@@ -171,21 +171,35 @@ static void handle_connection(int fd)
 
 				if(len > 0)
 				{
-					uint8_t* read_buf = (uint8_t*) malloc(len + 4);
+					const int readDataOffset = 14;
+					uint8_t* read_buf = (uint8_t*) malloc(len + readDataOffset);
 
 					read_buf[0] = COMMAND_WRITE;
-					read_buf[1] = (0x4 + len) >> 8;
-					read_buf[2] = (0x4 + len) & 0xff;
-					read_buf[3] = backend_ops->read(addr, len, &read_buf[4]);
+					read_buf[1] = command_ptr[1];
+					read_buf[2] = command_ptr[2];
+					read_buf[3] = command_ptr[3];
+					read_buf[4] = command_ptr[4];
+					read_buf[5] = command_ptr[5];
+					read_buf[6] = command_ptr[6];
+					read_buf[7] = command_ptr[7];
+					read_buf[8] = command_ptr[8];
+					read_buf[9] = command_ptr[9];
+					read_buf[10] = command_ptr[10];
+					read_buf[11] = command_ptr[11];
+					read_buf[12] = 0x00;
+					read_buf[13] = 0x00;
+
+					backend_ops->read(addr, len, &read_buf[readDataOffset]);
+					
 					printf("Read: ");
 					for(i=0; i<len; i++)
 					{
-						printf("%02x ", read_buf[i + 4]);
+						printf("%02x ", read_buf[i + readDataOffset]);
 					}
 
 					printf("\n");
 		
-					write(fd, read_buf, len + 4);
+					write(fd, read_buf, len + readDataOffset);
 					free(read_buf);
 				}
 

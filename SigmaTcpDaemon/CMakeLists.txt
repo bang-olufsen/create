@@ -4,7 +4,7 @@ project(SigmaTcpDaemon)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCES Main.cpp SigmaTcpServer.cpp SpiCommunication.cpp)
+set(SOURCES Main.cpp SigmaTcpServer.cpp SpiCommunication.cpp EepromHandler.cpp)
 
 #add_definitions ("-Wno-unused-function")
 #add_definitions ("-Wno-unused-value")

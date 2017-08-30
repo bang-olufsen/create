@@ -1,5 +1,6 @@
 #include "SigmaTcpServer.h"
 #include "SpiCommunication.h"
+#include "EepromHandler.h"
 #include <iostream>
 #include <exception>
 
@@ -7,6 +8,7 @@ int main()
 {
 	SigmaTcpServer tcpServer;
 	SpiCommunication spiCommIf;
+	EepromHandler eepromHandler;
 
 	try
 	{
@@ -16,6 +18,9 @@ int main()
 	{
 		std::cout << "Error initializing SPI device: " << e.what() << '\n';
 	}
+
+	//eepromHandler.Initialize(&spiCommIf);
+	//eepromHandler.WriteDefualtEeprom();
 
 	try
 	{

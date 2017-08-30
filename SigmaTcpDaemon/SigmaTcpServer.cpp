@@ -76,6 +76,8 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF)
 				unsigned int len = (commandPtr[8] << 8) | commandPtr[9];
 				unsigned int addr = (commandPtr[10] << 8) | commandPtr[11];
 
+				printf("Read %i bytes from %#04x\n", len, addr);
+
 				if (len > 0)
 				{
 					const int readDataOffset = 14;
@@ -95,7 +97,7 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF)
 					read_buf[11] = commandPtr[11];
 					read_buf[12] = 0x00;
 					read_buf[13] = 0x00;
-
+			
 					try
 					{
 						hwCommunicationIF->Read(addr, len, &read_buf[readDataOffset]);
@@ -116,6 +118,8 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF)
 			else {
 				unsigned int len = (commandPtr[10] << 8) | commandPtr[11];
 				unsigned int addr = (commandPtr[12] << 8) | commandPtr[13];
+
+				printf("Write %i bytes to 0x%04x\n", len, addr);
 
 				if (remainingBytes < CmdByteSize + len)
 				{
@@ -190,6 +194,8 @@ void SigmaTcpServer::Start()
 		if (newSockFd < 0) {
 			continue;
 		}
+
+		printf("Accepted a new connection\n");
 
 		//TODO limit number of threads and store descriptors, call join/delete
 		new std::thread(ConnectionHandlerThread, newSockFd, m_hwCommIf);

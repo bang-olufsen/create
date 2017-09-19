@@ -3,6 +3,7 @@
 #include<sys/socket.h>
 #include<arpa/inet.h> 
 #include <unistd.h>
+#include <cstring>
 
 SigmaTcpClient::SigmaTcpClient() :
 m_sockConnection(-1)
@@ -62,3 +63,52 @@ void SigmaTcpClient::WriteMemory(uint16_t addr, uint16_t size, uint8_t* data)
 
 	free(writeRequest);
 }
+
+double SigmaTcpClient::ReadDecimal(uint16_t addr)
+{
+	SigmaReadResponse& resp = ReadMemory(addr, m_DecimalByteSize);
+	int32_t resultValInt = 0;
+	resultValInt |= (resp.data[0] << 24);
+	resultValInt |= (resp.data[1] << 16);
+	resultValInt |= (resp.data[2] << 8);
+	resultValInt |= resp.data[3];
+
+	double decimalResult = resultValInt / m_FullScaleIntValue;
+
+	return decimalResult;	
+}
+
+void SigmaTcpClient::WriteDecimal(uint16_t addr, double value)
+{
+	int decimalIntValue = (int) ((value *  m_FullScaleIntValue) + 0.5);
+	uint8_t memValue[4] = {0};
+	memValue[0] = (uint8_t) (decimalIntValue >> 24);
+	memValue[1] = (uint8_t) (decimalIntValue >> 16);
+	memValue[2] = (uint8_t) (decimalIntValue >> 8);
+	memValue[3] = (uint8_t) decimalIntValue;
+
+	WriteMemory(addr, 4, memValue);
+}
+
+int SigmaTcpClient::ReadInteger(uint16_t addr)
+{
+	SigmaReadResponse& resp = ReadMemory(addr, m_IntByteSize);
+	int resultValInt = 0;
+
+	resultValInt |= (resp.data[0] << 24);
+	resultValInt |= (resp.data[1] << 16);
+	resultValInt |= (resp.data[2] << 8);
+	resultValInt |= resp.data[3];
+	return resultValInt;
+}
+
+void SigmaTcpClient::WriteInteger(uint16_t addr, int value)
+{
+	uint8_t memValue[4] = { 0 };
+	memValue[0] = (uint8_t)(value >> 24);
+	memValue[1] = (uint8_t)(value >> 16);
+	memValue[2] = (uint8_t)(value >> 8);
+	memValue[3] = (uint8_t)value;
+	WriteMemory(addr, m_IntByteSize, memValue);
+}
+

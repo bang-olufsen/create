@@ -7,14 +7,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <error.h>
-#include <string.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
+#include <cstring>
 
 class SpiCommunication : public HwCommunicationIF {
 public:

@@ -1,5 +1,25 @@
-#include "SigmaTcpServer.h"
+/*Copyright 2017 Bang & Olufsen A/S
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
+#include "SigmaTcpServer.h"
+#include "SigmaTcpTypes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,7 +37,6 @@
 #include <netinet/if_ether.h>
 #include <sys/ioctl.h>
 #include <stdexcept>
-#include <thread>
 #include <iostream>
 #include <mutex>
 
@@ -31,6 +50,7 @@ m_hwCommIf(nullptr)
 
 SigmaTcpServer::~SigmaTcpServer()
 {
+	Stop();
 }
 
 void SigmaTcpServer::Initialize(int port, HwCommunicationIF* hwCommunicationIF)
@@ -39,12 +59,19 @@ void SigmaTcpServer::Initialize(int port, HwCommunicationIF* hwCommunicationIF)
 	m_portNumber = port;
 }
 
-void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF)
+void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::atomic_bool* threadRunning)
 {
 	const int MaxConnectionBufferSize = 256 * 1024;
-	const char CommandRead = 0x0a;
-	const char CommandWrite = 0x0b;
-	const size_t CmdByteSize = 14;
+	const size_t CmdByteSize = sizeof(SigmaTcpReadRequest);
+
+	if (CmdByteSize != sizeof(SigmaTcpWriteRequest))
+	{
+		std::cout << "Error, the Sigma Studio read and write request headers differ in size, this is not supported" << std::endl;
+		*threadRunning = false;
+		shutdown(fd, SHUT_RDWR);
+		close(fd);
+		return;
+	}
 
 	uint8_t buf[MaxConnectionBufferSize] = { 0 };
 
@@ -53,7 +80,7 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF)
 	uint8_t *commandPtr = &buf[0];
 	size_t remainingBytes = 0;
 
-	while (true)
+	while (*threadRunning)
 	{
 		if (remainingBytes > 0)
 		{
@@ -69,83 +96,109 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF)
 
 		while (remainingBytes >= CmdByteSize)
 		{
-			char command = commandPtr[0];
+			//Handle the incoming command, must be either read or write request
+			if (commandPtr[0] == CommandRead) 
+			{
+				//Read request, extract the relevant header information
+				SigmaTcpReadRequest* readRequest =(SigmaTcpReadRequest*) &commandPtr[0];
+				unsigned int dataLength = (readRequest->dataLength3 << 24) | (readRequest->dataLength2 << 16) | (readRequest->dataLength1 << 8) | readRequest->dataLength0;
+				unsigned int dataAddress = (readRequest->addressHigh << 8) | readRequest->addressLow;
 
-			if (command == CommandRead) {
+				printf("Read %i bytes from %#04x\n", dataLength, dataAddress);
 
-				unsigned int len = (commandPtr[8] << 8) | commandPtr[9];
-				unsigned int addr = (commandPtr[10] << 8) | commandPtr[11];
-
-				printf("Read %i bytes from %#04x\n", len, addr);
-
-				if (len > 0)
+				if (dataLength > 0)
 				{
-					const int readDataOffset = 14;
-					uint8_t* read_buf = (uint8_t*)malloc(len + readDataOffset);
-
-					read_buf[0] = CommandWrite;
-					read_buf[1] = commandPtr[1];
-					read_buf[2] = commandPtr[2];
-					read_buf[3] = commandPtr[3];
-					read_buf[4] = commandPtr[4];
-					read_buf[5] = commandPtr[5];
-					read_buf[6] = commandPtr[6];
-					read_buf[7] = commandPtr[7];
-					read_buf[8] = commandPtr[8];
-					read_buf[9] = commandPtr[9];
-					read_buf[10] = commandPtr[10];
-					read_buf[11] = commandPtr[11];
-					read_buf[12] = 0x00;
-					read_buf[13] = 0x00;
+					SigmaTcpReadResponse readResponse;
+					uint8_t* readData = (uint8_t*)malloc(dataLength);
 			
 					try
 					{
-						hwCommunicationIF->Read(addr, len, &read_buf[readDataOffset]);
+						hwCommunicationIF->Read(dataAddress, dataLength, readData);
+
+						//Set the response data
+						readResponse.totalLength0 = readRequest->totalLength0;
+						readResponse.totalLength1 = readRequest->totalLength1;
+						readResponse.totalLength2 = readRequest->totalLength2;
+						readResponse.totalLength3 = readRequest->totalLength3;
+						readResponse.chipAddress = readRequest->chipAddress;
+						readResponse.dataLength0 = readRequest->dataLength0;
+						readResponse.dataLength1 = readRequest->dataLength1;
+						readResponse.dataLength2 = readRequest->dataLength2;
+						readResponse.dataLength3 = readRequest->dataLength3;
+						readResponse.addressHigh = readRequest->addressHigh;
+						readResponse.addressLow = readRequest->addressLow;
+
+						readResponse.successFailure = CommandReadSuccess;
 					}
 					catch (std::exception& e)
 					{
-						free(read_buf);
+						//Indicate that there was an error
+						readResponse.successFailure = CommandReadFailure;
+						dataLength = 0;
 						std::cout << "Error reading data: " << e.what() << '\n';
 					}
 
-					write(fd, read_buf, len + readDataOffset);
-					free(read_buf);
+					unsigned int totalResponseLength = dataLength + sizeof(SigmaTcpReadResponse);
+					uint8_t* responseData = (uint8_t*)malloc(totalResponseLength);
+					//Fist copy the response header
+					memcpy(responseData, (uint8_t*)&readResponse, sizeof(SigmaTcpReadResponse));
+					//Then the data
+					memcpy(responseData + sizeof(SigmaTcpReadResponse), readData, dataLength);
+
+					write(fd, responseData, totalResponseLength);
+
+					//Clean up
+					free(readData);
+					free(responseData);
 				}
 
 				remainingBytes -= CmdByteSize;
 				commandPtr += CmdByteSize;
 			}
-			else {
-				unsigned int len = (commandPtr[10] << 8) | commandPtr[11];
-				unsigned int addr = (commandPtr[12] << 8) | commandPtr[13];
+			else if (commandPtr[0] == CommandWrite) 
+			{
+				//Write request, extract the relevant header information
+				SigmaTcpWriteRequest* writeRequest = (SigmaTcpWriteRequest*)&commandPtr[0];
+				unsigned int dataLength = (writeRequest->dataLength3 << 24) | (writeRequest->dataLength2 << 16) | (writeRequest->dataLength1 << 8) | writeRequest->dataLength0;
+				unsigned int dataAddress = (writeRequest->addressHigh << 8) | writeRequest->addressLow;
 
-				printf("Write %i bytes to 0x%04x\n", len, addr);
+				printf("Write %i bytes to 0x%04x\n", dataLength, dataAddress);
 
-				if (remainingBytes < CmdByteSize + len)
+				if (remainingBytes < CmdByteSize + dataLength)
 				{
 					break;
 				}
 
 				try
 				{
-					hwCommunicationIF->Write(addr, len, commandPtr + CmdByteSize);
+					hwCommunicationIF->Write(dataAddress, dataLength, commandPtr + sizeof(SigmaTcpWriteRequest));
 				}
 				catch (std::exception& e)
 				{
 					std::cout << "Error reading data: " << e.what() << '\n';
 				}
 
-				remainingBytes -= (len + CmdByteSize);
-				commandPtr += CmdByteSize + len;
+				remainingBytes -= (dataLength + CmdByteSize);
+				commandPtr += CmdByteSize + dataLength  ;
+			}
+			else
+			{
+				std::cout << "Unknown command received" << std::endl;
 			}
 		}
 	}
+
+	*threadRunning = false;
 }
 
 
 void SigmaTcpServer::Start()
 {
-	int sockFd, newSockFd;
+	if (m_serverRunning)
+	{
+		//Already running
+		return;
+	}
 
 	if (m_portNumber < 0)
 	{
@@ -165,45 +218,120 @@ void SigmaTcpServer::Start()
 		throw std::domain_error("failed to get address info, unable to start server");
 	}
 	
-	sockFd = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-	if (sockFd < 0)
+	m_socketFd = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
+	if (m_socketFd < 0)
 	{
 		throw std::domain_error("failed to create socket");
 	}
 
 	int reuse = 1;
-	if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+	if (setsockopt(m_socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
 	{
 		throw std::domain_error("failed to set socket options");
 	}
 
-	if (bind(sockFd, serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
+	if (bind(m_socketFd, serverInfo->ai_addr, serverInfo->ai_addrlen) < 0)
 	{
 		throw std::domain_error("failed to bind socket");
 	}
 
 	freeaddrinfo(serverInfo);
 
-	if (listen(sockFd, 0) < 0)
+	if (listen(m_socketFd, 0) < 0)
 	{
 		throw std::domain_error("Failed to listen on socket");
 	}
 
-	while (true) {
-		newSockFd = accept(sockFd, NULL, NULL);
+	m_serverRunning = true;
+
+	while (m_serverRunning) {
+		int newSockFd = accept(m_socketFd, NULL, NULL);
 		if (newSockFd < 0) {
 			continue;
 		}
 
-		printf("Accepted a new connection\n");
+		//Make sure to update the thread pool to see if we can handle the incoming connection
+		CleanThreadPool();
 
-		//TODO limit number of threads and store descriptors, call join/delete
-		new std::thread(ConnectionHandlerThread, newSockFd, m_hwCommIf);
+		if (m_threadPool.size() < m_MaxNumClients)
+		{
+			std::cout << "Accepted a new connection" << std::endl;
+
+			//Add the new connection to the thread pool
+			std::atomic_bool* threadStatus = new std::atomic_bool(true);
+			std::thread* newClientThread = new std::thread(ConnectionHandlerThread, newSockFd, m_hwCommIf, threadStatus);
+			m_threadPool.push_back(std::make_tuple(newClientThread, newSockFd, threadStatus));
+		}
+		else
+		{
+			//No more connections allowed, close the socket
+			std::cout << "Only " << m_MaxNumClients << " active connections allowed at a time" << std::endl;
+			shutdown(newSockFd, SHUT_RDWR);
+			close(newSockFd);
+		}
+	}
+}
+
+void SigmaTcpServer::CloseClientConnection(std::thread* connectionThread, int fileDescriptor, std::atomic_bool* threadStatus)
+{
+	//close file desciptor, join and delete thread and free memory
+	shutdown(fileDescriptor, SHUT_RDWR);
+	close(fileDescriptor);
+
+	//Signal that the thread should stop running
+	*threadStatus = false;
+
+	if (connectionThread != nullptr)
+	{
+		//Wait for thread to exit
+		if (connectionThread->joinable())
+		{
+			connectionThread->join();
+		}
+
+		delete connectionThread;
 	}
 
+	delete threadStatus;
+}
+
+void SigmaTcpServer::CleanThreadPool()
+{
+	std::vector<std::tuple<std::thread*, int, std::atomic_bool*>> newThreadPool;
+	for (int i = 0; i < m_threadPool.size(); i++)
+	{
+		std::atomic_bool* threadRunning = std::get<2>(m_threadPool.at(i));
+
+		if (*threadRunning)
+		{
+			//Thread (connection) is still active
+			newThreadPool.push_back(m_threadPool.at(i));
+			continue;
+		}
+
+		//Thread (connection) is no longer active, remove it and remove it from the thread pool
+		CloseClientConnection(std::get<0>(m_threadPool.at(i)), std::get<1>(m_threadPool.at(i)), threadRunning);
+	}
+
+	m_threadPool = newThreadPool;
 }
 
 void SigmaTcpServer::Stop()
 { 
+	//Close all active client connections
+	for (int i = 0; i < m_threadPool.size(); i++)
+	{
+		CloseClientConnection(std::get<0>(m_threadPool.at(i)), std::get<1>(m_threadPool.at(i)), std::get<2>(m_threadPool.at(i)));
+	}
 
+	//All connections have been shutdown and closed, clear the thread pool
+	m_threadPool.clear();
+
+	//Shutdown the server socket
+	m_serverRunning = false;
+	if (m_socketFd != -1)
+	{
+		shutdown(m_socketFd, SHUT_RDWR);
+		close(m_socketFd);
+	} 	
 }

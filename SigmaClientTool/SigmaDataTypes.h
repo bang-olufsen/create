@@ -30,8 +30,9 @@ typedef struct SigmaReadResponse
 	uint8_t data[MaxReadSize];
 } SigmaReadResponse;
 
-const char SigmaCommandReadCode = 0x0a;
-const char SigmaCommandWriteCode = 0x0b;
+const char SigmaCommandReadCode = 0x0A;
+const char SigmaCommandWriteCode = 0x09;
+const char SigmaCommandEepromCode = 0xF0;
 
 const unsigned int SigmaCommandHeaderSize = 14;
 

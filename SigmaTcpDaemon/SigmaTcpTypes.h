@@ -27,6 +27,7 @@ const char CommandReadFailure = 0x01;
 const char CommandRead = 0x0A;
 const char CommandReadResponse = 0x0B;
 const char CommandWrite = 0x09;
+const char CommandEEPROM = 0xF0;
 
 #pragma pack(push, 1)
 typedef struct SigmaTcpReadRequest
@@ -85,4 +86,13 @@ typedef struct SigmaTcpWriteRequest
 	uint8_t addressHigh = 0;
 	uint8_t addressLow = 0;
 } SigmaTcpWriteRequest;
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+typedef struct SigmaTcpEepromRequest
+{
+	uint8_t controlValue = CommandEEPROM;
+	uint8_t length = 0;
+	uint8_t reserved[12] = { 0 };
+} SigmaTcpEepromRequest;
 #pragma pack(pop)

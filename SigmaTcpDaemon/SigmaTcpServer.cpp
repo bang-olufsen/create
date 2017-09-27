@@ -63,6 +63,8 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 {
 	const int MaxConnectionBufferSize = 256 * 1024;
 	const size_t CmdByteSize = sizeof(SigmaTcpReadRequest);
+	EepromHandler eepromHandler;
+	eepromHandler.Initialize(hwCommunicationIF);
 
 	if (CmdByteSize != sizeof(SigmaTcpWriteRequest))
 	{
@@ -179,7 +181,32 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 				}
 
 				remainingBytes -= (dataLength + CmdByteSize);
-				commandPtr += CmdByteSize + dataLength  ;
+				commandPtr += CmdByteSize + dataLength;
+			}
+			else if (commandPtr[0] == CommandEEPROM)
+			{
+				SigmaTcpEepromRequest* eepromRequest = (SigmaTcpEepromRequest*)&commandPtr[0];
+
+				if (remainingBytes >= eepromRequest->length + sizeof(SigmaTcpEepromRequest))
+				{
+					char* filePathString = new char[eepromRequest->length + 1];
+					memset(filePathString, 0, eepromRequest->length + 1);
+
+					memcpy(filePathString, commandPtr + sizeof(SigmaTcpEepromRequest), eepromRequest->length);
+
+					uint8_t successVal = 0;
+					
+					if (eepromHandler.WriteFromXml(filePathString))
+					{
+						successVal = 1;
+					}
+
+					write(fd, &successVal, 1);
+
+					remainingBytes = 0;
+
+					delete[] filePathString;
+				}
 			}
 			else
 			{

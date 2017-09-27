@@ -132,3 +132,23 @@ void SigmaTcpClient::WriteInteger(uint16_t addr, int value)
 	WriteMemory(addr, m_IntByteSize, memValue);
 }
 
+bool SigmaTcpClient::WriteEeprom(std::string pathToFile)
+{
+	uint8_t* eepromRequestData = nullptr;
+	uint16_t requestSize = 0;
+	uint8_t successVal = 0;
+	m_dataFormatter.CreateSigmaEepromRequest(pathToFile, &requestSize, &eepromRequestData);
+
+	if (eepromRequestData != nullptr && requestSize > 0)
+	{
+		::send(m_sockConnection, eepromRequestData, requestSize, 0);
+		::recv(m_sockConnection, &successVal, 1, 0);
+	}
+
+	if (eepromRequestData != nullptr)
+	{
+		free(eepromRequestData);
+	}
+
+	return successVal == 1;
+}

@@ -27,7 +27,7 @@ SOFTWARE.*/
 
 int main()
 {
-	SigmaTcpServer tcpServer;
+ 	SigmaTcpServer tcpServer;
 	SpiCommunication spiCommIf;
 	EepromHandler eepromHandler;
 
@@ -51,7 +51,7 @@ int main()
 
 	try
 	{
-		tcpServer.Start();
+			tcpServer.Start();
 	}
 	catch (std::exception& e)
 	{

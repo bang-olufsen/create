@@ -20,15 +20,21 @@ SOFTWARE.*/
 
 #pragma once
 #include "HwCommunicationIF.h"
+#include <string>
 
 class EepromHandler {
 public:
 	EepromHandler();
 	~EepromHandler();
 
+	//!@brief Initializes the class with the required initialization data. Must be done before writing to EEPROM
+	//!@param hwCommunicationIF The hardware interface to use for reading/writing data to/from DSP
 	void Initialize(HwCommunicationIF* hwCommunicationIF);
 
-	void WriteDefualtEeprom();
+	//!@brief Parses an XML sequence data document exported from SigmaStudio and writes the sequence data to DSP
+	//!@param path The full path to the XML file
+	//!@return true if the operation was successful
+	bool WriteFromXml(std::string path);
 private:
 	HwCommunicationIF* m_hwIf;
 };

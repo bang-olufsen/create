@@ -32,5 +32,7 @@ public:
 
 	void CreateSigmaReadRequest(uint16_t addr, uint16_t length, uint8_t** sigmaReadRequest);
 
+	void CreateSigmaEepromRequest(std::string pathToFile, uint16_t* requestLength, uint8_t** sigmaReadRequest);
+
 	void GetSigmaReadResponse(uint8_t* rawDataResponse, SigmaReadResponse* readRepsonse);
 };

@@ -21,6 +21,7 @@ SOFTWARE.*/
 #pragma once
 
 #include "HwCommunicationIF.h"
+#include "EepromHandler.h"
 #include <vector>
 #include <tuple>
 #include <thread>

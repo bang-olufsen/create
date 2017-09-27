@@ -68,3 +68,16 @@ void SigmaProtocolDataFormatter::GetSigmaReadResponse(uint8_t* rawDataResponse, 
 		memcpy(readRepsonse->data, &rawDataResponse[14], len);
 	}
 }
+
+void SigmaProtocolDataFormatter::CreateSigmaEepromRequest(std::string pathToFile, uint16_t* requestLength, uint8_t** sigmaEepromRequest)
+{
+	unsigned int totalRequestSize = pathToFile.size() + 1 + SigmaCommandHeaderSize;
+	*requestLength = totalRequestSize;
+	*sigmaEepromRequest = (uint8_t*)malloc(totalRequestSize);
+	memset(*sigmaEepromRequest, 0, totalRequestSize);
+
+	(*sigmaEepromRequest)[0] = SigmaCommandEepromCode;
+	(*sigmaEepromRequest)[1] = pathToFile.size();
+
+	memcpy(&(*sigmaEepromRequest)[SigmaCommandHeaderSize], pathToFile.c_str(), pathToFile.size());
+}

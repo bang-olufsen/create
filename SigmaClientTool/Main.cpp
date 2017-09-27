@@ -34,7 +34,7 @@ void PrintUsage()
 int main(int argc, char* argv[])
 {
 
-	if (argc < 4) {
+	if (argc < 3) {
 		PrintUsage();
 		return 0;
 	}
@@ -119,6 +119,19 @@ int main(int argc, char* argv[])
 		tcpClient.WriteMemory((uint16_t)strtol(argv[3], nullptr, 0), bytesToWrite, dataPtr);
 
 		free(dataPtr);
+	}
+	else if (strcmp(argv[2], "write_eeprom") == 0)
+	{
+		std::string filePath(argv[3]);
+		std::cout << "Writing " << filePath << " to EEPROM " << std::endl;
+		if (tcpClient.WriteEeprom(filePath))
+		{
+			std::cout << "SUCCESS " << std::endl;
+		}
+		else
+		{
+			std::cout << "FAILED " << std::endl;
+		}
 	}
 	else
 	{

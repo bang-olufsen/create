@@ -43,6 +43,8 @@ public:
 
 	void WriteInteger(uint16_t addr, int value);
 
+	bool WriteEeprom(std::string pathToFile);
+
 private:
 	SigmaReadResponse m_readResponse;
 	SigmaProtocolDataFormatter m_dataFormatter;

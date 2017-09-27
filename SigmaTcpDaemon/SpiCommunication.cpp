@@ -58,7 +58,6 @@ void SpiCommunication::Initialize(std::string devPath)
 		throw std::domain_error("Failed SPI LSB_FIRST");
 	}
 
-
 	if (ioctl(m_spiFd, SPI_IOC_RD_BITS_PER_WORD, &bits) < 0)
 	{
 		throw std::domain_error("Failed SPI BITS_PER_WORD");

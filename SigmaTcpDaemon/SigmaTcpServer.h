@@ -46,6 +46,10 @@ public:
 	//!@brief Stopes the TCP server if it is running, otherwise just returns.
 	void Stop();
 
+	//!@brief Enable/disable extra debug prints
+	//!@param enable True to enable extra debug prints
+	void SetDebugPrint(bool enable);
+
 private:
 	//!@brief Updates the thread pool cache and removes all references to threads that have already exited
 	void CleanThreadPool();
@@ -59,4 +63,5 @@ private:
 	const unsigned int m_MaxNumClients = 10;
 	bool m_serverRunning = false;
 	int m_socketFd = -1;
+	bool m_debugPrint = false;
 };

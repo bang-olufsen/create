@@ -25,10 +25,12 @@ SOFTWARE.*/
 #include <iostream>
 #include <exception>
 
-int main()
+int main(int argc, char* argv[])
 {
  	SigmaTcpServer tcpServer;
 	SpiCommunication spiCommIf;
+
+	tcpServer.SetDebugPrint(strcmp(argv[1], "-d") == 0);
 
 	try
 	{

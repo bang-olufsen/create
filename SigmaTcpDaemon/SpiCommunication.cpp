@@ -101,7 +101,8 @@ int SpiCommunication::Read(unsigned int addr, unsigned int len, uint8_t *data)
 	m_xferSettings[XFER_RD_INDEX].rx_buf = (unsigned long)data;
 	m_xferSettings[XFER_RD_INDEX].len = len; //Length of Data to read 
 	status = ioctl(m_spiFd, SPI_IOC_MESSAGE(2), m_xferSettings);
-	if (status < 0) {
+	if (status < 0) 
+	{
 		throw std::domain_error("Failed SPI_IOC_MESSAGE read error" + errno);
 	}
 
@@ -124,10 +125,12 @@ int SpiCommunication::Write(unsigned int addr, unsigned int len, const uint8_t *
 		write_buf[1] = (char) (addr >> 8);
 		write_buf[2] = addr & 0xFF;
 
-		if (i == loopCount) {
+		if (i == loopCount) 
+		{
 			currentBlockSize = len % MaxBlockSizeWrite;
 		}
-		else {
+		else 
+		{
 			currentBlockSize = MaxBlockSizeWrite;
 		}
 
@@ -143,7 +146,8 @@ int SpiCommunication::Write(unsigned int addr, unsigned int len, const uint8_t *
 		m_xferSettings[XFER_WR_INDEX].len = currentBlockSize + CommandHeaderSize; // Length of  command to write
 		int status = ioctl(m_spiFd, SPI_IOC_MESSAGE(1), m_xferSettings);
 
-		if (status < 0) {
+		if (status < 0) 
+		{
 			throw std::domain_error("Failed SPI_IOC_MESSAGE write error " + errno);
 		}
 	}

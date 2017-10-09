@@ -42,9 +42,10 @@ SOFTWARE.*/
 
 std::mutex spiDeviceMutex;
 
-SigmaTcpServer::SigmaTcpServer() : 
+SigmaTcpServer::SigmaTcpServer() :
 m_portNumber(-1),
-m_hwCommIf(nullptr)
+m_hwCommIf(nullptr),
+m_debugPrint(false)
 {
 }
 
@@ -59,7 +60,7 @@ void SigmaTcpServer::Initialize(int port, HwCommunicationIF* hwCommunicationIF)
 	m_portNumber = port;
 }
 
-void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::atomic_bool* threadRunning)
+void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::atomic_bool* threadRunning, bool debugPrint)
 {
 	const int MaxConnectionBufferSize = 256 * 1024;
 	const size_t CmdByteSize = sizeof(SigmaTcpReadRequest);
@@ -91,7 +92,9 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 		}
 		rxByteCount = read(fd, buf + remainingBytes, MaxConnectionBufferSize - remainingBytes);
 		if (rxByteCount <= 0)
+		{
 			break;
+		}
 
 		std::unique_lock<std::mutex> deviceLock(spiDeviceMutex);
 		remainingBytes += rxByteCount;
@@ -107,8 +110,11 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 				unsigned int dataLength = (readRequest->dataLength3 << 24) | (readRequest->dataLength2 << 16) | (readRequest->dataLength1 << 8) | readRequest->dataLength0;
 				unsigned int dataAddress = (readRequest->addressHigh << 8) | readRequest->addressLow;
 
-				printf("Read %i bytes from %#04x\n", dataLength, dataAddress);
-
+				if(debugPrint)
+				{
+					printf("Read %i bytes from %#04x\n", dataLength, dataAddress);
+				}
+				
 				if (dataLength > 0)
 				{
 					SigmaTcpReadResponse readResponse;
@@ -162,7 +168,10 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 				unsigned int dataLength = (writeRequest->dataLength3 << 24) | (writeRequest->dataLength2 << 16) | (writeRequest->dataLength1 << 8) | writeRequest->dataLength0;
 				unsigned int dataAddress = (writeRequest->addressHigh << 8) | writeRequest->addressLow;
 
-				printf("Write %i bytes to 0x%04x\n", dataLength, dataAddress);
+				if (debugPrint)
+				{
+					printf("Write %i bytes to 0x%04x\n", dataLength, dataAddress);
+				}
 
 				if (remainingBytes < CmdByteSize + dataLength)
 				{
@@ -269,9 +278,11 @@ void SigmaTcpServer::Start()
 
 	m_serverRunning = true;
 
-	while (m_serverRunning) {
+	while (m_serverRunning) 
+	{
 		int newSockFd = accept(m_socketFd, NULL, NULL);
-		if (newSockFd < 0) {
+		if (newSockFd < 0) 
+		{
 			continue;
 		}
 
@@ -280,11 +291,14 @@ void SigmaTcpServer::Start()
 
 		if (m_threadPool.size() < m_MaxNumClients)
 		{
-			std::cout << "Accepted a new connection" << std::endl;
+			if (m_debugPrint)
+			{
+				std::cout << "Accepted a new connection" << std::endl;
+			}
 
 			//Add the new connection to the thread pool
 			std::atomic_bool* threadStatus = new std::atomic_bool(true);
-			std::thread* newClientThread = new std::thread(ConnectionHandlerThread, newSockFd, m_hwCommIf, threadStatus);
+			std::thread* newClientThread = new std::thread(ConnectionHandlerThread, newSockFd, m_hwCommIf, threadStatus, m_debugPrint);
 			m_threadPool.push_back(std::make_tuple(newClientThread, newSockFd, threadStatus));
 		}
 		else
@@ -339,6 +353,11 @@ void SigmaTcpServer::CleanThreadPool()
 	}
 
 	m_threadPool = newThreadPool;
+}
+
+void SigmaTcpServer::SetDebugPrint(bool enable)
+{
+	m_debugPrint = enable;
 }
 
 void SigmaTcpServer::Stop()

@@ -70,6 +70,8 @@ SigmaReadResponse& SigmaTcpClient::ReadMemory(uint16_t addr, uint16_t size)
 		return m_readResponse;
 	}
 
+	memset(m_requestDatabuffer, 0, size + SigmaCommandHeaderSize);
+
 	m_dataFormatter.ReadRequest(addr, size, m_requestDatabuffer);
 
 	::send(m_sockConnection, m_requestDatabuffer, SigmaCommandHeaderSize, 0);
@@ -87,6 +89,8 @@ void SigmaTcpClient::WriteMemory(uint16_t addr, uint16_t size, uint8_t* data)
 		std::cout << "Error writing, maximum allowed size of write is " << m_MaxRequestSize << " bytes" << std::endl;
 		return;
 	}
+
+	memset(m_requestDatabuffer, 0, size + SigmaCommandHeaderSize);
 	
 	m_dataFormatter.WriteRequest(addr, size, data, m_requestDatabuffer);
 	::send(m_sockConnection, m_requestDatabuffer, size + SigmaCommandHeaderSize, 0);

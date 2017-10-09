@@ -65,7 +65,7 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 	const size_t CmdByteSize = sizeof(SigmaTcpReadRequest);
 	EepromHandler eepromHandler;
 	eepromHandler.Initialize(hwCommunicationIF);
-	std::vector<uint8_t> readResponseBuffer(1024);
+	std::vector<uint8_t> readResponseBuffer(1024, 0);
 
 	if (CmdByteSize != sizeof(SigmaTcpWriteRequest))
 	{
@@ -121,7 +121,7 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 			
 					try
 					{
-						hwCommunicationIF->Read(dataAddress, dataLength, readResponseBuffer.data());
+						hwCommunicationIF->Read(dataAddress, dataLength, readResponseBuffer.data() + sizeof(SigmaTcpReadResponse));
 
 						//Set the response data
 						readResponse.totalLength0 = readRequest->totalLength0;
@@ -146,13 +146,10 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 						std::cout << "Error reading data: " << e.what() << '\n';
 					}
 				
-					//Fist copy the response header
+					//Copy the response header
 					memcpy(readResponseBuffer.data(), (uint8_t*)&readResponse, sizeof(SigmaTcpReadResponse));
-					//Then the data
-					memcpy(readResponseBuffer.data() + sizeof(SigmaTcpReadResponse), readResponseBuffer.data(), dataLength);
-
+					//Write the response
 					write(fd, readResponseBuffer.data(), totalResponseLength);
-
 				}
 
 				remainingBytes -= CmdByteSize;

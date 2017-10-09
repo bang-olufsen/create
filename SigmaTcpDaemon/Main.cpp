@@ -30,7 +30,10 @@ int main(int argc, char* argv[])
  	SigmaTcpServer tcpServer;
 	SpiCommunication spiCommIf;
 
-	tcpServer.SetDebugPrint(strcmp(argv[1], "-d") == 0);
+	if (argc >= 2)
+	{
+		tcpServer.SetDebugPrint(strcmp(argv[1], "-d") == 0);
+	}
 
 	try
 	{

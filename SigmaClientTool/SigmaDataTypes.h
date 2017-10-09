@@ -21,7 +21,7 @@ SOFTWARE.*/
 #pragma once
 #include <cstdint>
 
-const int MaxReadSize = 1024;
+const int MaxReadSize = 1024 * 2;
 
 typedef struct SigmaReadResponse
 {
@@ -30,9 +30,9 @@ typedef struct SigmaReadResponse
 	uint8_t data[MaxReadSize];
 } SigmaReadResponse;
 
-const char SigmaCommandReadCode = 0x0A;
-const char SigmaCommandWriteCode = 0x09;
-const char SigmaCommandEepromCode = 0xF0;
+const uint8_t SigmaCommandReadCode = 0x0A;
+const uint8_t SigmaCommandWriteCode = 0x09;
+const uint8_t SigmaCommandEepromCode = 0xF0;
 
 const unsigned int SigmaCommandHeaderSize = 14;
 

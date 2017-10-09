@@ -28,11 +28,11 @@ public:
 	SigmaProtocolDataFormatter();
 	~SigmaProtocolDataFormatter();
 
-	void CreateSigmaWriteRequest(uint16_t addr, uint16_t length, uint8_t* data,  uint8_t** sigmaWriteRequest);
+	void WriteRequest(uint16_t addr, uint16_t length, uint8_t* data,  uint8_t* sigmaWriteRequest);
 
-	void CreateSigmaReadRequest(uint16_t addr, uint16_t length, uint8_t** sigmaReadRequest);
+	void ReadRequest(uint16_t addr, uint16_t length, uint8_t* sigmaReadRequest);
 
-	void CreateSigmaEepromRequest(std::string pathToFile, uint16_t* requestLength, uint8_t** sigmaReadRequest);
+	void EepromRequest(std::string pathToFile, uint16_t* requestLength, uint8_t* sigmaReadRequest);
 
-	void GetSigmaReadResponse(uint8_t* rawDataResponse, SigmaReadResponse* readRepsonse);
+	void GetReadResponse(uint8_t* rawDataResponse, SigmaReadResponse* readRepsonse);
 };

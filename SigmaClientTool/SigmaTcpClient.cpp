@@ -24,10 +24,14 @@ SOFTWARE.*/
 #include<arpa/inet.h> 
 #include <unistd.h>
 #include <cstring>
+#include <iostream>
+#include <stdio.h>
 
 SigmaTcpClient::SigmaTcpClient() :
 m_sockConnection(-1)
-{}
+{
+	memset(m_requestDatabuffer, 0, m_MaxRequestSize);
+}
 
 SigmaTcpClient::~SigmaTcpClient()
 {
@@ -60,28 +64,32 @@ void SigmaTcpClient::InitializeConnection(std::string ip)
 
 SigmaReadResponse& SigmaTcpClient::ReadMemory(uint16_t addr, uint16_t size)
 {
-	uint8_t* readRequst = nullptr;
-	m_dataFormatter.CreateSigmaReadRequest(addr, size, &readRequst);
+	if (size > m_MaxRequestSize)
+	{
+		std::cout << "Error reading, maximum allowed size of read is " << m_MaxRequestSize << " bytes" << std::endl;
+		return m_readResponse;
+	}
 
-	uint8_t* bytesToRcv = (uint8_t*) malloc(size + SigmaCommandHeaderSize);
-	::send(m_sockConnection, readRequst, SigmaCommandHeaderSize, 0);
-	::recv(m_sockConnection, bytesToRcv, size + SigmaCommandHeaderSize, 0);
+	m_dataFormatter.ReadRequest(addr, size, m_requestDatabuffer);
 
-	m_dataFormatter.GetSigmaReadResponse(bytesToRcv, &m_readResponse);
+	::send(m_sockConnection, m_requestDatabuffer, SigmaCommandHeaderSize, 0);
+	::recv(m_sockConnection, m_requestDatabuffer, size + SigmaCommandHeaderSize, 0);
 
-	free(readRequst);
-	free(bytesToRcv);
+	m_dataFormatter.GetReadResponse(m_requestDatabuffer, &m_readResponse);
 
 	return m_readResponse;
 } 
 
 void SigmaTcpClient::WriteMemory(uint16_t addr, uint16_t size, uint8_t* data)
 {
-	uint8_t* writeRequest = nullptr;
-	m_dataFormatter.CreateSigmaWriteRequest(addr, size, data, &writeRequest);
-	::send(m_sockConnection, writeRequest, size + SigmaCommandHeaderSize, 0);
-
-	free(writeRequest);
+	if (size > m_MaxRequestSize)
+	{
+		std::cout << "Error writing, maximum allowed size of write is " << m_MaxRequestSize << " bytes" << std::endl;
+		return;
+	}
+	
+	m_dataFormatter.WriteRequest(addr, size, data, m_requestDatabuffer);
+	::send(m_sockConnection, m_requestDatabuffer, size + SigmaCommandHeaderSize, 0);
 }
 
 double SigmaTcpClient::ReadDecimal(uint16_t addr)
@@ -134,20 +142,14 @@ void SigmaTcpClient::WriteInteger(uint16_t addr, int value)
 
 bool SigmaTcpClient::WriteEeprom(std::string pathToFile)
 {
-	uint8_t* eepromRequestData = nullptr;
 	uint16_t requestSize = 0;
 	uint8_t successVal = 0;
-	m_dataFormatter.CreateSigmaEepromRequest(pathToFile, &requestSize, &eepromRequestData);
+	m_dataFormatter.EepromRequest(pathToFile, &requestSize, m_requestDatabuffer);
 
-	if (eepromRequestData != nullptr && requestSize > 0)
+	if (requestSize > 0)
 	{
-		::send(m_sockConnection, eepromRequestData, requestSize, 0);
+		::send(m_sockConnection, m_requestDatabuffer, requestSize, 0);
 		::recv(m_sockConnection, &successVal, 1, 0);
-	}
-
-	if (eepromRequestData != nullptr)
-	{
-		free(eepromRequestData);
 	}
 
 	return successVal == 1;

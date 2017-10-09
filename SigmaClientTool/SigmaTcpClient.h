@@ -49,7 +49,9 @@ private:
 	SigmaReadResponse m_readResponse;
 	SigmaProtocolDataFormatter m_dataFormatter;
 	int m_sockConnection;
-	const double m_FullScaleIntValue = 16777216;
+	const double m_FullScaleIntValue = 0x1000000;
 	const int m_DecimalByteSize = 4;
 	const int m_IntByteSize = 4;
+	static const int m_MaxRequestSize = 1024 * 2 + SigmaCommandHeaderSize;
+	uint8_t m_requestDatabuffer[m_MaxRequestSize];
 };

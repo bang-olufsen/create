@@ -24,18 +24,20 @@ SOFTWARE.*/
 #include <string.h>
 #include <stdlib.h> 
 
-void PrintUsage()
+void printUsage()
 {
 	std::cout << "Usage:" << std::endl << "Read: SigmaClientTool [target IP] [read_int|read_dec|read_reg] [address] [length] (for read_reg only)" \
 		<< std::endl << "Write value: SigmaClientTool [target IP] [write_val] [address] [value] (single int or decimal value)" \
-		<< std::endl << "Write register: SigmaClientTool [target IP] [write_reg] [address] [length] [value1 value2 value3 ...] (each value is 1 bytes in hex format 0xXX)" <<std::endl;
+		<< std::endl << "Write register: SigmaClientTool [target IP] [write_reg] [address] [length] [value1 value2 value3 ...] (each value is 1 bytes in hex format 0xXX)" \
+		<< std::endl << "Write EEPROM: SigmaClientTool [target IP] [write_eeprom] [path to XML file]" << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
 
-	if (argc < 3) {
-		PrintUsage();
+	if (argc < 3) 
+	{
+		printUsage();
 		return 0;
 	}
 
@@ -45,8 +47,9 @@ int main(int argc, char* argv[])
 
 	if (strcmp(argv[2], "read_reg") == 0)
 	{
-		if (argc < 5) {
-			PrintUsage();
+		if (argc < 5) 
+		{
+			printUsage();
 			return 0;
 		}
 
@@ -57,7 +60,15 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < resp.length; i++)
 		{
 			printf("0x%02x", resp.data[i]);
-			(i % 12 == 0 && i != 0) ? printf("\n%i: ", i) : printf(" ");
+			//Format the output to have maximum 12 bytes per line and assign numbers to each byte
+			if (i % 12 == 0 && i != 0)
+			{
+				printf("\n%i: ", i);
+			}
+			else
+			{
+				printf(" ");
+			}
 		}
 		printf("\n");
 	}
@@ -112,7 +123,7 @@ int main(int argc, char* argv[])
 		uint8_t* dataPtr = (uint8_t*)malloc(bytesToWrite);
 		for (int i = 0; i < bytesToWrite; i++)
 		{
-			dataPtr[i] = strtol(argv[5 + i], nullptr, 0);
+			dataPtr[i] = (uint8_t) strtol(argv[5 + i], nullptr, 0);
 		}
 
 		std::cout << "Writing " << bytesToWrite << " bytes to " << (uint16_t)strtol(argv[3], nullptr, 0) << std::endl;
@@ -136,7 +147,7 @@ int main(int argc, char* argv[])
 	else
 	{
 		std::cout << "Unknown argument" << std::endl;
-		PrintUsage();
+		printUsage();
 	}
 
 	return 0;

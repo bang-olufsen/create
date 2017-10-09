@@ -56,7 +56,7 @@ private:
 	int m_portNumber;
 	HwCommunicationIF* m_hwCommIf;
 	std::vector<std::tuple<std::thread*, int, std::atomic_bool*>> m_threadPool;
-	const int m_MaxNumClients = 10;
+	const unsigned int m_MaxNumClients = 10;
 	bool m_serverRunning = false;
 	int m_socketFd = -1;
 };

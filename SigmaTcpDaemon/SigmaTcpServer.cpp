@@ -65,6 +65,7 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 	const size_t CmdByteSize = sizeof(SigmaTcpReadRequest);
 	EepromHandler eepromHandler;
 	eepromHandler.Initialize(hwCommunicationIF);
+	std::vector<uint8_t> readResponseBuffer(1024);
 
 	if (CmdByteSize != sizeof(SigmaTcpWriteRequest))
 	{
@@ -111,11 +112,16 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 				if (dataLength > 0)
 				{
 					SigmaTcpReadResponse readResponse;
-					uint8_t* readData = (uint8_t*)malloc(dataLength);
+					unsigned int totalResponseLength = dataLength + sizeof(SigmaTcpReadResponse);
+					if (totalResponseLength > readResponseBuffer.size())
+					{
+						//Make sure the buffer can hold the response data and header information
+						readResponseBuffer.resize(totalResponseLength, 0);
+					}
 			
 					try
 					{
-						hwCommunicationIF->Read(dataAddress, dataLength, readData);
+						hwCommunicationIF->Read(dataAddress, dataLength, readResponseBuffer.data());
 
 						//Set the response data
 						readResponse.totalLength0 = readRequest->totalLength0;
@@ -139,19 +145,14 @@ void ConnectionHandlerThread(int fd, HwCommunicationIF* hwCommunicationIF, std::
 						dataLength = 0;
 						std::cout << "Error reading data: " << e.what() << '\n';
 					}
-
-					unsigned int totalResponseLength = dataLength + sizeof(SigmaTcpReadResponse);
-					uint8_t* responseData = (uint8_t*)malloc(totalResponseLength);
+				
 					//Fist copy the response header
-					memcpy(responseData, (uint8_t*)&readResponse, sizeof(SigmaTcpReadResponse));
+					memcpy(readResponseBuffer.data(), (uint8_t*)&readResponse, sizeof(SigmaTcpReadResponse));
 					//Then the data
-					memcpy(responseData + sizeof(SigmaTcpReadResponse), readData, dataLength);
+					memcpy(readResponseBuffer.data() + sizeof(SigmaTcpReadResponse), readResponseBuffer.data(), dataLength);
 
-					write(fd, responseData, totalResponseLength);
+					write(fd, readResponseBuffer.data(), totalResponseLength);
 
-					//Clean up
-					free(readData);
-					free(responseData);
 				}
 
 				remainingBytes -= CmdByteSize;
@@ -325,7 +326,7 @@ void SigmaTcpServer::CloseClientConnection(std::thread* connectionThread, int fi
 void SigmaTcpServer::CleanThreadPool()
 {
 	std::vector<std::tuple<std::thread*, int, std::atomic_bool*>> newThreadPool;
-	for (int i = 0; i < m_threadPool.size(); i++)
+	for (unsigned int i = 0; i < m_threadPool.size(); i++)
 	{
 		std::atomic_bool* threadRunning = std::get<2>(m_threadPool.at(i));
 
@@ -345,8 +346,14 @@ void SigmaTcpServer::CleanThreadPool()
 
 void SigmaTcpServer::Stop()
 { 
+	if (!m_serverRunning)
+	{
+		//Server is not running, nothing to stop
+		return;
+	}
+
 	//Close all active client connections
-	for (int i = 0; i < m_threadPool.size(); i++)
+	for (unsigned int i = 0; i < m_threadPool.size(); i++)
 	{
 		CloseClientConnection(std::get<0>(m_threadPool.at(i)), std::get<1>(m_threadPool.at(i)), std::get<2>(m_threadPool.at(i)));
 	}

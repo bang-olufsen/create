@@ -103,7 +103,7 @@ bool EepromHandler::WriteFromXml(std::string path)
 		std::fill(bytes.begin(), bytes.end(), 0);
 
 		//Parse the string and fill the vector with the correct data
-		for (int i = 0; i < length - 2; i++)
+		for (unsigned int i = 0; i < length - 2; i++)
 		{
 			bytes.at(i) = std::stoi(dataText.substr(i * 3, 2), 0, 16);
 		}

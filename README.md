@@ -6,11 +6,11 @@ The repository contains the software that is intended to run on a Raspberry Pi c
 ## SigmaTcpDaemon
 This is a program written in C++11 that runs a TCP server which enables connecting from Sigma Studio running on any PC on the same network and program or adjust DSP parameters. The server implements the communication protocol specified by Analog Devices which can be found [here](https://wiki.analog.com/resources/tools-software/sigmastudio/usingsigmastudio/tcpipchannels) and communicates with the DSP chip using the SPI interface of the Raspberry Pi.
 
-## SigmaTcpClient
+## SigmaClientTool
 This is a simple command-line tool intended primarily for debugging and writing the DSP EEPROM. It is depending on a running SigmaTcpDaemon instance which it will connect to and allow to read/write registers and also write to the EEPROM.
 
 # Building
-Clone this repository and build with CMake.
+Clone this repository and build with CMake. For SigmaTcpDaemon:
 ```
 git clone https://github.com/bang-olufsen/create.git
 cd create/SigmaTcpDaemon

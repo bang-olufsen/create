@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
 	catch (std::exception& e)
 	{
 		std::cout << "Error initializing SPI device: " << e.what() << '\n';
+		return 1;
 	}
 
 	try
@@ -51,6 +52,7 @@ int main(int argc, char* argv[])
 	catch (std::exception& e)
 	{
 		std::cout << "Error initializing TCP server: " << e.what() << '\n';
+		return 1;
 	}
 
 	try
@@ -60,6 +62,7 @@ int main(int argc, char* argv[])
 	catch (std::exception& e)
 	{
 		std::cout << "Error starting TCP server: " << e.what() << '\n';
+		return 1;
 	}
 
 	return 0;

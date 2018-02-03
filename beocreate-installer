@@ -1,0 +1,278 @@
+#!/bin/bash
+
+# Copyright 2018 Bang & Olufsen A/S
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Please run as root.
+
+echo "BeoCreate Installer Release 3, (c) 2018 Bang & Olufsen"
+if (( $# == 0 ))
+then
+echo "Usage: sudo beocreate-installer [base | install-source] [source name]"
+exit 0
+else
+case "$1" in
+base)
+	echo "Installing BeoCreate 4-Channel Amplifier Base System..."
+	
+	echo "Updating apt-get package manager lists and upgrading existing packages..."
+	sleep 2
+	apt-get --assume-yes update
+	apt-get --assume-yes upgrade
+	
+	echo "Installing Node..."
+	sleep 2
+	cd /home/pi/
+	wget -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
+	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz 
+	cd /home/pi/node-v8.9.3-linux-armv6l
+	cp -R * /usr/local/
+	cd /home/pi/
+	
+	echo "Installing Apache and required Node modules..."
+	sleep 2
+	apt-get --assume-yes install libavahi-compat-libdnssd-dev
+	apt-get --assume-yes install apache2 -y
+	npm install -g npm@4.6.1
+	npm install mdns
+	npm install request
+	npm install websocket
+	npm install wireless-tools
+	npm install ping
+	npm install forever -g
+	npm install xml-stream
+	npm install utf8
+	npm install aplay
+	apt-get --assume-yes install pigpio
+	npm install pigpio
+	
+	echo "Installing BeoCreate Link..."
+	sleep 2
+	wget -O /home/pi/beocreate_essentials.zip "http://downloads.hifiberry.com/beocreate/release-3/beocreate_essentials.zip"
+	unzip beocreate_essentials.zip
+	wget -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
+	
+	echo "Installing sounds..."
+	sleep 2
+	mkdir /home/pi/Music
+	wget -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
+	cd /home/pi/Music
+	unzip beocreate-sounds.zip
+	cd /home/pi/
+	
+	echo "Installing startup script..."
+	wget -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
+	chmod 755 /etc/init.d/beocreate-4ch
+	systemctl enable beocreate-4ch
+	
+	echo "Installing SigmaDSP daemon and reset..."
+	sleep 2
+	apt-get --assume-yes install build-essential git xmltoman
+	apt-get --assume-yes install cmake
+	apt-get --assume-yes install wiringpi
+	mkdir /home/pi/dsp/
+	mkdir /home/pi/bin/
+	wget -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
+	chmod 755 /home/pi/bin/sigmareset
+	git clone https://github.com/bang-olufsen/create.git
+	cd /home/pi/create/SigmaTcpDaemon
+	cmake .
+	make
+	
+	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..."
+	sleep 2
+	cd /home/pi/
+	git clone https://github.com/hifiberry/beocreate-tools.git
+	cd /home/pi/beocreate-tools
+	./enable-hifiberry
+	./enable-spi
+	
+	echo "Installing BeoSetup hotspot..."
+	sleep 2
+	cd /etc/wpa_supplicant/
+	echo 'network={
+	ssid="BeoSetup"
+	proto=RSN
+	key_mgmt=NONE
+	pairwise=CCMP
+	group=CCMP
+	mode=2
+	frequency=2432
+	disabled=1
+}
+	' | cat - wpa_supplicant.conf > temp && mv temp wpa_supplicant.conf
+	
+	echo "Installing Bluetooth audio..."
+	sleep 2
+	cd /home/pi
+	git clone https://github.com/c-larsen/bt-speaker.git
+	cd /home/pi/bt-speaker
+	./install.sh root
+	mkdir /etc/bt_speaker/
+	echo "[bt_speaker]
+play_command = aplay -f cd -
+connect_command = aplay -q /home/pi/Music/setup-complete.wav
+disconnect_command = aplay -q /home/pi/Music/setup-required.wav
+
+[alsa]
+id = 0
+cardindex = 0
+mixer = Master" > /etc/bt_speaker/config.ini
+
+	echo "Renaming system to beocreate-4ch-blank.local..."
+	sleep 2
+	raspi-config nonint do_hostname beocreate-4ch-blank
+	
+	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)."
+	reboot
+;;
+install-source)
+if (( $# != 2 ))
+	then
+		echo "Please specify the source to install: sudo beocreate-installer install-source <source name>"
+	else
+	case "$2" in
+	spotifyd)
+		echo "Installing spotifyd..."
+		apt-get --assume-yes install portaudio19-dev
+		cd /tmp
+		wget https://github.com/Spotifyd/spotifyd/releases/download/untagged-2cb556328b5f57a0fe2b/spotifyd-2018-01-14-armv7.zip
+		unzip spotifyd-2018-01-14-armv7.zip
+		rm spotifyd-2018-01-14-armv7.zip
+		sudo sudo mkdir -p /opt/spotifyd
+		sudo mv spotifyd /opt/spotifyd
+
+		echo "[Unit]
+Description=Spotify Connect
+After=network-online.target
+After=sound.target
+[Service]
+Type=idle
+User=pi
+ExecStart=/opt/spotifyd/spotifyd -c /etc/spotifyd.conf --no-daemon
+Restart=always
+RestartSec=10
+StartLimitInterval=30
+StartLimitBurst=20
+[Install]
+WantedBy=multi-user.target" > spotify.service
+		
+		RAWPRODUCTNAME="$(awk -F= '/PRETTY/ {print $2}' /etc/machine-info)"
+		case "$RAWPRODUCTNAME" in  
+		     *\ * )
+		           PRODUCTNAME=$RAWPRODUCTNAME
+		          ;;
+		       *)
+		           PRODUCTNAME="\"${RAWPRODUCTNAME}\""
+		           ;;
+		esac
+		
+		echo "[global]
+backend = alsa
+mixer = Master
+volume-control = alsa # or softvol
+bitrate = 320
+device_name = ${PRODUCTNAME}" > spotifyd.conf
+
+		sudo cp spotifyd.conf /etc/spotifyd.conf
+		sudo cp spotify.service /lib/systemd/system/spotify.service
+		sudo systemctl daemon-reload
+		sudo systemctl enable spotify.service
+		sudo systemctl restart spotify.service
+		echo "spotifyd installed."
+	;;
+	shairport-sync)
+		echo "Installing dependencies for shairport-sync..."
+		sleep 2
+		apt-get --assume-yes install build-essential git xmltoman
+		apt-get --assume-yes install autoconf automake libtool libdaemon-dev libpopt-dev libconfig-dev
+		apt-get --assume-yes install libasound2-dev
+		apt-get --assume-yes install avahi-daemon libavahi-client-dev
+		apt-get --assume-yes install libssl-dev
+		apt-get --assume-yes install libmbedtls-dev
+		apt-get --assume-yes install libsoxr-dev
+
+		echo "Installing the latest shairport-sync..."
+		sleep 2
+		cd /home/pi/
+		git clone https://github.com/mikebrady/shairport-sync.git
+		cd /home/pi/shairport-sync
+		autoreconf -i -f
+		./configure --sysconfdir=/etc --with-alsa --with-avahi --with-ssl=openssl --with-metadata --with-soxr --with-systemd
+		make
+		getent group shairport-sync &>/dev/null || groupadd -r shairport-sync >/dev/null
+		getent passwd shairport-sync &> /dev/null || useradd -r -M -g shairport-sync -s /usr/bin/nologin -G audio shairport-sync >/dev/null
+		make install
+		cp /etc/shairport-sync.conf /etc/shairport-sync-sample.conf
+		RAWPRODUCTNAME="$(awk -F= '/PRETTY/ {print $2}' /etc/machine-info)"
+		case "$RAWPRODUCTNAME" in  
+		     *\ * )
+		           PRODUCTNAME=$RAWPRODUCTNAME
+		          ;;
+		       *)
+		           PRODUCTNAME="\"${RAWPRODUCTNAME}\""
+		           ;;
+		esac
+		echo "general =
+	{
+		name = ${PRODUCTNAME};
+		interpolation = \"soxr\";
+	}
+metadata =
+	{
+		enabled = \"yes\";
+		include_cover_art = \"yes\";
+	}
+sessioncontrol =
+	{
+		allow_session_interruption = \"yes\";
+		session_timeout = 10;
+	}
+	alsa =
+	{
+		mixer_control_name = \"Master\";
+	}" > /etc/shairport-sync.conf
+		systemctl enable shairport-sync
+		echo "shairport-sync installed."
+	;;
+	bluetooth)
+		echo "Installing Bluetooth audio..."
+		cd /home/pi
+		git clone https://github.com/c-larsen/bt-speaker.git
+		cd /home/pi/bt-speaker
+		./install.sh root
+		mkdir /etc/bt_speaker/
+		echo "[bt_speaker]
+play_command = aplay -f cd -
+connect_command = aplay -q /home/pi/Music/setup-complete.wav
+disconnect_command = aplay -q /home/pi/Music/setup-required.wav
+
+[alsa]
+id = 0
+cardindex = 0
+mixer = Master" > /etc/bt_speaker/config.ini
+		echo "bluetooth installed."
+	;;
+	*)
+	esac
+	fi
+;;
+*)
+	echo "No argument matches."
+exit 0
+esac
+fi

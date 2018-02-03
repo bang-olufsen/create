@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Copyright 2018 Bang & Olufsen A/S
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+### BEGIN INIT INFO
+# Provides:          scriptname
+# Required-Start:    $all
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: BeoCreate Startup
+# Description:       All BeoCreate-specific startup functions.
+### END INIT INFO
+
+case "$1" in
+start)
+	
+	# Reset SigmaDSP:
+	echo "Resetting SigmaDSP..."
+	/home/pi/bin/sigmareset
+
+	# Start SigmaDSP daemon:
+	echo "Starting SigmaDSP daemon..."
+	/home/pi/create/SigmaTcpDaemon/sigmaTcpDaemon > /dev/null &
+	
+	sleep 2
+
+	# Start the remote control server:
+	echo "Starting remote control server..."
+	forever start -s /home/pi/beocreate-server.js
+
+	# Play the startup sound:
+	echo "Playing startup sound..."
+	aplay -q /home/pi/Music/startup.wav
+;;
+*)
+exit 0
+esac

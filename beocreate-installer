@@ -138,6 +138,7 @@ mixer = Master" > /etc/bt_speaker/config.ini
 	raspi-config nonint do_hostname beocreate-4ch-blank
 	
 	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)."
+	sleep 10
 	reboot
 ;;
 install-source)

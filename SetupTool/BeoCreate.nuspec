@@ -10,6 +10,6 @@
     <owners>Tuomas Petteri Hämäläinen</owners>
   </metadata>
   <files>
-    <file src="SetupTool\**" exclude="SetupTool\*.nuspec" />
+    <file src="**" />
   </files>
 </package>

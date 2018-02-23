@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en" manifest="offline.appcache">
+<head>
+	<meta charset="utf-8">
+	<title>Bang &amp; Olufsen Create</title>
+	
+	<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-content">
+	<meta name="apple-mobile-web-app-title" content="Create" />
+		
+	<link rel="stylesheet" type="text/css" href="create2017.css" />
+	<script type="text/javascript" src="scripts/jquery-1.10.2.min.js"></script>
+	<link rel="stylesheet" href="https://cloud.typography.com/6462894/7099172/css/fonts.css">
+	<script src='scripts/modernizr.js'></script>
+	<script src='scripts/fastclick.js'></script>
+	<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1.0" />
+	<!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	
+	
+</head>
+<body class="disconnected">
+	<div id="content-wrap">
+	<div id="chrome">
+		<div class="screen visible block" id="welcome">
+			<header>
+				<img class="header-beo" src="images/bangolufsen.svg">
+			</header>
+			<div class="scroll-area">
+				<div class="no-padding colour-area max-height">
+					<div class="hero-text-wrap">
+						<h2 class="center">BeoCreate 4-Channel Amplifier</h2>
+						<h1 class="center">Let's Get Started</h1>
+					</div>
+					<img src="images/hero.jpg" class="hero-image">
+				</div>
+				
+				<div class="menu-group hidden" id="later-previous-setup">
+					
+					<div class="menu-item icon left" onclick="transitionToScreen('connect-to');">
+						<img src="symbols-thin-black/connect.svg" class="menu-icon">
+						<div class="menu-label">Saved Sound Systems...</div>
+					</div>
+					<div class="menu-item icon left" onclick="inputProductIP();">
+						<img src="symbols-thin-black/network.svg" class="menu-icon">
+						<div class="menu-label">Connect with IP Address...</div>
+						<p>If your product is not automatically discovered, use this option to enter its IP address manually.</p>
+					</div>
+				</div>
+				<div class="menu-group">
+				<h2>Set up new</h2>
+				<div class="setup-guide-intro">
+					<p>To set up your BeoCreate 4-Channel Amplifier with a freshly installed Raspberry Pi, choose which method you used to prepare the SD card.</p>
+					<div class="menu-item icon left" onclick="setupMethod('pibakery');">
+						<img src="symbols-thin-black/sd-card-lines.svg" class="menu-icon">
+						<div class="menu-label">PiBakery</div>
+						<p>SD card created using the PiBakery software and the BeoCreate recipe.</p>
+					</div>
+					<div class="menu-item icon left" onclick="setupMethod('image');">
+						<img src="symbols-thin-black/sd-card-download.svg" class="menu-icon">
+						<div class="menu-label">Downloaded Disk Image</div>
+						<p>SD card created from the downloaded BeoCreate disk image.</p>
+					</div>
+				</div>
+				<p class="image-install-guide hidden">To get started, you will first need to connect to the Wi-Fi hotspot created by the Raspberry Pi.</p>
+				</div>
+				<div class="menu-group pibakery-install-guide hidden">
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/1.svg">
+							<p class="larger">Make sure your <span class="device">device</span> is on the same network that you entered in PiBakery.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/2.svg">
+							<p class="larger">Setup should begin automatically.</p>
+						</section>
+						<p>It can take 30 minutes or even longer after plugging in power for the setup to begin. The Raspberry Pi is downloading updates and other files from the internet – please be patient. Enjoy a cup of coffee or take a walk in the meantime!</p>
+				</div>
+				<div class="menu-group image-install-guide hidden">
+					<div class="device-specific ios">
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/1.svg">
+							<p class="larger">Open Settings and tap Wi-Fi on your <span class="device">device</span>.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/2.svg">
+							<p class="larger">Find a network called "BeoSetup" and tap to join it.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/3.svg">
+							<p class="larger">Return here to begin setup.</p>
+						</section>
+						
+					</div>
+					<div class="device-specific android">
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/1.svg">
+							<p class="larger">Go to Wi-Fi settings on your on your <span class="device">device</span>.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/2.svg">
+							<p class="larger">Find a network called "BeoSetup" and connect to it.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/3.svg">
+							<p class="larger">Return here to begin setup.</p>
+						</section>
+					</div>
+					<div class="device-specific windows">
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/1.svg">
+							<p class="larger">Click the Wi-Fi icon in the taskbar of your Windows device.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/2.svg">
+							<p class="larger">Find a network called "BeoSetup" and connect to it.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/3.svg">
+							<p class="larger">Setup should begin automatically.</p>
+						</section>
+					</div>
+					<div class="device-specific other">
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/1.svg">
+							<p class="larger">Open the Wi-Fi settings on your device.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/2.svg">
+							<p class="larger">Find a network called "BeoSetup" and connect to it.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/3.svg">
+							<p class="larger">Setup should begin automatically.</p>
+						</section>
+					</div>
+					<div class="device-specific macos">
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/1.svg">
+							<p class="larger">Click the Wi-Fi icon at the right-hand side of the menu bar on your Mac.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/2.svg">
+							<p class="larger">Select a network called "BeoSetup" from the menu.</p>
+						</section>
+						<section class="icon">
+							<img class="section-icon" src="images/numbers/3.svg">
+							<p class="larger">Setup will begin automatically.</p>
+						</section>
+					</div>
+					<p>It may take a minute for the "BeoSetup" network to appear.</p>
+				</div>
+				<div class="menu-group" id="initial-previous-setup">
+					<div class="menu-item icon left" onclick="inputProductIP();">
+						<img src="symbols-thin-black/network.svg" class="menu-icon">
+						<div class="menu-label">Connect with IP Address...</div>
+						<p>If your product is not automatically discovered, use this option to enter its IP address manually.</p>
+					</div>
+					<div class="menu-item icon left" onclick="inputProduct();">
+						<img src="symbols-thin-black/connect.svg" class="menu-icon">
+						<div class="menu-label">Add Sound System...</div>
+						<p>If you want to change settings on a product that has already been set up, select this option to enter its name.</p>
+					</div>
+					
+				</div>
+				
+			</div>
+			
+		</div>
+		
+		
+		<div class="screen right" id="setup-start">
+			<header>
+				<h1>Ready to Set Up</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+				<p>Your <span class="device">device</span> is now connected to the Raspberry Pi. You will be guided through the essential settings:</p>
+				</div>
+				<div class="menu-group">
+				<section class="icon has-wifi-only">
+					<img class="section-icon" src="symbols-thin-black/wifi-3.svg">
+					<p class="larger">Adding your wireless network to the Raspberry Pi</p>
+				</section>
+				<section class="icon">
+					<img class="section-icon" src="symbols-thin-black/preset.svg">
+					<p class="larger">Selecting a sound profile for your loudspeaker</p>
+				</section>
+				<section class="icon">
+					<img class="section-icon" src="symbols-thin-black/name.svg">
+					<p class="larger">Naming the system</p>
+				</section>
+				</div>
+				<div class="menu-group">
+				<p><span class="bold">Privacy note:</span> Information is sent to the Raspberry Pi over local network. Nothing is sent to Bang &amp; Olufsen without your permission.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="setup-wifi">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="prevStep();">
+				<h1>Wi-Fi</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+					<p>The Raspberry Pi needs an internet connection to download sound profiles. Wi-Fi can also later be enabled for music streaming. Select a network to add it.</p>
+				</div>
+				<div class="menu-group wifi-connected-wrap hidden">
+				<h2>Connected</h2>
+				<p>You are already connected and ready for the next step!</p>
+				<div class="wifi-connected-list">
+					<div class="menu-item wifi-connected-item icon left">
+						<img class="menu-icon left" src="symbols-thin-black/wifi.svg">
+						<div class="menu-label"></div>
+						<img class="menu-icon right" src="symbols-thin-black/delete.svg">
+					</div>
+				</div>
+				</div>
+				<div class="menu-group wifi-saved-wrap hidden">
+				<h2>Saved Networks</h2>
+				<p>These networks have already been added.</p>
+				<div class="wifi-saved-list">
+				
+				</div>
+				</div>
+				
+				<div class="menu-group">
+				<h2>Found Networks</h2>
+				<div class="wifi-available-list">
+				
+				</div>
+				</div>
+				
+				<div class="menu-group">
+				<div class="menu-item icon left" onclick="addOtherNetwork();">
+					<img src="symbols-thin-black/add.svg" class="menu-icon">
+					<div class="menu-label">Add Other...</div>
+				</div>
+				</div>
+				<div class="menu-group">
+					<p>If you don't see your network, try moving the sound system closer to the base station. If your network is hidden, select Add Other to enter its name and password.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="setup-profile">
+			<header>
+				 <img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="prevStep();">
+				<h1>Sound Profile</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+				<p>Select your loudspeaker model to install a sound profile custom-designed for it by Bang &amp; Olufsen acousticians.</p>
+				</div>
+				<div class="menu-group">
+				<h2>Bang &amp; Olufsen Models</h2>
+				<div class="beo-sound-profiles">
+				
+				</div>
+				</div>
+				<div class="menu-group">
+				<h2>Other Profiles</h2>
+				<div class="other-sound-profiles">
+				
+				</div>
+				</div>
+				<div class="menu-group">
+				<p>The non-Bang &amp; Olufsen profiles do not include equalisation filters, but they can be safely used with any loudspeaker of the indicated type.</p>
+				<p>If you would like to custom-tune your loudspeakers, instructions will be available after the setup.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="setup-name">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="prevStep();">
+				<h1>Name</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+				<p>Choose a unique name for your sound system so you can find it on your devices and services.</p>
+				</div>
+				<div class="menu-group center">
+					<form id="system-name-1" action="javascript:saveSystemName(1);">
+					<input type="text" name="text-input-system-name" value="" id="text-input-system-name-1" class="text-input-system-name" autocorrect="off" autocapitalize="on" placeholder="System Name">
+					<input type="submit" value="Submit" id="submit-system-name-1">
+				</form>
+				</div>
+				<div class="menu-group">
+					<p class="grey system-name-input-hostname-string hidden">Devices will discover each other on the network with hostnames. This system's hostname will be <span class="bold system-name-input-hostname">beovox-cx50.local</span>.</p>
+				</div>	
+			</div>
+		</div>
+		
+		<div class="screen right" id="setup-finish">
+			<header>
+				<h1>Finishing Setup</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+				<p>The rest of the setup is automatic, and can take a few minutes. You will hear a tone when it finishes.</p>
+				</div>
+				<div class="menu-group">
+				<h2>In a moment you can:</h2>
+				<section class="icon">
+					<img class="section-icon" src="symbols-thin-black/bluetooth.svg">
+					<p class="larger">Use Bluetooth to stream music to the sound system</p>
+				</section>
+				<section class="icon">
+					<img class="section-icon" src="symbols-thin-black/software-update.svg">
+					<p class="larger">Install other streaming services</p>
+				</section>
+				<section class="icon">
+					<img class="section-icon" src="symbols-thin-black/dsp.svg">
+					<p class="larger">Get instructions for custom-tuning your loudspeakers with SigmaStudio</p>
+				</section>
+				</div>
+				<div class="menu-group">
+				<p>To see the advanced options and change settings, you can return to this setup tool at any time.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="overview">
+			<header>
+				<h1>Sound System</h1>
+				<img class="symbol-button right" src="symbols-thin-black/connect.svg" onclick="transitionToScreen('connect-to');">
+			</header>
+			<div class="scroll-area">
+				<div class="no-padding colour-area">
+					<div class="hero-text-wrap">
+						<h2 class="center product-model">System Model</h2>
+						<h1 class="center product-name">System Name</h1>
+					</div>
+					<img src="images/hero-connected.jpg" class="hero-image">
+				</div>
+				<div class="menu-group">
+					<p>In this menu you can change any of the initial settings and access advanced options.</p>
+				</div>
+				<div class="menu-group">
+					<h2>Essentials</h2>
+					<div class="menu-item icon left has-wifi-only" onclick="transitionToScreen('wifi')">
+						<img src="symbols-thin-black/wifi.svg" class="menu-icon">
+						<div class="menu-label">Wi-Fi</div>
+						<div class="menu-value wifi-not-connected hidden red">No Connection</div>
+					</div>
+					<div class="menu-item icon left" onclick="transitionToScreen('name');">
+						<img src="symbols-thin-black/name.svg" class="menu-icon">
+						<div class="menu-label">System Name</div>
+					</div>
+					<div class="menu-item icon left" onclick="transitionToScreen('profile')">
+						<img src="symbols-thin-black/preset.svg" class="menu-icon">
+						<div class="menu-label">Sound Profile</div>
+					</div>
+					
+				</div>
+				<div class="menu-group">
+					<h2>Advanced</h2>
+					<div class="menu-item icon left" onclick="transitionToScreen('sound-adjustments');">
+						<img src="symbols-thin-black/volume-limit.svg" class="menu-icon">
+						<div class="menu-label">Sound Adjustments</div>
+					</div>
+					<div class="menu-item icon left" onclick="transitionToScreen('sources');">
+						<img src="symbols-thin-black/input.svg" class="menu-icon">
+						<div class="menu-label">Sources</div>
+					</div>
+					<div class="menu-item icon left" onclick="transitionToScreen('ssh');">
+						<img src="symbols-thin-black/terminal.svg" class="menu-icon">
+						<div class="menu-label">Remote Login (SSH)</div>
+					</div>
+					<div class="menu-item icon left" onclick="transitionToScreen('custom-tuning');">
+						<img src="symbols-thin-black/dsp.svg" class="menu-icon">
+						<div class="menu-label">Custom Sound Tuning</div>
+					</div>
+					<div class="menu-item icon left hidden" id="software-update-menu-item" onclick="transitionToScreen('software-update');">
+						<img src="symbols-thin-black/software-update.svg" class="menu-icon">
+						<div class="menu-label">Software Update</div>
+					</div>
+					
+					
+				</div>
+				<div class="menu-group">
+					<h2>Setup Tool</h2>
+					<div class="menu-item icon left" onclick="transitionToScreen('about');">
+						<img src="symbols-thin-black/beo.svg" class="menu-icon">
+						<div class="menu-label">About</div>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+		
+		
+		<div class="screen right" id="connect-to">
+			<header>
+				<img class="symbol-button left product-delete-mode-disable" id="connect-to-back-button" src="symbols-thin-black/back.svg" onclick="transitionToScreen();">
+				<h1>Connect To</h1>
+				<img class="symbol-button right" id="connect-to-delete-button" src="symbols-thin-black/delete.svg" onclick="toggleProductDeleteMode();">
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+					<h2>Saved Sound Systems</h2>
+					<p>These sound systems have been set up and connected to this <span class="device">device</span>  before.</p>
+					<div class="saved-products-list">
+						
+					</div>
+				</div>
+				<div class="menu-group product-delete-mode-disable can-disable">
+					
+					<div class="menu-item icon left" onclick="inputProduct();">
+						<img src="symbols-thin-black/add.svg" class="menu-icon">
+						<div class="menu-label">Add Sound System...</div>
+					</div>
+					<div class="menu-item icon left connected-only" onclick="selectProduct('new');">
+						<img src="symbols-thin-black/settings.svg" class="menu-icon">
+						<div class="menu-label">Set Up New</div>
+					</div>
+					<div class="spacer"></div>
+					<p class="connected-only">To set up a BeoCreate 4-Channel Amplifier with a freshly installed Raspberry Pi, select "Set Up New".</p>
+					<p>If you can't see a previously set up sound system here, select "Add Sound System" to enter its name.</p>
+					
+				</div>
+			</div>
+		</div>
+		
+		
+		<div class="screen right" id="sound-adjustments">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Adjustments</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group colour-area yellow hidden" id="adjustments-disabled-note">
+					<h2>Adjustments Disabled</h2>
+					<p>You have disabled the sound adjustments from Custom Sound Tuning menu for safety. To enable them again, you can reinstall one of the preset sound profiles from Sound Profiles screen.</p>
+				</div>
+				<div class="menu-group can-disable" id="vol-limit">
+				<h2>Volume Limit</h2>
+				<p>Set a volume limit that applies to all sources.</p>
+					<div class="range-icons">
+						<img src="symbols-thin-black/volume-mute.svg" class="left">
+						<input type="range" id="volume-limit-slider" min="0" max="100" value="100">
+						<img src="symbols-thin-black/volume.svg" class="right">
+					</div>
+				</div>
+				<div class="menu-group can-disable" id="ch-select">
+				<h2>Channels</h2>
+				<p>Select which channels will be played through the loudspeakers.</p>
+					<div class="menu-item icon left channel-select-item radio 3-way-hide" id="channel-select-item-stereo" onclick="selectChannel('stereo');">
+						<div class="one-row">
+						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
+						<div class="menu-label">Stereo</div>
+						</div>
+						<p>Allows you to connect two 2-way loudspeakers to the same amplifier and use them as a stereo pair.</p>
+					</div>
+					<div class="menu-item icon left channel-select-item radio" id="channel-select-item-left" onclick="selectChannel('left');">
+						<div class="one-row">
+						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
+						<div class="menu-label">Left</div>
+						</div>
+						<p>All outputs will play the left channel.</p>
+					</div>
+					<div class="menu-item icon left channel-select-item radio" id="channel-select-item-right" onclick="selectChannel('right');">
+						<div class="one-row">
+						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
+						<div class="menu-label">Right</div>
+						</div>
+						<p>All outputs will play the right channel.</p>
+					</div>
+					<div class="menu-item icon left channel-select-item radio" id="channel-select-item-mono" onclick="selectChannel('mono');">
+						<div class="one-row">
+						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
+						<div class="menu-label">Mono</div>
+						</div>
+						<p>Stereo signal will be downmixed and played through all outputs.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		
+		<div class="screen right" id="wifi">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Wi-Fi</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group wifi-not-connected hidden colour-area yellow">
+					<h2>No Connection</h2>
+					<p>The sound system couldn't connect to a Wi-Fi network. Has the right network been added? Is the password correct? Double-check the settings and select "Finish Wi-Fi Setup" to try connecting again.</p>
+				</div>
+				<div class="menu-group wifi-connected-wrap hidden">
+				<h2>Connected</h2>
+				<div class="wifi-connected-list">
+					<div class="menu-item wifi-connected-item icon left">
+						<img class="menu-icon left" src="symbols-thin-black/wifi.svg">
+						<div class="menu-label"></div>
+						<img class="menu-icon right" src="symbols-thin-black/delete.svg">
+					</div>
+				</div>
+				</div>
+				<div class="menu-group wifi-saved-wrap hidden">
+				<h2><span class="wifi-connected">Other </span>Saved Networks</h2>
+				<p>These networks have been added before, and they will be joined automatically.</p>
+				<div class="wifi-saved-list">
+				
+				</div>
+				</div>
+				
+				<div class="menu-group">
+				<h2>Found Networks</h2>
+				<p>These networks are currently available. Tap to add one to the list of saved networks.</p>
+				<div class="wifi-available-list">
+				
+				</div>
+				</div>
+				
+				<div class="menu-group">
+				<div class="menu-item icon left" onclick="addOtherNetwork();">
+					<img src="symbols-thin-black/add.svg" class="menu-icon">
+					<div class="menu-label">Add Other...</div>
+				</div>
+				</div>
+				<div class="menu-group">
+					<p>If you don't see your network, try moving the sound system closer to the base station. If your network is hidden, select Add Other to enter its name and password.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="name">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Name</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+					<div class="menu-item static icon left">
+						<div class="one-row">
+							<img src="symbols-thin-black/name.svg" class="menu-icon">
+							<div class="menu-label product-name">Hostname</div>
+						</div>
+						<div class="menu-value product-hostname">Port 8086</div>
+					</div>
+				</div>
+				<div class="menu-group">
+					<h2>Enter a New Name</h2>
+					<p>Choose a unique name for your sound system so you can find it on your devices and services.</p>
+					<p><span class="bold">Note:</span> the system will restart to apply this change.</p>
+				</div>
+				<div class="menu-group center">
+					<form id="system-name-2" action="javascript:saveSystemName(1);">
+					<input type="text" name="text-input-system-name" value="" id="text-input-system-name-2" class="text-input-system-name" autocorrect="off" autocapitalize="on" placeholder="System Name">
+					<input type="submit" value="Submit" id="submit-system-name-2">
+				</form>
+				</div>
+				<div class="menu-group">
+					<p class="grey system-name-input-hostname-string hidden">Devices will discover each other on the network with hostnames. This system's hostname will be <span class="bold system-name-input-hostname">beovox-cx50.local</span>.</p>
+				</div>	
+			</div>
+		</div>
+		
+		<div class="screen right" id="profile">
+			<header>
+				 <img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Sound Profile</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+				<p>Select your loudspeaker model to install a sound profile custom-designed for it by Bang &amp; Olufsen acousticians.</p>
+					<p><span class="bold">Note:</span> selecting a new sound profile will override existing settings stored in the sound processor.</p>
+				</div>
+				<div class="menu-group">
+				<h2>Bang &amp; Olufsen Models</h2>
+				<div class="beo-sound-profiles">
+				
+				</div>
+				</div>
+				<div class="menu-group">
+				<h2>Other Profiles</h2>
+				<div class="other-sound-profiles">
+				
+				</div>
+				</div>
+				<div class="menu-group">
+				<p>The non-Bang &amp; Olufsen profiles do not include equalisation filters, but they can be safely used with any loudspeaker of the indicated type.</p>
+				<p>If you would like to custom-tune your loudspeakers, select "Custom Sound Tuning" in the previous menu.</p>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="sources">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Sources</h1>
+			</header>
+			<div class="scroll-area">
+				
+				<div class="menu-group">
+					<p>Greyed-out sources have been installed. Others are available for installation – tap to install them.</p>
+					<div class="menu-item icon left source-list-item" id="source-list-bluetooth"  onclick="installSource('bluetooth');">
+						<div class="one-row">
+							<img src="symbols-thin-black/bluetooth.svg" class="menu-icon">
+							<div class="menu-label">Bluetooth</div>
+						</div>
+						<div class="menu-value">Always Open for Pairing</div>
+						<p>When a Bluetooth device connects, Wi-Fi on the sound system is turned off to avoid audio dropouts. This setup tool won't be able to connect to the system during that time. When the device disconnects, Wi-Fi will be turned back on.</p>
+					</div>
+					<div class="menu-item icon left source-list-item" id="source-list-optical" onclick="installSource('optical');">
+						<div class="one-row">
+							<img src="symbols-thin-black/input.svg" class="menu-icon">
+							<div class="menu-label">Optical Input</div>
+						</div>
+						<div class="menu-value">Line Sense</div>
+						<p>This is the Toslink connector on the amplifier board. If a signal is detected, all other sources will be muted and the system will play from this input.</p>
+					</div>
+					<div class="menu-item icon left source-list-item" id="source-list-shairport-sync" onclick="installSource('shairport-sync');">
+						<div class="one-row">
+							<img src="symbols-thin-black/airplay.svg" class="menu-icon">
+							<div class="menu-label">AirPlay 1</div>
+						</div>
+						<div class="menu-value">shairport-sync</div>
+						<p>Stream audio over Wi-Fi from iOS devices and Mac computers.</p>
+					</div>
+					<div class="menu-item icon left source-list-item" id="source-list-spotifyd" onclick="installSource('spotifyd');">
+						<div class="one-row">
+							<img src="symbols-thin-black/spotify.svg" class="menu-icon">
+							<div class="menu-label">Spotify Connect</div>
+						</div>
+						<div class="menu-value">Spotifyd</div>
+						<p>Spotify Premium subscription is required to use this feature.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="screen right" id="ssh">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Remote Login</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+					<p>Remote login, also known as SSH (secure shell), allows you to use command line of the Raspberry Pi over the network. By default, remote login is disabled for security reasons.</p>
+					<p><span class="bold">Warning:</span> changes made to the system through remote login are unsupported. By using this feature, it is assumed that you are an advanced user and know what you're doing.</p>
+				</div>
+				<div class="menu-group">
+				
+					<div class="menu-item icon left ssh-disabled" onclick="ssh(true);">
+						<div class="one-row">
+							<img src="symbols-thin-black/terminal.svg" class="menu-icon">
+							<div class="menu-label">Enable Remote Login</div>
+						</div>
+					</div>
+					<div class="menu-item icon left ssh-enabled" onclick="ssh(false);">
+						<div class="one-row">
+							<img src="symbols-thin-black/terminal.svg" class="menu-icon">
+							<div class="menu-label">Disable Remote Login</div>
+						</div>
+					</div>
+				</div>
+				<div class="menu-group">
+				<h2>Hostname &amp; IP address</h2>
+					<p>To connect, type the hostname or IP address into your SSH client.</p>
+					<div class="menu-item static icon left">
+						<div class="one-row">
+							<img src="symbols-thin-black/network.svg" class="menu-icon">
+							<div class="menu-label product-hostname">Hostname</div>
+						</div>
+						<div class="menu-value system-ip">IP</div>
+					</div>
+				</div>
+				
+				<!--<div class="menu-group">
+					<h2>Guides</h2>
+					<div class="menu-item multi-row icon left" onclick="help('remote-login-basics');">
+						<img src="symbols-thin-black/help.svg" class="menu-icon">
+						<div class="menu-label">Remote Login Basics</div>
+						<p>How to connect using a terminal emulator on your computer.</p>
+					</div>
+				</div>-->
+				
+				
+				
+			</div>
+		</div>
+		
+		<div class="screen right" id="custom-tuning">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Custom Tuning</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group colour-area yellow" id="custom-tuning-warning">
+					<h2>Warning</h2>
+					<p>Settings in Sound Adjustments screen do not work with custom sound programs. Disable the adjustments to avoid unpleasant noises and other unpredictable behaviour that could potentially damage your loudspeakers.</p>
+					<div class="menu-item icon left" onclick="disableSoundAdjustments();">
+						<div class="one-row">
+							<img src="symbols-thin-black/volume-disabled.svg" class="menu-icon">
+							<div class="menu-label">Disable Sound Adjustments</div>
+						</div>
+					</div>
+				</div>
+				<div class="menu-group">
+					<p>SigmaStudio software from Analog Devices gives you full control over the sound processor (DSP) onboard BeoCreate 4-Channel Amplifier. The DSP can be wirelessly programmed using a Windows PC (or virtual machine).</p>
+				</div>
+				<div class="menu-group">
+				<h2>System IP Address</h2>
+					<div class="menu-item static icon left">
+						<div class="one-row">
+							<img src="symbols-thin-black/network.svg" class="menu-icon">
+							<div class="menu-label system-ip">---.---.-.---</div>
+						</div>
+						<div class="menu-value">Port 8086</div>
+					</div>
+				</div>
+				
+				<div class="menu-group">
+					<h2>Guides</h2>
+					<div class="menu-item multi-row icon left" onclick="help('sigma-getting-started');">
+						<img src="symbols-thin-black/help.svg" class="menu-icon">
+						<div class="menu-label">Getting Started</div>
+						<p>Download SigmaStudio and connect it to the BeoCreate 4-Channel Amplifier.</p>
+					</div>
+					<div class="menu-item multi-row icon left" onclick="help('sigma-building-program');">
+						<img src="symbols-thin-black/help.svg" class="menu-icon">
+						<div class="menu-label">Building a DSP Program</div>
+						<p>Add and remove blocks, update the DSP memory.</p>
+					</div>
+					<div class="menu-item multi-row icon left" onclick="help('sigma-writing-eeprom');">
+						<img src="symbols-thin-black/help.svg" class="menu-icon">
+						<div class="menu-label">Saving a Program</div>
+						<p>Write the program to permanent memory so that it is not erased when the system is powered off.</p>
+					</div>
+				</div>
+				
+				
+				
+			</div>
+		</div>
+		
+		<div class="screen right" id="software-update">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>Software Update</h1>
+			</header>
+			<div class="scroll-area">
+				
+				<div id="no-updates">
+					<div class="menu-group">
+						<h2>Up to date</h2>
+						<div class="menu-item static icon left">
+							<div class="one-row">
+								<img src="symbols-thin-black/beo.svg" class="menu-icon">
+								<div class="menu-label">BeoCreate System</div>
+							</div>
+							<div class="menu-value system-version">Release 1</div>
+							<div class="update-changelog">
+							
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div id="update-available">
+					<div class="menu-group">
+						<h2>Update available</h2>
+						<div class="menu-item static icon left">
+							<div class="one-row">
+								<img src="symbols-thin-black/beo.svg" class="menu-icon">
+								<div class="menu-label">BeoCreate System</div>
+							</div>
+							<div class="menu-value new-system-version">Release 2</div>
+						</div>
+					</div>
+					<div class="menu-group">
+							<h2>What's New in This Version</h2>
+							<div class="update-changelog">
+								<p>Bug fixes and other improvements.</p>
+								<p>Across the board.</p>
+							</div>
+					</div>
+					<div class="menu-group">
+						<div class="menu-item icon left" onclick="installSoftwareUpdate();">
+							<div class="one-row">
+								<img src="symbols-thin-black/software-update.svg" class="menu-icon">
+								<div class="menu-label">Install Update</div>
+							</div>
+						</div>
+					</div>
+					
+				</div>
+				
+				
+			</div>
+		</div>
+		
+		<div class="screen right" id="about">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="transitionToScreen('overview');">
+				<h1>About</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group center" id="about-top-box">
+				<img class="beo" src="images/bangolufsen.svg">
+				<h2>BeoCreate Setup Tool</h2>
+				<p>Release 3, 2/2018</p>
+				</div>
+				
+				<div class="menu-group">
+				<h2>Software</h2>
+				<p>BeoCreate Setup Tool is built on the open web platform. Software on the Raspberry Pi is open-source, and source code is available on GitHub with MIT licence.</p>
+					<a href="https://github.com/bang-olufsen/create">
+						<div class="menu-item icon left">
+							<div class="one-row">
+								<img src="symbols-thin-black/code.svg" class="menu-icon">
+								<div class="menu-label">Source Code</div>
+							</div>
+							<div class="menu-value">github.com</div>
+						</div>
+					</a>
+				</div>
+				
+				<div class="menu-group">
+				<h2>Hardware</h2>
+				<p>BeoCreate 4-Channel Amplifier was developed in 2017 in partnership with HiFiBerry.</p>
+					<a href="http://www.bang-olufsen.com/">
+					<div class="menu-item icon left">
+						<div class="one-row">
+							<img src="symbols-thin-black/beo.svg" class="menu-icon">
+							<div class="menu-label">Bang &amp; Olufsen</div>
+						</div>
+						<div class="menu-value">bang-olufsen.com</div>
+					</div>
+					</a>
+					<a href="http://www.hifiberry.com/beocreate/">
+						<div class="menu-item icon left">
+							<div class="one-row">
+								<img src="symbols-thin-black/hifiberry.svg" class="menu-icon">
+								<div class="menu-label">HiFiBerry</div>
+							</div>
+							<div class="menu-value">hifiberry.com</div>
+						</div>
+					</a>
+				</div>
+				
+				<div class="menu-group center">
+				<h2 class="grey">Like no one else</h2>
+				</div>
+			</div>
+				
+		</div>
+		
+		<div id="multi-button" class="button disabled hidden" onclick="multiButton();">
+			<img src="symbols-thin-black/load.svg"><span>Searching...</span>
+		</div>
+		
+		<div id="text-input" class="bottom">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/back.svg" onclick="cancelText();">
+				<h1>Add Network</h1>
+				<img class="symbol-button right" id="text-input-submit" src="symbols-thin-black/done.svg" onclick="submitText();">
+			</header>
+			<div class="scroll-area">
+				<div class="menu-group">
+				<p id="text-prompt">To add "Hämäläinen", you need to enter its password.</p>
+				</div>
+				<div class="menu-group">
+				<form id="text-fields" action="javascript:submitText();">
+					<input type="text" name="text-input" value="" id="text-input-plain" autocorrect="off" autocapitalize="off" placeholder="hostname.local">
+					<input type="password" name="password-input" id="text-input-password" placeholder="Password" value="">
+					<input type="submit" value="Submit" id="submit-text">
+				</form>
+				</div>
+			</div>
+		</div>
+		
+		<div id="help" class="bottom">
+			<header>
+				<img class="symbol-button left" src="symbols-thin-black/done.svg" onclick="help();">
+				<h1>Help</h1>
+			</header>
+			<div class="scroll-area">
+				<div class="help-topic" id="sigma-getting-started">
+					<div class="menu-group">
+						<h2>Getting Started with SigmaStudio</h2>
+						<p>Download SigmaStudio for free from Analog Devices website. Install it.</p>
+						<p>Get a starter project suitable for your loudspeakers from HiFiBerry website and open it in SigmaStudio.</p>
+						<p>Go to "Hardware Configuration" tab, right-click on the "TCPIP" block and select "Show TCPIP Settings".</p>
+						<p>Enter the IP address shown in the previous screen and click "Open Connection". If you see no errors, the connection has been made and you can close the window.</p>				
+					</div>
+				</div>
+				<div class="help-topic" id="sigma-building-program">
+					<div class="menu-group">
+						<h2>The Basics of Building and Testing a DSP Program</h2>
+						<p>On the "Schematic" tab you will see all of the different blocks in the DSP program.</p>
+						<p>You can drag in new blocks from the toolbox on the left. To remove a block, select it and press the Delete key.</p>
+						<p>Click "Link Compile Download" in the toolbar to upload the program to the DSP memory. You should see "Active: Downloaded" in the lower right corner of the window. This means that the program has been uploaded.</p>
+						<p>When you change settings in existing blocks, you will hear the effect in real time, as long as the text in the lower right corner says "Active: Downloaded".</p>
+						<p>After adding or removing blocks, the text in the lower right corner will change to "Design Mode". This means that you will have to click "Link Compile Download" again to upload your changes and restore the real-time functionality.</p>
+						<p>Refer to the SigmaStudio help and wiki for more information on how to use the different DSP blocks.</p>
+					</div>
+				</div>
+				<div class="help-topic" id="sigma-writing-eeprom">
+					<div class="menu-group">
+						<h2>Saving a Program to Permanent Memory</h2>
+						<p>To make your program persist on the BeoCreate 4-Channel Amplifier when it is powered off, it needs to be written to permanent memory on the board.</p>
+						<p>Click "Link Compile Download" once more to make sure your changes have been updated to the DSP.</p>
+						<p>Go to "Hardware Configuration" tab and right-click on the "ADAU1451" block.</p>
+						<p>Under "Self-boot Memory" submenu, select "Write Latest Compilation through DSP".</p>
+						<p>Select OK in the window that opens – you don't need to change any of the settings.</p>
+						<p>Confirm that you want to erase and rewrite the memory, and wait for the process to complete. Do not unplug the sound system during this time.</p>
+						<p>Remember to also save the project file to your computer so you can make changes to it later, if you wish.</p>
+					</div>
+				</div>
+				<div class="help-topic" id="remote-login-basics">
+					<div class="menu-group">
+						<h2>Remote Login Basics</h2>
+						<p>Mac and Linux computers have a built-in SSH client accessible through the Terminal application. For Windows, PuTTY is a popular option that can be downloaded from the internet.</p>
+						<p>To open a connection, type "ssh pi@hostname", replacing "hostname" with the hostname or IP address from the previous screen. Press return.</p>
+						<p>If you are asked to confirm keys, type "yes" and press return, unless instructed otherwise.</p>
+						<p>Type your SSH password when asked and press return. It is normal to not see the password characters appear.</p>
+						<p>You should now be connected to the Raspberry Pi and you can run any commands on it.</p>
+						<p>To end the SSH session, type "exit" and press return.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="notify">
+			<div id="notify-wrap">
+				<img src="symbols-thin-black/done.svg">
+				<h1>FLASH Added</h1>
+				<p></p>
+			</div>
+		</div>
+		
+		<div id="ask">
+			<div id="ask-wrap">
+				<div id="ask-dynamic-menu">
+					
+				</div>
+				<div class="menu-item icon left" id="ask-cancel" onclick="ask();">
+					<img src="symbols-thin-black/back.svg" class="menu-icon">
+					<div class="menu-label">Cancel</div>
+				</div>
+			</div>
+			
+			<div id="ask-menu-store">
+				<div id="open-network-ask-menu">
+					<div class="menu-group">
+						<h2>Add <span class="ask-dynamic-0">Open Network</span>?</h2>
+					<p>Open networks can be insecure. If you control this network, consider protecting it with a password.</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/add.svg" class="menu-icon">
+						<div class="menu-label">Add Anyway</div>
+					</div>
+				</div>
+				
+				<div id="install-source-ask-menu">
+					<div class="menu-group">
+						<h2>Install <span class="ask-dynamic-0">Source</span>?</h2>
+					<p>Installing a source downloads and installs files from the internet. It can take a few minutes, and the system will restart afterwards.</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/software-update.svg" class="menu-icon">
+						<div class="menu-label">Install This Source</div>
+					</div>
+				</div>
+				
+				<div id="remove-network-ask-menu">
+					<div class="menu-group">
+						<h2>Remove <span class="ask-dynamic-0">Open Network</span>?</h2>
+					<p>If you remove this network, the sound system won't connect to it.</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/delete.svg" class="menu-icon">
+						<div class="menu-label">Remove Network</div>
+					</div>
+				</div>
+				
+				<div id="remove-current-network-ask-menu">
+					<div class="menu-group">
+						<h2>Remove <span class="ask-dynamic-0">Current Network</span>?</h2>
+						<p>The sound system is currently connected to this network. If you remove it, you may have to connect your <span class="device">device</span> to the 'BeoSetup' hotspot to add another available network.</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/delete.svg" class="menu-icon">
+						<div class="menu-label">Remove Anyway</div>
+					</div>
+				</div>
+				
+				<div id="flash-dsp-ask-menu">
+					<div class="menu-group">
+						<h2>Install this sound profile?</h2>
+					<p>Installing a sound profile will override any custom sound programs stored in BeoCreate 4-Channel Amplifier.</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/sound-profile.svg" class="menu-icon">
+						<div class="menu-label">Install Sound Profile</div>
+					</div>
+				</div>
+				
+				<div id="remove-product-ask-menu">
+					<div class="menu-group">
+						<h2>Remove <span class="ask-dynamic-0">Product</span>?</h2>
+						<p>If you remove this product, the setup tool will not connect to it automatically.</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/delete.svg" class="menu-icon">
+						<div class="menu-label">Remove Product</div>
+					</div>
+				</div>
+				
+				<div id="install-update-ask-menu">
+					<div class="menu-group">
+						<h2>Install Software Update?</h2>
+					<p>Installing the update will take a moment. Please don't unplug the sound system during that time. You will hear a tone when the update is complete</p>
+					</div>
+					<div class="menu-item icon left" onclick="askOption(0);">
+						<img src="symbols-thin-black/software-update.svg" class="menu-icon">
+						<div class="menu-label">Install</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	
+	</div>
+	</div>
+<script src='scripts/create-setup.js'></script>
+
+</body>
+</html>

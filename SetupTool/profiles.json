@@ -1,0 +1,30 @@
+{
+  "basePath": "http://downloads.hifiberry.com/beocreate/profiles",
+  "models": [
+    {
+		"name": "Beovox CX50",
+		"description": "Manufactured 1984-2003",
+		"mfg": "Bang & Olufsen",
+		"file": "beovox-cx50"
+    },
+    {
+    	"name": "Beovox CX100",
+    	"description": "Manufactured 1984-2003",
+		"mfg": "Bang & Olufsen",
+		"file": "beovox-cx100"
+    },
+    {
+    	"name": "BeoLab S",
+    	"hidden": true,
+    	"description": "Manufactured 2016",
+		"mfg": "Bang & Olufsen",
+		"file": "beolab-s",
+		"path": "http://www.tuomashamalainen.com/bang-olufsen/dsp"
+    },
+    {
+		"name": "Basic Full-Range",
+		"description": "Any passive loudspeaker",
+		"file": "basic-fullrange"
+    }
+  ]
+}

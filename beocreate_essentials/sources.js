@@ -163,6 +163,18 @@ SourceManager.prototype.initialise = function initialise(options) {
 					case "pbeg":
 						self.emit('wake', {sourceName: "AirPlay"});
 						break;
+					case "PICT":
+						self.emit('metadata', {picture: data64});
+						break;
+					case "minm":
+						self.emit('metadata', {title: decodedData});
+						break;
+					case "asal":
+						self.emit('metadata', {album: decodedData});
+						break;
+					case "asar":
+						self.emit('metadata', {artist: decodedData});
+						break;
 				}
 			}
 	

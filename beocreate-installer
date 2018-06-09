@@ -151,9 +151,9 @@ if (( $# != 2 ))
 		echo "Installing spotifyd..."
 		apt-get --assume-yes install portaudio19-dev
 		cd /tmp
-		wget https://github.com/Spotifyd/spotifyd/releases/download/untagged-2cb556328b5f57a0fe2b/spotifyd-2018-01-14-armv7.zip
-		unzip spotifyd-2018-01-14-armv7.zip
-		rm spotifyd-2018-01-14-armv7.zip
+                wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
+                unzip spotifyd-2018-05-29-armv6.zip
+                rm spotifyd-2018-05-29-armv6.zip
 		sudo sudo mkdir -p /opt/spotifyd
 		sudo mv spotifyd /opt/spotifyd
 

@@ -154,8 +154,8 @@ if (( $# != 2 ))
 		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
 		unzip spotifyd-2018-05-29-armv6.zip
 		rm spotifyd-2018-05-29-armv6.zip
-		sudo sudo mkdir -p /opt/spotifyd
-		sudo mv spotifyd /opt/spotifyd
+		mkdir -p /opt/spotifyd
+		mv spotifyd /opt/spotifyd
 
 		echo "[Unit]
 Description=Spotify Connect
@@ -189,11 +189,11 @@ volume-control = alsa # or softvol
 bitrate = 320
 device_name = ${PRODUCTNAME}" > spotifyd.conf
 
-		sudo cp spotifyd.conf /etc/spotifyd.conf
-		sudo cp spotify.service /lib/systemd/system/spotify.service
-		sudo systemctl daemon-reload
-		sudo systemctl enable spotify.service
-		sudo systemctl restart spotify.service
+		cp spotifyd.conf /etc/spotifyd.conf
+		cp spotify.service /lib/systemd/system/spotify.service
+		systemctl daemon-reload
+		systemctl enable spotify.service
+		systemctl restart spotify.service
 		echo "spotifyd installed."
 	;;
 	shairport-sync)

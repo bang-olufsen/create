@@ -17,12 +17,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Please run as root.
+print_usage() {
+	echo "Usage: sudo beocreate-installer [base | install-source] [source name]"
+}
+
+if [[ $EUID -ne 0 ]]; then
+	echo "This script must be run as root."
+	print_usage
+	exit 1
+fi
 
 echo "BeoCreate Installer Release 3, (c) 2018 Bang & Olufsen"
 if (( $# == 0 ))
 then
-echo "Usage: sudo beocreate-installer [base | install-source] [source name]"
+print_usage
 exit 0
 else
 case "$1" in

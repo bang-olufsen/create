@@ -54,73 +54,119 @@ var dsp = module.exports = {
 
 // FILTER CALCULATION FUNCTIONS
 
+// Cache Pi
+var mathPI = Math.PI;
+
+// BIQUAD FILTER CALCULATION FUNCTIONS
+
 // Peak filter
 function peak(Fs, Fc, dBBoost, Q, gain) {
 	// Equivalent to the "Parametric" 2nd order filter in SigmaStudio
-	w0 = 2 * Math.PI * Fc / Fs;
+	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
 	
 	A = Math.pow(10, (dBBoost / 40));
 	alpha = Math.sin(w0) / (2 * Q);
 	
 	// Calculate initial coefficients
-	a0i = 1 + alpha / A;
-	a1i = -2 * Math.cos(w0);
-	a2i = 1 - alpha / A;
-	b0i = (1 + alpha * A) * gainLinear;
+	a0i =   1 + alpha / A;
+	a1i =  -2 * Math.cos(w0);
+	a2i =   1 - alpha / A;
+	b0i =  (1 + alpha * A) * gainLinear;
 	b1i = -(2 * Math.cos(w0)) * gainLinear;
-	b2i = (1 - alpha * A) * gainLinear;
+	b2i =  (1 - alpha * A) * gainLinear;
 	
 	// Loop coefficients through normalisation function
-	coeffs = normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
+	return normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
 	
-	return coeffs;
 }
 
 
 // Butterworth lowpass
 function lowPass(Fs, Fc, gain) {
 	// Equivalent to the "Butterworth LP" 2nd order filter in SigmaStudio
-	w0 = 2 * Math.PI * Fc / Fs;
+	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
 	
 	alpha = Math.sin(w0) / (2.0 * 1 / Math.sqrt(2));
 	
 	// Calculate initial coefficients
-	a0i = 1 + alpha;
+	a0i =  1 + alpha;
 	a1i = -2 * Math.cos(w0);
-	a2i = 1 - alpha;
+	a2i =  1 - alpha;
 	b0i = (1 - Math.cos(w0)) * gainLinear / 2;
 	b1i = (1 - Math.cos(w0)) * gainLinear;
 	b2i = (1 - Math.cos(w0)) * gainLinear / 2;
 	
 	// Loop coefficients through normalisation function
-	coeffs = normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
+	return normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
 	
-	return coeffs;
 }
 
 
 // Butterworth highpass
 function highPass(Fs, Fc, gain) {
 	// Equivalent to the "Butterworth HP" 2nd order filter in SigmaStudio
-	w0 = 2 * Math.PI * Fc / Fs;
+	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
 	
 	alpha = Math.sin(w0) / (2.0 * 1 / Math.sqrt(2));
 	
 	// Calculate initial coefficients
-	a0i = 1 + alpha;
-	a1i = -2 * Math.cos(w0);
-	a2i = 1 - alpha;
-	b0i = (1 + Math.cos(w0)) * gainLinear / 2;
+	a0i =   1 + alpha;
+	a1i =  -2 * Math.cos(w0);
+	a2i =   1 - alpha;
+	b0i =  (1 + Math.cos(w0)) * gainLinear / 2;
 	b1i = -(1 + Math.cos(w0)) * gainLinear;
-	b2i = (1 + Math.cos(w0)) * gainLinear / 2;
+	b2i =  (1 + Math.cos(w0)) * gainLinear / 2;
 	
 	// Loop coefficients through normalisation function
-	coeffs = normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
+	return normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
 	
-	return coeffs;
+}
+
+// Low-shelf filter
+function lowShelf(Fs, Fc, dBBoost, slope, gain) {
+	// 2nd-order low-shelf filter
+	w0 = 2 * mathPI * Fc / Fs;
+	gainLinear = Math.pow(10, (gain / 20));
+	
+	A = Math.pow(10, (dBBoost / 40));
+	alpha = Math.sin(w0) / 2 * Math.sqrt((A + 1/A)*(1/slope - 1) + 2);
+
+	// Calculate initial coefficients
+	a0i =          (A+1) + (A-1) * Math.cos(w0) + 2 * Math.sqrt(A) * alpha;
+	a1i =    -2 * ((A-1) + (A+1) * Math.cos(w0));
+	a2i =          (A+1) + (A-1) * Math.cos(w0) - 2 * Math.sqrt(A) * alpha;
+	b0i =     A * ((A+1) - (A-1) * Math.cos(w0) + 2 * Math.sqrt(A) * alpha);
+	b1i = 2 * A * ((A-1) - (A+1) * Math.cos(w0));
+	b2i =     A * ((A+1) - (A-1) * Math.cos(w0) - 2 * Math.sqrt(A) * alpha);
+	
+	// Loop coefficients through normalisation function
+	return normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
+	
+}
+
+// High-shelf filter
+function highShelf(Fs, Fc, dBBoost, slope, gain) {
+	// 2nd-order high-shelf filter
+	w0 = 2 * mathPI * Fc / Fs;
+	gainLinear = Math.pow(10, (gain / 20));
+	
+	A = Math.pow(10, (dBBoost / 40));
+	alpha = Math.sin(w0) / 2 * Math.sqrt((A + 1/A)*(1/slope - 1) + 2);
+
+	// Calculate initial coefficients
+	a0i =           (A+1) - (A-1) * Math.cos(w0) + 2 * Math.sqrt(A) * alpha;
+	a1i =      2 * ((A-1) - (A+1) * Math.cos(w0));
+	a2i =           (A+1) - (A-1) * Math.cos(w0) - 2 * Math.sqrt(A) * alpha;
+	b0i =      A * ((A+1) + (A-1) * Math.cos(w0) + 2 * Math.sqrt(A) * alpha);
+	b1i = -2 * A * ((A-1) + (A+1) * Math.cos(w0));
+	b2i =      A * ((A+1) + (A-1) * Math.cos(w0) - 2 * Math.sqrt(A) * alpha);
+	
+	// Loop coefficients through normalisation function
+	return normaliseCoeffs(a0i, a1i, a2i, b0i, b1i, b2i)
+	
 }
 
 

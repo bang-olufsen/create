@@ -17,20 +17,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-print_usage() {
-	echo "Usage: sudo beocreate-installer [base | install-source] [source name]"
-}
-
-if [[ $EUID -ne 0 ]]; then
-	echo "This script must be run as root."
-	print_usage
-	exit 1
-fi
+# Please run as root.
 
 echo "BeoCreate Installer Release 3, (c) 2018 Bang & Olufsen"
 if (( $# == 0 ))
 then
-print_usage
+echo "Usage: sudo beocreate-installer [base | install-source] [source name]"
 exit 0
 else
 case "$1" in
@@ -159,11 +151,11 @@ if (( $# != 2 ))
 		echo "Installing spotifyd..."
 		apt-get --assume-yes install portaudio19-dev
 		cd /tmp
-		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
-		unzip spotifyd-2018-05-29-armv6.zip
-		rm spotifyd-2018-05-29-armv6.zip
-		mkdir -p /opt/spotifyd
-		mv spotifyd /opt/spotifyd
+		wget https://github.com/Spotifyd/spotifyd/releases/download/untagged-2cb556328b5f57a0fe2b/spotifyd-2018-01-14-armv7.zip
+		unzip spotifyd-2018-01-14-armv7.zip
+		rm spotifyd-2018-01-14-armv7.zip
+		sudo sudo mkdir -p /opt/spotifyd
+		sudo mv spotifyd /opt/spotifyd
 
 		echo "[Unit]
 Description=Spotify Connect
@@ -197,11 +189,11 @@ volume-control = alsa # or softvol
 bitrate = 320
 device_name = ${PRODUCTNAME}" > spotifyd.conf
 
-		cp spotifyd.conf /etc/spotifyd.conf
-		cp spotify.service /lib/systemd/system/spotify.service
-		systemctl daemon-reload
-		systemctl enable spotify.service
-		systemctl restart spotify.service
+		sudo cp spotifyd.conf /etc/spotifyd.conf
+		sudo cp spotify.service /lib/systemd/system/spotify.service
+		sudo systemctl daemon-reload
+		sudo systemctl enable spotify.service
+		sudo systemctl restart spotify.service
 		echo "spotifyd installed."
 	;;
 	shairport-sync)

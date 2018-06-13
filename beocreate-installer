@@ -47,9 +47,7 @@ base)
 	cd /home/pi/ || exit
 	wget -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
 	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz 
-	cd /home/pi/node-v8.9.3-linux-armv6l || exit
-	cp -R ./* /usr/local/
-	cd /home/pi/ || exit
+	cp -R /home/pi/node-v8.9.3-linux-armv6l/* /usr/local/
 	
 	echo "Installing Apache and required Node modules..."
 	sleep 2

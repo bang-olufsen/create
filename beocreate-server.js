@@ -291,6 +291,12 @@ function manageSources(content) {
 			});
 			break;
 		case "list":
+			raspotifyIndex = sourceList.indexOf("raspotify");
+			if (raspotifyIndex != -1) {
+				sourceList[raspotifyIndex] = "spotifyd";
+				beoconfig.sources = sourceList;
+				saveConfiguration();
+			}
 			beoCom.send({header: "sources", content: {sources: sourceList}});
 			break;
 	}

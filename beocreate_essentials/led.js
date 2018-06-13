@@ -61,6 +61,7 @@ function colourNameToRGB(colourName) {
 }
 
 var fadeInterval = null;
+var ledDelay = null;
 
 function fadeTo(options) {
 	// If a fade is in progress, stop it and use the present value as the starting point for transition (previousColour).
@@ -72,12 +73,21 @@ function fadeTo(options) {
 		previousColour = selectedColour.slice(0);
 	}
 	
+	// If fadeOutAfter is set, fade out the LED after a number of seconds.
+	clearTimeout(ledDelay);
+	if (options.fadeOutAfter) {
+		ledDelay = setTimeout(function() {
+			fadeOut();
+		}, 1000*options.fadeOutAfter);
+	}
+	
 	// If colour values have been provided in RGB, use them. Otherwise convert colour name.
 	if (options.rgb) {
 		selectedColour = options.rgb;
 	} else if (options.colour) {
 		selectedColour = colourNameToRGB(options.colour);
 	}
+	
 	
 	// Determine the transition steps based on the largest colour value difference, so that all colours reach the end value at the same time.
 	

@@ -27,7 +27,7 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-echo "BeoCreate Installer Release 3, (c) 2018 Bang & Olufsen"
+echo "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen"
 if (( $# == 0 ))
 then
 print_usage
@@ -157,6 +157,8 @@ if (( $# != 2 ))
 	case "$2" in
 	spotifyd)
 		echo "Installing spotifyd..."
+		apt-get --assume-yes update
+		apt-get --assume-yes upgrade
 		apt-get --assume-yes install portaudio19-dev
 		cd /tmp
 		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
@@ -207,12 +209,13 @@ device_name = ${PRODUCTNAME}" > spotifyd.conf
 	shairport-sync)
 		echo "Installing dependencies for shairport-sync..."
 		sleep 2
+		apt-get --assume-yes update
+		apt-get --assume-yes upgrade
 		apt-get --assume-yes install build-essential git xmltoman
 		apt-get --assume-yes install autoconf automake libtool libdaemon-dev libpopt-dev libconfig-dev
 		apt-get --assume-yes install libasound2-dev
 		apt-get --assume-yes install avahi-daemon libavahi-client-dev
 		apt-get --assume-yes install libssl-dev
-		apt-get --assume-yes install libmbedtls-dev
 		apt-get --assume-yes install libsoxr-dev
 
 		echo "Installing the latest shairport-sync..."
@@ -223,8 +226,6 @@ device_name = ${PRODUCTNAME}" > spotifyd.conf
 		autoreconf -i -f
 		./configure --sysconfdir=/etc --with-alsa --with-avahi --with-ssl=openssl --with-metadata --with-soxr --with-systemd
 		make
-		getent group shairport-sync &>/dev/null || groupadd -r shairport-sync >/dev/null
-		getent passwd shairport-sync &> /dev/null || useradd -r -M -g shairport-sync -s /usr/bin/nologin -G audio shairport-sync >/dev/null
 		make install
 		cp /etc/shairport-sync.conf /etc/shairport-sync-sample.conf
 		RAWPRODUCTNAME="$(awk -F= '/PRETTY/ {print $2}' /etc/machine-info)"
@@ -260,6 +261,8 @@ sessioncontrol =
 	;;
 	bluetooth)
 		echo "Installing Bluetooth audio..."
+		apt-get --assume-yes update
+		apt-get --assume-yes upgrade
 		cd /home/pi
 		git clone https://github.com/c-larsen/bt-speaker.git
 		cd /home/pi/bt-speaker

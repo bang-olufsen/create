@@ -163,6 +163,29 @@ SourceManager.prototype.initialise = function initialise(options) {
 					case "pbeg":
 						self.emit('wake', {sourceName: "AirPlay"});
 						break;
+					case "PICT":
+						self.emit('metadata', {picture: data64});
+						break;
+					case "minm":
+						self.emit('metadata', {title: decodedData});
+						break;
+					case "asal":
+						self.emit('metadata', {album: decodedData});
+						break;
+					case "asar":
+						self.emit('metadata', {artist: decodedData});
+						break;
+					case "pvol":
+						volumeValues = decodedData.split(",");
+						if (volumeValues[0] == -144) {
+							volumeIsMuted = true;
+							self.emit('playback', {volume: -1});
+						} else {
+							volumeIsMuted = false;
+							lastVolume = convertAirPlayVolume(volumeValues[0], 0);
+							self.emit('playback', {volume: lastVolume});
+						}
+						break;
 				}
 			}
 	
@@ -180,4 +203,12 @@ SourceManager.prototype.initialise = function initialise(options) {
 }
 
 
+function convertAirPlayVolume(value, conversionType) {
+	if (conversionType == 0) { // Convert from dB (-30 to 0) to abstracted value (0-90).
+		return (1 - (value / -30)) * 90;
+	}
 
+	if (conversionType == 1) { // Convert from abstracted value to dB (-30 to 0).
+		return -30 + ((value / 90) * 30);
+	}
+}

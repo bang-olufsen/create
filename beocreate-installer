@@ -23,6 +23,13 @@ exec 3>&1 4>&2
 exec 1>/home/pi/installer.log 2>&1
 # from here on, output must go to >&3 to go to STDOUT
 
+catch_failure() {
+	echo "Installation failed. Please see /home/pi/installer.log for more information." >&3
+	exit 1
+}
+trap catch_failure ERR INT TERM
+
+# trace bash commands to the log file before we run them
 set -x
 
 print_usage() {
@@ -48,10 +55,10 @@ base)
 	echo "Updating apt-get package manager lists and upgrading existing packages..." >&3
 	apt-get -q --assume-yes update
 	apt-get -q --assume-yes upgrade
-	
+
 	echo "Installing Node..." >&3
 	cd /home/pi/
-	wget -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
+	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
 	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz
 	cd /home/pi/node-v8.9.3-linux-armv6l
 	cp -R * /usr/local/
@@ -74,19 +81,19 @@ base)
 	npm install pigpio
 	
 	echo "Installing BeoCreate Link..." >&3
-	wget -O /home/pi/beocreate_essentials.zip "http://downloads.hifiberry.com/beocreate/release-3/beocreate_essentials.zip"
+	wget -q -O /home/pi/beocreate_essentials.zip "http://downloads.hifiberry.com/beocreate/release-3/beocreate_essentials.zip"
 	unzip beocreate_essentials.zip
-	wget -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
+	wget -q -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
 	
 	echo "Installing sounds..." >&3
 	mkdir /home/pi/Music
-	wget -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
+	wget -q -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
 	cd /home/pi/Music
 	unzip beocreate-sounds.zip
 	cd /home/pi/
 	
 	echo "Installing startup script..." >&3
-	wget -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
+	wget -q -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
 	chmod 755 /etc/init.d/beocreate-4ch
 	systemctl enable beocreate-4ch
 	
@@ -96,7 +103,7 @@ base)
 	apt-get -q --assume-yes install wiringpi
 	mkdir /home/pi/dsp/
 	mkdir /home/pi/bin/
-	wget -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
+	wget -q -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
 	chmod 755 /home/pi/bin/sigmareset
 	git clone https://github.com/bang-olufsen/create.git
 	cd /home/pi/create/SigmaTcpDaemon
@@ -143,6 +150,8 @@ mixer = Master" > /etc/bt_speaker/config.ini
 	echo "Renaming system to beocreate-4ch-blank.local..." >&3
 	raspi-config nonint do_hostname beocreate-4ch-blank
 	
+	# stop catching ^c at this point
+	trap '' INT
 	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)." >&3
 	sleep 10
 	reboot

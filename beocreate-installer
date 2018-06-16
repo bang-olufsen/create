@@ -86,7 +86,9 @@ base)
 	wget -q -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
 	
 	echo "Installing sounds..." >&3
-	mkdir /home/pi/Music
+	if [ ! -d  /home/pi/Music ]; then
+		mkdir /home/pi/Music
+	fi
 	wget -q -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
 	cd /home/pi/Music
 	unzip beocreate-sounds.zip

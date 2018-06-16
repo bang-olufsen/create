@@ -21,6 +21,7 @@
 exec 3>&1 4>&2
 # send STDOUT and STDERR to a fine log file
 exec 1>/home/pi/installer.log 2>&1
+# from here on, output must go to >&3 to go to STDOUT
 
 print_usage() {
 	echo "Usage: sudo ./beocreate-installer [base | install-source] [source name]" >&3

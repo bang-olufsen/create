@@ -44,12 +44,10 @@ base)
 	
 	echo "Installing Node..."
 	sleep 2
-	cd /home/pi/
+	cd /home/pi/ || exit
 	wget -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
 	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz 
-	cd /home/pi/node-v8.9.3-linux-armv6l
-	cp -R * /usr/local/
-	cd /home/pi/
+	cp -R /home/pi/node-v8.9.3-linux-armv6l/* /usr/local/
 	
 	echo "Installing Apache and required Node modules..."
 	sleep 2
@@ -78,9 +76,9 @@ base)
 	sleep 2
 	mkdir /home/pi/Music
 	wget -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
-	cd /home/pi/Music
+	cd /home/pi/Music || exit
 	unzip beocreate-sounds.zip
-	cd /home/pi/
+	cd /home/pi/ || exit
 	
 	echo "Installing startup script..."
 	wget -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
@@ -97,21 +95,21 @@ base)
 	wget -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
 	chmod 755 /home/pi/bin/sigmareset
 	git clone https://github.com/bang-olufsen/create.git
-	cd /home/pi/create/SigmaTcpDaemon
+	cd /home/pi/create/SigmaTcpDaemon || exit
 	cmake .
 	make
 	
 	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..."
 	sleep 2
-	cd /home/pi/
+	cd /home/pi/ || exit
 	git clone https://github.com/hifiberry/beocreate-tools.git
-	cd /home/pi/beocreate-tools
+	cd /home/pi/beocreate-tools || exit
 	./enable-hifiberry
 	./enable-spi
 	
 	echo "Installing BeoSetup hotspot..."
 	sleep 2
-	cd /etc/wpa_supplicant/
+	cd /etc/wpa_supplicant/ || exit
 	echo 'network={
 	ssid="BeoSetup"
 	proto=RSN
@@ -126,9 +124,9 @@ base)
 	
 	echo "Installing Bluetooth audio..."
 	sleep 2
-	cd /home/pi
+	cd /home/pi || exit
 	git clone https://github.com/c-larsen/bt-speaker.git
-	cd /home/pi/bt-speaker
+	cd /home/pi/bt-speaker || exit
 	./install.sh root
 	mkdir /etc/bt_speaker/
 	echo "[bt_speaker]
@@ -160,7 +158,7 @@ if (( $# != 2 ))
 		apt-get --assume-yes update
 		apt-get --assume-yes upgrade
 		apt-get --assume-yes install portaudio19-dev
-		cd /tmp
+		cd /tmp || exit
 		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
 		unzip spotifyd-2018-05-29-armv6.zip
 		rm spotifyd-2018-05-29-armv6.zip
@@ -220,9 +218,9 @@ device_name = ${PRODUCTNAME}" > spotifyd.conf
 
 		echo "Installing the latest shairport-sync..."
 		sleep 2
-		cd /home/pi/
+		cd /home/pi/ || exit
 		git clone https://github.com/mikebrady/shairport-sync.git
-		cd /home/pi/shairport-sync
+		cd /home/pi/shairport-sync || exit
 		autoreconf -i -f
 		./configure --sysconfdir=/etc --with-alsa --with-avahi --with-ssl=openssl --with-metadata --with-soxr --with-systemd
 		make
@@ -263,9 +261,9 @@ sessioncontrol =
 		echo "Installing Bluetooth audio..."
 		apt-get --assume-yes update
 		apt-get --assume-yes upgrade
-		cd /home/pi
+		cd /home/pi || exit
 		git clone https://github.com/c-larsen/bt-speaker.git
-		cd /home/pi/bt-speaker
+		cd /home/pi/bt-speaker || exit
 		./install.sh root
 		mkdir /etc/bt_speaker/
 		echo "[bt_speaker]

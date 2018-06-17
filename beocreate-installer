@@ -52,8 +52,9 @@ case "$1" in
 base)
 	echo "Installing BeoCreate 4-Channel Amplifier Base System..." >&3
 	
-	echo "Updating apt-get package manager lists and upgrading existing packages..." >&3
+	echo "Updating apt-get package manager lists..." >&3
 	apt-get -q --assume-yes update
+	echo "Upgrading existing packages..." >&3
 	apt-get -q --assume-yes upgrade
 
 	echo "Installing Node..." >&3

@@ -24,7 +24,7 @@ exec 1>/home/pi/installer.log 2>&1
 # from here on, output must go to >&3 to go to STDOUT
 
 catch_failure() {
-	echo "Installation failed. Please see /home/pi/installer.log for more information." >&3
+	echo "Installation failed. Please 'tail -n 20 /home/pi/installer.log' for debug information." >&3
 	exit 1
 }
 trap catch_failure ERR INT TERM
@@ -42,7 +42,7 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-echo "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen" >&3
+echo -e "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen\n" >&3
 if (( $# == 0 ))
 then
 	print_usage
@@ -56,6 +56,9 @@ base)
 	apt-get -q --assume-yes update
 	echo "Upgrading existing packages..." >&3
 	apt-get -q --assume-yes upgrade
+	# Need another update or following commands can't find packages
+	# That upgrade does something to the sources.
+	apt-get -q --assume-yes update
 
 	echo "Installing Node..." >&3
 	cd /home/pi/
@@ -65,9 +68,10 @@ base)
 	cp -R * /usr/local/
 	cd /home/pi/
 	
-	echo "Installing Apache and required Node modules..." >&3
+	echo "Installing Apache..." >&3
 	apt-get -q --assume-yes install libavahi-compat-libdnssd-dev
-	apt-get -q --assume-yes install apache2 -y
+	apt-get -q --assume-yes install apache2
+	echo "Installing Node modules..." >&3
 	npm install -g npm@4.6.1
 	npm install mdns
 	npm install request

@@ -17,44 +17,61 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# save the file descriptors
+exec 3>&1 4>&2
+# send STDOUT and STDERR to a fine log file
+exec 1>/home/pi/installer.log 2>&1
+# from here on, output must go to >&3 to go to STDOUT
+
+catch_failure() {
+	echo "Installation failed. Please 'tail -n 20 /home/pi/installer.log' for debug information." >&3
+	exit 1
+}
+trap catch_failure ERR INT TERM
+
+# trace bash commands to the log file before we run them
+set -x
+
 print_usage() {
-	echo "Usage: sudo beocreate-installer [base | install-source] [source name]"
+	echo "Usage: sudo ./beocreate-installer [base | install-source] [source name]" >&3
 }
 
 if [[ $EUID -ne 0 ]]; then
-	echo "This script must be run as root."
+	echo "This script must be run as root." >&3
 	print_usage
 	exit 1
 fi
 
-echo "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen"
+echo -e "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen\n" >&3
 if (( $# == 0 ))
 then
-print_usage
-exit 0
+	print_usage
+	exit 0
 else
 case "$1" in
 base)
-	echo "Installing BeoCreate 4-Channel Amplifier Base System..."
+	echo "Installing BeoCreate 4-Channel Amplifier Base System..." >&3
 	
-	echo "Updating apt-get package manager lists and upgrading existing packages..."
-	sleep 2
-	apt-get --assume-yes update
-	apt-get --assume-yes upgrade
-	
-	echo "Installing Node..."
-	sleep 2
-	cd /home/pi/
-	wget -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
-	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz 
+	echo "Updating apt-get package manager lists..." >&3
+	apt-get -q --assume-yes update
+	echo "Upgrading existing packages..." >&3
+	apt-get -q --assume-yes upgrade
+	# Need another update or following commands can't find packages
+	# That upgrade does something to the sources.
+	apt-get -q --assume-yes update
+
+	echo "Installing Node..." >&3
+	cd /home/pi/ || exit
+	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
+	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz
 	cd /home/pi/node-v8.9.3-linux-armv6l
 	cp -R * /usr/local/
 	cd /home/pi/
 	
-	echo "Installing Apache and required Node modules..."
-	sleep 2
-	apt-get --assume-yes install libavahi-compat-libdnssd-dev
-	apt-get --assume-yes install apache2 -y
+	echo "Installing Apache..." >&3
+	apt-get -q --assume-yes install libavahi-compat-libdnssd-dev
+	apt-get -q --assume-yes install apache2
+	echo "Installing Node modules..." >&3
 	npm install -g npm@4.6.1
 	npm install mdns
 	npm install request
@@ -65,54 +82,50 @@ base)
 	npm install xml-stream
 	npm install utf8
 	npm install aplay
-	npm install diacritics
-	apt-get --assume-yes install pigpio
+	apt-get -q --assume-yes install pigpio
 	npm install pigpio
 	
-	echo "Installing BeoCreate Link..."
-	sleep 2
-	wget -O /home/pi/beocreate_essentials.zip "http://downloads.hifiberry.com/beocreate/release-3/beocreate_essentials.zip"
+	echo "Installing BeoCreate Link..." >&3
+	wget -q -O /home/pi/beocreate_essentials.zip "http://downloads.hifiberry.com/beocreate/release-3/beocreate_essentials.zip"
 	unzip beocreate_essentials.zip
-	wget -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
+	wget -q -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
 	
-	echo "Installing sounds..."
-	sleep 2
-	mkdir /home/pi/Music
-	wget -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
-	cd /home/pi/Music
+	echo "Installing sounds..." >&3
+	if [ ! -d  /home/pi/Music ]; then
+		mkdir /home/pi/Music
+	fi
+	wget -q -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
+	cd /home/pi/Music || exit
 	unzip beocreate-sounds.zip
-	cd /home/pi/
+	cd /home/pi/ || exit
 	
-	echo "Installing startup script..."
-	wget -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
+	echo "Installing startup script..." >&3
+	wget -q -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
 	chmod 755 /etc/init.d/beocreate-4ch
 	systemctl enable beocreate-4ch
 	
-	echo "Installing SigmaDSP daemon and reset..."
-	sleep 2
-	apt-get --assume-yes install build-essential git xmltoman
-	apt-get --assume-yes install cmake
-	apt-get --assume-yes install wiringpi
+	echo "Installing SigmaDSP daemon and reset..." >&3
+	apt-get -q --assume-yes install build-essential git xmltoman
+	apt-get -q --assume-yes install cmake
+	apt-get -q --assume-yes install wiringpi
 	mkdir /home/pi/dsp/
 	mkdir /home/pi/bin/
-	wget -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
+	wget -q -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
 	chmod 755 /home/pi/bin/sigmareset
 	git clone https://github.com/bang-olufsen/create.git
-	cd /home/pi/create/SigmaTcpDaemon
+	cd /home/pi/create/SigmaTcpDaemon || exit
 	cmake .
 	make
 	
-	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..."
-	sleep 2
-	cd /home/pi/
+	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..." >&3
+	cd /home/pi/ || exit
 	git clone https://github.com/hifiberry/beocreate-tools.git
-	cd /home/pi/beocreate-tools
+	cd /home/pi/beocreate-tools || exit
 	./enable-hifiberry
 	./enable-spi
 	
-	echo "Installing BeoSetup hotspot..."
-	sleep 2
-	cd /etc/wpa_supplicant/
+	echo "Installing BeoSetup hotspot..." >&3
+	cd /etc/wpa_supplicant/ || exit
 	echo 'network={
 	ssid="BeoSetup"
 	proto=RSN
@@ -125,11 +138,10 @@ base)
 }
 	' | cat - wpa_supplicant.conf > temp && mv temp wpa_supplicant.conf
 	
-	echo "Installing Bluetooth audio..."
-	sleep 2
-	cd /home/pi
+	echo "Installing Bluetooth audio..." >&3
+	cd /home/pi || exit
 	git clone https://github.com/c-larsen/bt-speaker.git
-	cd /home/pi/bt-speaker
+	cd /home/pi/bt-speaker || exit
 	./install.sh root
 	mkdir /etc/bt_speaker/
 	echo "[bt_speaker]
@@ -142,26 +154,27 @@ id = 0
 cardindex = 0
 mixer = Master" > /etc/bt_speaker/config.ini
 
-	echo "Renaming system to beocreate-4ch-blank.local..."
-	sleep 2
+	echo "Renaming system to beocreate-4ch-blank.local..." >&3
 	raspi-config nonint do_hostname beocreate-4ch-blank
 	
-	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)."
+	# stop catching ^c at this point
+	trap '' INT
+	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)." >&3
 	sleep 10
 	reboot
 ;;
 install-source)
 if (( $# != 2 ))
 	then
-		echo "Please specify the source to install: sudo beocreate-installer install-source <source name>"
+		echo "Please specify the source to install: sudo beocreate-installer install-source <source name>" >&3
 	else
 	case "$2" in
 	spotifyd)
-		echo "Installing spotifyd..."
-		apt-get --assume-yes update
-		apt-get --assume-yes upgrade
-		apt-get --assume-yes install portaudio19-dev
-		cd /tmp
+		echo "Installing spotifyd..." >&3
+		apt-get -q --assume-yes update
+		apt-get -q --assume-yes upgrade
+		apt-get -q --assume-yes install portaudio19-dev
+		cd /tmp || exit
 		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
 		unzip spotifyd-2018-05-29-armv6.zip
 		rm spotifyd-2018-05-29-armv6.zip
@@ -205,25 +218,23 @@ device_name = ${PRODUCTNAME}" > spotifyd.conf
 		systemctl daemon-reload
 		systemctl enable spotify.service
 		systemctl restart spotify.service
-		echo "spotifyd installed."
+		echo "spotifyd installed." >&3
 	;;
 	shairport-sync)
-		echo "Installing dependencies for shairport-sync..."
-		sleep 2
-		apt-get --assume-yes update
-		apt-get --assume-yes upgrade
-		apt-get --assume-yes install build-essential git xmltoman
-		apt-get --assume-yes install autoconf automake libtool libdaemon-dev libpopt-dev libconfig-dev
-		apt-get --assume-yes install libasound2-dev
-		apt-get --assume-yes install avahi-daemon libavahi-client-dev
-		apt-get --assume-yes install libssl-dev
-		apt-get --assume-yes install libsoxr-dev
+		echo "Installing dependencies for shairport-sync..." >&3
+		apt-get -q --assume-yes update
+		apt-get -q --assume-yes upgrade
+		apt-get -q --assume-yes install build-essential git xmltoman
+		apt-get -q --assume-yes install autoconf automake libtool libdaemon-dev libpopt-dev libconfig-dev
+		apt-get -q --assume-yes install libasound2-dev
+		apt-get -q --assume-yes install avahi-daemon libavahi-client-dev
+		apt-get -q --assume-yes install libssl-dev
+		apt-get -q --assume-yes install libsoxr-dev
 
-		echo "Installing the latest shairport-sync..."
-		sleep 2
-		cd /home/pi/
+		echo "Installing the latest shairport-sync..." >&3
+		cd /home/pi/ || exit
 		git clone https://github.com/mikebrady/shairport-sync.git
-		cd /home/pi/shairport-sync
+		cd /home/pi/shairport-sync || exit
 		autoreconf -i -f
 		./configure --sysconfdir=/etc --with-alsa --with-avahi --with-ssl=openssl --with-metadata --with-soxr --with-systemd
 		make
@@ -261,12 +272,13 @@ sessioncontrol =
 		echo "shairport-sync installed."
 	;;
 	bluetooth)
-		echo "Installing Bluetooth audio..."
-		apt-get --assume-yes update
-		apt-get --assume-yes upgrade
-		cd /home/pi
+
+		echo "Installing Bluetooth audio..." >&3
+		apt-get -q --assume-yes update
+		apt-get -q --assume-yes upgrade
+		cd /home/pi || exit
 		git clone https://github.com/c-larsen/bt-speaker.git
-		cd /home/pi/bt-speaker
+		cd /home/pi/bt-speaker || exit
 		./install.sh root
 		mkdir /etc/bt_speaker/
 		echo "[bt_speaker]
@@ -278,14 +290,14 @@ disconnect_command = aplay -q /home/pi/Music/setup-required.wav
 id = 0
 cardindex = 0
 mixer = Master" > /etc/bt_speaker/config.ini
-		echo "bluetooth installed."
+		echo "bluetooth installed." >&3
 	;;
 	*)
 	esac
 	fi
 ;;
 *)
-	echo "No argument matches."
+	echo "No argument matches." >&3
 exit 0
 esac
 fi

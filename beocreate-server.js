@@ -24,7 +24,7 @@ SOFTWARE.*/
 
 // RELEASE VERSION
 // Used to determine if software updates need to be installed. *TO DO*
-var releaseVersion = 3;
+var releaseVersion = 4;
 
 // DEPENDENCIES
 var communicator = require("./beocreate_essentials/communication");
@@ -36,6 +36,7 @@ var Sound = require("aplay");
 var fs = require('fs');
 var xmlStream = require('xml-stream'); // for parsing DSP XMLs
 var http = require('http');
+var removeDiacritics = require('diacritics').remove;
 
 var beoCom = communicator();
 
@@ -62,7 +63,7 @@ if (fs.existsSync(beoConfigFile)) {
 	    "step": 0,
 	    "wifiMode": "autoHotspot",
 	    "ssh": true,
-	    "connectedWith": null
+	    "voicePrompts": true
 	  },
 		"volumeLimit": {
 			"value": 100,
@@ -126,7 +127,14 @@ wifi.initialise(beoconfig.setup.wifiMode); // Set Wi-Fi to autohotspot, if Wi-Fi
 
 speakIPTimeout = null;
 speakIPTimeout = setTimeout(function() {
-	if (beoconfig.setup.connectedWith != "hostname") {
+	if (beoconfig.setup.connectedWith != undefined && beoconfig.setup.connectedWith != null) {
+		if (beoconfig.setup.connectedWith == "hostname" || beoconfig.setup.connectedWith == "blank") {
+			beoconfig.setup.voicePrompts = false;
+		}
+		delete beoconfig.setup.connectedWith;
+		saveConfiguration();
+	}
+	if (beoconfig.setup.voicePrompts == true) {
 		if (beoconfig.step == 0) {
 			speakIP('repeat');
 		} else {
@@ -153,6 +161,9 @@ beoCom.on("data", function(data, connection){
 			break;
 		case "setup":
 			manageSetup(data.content);
+			break;
+		case "voicePrompts":
+			manageVoicePrompts(data.content);
 			break;
 		case "handshake":
 			handshake(data.content);
@@ -188,8 +199,8 @@ function handshake(content) {
 			}
 			beoCom.send({header: "handshake", content: {name: productName, model: soundProfile, modelName: beoconfig.setup.modelName, hostname: beoconfig.setup.hostname, flashed: flashed, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands, wifiMode: wifi.mode()}});
 		}
-		if (content.connectedWith) {
-			beoconfig.setup.connectedWith = content.connectedWith;
+		if (content.connectedWith == "hostname" || content.connectedWith == "blank") {
+			beoconfig.setup.voicePrompts = false;
 		}
 	}
 }
@@ -219,7 +230,7 @@ function manageSetup(content) {
 		case "setName":
 		case "systemName":
 			productName = content.name;
-			hostname = content.hostname;
+			hostname = removeDiacritics(productName);
 			beoconfig.setup.hostname = hostname;
 			beoconfig.setup.productName = productName;
 			saveConfiguration();
@@ -265,6 +276,19 @@ function manageSetup(content) {
 		case "doAutomated":
 			
 			break;
+	}
+}
+
+
+function manageVoicePrompts(content) {
+	if (content.operation == "toggle") {
+		if (beoconfig.setup.voicePrompts == true) {
+			beoconfig.setup.voicePrompts = false;
+		} else {
+			beoconfig.setup.voicePrompts = true;
+		}
+		saveConfigurationWithDelay();
+		beoCom.send({header: "voicePrompts", content: {voicePrompts: beoconfig.setup.voicePrompts}});
 	}
 }
 

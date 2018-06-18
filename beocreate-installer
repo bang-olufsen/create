@@ -65,6 +65,7 @@ base)
 	npm install xml-stream
 	npm install utf8
 	npm install aplay
+	npm install diacritics
 	apt-get --assume-yes install pigpio
 	npm install pigpio
 	

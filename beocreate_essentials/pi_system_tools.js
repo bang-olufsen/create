@@ -22,7 +22,6 @@ SOFTWARE.*/
 var child_process = require('child_process');
 
 
-
 var pi_system_tools = module.exports = {
 	setHostname: setHostname,
 	ssh: ssh,

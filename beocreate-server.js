@@ -230,7 +230,7 @@ function manageSetup(content) {
 		case "setName":
 		case "systemName":
 			productName = content.name;
-			hostname = removeDiacritics(productName);
+			hostname = generateHostname(productName);
 			beoconfig.setup.hostname = hostname;
 			beoconfig.setup.productName = productName;
 			saveConfiguration();
@@ -761,4 +761,13 @@ function getBeoMetadata(filePath, callback) {
 	  	metadata = {modelName: modelName, modelID: modelID, volumeControlRegister: volumeControlRegister, channelSelectRegister: channelSelectRegister, balanceRegister: balanceRegister, crossoverBands: crossoverBands};
 	  	callback(metadata);
 	});
+}
+
+function generateHostname(readableName) {
+	n = readableName.toLowerCase(); // Convert to lower case
+	n = removeDiacritics(n); // Remove diacritics
+	n = n.replace(" ", "-"); // Replace spaces with hyphens
+	n = n.replace(/[^\w\-]|_/g, ""); // Remove non-alphanumeric characters except hyphens
+	n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+	return n; //+".local"; // Add .local
 }

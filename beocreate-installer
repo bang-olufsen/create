@@ -274,7 +274,7 @@ sessioncontrol =
 		mixer_control_name = \"Master\";
 	}" > /etc/shairport-sync.conf
 		systemctl enable shairport-sync
-		echo "shairport-sync installed."
+		echo "shairport-sync installed." >&3
 	;;
 	bluetooth)
 

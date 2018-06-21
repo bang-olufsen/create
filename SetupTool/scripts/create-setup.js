@@ -649,7 +649,12 @@ function processReceivedData(data) {
 			}
 			break;
 		case "systemName":
-			result = addOrUpdateProduct(data.content.hostname, {name: data.content.name, model: data.content.model, newHostname: data.content.hostname}, true);
+			if (productHostname) {
+				hostnameToUpdate = productHostname;
+			} else {
+				hostnameToUpdate = data.content.hostname;
+			}
+			result = addOrUpdateProduct(hostnameToUpdate, {name: data.content.name, model: data.content.model, newHostname: data.content.hostname}, true);
 			if (result === true || result === false) {
 				//
 			} else {

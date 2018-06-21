@@ -86,34 +86,38 @@ base)
 	apt-get -q --assume-yes install pigpio
 	npm install pigpio
 	
-	echo "Installing BeoCreate Link..." >&3
-	wget -q -O /home/pi/beocreate_essentials.zip "http://downloads.hifiberry.com/beocreate/release-3/beocreate_essentials.zip"
-	unzip beocreate_essentials.zip
-	wget -q -O /home/pi/beocreate-server.js "http://downloads.hifiberry.com/beocreate/release-3/beocreate-server.js"
+	echo "Downloading Bang & Olufsen Create git repository..." >&3
+	apt-get -q --assume-yes install build-essential git xmltoman
+	git clone https://github.com/bang-olufsen/create.git
+	
+	echo "Installing BeoCreate Essentials..." >&3
+	cp -R /home/pi/create/beocreate_essentials /home/pi/beocreate_essentials/
+	
+	echo "Installing BeoCreate Server..." >&3
+	cp /home/pi/create/beocreate-server.js /home/pi/beocreate-server.js
 	
 	echo "Installing sounds..." >&3
 	if [ ! -d  /home/pi/Music ]; then
 		mkdir /home/pi/Music
 	fi
-	wget -q -O /home/pi/Music/beocreate-sounds.zip "http://downloads.hifiberry.com/beocreate/common/beocreate-sounds.zip"
-	cd /home/pi/Music || exit
-	unzip beocreate-sounds.zip
-	cd /home/pi/ || exit
+	cp -R /home/pi/create/Sounds/* /home/pi/Music/
 	
-	echo "Installing startup script..." >&3
-	wget -q -P /etc/init.d/ "http://downloads.hifiberry.com/beocreate/release-3/beocreate-4ch"
+	echo "Installing system startup script..." >&3
+	cp /home/pi/create/beocreate-4ch /etc/init.d/beocreate-4ch
 	chmod 755 /etc/init.d/beocreate-4ch
 	systemctl enable beocreate-4ch
 	
-	echo "Installing SigmaDSP daemon and reset..." >&3
-	apt-get -q --assume-yes install build-essential git xmltoman
+	echo "Installing SigmaDSP daemon and reset sequence..." >&3
 	apt-get -q --assume-yes install cmake
 	apt-get -q --assume-yes install wiringpi
-	mkdir /home/pi/dsp/
-	mkdir /home/pi/bin/
-	wget -q -P /home/pi/bin/ "http://downloads.hifiberry.com/beocreate/release-3/sigmareset"
+	if [ ! -d  /home/pi/dsp/ ]; then
+		mkdir /home/pi/dsp
+	fi
+	if [ ! -d  /home/pi/bin/ ]; then
+		mkdir /home/pi/bin
+	fi
+	cp /home/pi/create/sigmareset /home/pi/bin/sigmareset
 	chmod 755 /home/pi/bin/sigmareset
-	git clone https://github.com/bang-olufsen/create.git
 	cd /home/pi/create/SigmaTcpDaemon || exit
 	cmake .
 	make

@@ -466,6 +466,27 @@ p, h1, h2 {
 	/*opacity: 0.5;*/
 }
 
+.menu-toggle {
+	display: flex;
+	text-transform: uppercase;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	font-size: 0.8em;
+}
+
+.menu-toggle div:last-of-type {
+	opacity: 0.2;
+	margin-left: 0.2em;
+}
+
+.on .menu-toggle div:first-of-type {
+	opacity: 0.2;
+}
+
+.on .menu-toggle div:last-of-type {
+	opacity: 1;
+}
+
 
 .red {
 	color: #de6c3d;

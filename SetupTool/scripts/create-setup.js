@@ -1,3 +1,20 @@
+/*Copyright 2018 Bang & Olufsen A/S
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
 // BANG & OLUFSEN
 // BeoCreate 4-Channel Amplifier Setup
 // Release 3
@@ -5,6 +22,7 @@
 var os;
 var screenFlow = ["welcome", "setup-start", "setup-wifi", "setup-profile", "setup-name", "setup-finish", "overview", "sound-adjustments", "name", "wifi", "profile", "custom-tuning", "guide", "sources", "ssh", "connect-to", "software-update", "about"]; // Indicates where different screens exist spatially within the application.
 var sourceNames = {"bluetooth": "Bluetooth", "shairport-sync": "Shairport-sync", "spotifyd": "Spotifyd"};
+var systemVersion = 0;
 window.addEventListener('load', function() {
 	
 	// Enables fastclick.js so that buttons respond immediately.
@@ -576,6 +594,18 @@ function processReceivedData(data) {
 			
 			if (data.content.systemVersion) {
 				$(".system-version").text("Release "+data.content.systemVersion);
+				systemVersion = data.content.systemVersion;
+			}
+			
+			if (data.content.voicePrompts != undefined) {
+				$("#voice-prompt-toggle").removeClass("hidden");
+				if (data.content.voicePrompts == 1) {
+					$("#voice-prompt-toggle").addClass("on");
+				} else {
+					$("#voice-prompt-toggle").removeClass("on");
+				}
+			} else {
+				$("#voice-prompt-toggle").addClass("hidden");
 			}
 			
 			$("#multi-button span").text("Searching...");
@@ -764,6 +794,13 @@ function processReceivedData(data) {
 			} else {
 				$(".ssh-disabled").removeClass("hidden");
 				$(".ssh-enabled").addClass("hidden");
+			}
+			break;
+		case "voicePrompts":
+			if (data.content.voicePrompts == 1) {
+				$("#voice-prompt-toggle").addClass("on");
+			} else {
+				$("#voice-prompt-toggle").removeClass("on");
 			}
 			break;
 		case "plainJSON":
@@ -1010,6 +1047,10 @@ function selectChannel(channel) {
 	$(".channel-select-item").removeClass("selected");
 	$("#channel-select-item-"+channel).addClass("selected");
 	sendToProduct({header: "dsp", content: {operation: "setChSelect", ch: channel}});   
+}
+
+function toggleVoicePrompts() {
+	sendToProduct({header: "voicePrompts", content: {operation: "toggle"}});  
 }
 
 function disableSoundAdjustments() {

@@ -634,7 +634,7 @@ function processReceivedData(data) {
 			break;
 		case "sources":
 			if (data.content.message == "installing") {
-				notify("Installing "+sourceNames[data.content.source]+"...", "This will take a while. The system will restart after the installation.", "load", true);
+				notify("Installing "+sourceNames[data.content.source]+"...", "This will take a while. The sound system will restart after the installation.", "load", true);
 			}
 			if (data.content.message == true) {
 				notify(sourceNames[data.content.source]+" installed", "Restarting sound system, please wait...", "done", true);
@@ -712,7 +712,13 @@ function processReceivedData(data) {
 					//console.log(network.SSID);
 					hexEscapedNetworkName = network.SSID.decodeEscapeSequence();
 					//console.log(hexEscapedNetworkName);
-					networkName = decodeUTF8(hexEscapedNetworkName);
+					try {
+						networkName = decodeUTF8(hexEscapedNetworkName);
+					} catch (error) {
+						networkName = hexEscapedNetworkName;
+						console.log(error);
+					}
+					
 					//console.log(networkName);
 					extraClasses = "";
 					if (network.current) {//extraClasses += " current";
@@ -1148,8 +1154,8 @@ function cancelText() {
 	}, 520);
 }
 
-generatedHostname = "";
-systemName = "";
+var generatedHostname = "";
+var systemName = "";
 $('input').bind('input propertychange', function() {
     if ($(this).attr("id") == "text-input-plain") validateTextInput();
 	if ($(this).attr("id") == "text-input-password") validateTextInput();

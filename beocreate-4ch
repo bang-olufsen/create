@@ -33,6 +33,9 @@ start)
 	# Reset SigmaDSP:
 	echo "Resetting SigmaDSP..."
 	/home/pi/bin/sigmareset
+	
+	# Setting master volume:
+	amixer sset 'Master' 90%
 
 	# Start SigmaDSP daemon:
 	echo "Starting SigmaDSP daemon..."

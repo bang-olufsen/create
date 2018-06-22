@@ -179,6 +179,9 @@ beoCom.on("data", function(data, connection){
 
 function handshake(content) {
 	if (content.operation == "doHandshake") {
+		if (content.connectedWith == "hostname" || content.connectedWith == "blank") {
+			beoconfig.setup.voicePrompts = false;
+		}
 		if (setupStep != null) {
 			beoCom.send({header: "setup", content: {status: setupStep, wifiMode: wifi.mode(), hostname: beoconfig.setup.hostname}});
 		} else {
@@ -197,10 +200,7 @@ function handshake(content) {
 			} else {
 				balance = null;
 			}
-			beoCom.send({header: "handshake", content: {name: productName, model: soundProfile, modelName: beoconfig.setup.modelName, hostname: beoconfig.setup.hostname, flashed: flashed, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands, wifiMode: wifi.mode()}});
-		}
-		if (content.connectedWith == "hostname" || content.connectedWith == "blank") {
-			beoconfig.setup.voicePrompts = false;
+			beoCom.send({header: "handshake", content: {name: productName, model: soundProfile, modelName: beoconfig.setup.modelName, hostname: beoconfig.setup.hostname, flashed: flashed, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands, wifiMode: wifi.mode(), voicePrompts: beoconfig.setup.voicePrompts}});
 		}
 	}
 }

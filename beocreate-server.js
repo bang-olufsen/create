@@ -421,7 +421,7 @@ function doAutomatedSetup(step) {
 					doAutomatedSetup(7);
 				}
 			});*/
-			beoCom.send({header: "bottomProgress", content: "Inst. sound profile..."});
+			beoCom.send({header: "bottomProgress", content: "Sound profile..."});
 			flashSoundProfileWithName(1, tempSoundProfile, function(response) {
 				if (response == true) {
 					doAutomatedSetup(7);

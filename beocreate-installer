@@ -88,6 +88,9 @@ base)
 	
 	echo "Downloading Bang & Olufsen Create git repository..." >&3
 	apt-get -q --assume-yes install build-essential git xmltoman
+	if [ -d /home/pi/create ]; then
+		rm -rf /home/pi/create
+	fi
 	git clone https://github.com/bang-olufsen/create.git
 	
 	echo "Installing BeoCreate Essentials..." >&3
@@ -124,6 +127,9 @@ base)
 	
 	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..." >&3
 	cd /home/pi/ || exit
+	if [ -d /home/pi/beocreate-tools ]; then
+		rm -rf /home/pi/beocreate-tools
+	fi
 	git clone https://github.com/hifiberry/beocreate-tools.git
 	cd /home/pi/beocreate-tools || exit
 	./enable-hifiberry
@@ -145,6 +151,9 @@ base)
 	
 	echo "Installing Bluetooth audio..." >&3
 	cd /home/pi || exit
+	if [ -d /home/pi/bt-speaker ]; then
+		rm -rf /home/pi/bt-speaker
+	fi
 	git clone https://github.com/c-larsen/bt-speaker.git
 	cd /home/pi/bt-speaker || exit
 	./install.sh root
@@ -238,6 +247,9 @@ device_name = ${PRODUCTNAME}" > spotifyd.conf
 
 		echo "Installing the latest shairport-sync..." >&3
 		cd /home/pi/ || exit
+		if [ -d /home/pi/shairport-sync ]; then
+			rm -rf /home/pi/shairport-sync
+		fi
 		git clone https://github.com/mikebrady/shairport-sync.git
 		cd /home/pi/shairport-sync || exit
 		autoreconf -i -f
@@ -282,6 +294,9 @@ sessioncontrol =
 		apt-get -q --assume-yes update
 		apt-get -q --assume-yes upgrade
 		cd /home/pi || exit
+		if [ -d /home/pi/bt-speaker ]; then
+			rm -rf /home/pi/bt-speaker
+		fi
 		git clone https://github.com/c-larsen/bt-speaker.git
 		cd /home/pi/bt-speaker || exit
 		./install.sh root

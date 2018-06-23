@@ -65,7 +65,7 @@ base)
 	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
 	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz
 	cd /home/pi/node-v8.9.3-linux-armv6l
-	cp -R * /usr/local/
+	cp --remove-destination -R * /usr/local/
 	cd /home/pi/
 	
 	echo "Installing Apache..." >&3

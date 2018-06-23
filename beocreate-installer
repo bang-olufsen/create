@@ -157,7 +157,9 @@ base)
 	git clone https://github.com/c-larsen/bt-speaker.git
 	cd /home/pi/bt-speaker || exit
 	./install.sh root
-	mkdir /etc/bt_speaker/
+	if [ ! -d  /etc/bt_speaker/ ]; then
+		mkdir /etc/bt_speaker/
+	fi
 	echo "[bt_speaker]
 play_command = aplay -f cd -
 connect_command = aplay -q /home/pi/Music/setup-complete.wav
@@ -300,7 +302,9 @@ sessioncontrol =
 		git clone https://github.com/c-larsen/bt-speaker.git
 		cd /home/pi/bt-speaker || exit
 		./install.sh root
-		mkdir /etc/bt_speaker/
+		if [ ! -d  /etc/bt_speaker/ ]; then
+			mkdir /etc/bt_speaker/
+		fi
 		echo "[bt_speaker]
 play_command = aplay -f cd -
 connect_command = aplay -q /home/pi/Music/setup-complete.wav

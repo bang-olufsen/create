@@ -172,6 +172,10 @@ mixer = Master" > /etc/bt_speaker/config.ini
 
 	echo "Renaming system to beocreate-4ch-blank.local..." >&3
 	raspi-config nonint do_hostname beocreate-4ch-blank
+
+	if [ -f /home/pi/beoconfig.json ]; then
+		mv -b -f /home/pi/beoconfig.json /home/pi/beoconfig.json.old
+	fi
 	
 	# stop catching ^c at this point
 	trap '' INT

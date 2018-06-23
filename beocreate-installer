@@ -163,7 +163,7 @@ mixer = Master" > /etc/bt_speaker/config.ini
 	raspi-config nonint do_hostname beocreate-4ch-blank
 	
 	# stop catching ^c at this point
-	trap '' INT
+	trap - INT
 	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)." >&3
 	sleep 10
 	reboot

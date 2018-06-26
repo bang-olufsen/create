@@ -531,6 +531,7 @@ function flashSoundProfileWithName(stage, fileName, callback) {
 			break;
 		case 2:
 			beoCom.send({header: "soundProfile", content: {message: "flashing"}});
+			fs.copyFileSync(dspDownloadLocation+fileName+".xml", dspDownloadLocation+"current.xml"); // Make a copy of the sound profile as "current.xml", so that external software can find it easily.
 			beoDSP.flashEEPROM(dspDownloadLocation+fileName+".xml", function(response) {
 				if (response == 1) { 
 					soundProfile = tempSoundProfile;

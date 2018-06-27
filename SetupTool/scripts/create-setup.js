@@ -49,7 +49,7 @@ window.addEventListener('load', function() {
 	if (localStorage.beoCreateSoundProfiles) {
 		soundProfiles = JSON.parse(localStorage.beoCreateSoundProfiles);
 	}
-	$.getJSON("http://www.bang-olufsen.com/recreate/setup/profiles.json", function( json ) {
+	$.getJSON("profiles.json", function( json ) {
 		console.log(json);
   		soundProfiles = json;
 		localStorage.beoCreateSoundProfiles = JSON.stringify(json);

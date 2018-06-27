@@ -27,7 +27,7 @@ SOFTWARE.
 	
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-content">
-	<meta name="apple-mobile-web-app-title" content="Create" />
+	<meta name="apple-mobile-web-app-title" content="ReCreate" />
 		
 	<link rel="stylesheet" type="text/css" href="create2017.css" />
 	<script type="text/javascript" src="scripts/jquery-1.10.2.min.js"></script>
@@ -72,17 +72,19 @@ SOFTWARE.
 				<div class="menu-group">
 				<h2>Set up new</h2>
 				<div class="setup-guide-intro">
-					<p>To set up your BeoCreate 4-Channel Amplifier with a freshly installed Raspberry Pi, choose which method you used to prepare the SD card.</p>
+					<p>First, choose which method you used to prepare the SD card:</p>
+					
+					<div class="menu-item icon left" onclick="setupMethod('image');">
+						<img src="symbols-thin-black/sd-card-download.svg" class="menu-icon">
+						<div class="menu-label">BeoCreate Image</div>
+						<p>SD card created from the disk image downloaded from HiFiBerry.</p>
+					</div>
 					<div class="menu-item icon left" onclick="setupMethod('pibakery');">
 						<img src="symbols-thin-black/sd-card-lines.svg" class="menu-icon">
 						<div class="menu-label">PiBakery</div>
-						<p>SD card created using the PiBakery software and the BeoCreate recipe.</p>
+						<p>SD card created with the PiBakery software and the BeoCreate recipe.</p>
 					</div>
-					<div class="menu-item icon left" onclick="setupMethod('image');">
-						<img src="symbols-thin-black/sd-card-download.svg" class="menu-icon">
-						<div class="menu-label">Downloaded Disk Image</div>
-						<p>SD card created from the downloaded BeoCreate disk image.</p>
-					</div>
+					
 				</div>
 				<p class="image-install-guide hidden">To get started, you will first need to connect to the Wi-Fi hotspot created by the Raspberry Pi.</p>
 				</div>
@@ -457,8 +459,7 @@ SOFTWARE.
 					<p>You have disabled the sound adjustments from Custom Sound Tuning menu for safety. To enable them again, you can reinstall one of the preset sound profiles from Sound Profiles screen.</p>
 				</div>
 				<div class="menu-group can-disable" id="vol-limit">
-				<h2>Volume Limit</h2>
-				<p>Set a volume limit that applies to all sources.</p>
+				<h2>Master Volume Limit</h2>
 					<div class="range-icons">
 						<img src="symbols-thin-black/volume-mute.svg" class="left">
 						<input type="range" id="volume-limit-slider" min="0" max="100" value="100">
@@ -473,28 +474,25 @@ SOFTWARE.
 						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
 						<div class="menu-label">Stereo</div>
 						</div>
-						<p>Allows you to connect two 2-way loudspeakers to the same amplifier and use them as a stereo pair.</p>
+						<p>Connect two 2-way loudspeakers to the same amplifier and use them as a stereo pair.</p>
 					</div>
 					<div class="menu-item icon left channel-select-item radio" id="channel-select-item-left" onclick="selectChannel('left');">
 						<div class="one-row">
 						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
 						<div class="menu-label">Left</div>
 						</div>
-						<p>All outputs will play the left channel.</p>
 					</div>
 					<div class="menu-item icon left channel-select-item radio" id="channel-select-item-right" onclick="selectChannel('right');">
 						<div class="one-row">
 						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
 						<div class="menu-label">Right</div>
 						</div>
-						<p>All outputs will play the right channel.</p>
 					</div>
 					<div class="menu-item icon left channel-select-item radio" id="channel-select-item-mono" onclick="selectChannel('mono');">
 						<div class="one-row">
 						<img class="menu-icon checkmark" src="symbols-thin-black/checkmark.svg">
 						<div class="menu-label">Mono</div>
 						</div>
-						<p>Stereo signal will be downmixed and played through all outputs.</p>
 					</div>
 				</div>
 				<div class="menu-group" id="sound-other">
@@ -580,7 +578,7 @@ SOFTWARE.
 				<div class="menu-group">
 					<h2>Enter a New Name</h2>
 					<p>Choose a unique name for your sound system so you can find it on your devices and services.</p>
-					<p><span class="bold">Note:</span> the system will restart to apply this change.</p>
+					<p>Tap <img src="symbols-thin-black/back.svg"> to save the new name and restart the system.</p>
 				</div>
 				<div class="menu-group center">
 					<form id="system-name-2" action="javascript:saveSystemName(1);">
@@ -638,15 +636,15 @@ SOFTWARE.
 							<div class="menu-label">Bluetooth</div>
 						</div>
 						<div class="menu-value">Always Open for Pairing</div>
-						<p>When a Bluetooth device connects, Wi-Fi on the sound system is turned off to avoid audio dropouts. This setup tool won't be able to connect to the system during that time. When the device disconnects, Wi-Fi will be turned back on.</p>
+						<p>When a Bluetooth device connects, Wi-Fi is disabled to avoid dropouts, and you won't be able to use the setup tool at that time. When the device disconnects, Wi-Fi will be turned back on.</p>
 					</div>
 					<div class="menu-item icon left source-list-item" id="source-list-optical" onclick="installSource('optical');">
 						<div class="one-row">
 							<img src="symbols-thin-black/input.svg" class="menu-icon">
 							<div class="menu-label">Optical Input</div>
 						</div>
-						<div class="menu-value">Line Sense</div>
-						<p>This is the Toslink connector on the amplifier board. If a signal is detected, all other sources will be muted and the system will play from this input.</p>
+						<div class="menu-value">Always On</div>
+						<p>This is the Toslink connector on the amplifier board. It always accepts a signal.</p>
 					</div>
 					<div class="menu-item icon left source-list-item" id="source-list-shairport-sync" onclick="installSource('shairport-sync');">
 						<div class="one-row">
@@ -654,7 +652,7 @@ SOFTWARE.
 							<div class="menu-label">AirPlay 1</div>
 						</div>
 						<div class="menu-value">shairport-sync</div>
-						<p>Stream audio over Wi-Fi from iOS devices and Mac computers.</p>
+						<p>Stream audio over Wi-Fi from iOS devices, Mac computers and other compatible devices.</p>
 					</div>
 					<div class="menu-item icon left source-list-item" id="source-list-spotifyd" onclick="installSource('spotifyd');">
 						<div class="one-row">
@@ -675,7 +673,7 @@ SOFTWARE.
 			</header>
 			<div class="scroll-area">
 				<div class="menu-group">
-					<p>Remote login, also known as SSH (secure shell), allows you to use command line of the Raspberry Pi over the network. By default, remote login is disabled for security reasons.</p>
+					<p>Remote login, also known as SSH, allows you to use command line of the Raspberry Pi over the network.</p>
 					<p><span class="bold">Warning:</span> changes made to the system through remote login are unsupported. By using this feature, it is assumed that you are an advanced user and know what you're doing.</p>
 				</div>
 				<div class="menu-group">
@@ -995,7 +993,7 @@ SOFTWARE.
 				<div id="install-source-ask-menu">
 					<div class="menu-group">
 						<h2>Install <span class="ask-dynamic-0">Source</span>?</h2>
-					<p>Installing a source downloads and installs files from the internet. It can take a few minutes, and the system will restart afterwards.</p>
+					<p>Installing a source downloads and installs files from the internet. It can take some time, and the system will restart afterwards.</p>
 					</div>
 					<div class="menu-item icon left" onclick="askOption(0);">
 						<img src="symbols-thin-black/software-update.svg" class="menu-icon">

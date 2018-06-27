@@ -3,32 +3,32 @@
   "models": [
     {
 		"name": "Beovox CX50",
-		"description": "Manufactured 1984-2003",
+		"description": "Designed by Jacob Jensen, manufactured 1984-2003",
 		"mfg": "Bang & Olufsen",
 		"file": "beovox-cx50"
     },
     {
     	"name": "Beovox CX100",
-    	"description": "Manufactured 1984-2003",
+    	"description": "Designed by Jacob Jensen, manufactured 1984-2003",
 		"mfg": "Bang & Olufsen",
 		"file": "beovox-cx100"
     },
     {
     	"name": "Beovox RL6000",
-    	"description": "Manufactured 1991-1997",
+    	"description": "Designed by David Lewis, manufactured 1991-1997",
 		"mfg": "Bang & Olufsen",
 		"file": "beovox-rl6000"
     },
     {
     	"name": "Beovox S35",
-    	"description": "Manufactured 1977-1980",
+    	"description": "Designed by Jacob Jensen, manufactured 1977-1980",
 		"mfg": "Bang & Olufsen",
 		"file": "beovox-s35"
     },
     {
     	"name": "BeoLab S",
     	"hidden": true,
-    	"description": "Manufactured 2016",
+    	"description": "Designed by Tuomas Hämäläinen, manufactured 2016",
 		"mfg": "Bang & Olufsen",
 		"file": "beolab-s",
 		"path": "http://www.tuomashamalainen.com/bang-olufsen/dsp"

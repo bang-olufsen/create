@@ -20,7 +20,6 @@ SOFTWARE.*/
 
 #include "SpiCommunication.h"
 #include <stdexcept>
-#include <vector>
 
 #define XFER_WR_INDEX 0
 #define XFER_RD_INDEX 1
@@ -92,15 +91,15 @@ int SpiCommunication::Read(unsigned int addr, unsigned int len, uint8_t *data)
 {
 	const int SpiReadCmdHeaderValue = 0x01;
 	int status;
-	std::vector<uint8_t> readCmdBuffer(CommandHeaderSize + len, 0);
-	std::vector<uint8_t> readOutputBuffer(CommandHeaderSize + len, 0);
+	m_readCmdBuffer.resize(CommandHeaderSize + len);
+	m_readOutputBuffer.resize(CommandHeaderSize + len);
 
-	readCmdBuffer[0] = SpiReadCmdHeaderValue;
-	readCmdBuffer[1] = (char) (addr >> 8);
-	readCmdBuffer[2] = addr & 0xFF;
-	m_xferSettings[XFER_WR_INDEX].tx_buf = (unsigned long)readCmdBuffer.data();
+	m_readCmdBuffer[0] = SpiReadCmdHeaderValue;
+	m_readCmdBuffer[1] = (char) (addr >> 8);
+	m_readCmdBuffer[2] = addr & 0xFF;
+	m_xferSettings[XFER_WR_INDEX].tx_buf = (unsigned long)m_readCmdBuffer.data();
 	m_xferSettings[XFER_WR_INDEX].len = CommandHeaderSize + len; // Length of  command to write
-	m_xferSettings[XFER_WR_INDEX].rx_buf = (unsigned long)readOutputBuffer.data();
+	m_xferSettings[XFER_WR_INDEX].rx_buf = (unsigned long)m_readOutputBuffer.data();
 	m_xferSettings[XFER_WR_INDEX].len = CommandHeaderSize + len; //Length of Data to read 
 	status = ioctl(m_spiFd, SPI_IOC_MESSAGE(1), m_xferSettings);
 
@@ -109,7 +108,7 @@ int SpiCommunication::Read(unsigned int addr, unsigned int len, uint8_t *data)
 		throw std::domain_error("Failed SPI_IOC_MESSAGE read error" + errno);
 	}
 
-	memcpy(data, readOutputBuffer.data() + CommandHeaderSize, len);
+	memcpy(data, m_readOutputBuffer.data() + CommandHeaderSize, len);
 	
 	return status;
 }

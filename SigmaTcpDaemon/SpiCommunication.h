@@ -30,7 +30,7 @@ SOFTWARE.*/
 #include <fcntl.h>
 #include <stdlib.h>
 #include <cstring>
-
+#include <vector>
 
 //! @class SpiCommunication
 //! @brief This class implements a simple interface for reading/writing the SPI bus used to communicate with the ADAU 1451 DSP
@@ -58,4 +58,6 @@ public:
 private:
 	int m_spiFd;
 	struct spi_ioc_transfer m_xferSettings[2];
+	std::vector<uint8_t> m_readCmdBuffer;
+	std::vector<uint8_t> m_readOutputBuffer;
 };

@@ -148,6 +148,9 @@ int SpiCommunication::Write(unsigned int addr, unsigned int len, const uint8_t *
 
 		m_xferSettings[XFER_WR_INDEX].tx_buf = (unsigned long)write_buf;
 		m_xferSettings[XFER_WR_INDEX].len = currentBlockSize + CommandHeaderSize; // Length of  command to write
+		m_xferSettings[XFER_WR_INDEX].rx_buf = 0;
+		m_xferSettings[XFER_WR_INDEX].len = 0;
+
 		int status = ioctl(m_spiFd, SPI_IOC_MESSAGE(1), m_xferSettings);
 
 		if (status < 0) 

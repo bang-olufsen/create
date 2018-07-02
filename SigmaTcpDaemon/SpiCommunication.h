@@ -57,7 +57,7 @@ public:
 
 private:
 	int m_spiFd;
-	struct spi_ioc_transfer m_xferSettings[2];
+	struct spi_ioc_transfer m_xferSettings;
 	std::vector<uint8_t> m_readCmdBuffer;
 	std::vector<uint8_t> m_readOutputBuffer;
 };

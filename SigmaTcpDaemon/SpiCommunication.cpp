@@ -21,16 +21,12 @@ SOFTWARE.*/
 #include "SpiCommunication.h"
 #include <stdexcept>
 
-#define XFER_WR_INDEX 0
-#define XFER_RD_INDEX 1
-
 const int CommandHeaderSize = 3;
 
 SpiCommunication::SpiCommunication() :
 m_spiFd(-1)
 {
-	memset(&m_xferSettings[XFER_WR_INDEX], 0, sizeof(spi_ioc_transfer));
-	memset(&m_xferSettings[XFER_RD_INDEX], 0, sizeof(spi_ioc_transfer));
+	memset(&m_xferSettings, 0, sizeof(spi_ioc_transfer));
 }
 
 SpiCommunication::~SpiCommunication()
@@ -73,17 +69,10 @@ void SpiCommunication::Initialize(std::string devPath)
 		throw std::domain_error("Failed SPI WR_MAX_SPEED_HZ");
 	}
 
-	m_xferSettings[XFER_WR_INDEX].len = 3;  //Length of  command to write
-	m_xferSettings[XFER_WR_INDEX].cs_change = 0;
-	m_xferSettings[XFER_WR_INDEX].delay_usecs = 0;
-	m_xferSettings[XFER_WR_INDEX].speed_hz = speedWr;
-	m_xferSettings[XFER_WR_INDEX].bits_per_word = 8; 
-
-	m_xferSettings[XFER_RD_INDEX].len = 2;  //Length of Data to read
-	m_xferSettings[XFER_RD_INDEX].cs_change = 0;
-	m_xferSettings[XFER_RD_INDEX].delay_usecs = 0;
-	m_xferSettings[XFER_RD_INDEX].speed_hz = speedRd;
-	m_xferSettings[XFER_RD_INDEX].bits_per_word = 8;
+	m_xferSettings.cs_change = 0;
+	m_xferSettings.delay_usecs = 0;
+	m_xferSettings.speed_hz = std::min(speedWr, speedRd);
+	m_xferSettings.bits_per_word = 8; 
 }
 
 
@@ -97,10 +86,9 @@ int SpiCommunication::Read(unsigned int addr, unsigned int len, uint8_t *data)
 	m_readCmdBuffer[0] = SpiReadCmdHeaderValue;
 	m_readCmdBuffer[1] = (char) (addr >> 8);
 	m_readCmdBuffer[2] = addr & 0xFF;
-	m_xferSettings[XFER_WR_INDEX].tx_buf = (unsigned long)m_readCmdBuffer.data();
-	m_xferSettings[XFER_WR_INDEX].len = CommandHeaderSize + len; // Length of  command to write
-	m_xferSettings[XFER_WR_INDEX].rx_buf = (unsigned long)m_readOutputBuffer.data();
-	m_xferSettings[XFER_WR_INDEX].len = CommandHeaderSize + len; //Length of Data to read 
+	m_xferSettings.tx_buf = (unsigned long)m_readCmdBuffer.data();
+	m_xferSettings.len = CommandHeaderSize + len; // Length of  command to write
+	m_xferSettings.rx_buf = (unsigned long)m_readOutputBuffer.data();
 	status = ioctl(m_spiFd, SPI_IOC_MESSAGE(1), m_xferSettings);
 
 	if (status < 0) 
@@ -146,10 +134,8 @@ int SpiCommunication::Write(unsigned int addr, unsigned int len, const uint8_t *
 
 		memcpy(&write_buf[CommandHeaderSize], data + (i*MaxBlockSizeWrite), currentBlockSize);
 
-		m_xferSettings[XFER_WR_INDEX].tx_buf = (unsigned long)write_buf;
-		m_xferSettings[XFER_WR_INDEX].len = currentBlockSize + CommandHeaderSize; // Length of  command to write
-		m_xferSettings[XFER_WR_INDEX].rx_buf = 0;
-		m_xferSettings[XFER_WR_INDEX].len = 0;
+		m_xferSettings.tx_buf = (unsigned long)write_buf;
+		m_xferSettings.len = currentBlockSize + CommandHeaderSize; // Length of  command to write
 
 		int status = ioctl(m_spiFd, SPI_IOC_MESSAGE(1), m_xferSettings);
 

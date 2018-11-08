@@ -24,7 +24,7 @@ SOFTWARE.*/
 
 // RELEASE VERSION
 // Used to determine if software updates need to be installed. *TO DO*
-var releaseVersion = 4;
+var releaseVersion = 5;
 
 // DEPENDENCIES
 var communicator = require("./beocreate_essentials/communication");
@@ -55,9 +55,7 @@ if (fs.existsSync(beoConfigFile)) {
 	// If not, create the default configuration.
 	var beoconfig = {
 	  "setup": {
-	    "productName": null,
 	    "modelName": null,
-	    "hostname": null,
 	    "profile": null,
 		"flashed": false,
 	    "step": 0,
@@ -78,7 +76,7 @@ if (fs.existsSync(beoConfigFile)) {
 			"register": null
 		},
 		"crossoverBands": 1,
-		"sources": ["optical", "bluetooth"]
+		"checksum": null;
 	};
 	saveConfiguration();
 }
@@ -96,19 +94,22 @@ function saveConfigurationWithDelay() {
 	}, 2000);
 }
 
-var productName = "BeoCreate 4-Channel Amplifier";
 
 var setupStep = beoconfig.setup.step;
 var soundProfile = beoconfig.setup.profile;
-if (beoconfig.setup.productName) productName = beoconfig.setup.productName;
-var hostname = beoconfig.setup.hostname;
+var hostname = "";
+var productName = "";
+piSystem.getHostname(function(names) {
+	productName = names.uiName;
+	hostname = names.static;
+	beoCom.start({name: productName}); // Opens the server up for remotes to connect.
+};
 var flashed = beoconfig.setup.flashed;
-var sourceList = beoconfig.sources;
+var sourceList = [];
 
-beoCom.start({name: productName}); // Opens the server up for remotes to connect.
+var customSoundProfile = false;
 
-//beoDSP.readDictionary(dspParameterFile); // Reads the DSP parameter addresses into memory.
-//setTimeout(function() {
+
 beoDSP.connectDSP(function(success) {  
 	if (success) {
 		for (var i = 0; i < 3; i++) {
@@ -117,13 +118,39 @@ beoDSP.connectDSP(function(success) {
 			
 			}, true);
 		}
-		dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});	
-		dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});
+		if (beoconfig.checksum != null) {
+			compareDSPChecksum(beoconfig.checksum, function(result) {
+				if (result == true) {
+					dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});
+					dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});
+				} else {
+					dsp({operation: "enableCustom"});
+				}
+			}
+		} else {
+			manageSoundProfile({operation: "enableCustom"});
+		}
+
+		setTimeout(function() {
+			// Set volume at startup (DISABLED, POTENTIALLY DANGEROUS to do here if the server is restarted when something else is playing. This is still found in the old startup script.)
+			/*command = "amixer set Master 90%";
+			child_process.exec(command, function(error, stdout, stderr) {
+				if (error) {
+					//callback(null, error);
+				} else {*/
+					// Play startup sound.
+					startupSound = new Sound();
+					startupSound.play("/home/pi/Music/startup.wav");
+				/*}
+			});*/
+			
+		}, 2000);
 	}
-}); // Opens a link with the SigmaDSP daemon.
-//}, 2000);
+});
 
 wifi.initialise(beoconfig.setup.wifiMode); // Set Wi-Fi to autohotspot, if Wi-Fi is available.
+
+getSources();
 
 speakIPTimeout = null;
 speakIPTimeout = setTimeout(function() {
@@ -156,6 +183,9 @@ beoCom.on("data", function(data, connection){
 		case "dsp":
 			dsp(data.content);
 			break;
+		case "navigation":
+			navigation(data.content);
+			break;
 		case "wifi":
 			wifiFunctions(data.content);
 			break;
@@ -185,22 +215,63 @@ function handshake(content) {
 		if (setupStep != null) {
 			beoCom.send({header: "setup", content: {status: setupStep, wifiMode: wifi.mode(), hostname: beoconfig.setup.hostname}});
 		} else {
-			if (beoconfig.volumeLimit.register != null) {
+			if (beoconfig.volumeLimit.register != null && !customSoundProfile) {
 				volLimit = beoconfig.volumeLimit.value;
 			} else {
 				volLimit = null;
 			}
-			if (beoconfig.chSelect.register != null) {
+			if (beoconfig.chSelect.register != null && !customSoundProfile) {
 				chSelect = beoconfig.chSelect.value;
 			} else {
 				chSelect = null;
 			}
-			if (beoconfig.balance.register != null) {
+			if (beoconfig.balance.register != null && !customSoundProfile) {
 				balance = beoconfig.balance.value;
 			} else {
 				balance = null;
 			}
-			beoCom.send({header: "handshake", content: {name: productName, model: soundProfile, modelName: beoconfig.setup.modelName, hostname: beoconfig.setup.hostname, flashed: flashed, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands, wifiMode: wifi.mode(), voicePrompts: beoconfig.setup.voicePrompts}});
+			beoCom.send({header: "handshake", content: {name: productName, model: soundProfile, modelName: beoconfig.setup.modelName, serverVersion: releaseVersion, hostname: hostname, flashed: flashed, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands, wifiMode: wifi.mode(), voicePrompts: beoconfig.setup.voicePrompts}});
+		}
+	}
+}
+
+function navigation(content) {
+	if (content.currentScreen) {
+		switch (content.currentScreen) {
+			case "profile":
+			case "sound-adjustments":
+			case "custom-tuning":
+				beoCom.send({header: "soundAdjustments", content: {status: "checking"}});
+				if (beoconfig.checksum != null) {
+					compareDSPChecksum(beoconfig.checksum, function(result) {
+						if (result == true) {
+							
+							if (beoconfig.volumeLimit.register != null && !customSoundProfile) {
+								volLimit = beoconfig.volumeLimit.value;
+							} else {
+								volLimit = null;
+							}
+							if (beoconfig.chSelect.register != null && !customSoundProfile) {
+								chSelect = beoconfig.chSelect.value;
+							} else {
+								chSelect = null;
+							}
+							if (beoconfig.balance.register != null && !customSoundProfile) {
+								balance = beoconfig.balance.value;
+							} else {
+								balance = null;
+							}
+							
+							beoCom.send({header: "soundAdjustments", content: {status: "ready", model: soundProfile, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands}});
+							
+						} else {
+							dsp({operation: "enableCustom"});
+						}
+					}
+				} else {
+					manageSoundProfile({operation: "enableCustom"});
+				}
+				break;
 		}
 	}
 }
@@ -230,19 +301,15 @@ function manageSetup(content) {
 		case "setName":
 		case "systemName":
 			productName = content.name;
-			hostname = generateHostname(productName);
-			beoconfig.setup.hostname = hostname;
-			beoconfig.setup.productName = productName;
-			saveConfiguration();
-			beoCom.send({header: "systemName", content: {name: productName, hostname: hostname, model: soundProfile}});
 			if (content.doAutomatedSetup) {
 				doAutomatedSetup(1);
 			}
 			if (content.restartNow) {
 				beoSources.configureSource(beoconfig.sources, {productName: productName}, function(success) {
-					piSystem.setHostname(hostname, productName, function(success) {
+					piSystem.setHostname(productName, function(success, names) {
 						if (success == true) { 
 							console.log("Succesfully set hostname.");
+							beoCom.send({header: "systemName", content: {name: names.uiName, hostname: names.static, model: soundProfile}});
 							piSystem.power("reboot");
 						} else {
 							console.log("Error setting hostname.");	
@@ -300,11 +367,6 @@ function manageSources(content) {
 			beoSources.installSource(content.source, function(response) {
 				if (response == true) { 
 					beoCom.send({header: "sources", content: {message: true, source: content.source}});
-					if (sourceList.indexOf(content.source) == -1) {
-						sourceList.push(content.source);
-						beoconfig.sources = sourceList;
-						saveConfiguration();
-					}
 					if (content.restartNow) {
 						piSystem.power("reboot");
 					}
@@ -324,6 +386,44 @@ function manageSources(content) {
 			beoCom.send({header: "sources", content: {sources: sourceList}});
 			break;
 	}
+}
+
+function getSources() {
+	// Check if sources exist.
+	sourceList = ["optical"];
+	
+	command = "whereis spotifyd";
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(null, error);
+		} else {
+			if (stdout.indexOf("/") != -1) {
+				sourceList.push("spotifyd");
+			}
+		}
+	});
+	
+	command = "whereis bt_speaker";
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(null, error);
+		} else {
+			if (stdout.indexOf("/") != -1) {
+				sourceList.push("bluetooth");
+			}
+		}
+	});
+	
+	command = "whereis shairport-sync";
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(null, error);
+		} else {
+			if (stdout.indexOf("/") != -1) {
+				sourceList.push("shairport-sync");
+			}
+		}
+	});
 }
 
 //var automatedSetupStep = 0;
@@ -346,8 +446,8 @@ function doAutomatedSetup(step) {
 			break;
 		case 2:
 			beoCom.send({header: "bottomProgress", content: "Renaming system..."});
-			piSystem.setHostname(hostname, productName, function(success) {
-				if (success == true) { 
+			piSystem.setHostname(productName, function(success) {
+				if (success == true) {
 					console.log("Succesfully set hostname.");
 					doAutomatedSetup(3);
 				} else {
@@ -368,6 +468,7 @@ function doAutomatedSetup(step) {
 				doAutomatedSetup(4);
 			break;
 		case 4:
+			beoCom.send({header: "bottomProgress", content: "Connecting to Wi-Fi..."});
 			wifi.waitForNetwork(function(connected) {
 				if (connected == true) { 
 					console.log("Network connection detected.");
@@ -499,13 +600,29 @@ function manageSoundProfile(content) {
 		}
 	}
 	if (content.operation == "enableCustom") {
-		beoconfig.volumeLimit.register = null;
+		/*beoconfig.volumeLimit.register = null;
 		beoconfig.chSelect.register = null;
 		beoconfig.balance.register = null;
-		beoconfig.crossoverBands = null;
+		beoconfig.crossoverBands = null;*/
+		customSoundProfile = true;
 		beoCom.send({header: "soundProfile", content: {message: "custom"}});
-		saveConfiguration();
+		//saveConfiguration();
 	}
+}
+
+function compareDSPChecksum(checksum, callback) {
+	command = "dsptoolkit get-checksum";
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(false, error);
+		} else {
+			if (stdout.indexOf(checksum) != -1) {
+				callback(true);
+			} else {
+				callback(false);
+			}
+		}
+	});
 }
 
 function flashSoundProfileWithName(stage, fileName, callback) {
@@ -531,7 +648,7 @@ function flashSoundProfileWithName(stage, fileName, callback) {
 			break;
 		case 2:
 			beoCom.send({header: "soundProfile", content: {message: "flashing"}});
-			fs.copyFileSync(dspDownloadLocation+fileName+".xml", dspDownloadLocation+"current.xml"); // Make a copy of the sound profile as "current.xml", so that external software can find it easily.
+			//fs.copyFileSync(dspDownloadLocation+fileName+".xml", dspDownloadLocation+"current.xml"); // Make a copy of the sound profile as "current.xml", so that external software can find it easily.
 			beoDSP.flashEEPROM(dspDownloadLocation+fileName+".xml", function(response) {
 				if (response == 1) { 
 					soundProfile = tempSoundProfile;
@@ -541,6 +658,7 @@ function flashSoundProfileWithName(stage, fileName, callback) {
 					beoconfig.balance.register = tempMetadata.balanceRegister;
 					beoconfig.crossoverBands = tempMetadata.crossoverBands;
 					beoconfig.setup.modelName = tempMetadata.modelName;
+					beoconfig.checksum = tempMetadata.checksum;
 					if (beoconfig.crossoverBands == 3 && beoconfig.chSelect.value == "stereo") {
 						beoconfig.chSelect.value = "mono";
 					}
@@ -733,6 +851,7 @@ function getBeoMetadata(filePath, callback) {
 	  	channelSelectRegister = null;
 	  	balanceRegister = null;
 	  	crossoverBands = null;
+	  	checksum = null;
 	  	for (var i = 0; i < dataItems.length; i++) {
 	  		//console.log(typeof dataItems[i]);
 			if (typeof dataItems[i] == "object") {
@@ -755,20 +874,14 @@ function getBeoMetadata(filePath, callback) {
 						case "crossoverBands":
 							crossoverBands = parseInt(dataItems[i].$text);
 							break;
+						case "checksum":
+							checksum = dataItems[i].$text;
+							break;
 					}
 				}
 			}
 	  	}
-	  	metadata = {modelName: modelName, modelID: modelID, volumeControlRegister: volumeControlRegister, channelSelectRegister: channelSelectRegister, balanceRegister: balanceRegister, crossoverBands: crossoverBands};
+	  	metadata = {modelName: modelName, modelID: modelID, volumeControlRegister: volumeControlRegister, channelSelectRegister: channelSelectRegister, balanceRegister: balanceRegister, crossoverBands: crossoverBands, checksum: checksum};
 	  	callback(metadata);
 	});
-}
-
-function generateHostname(readableName) {
-	n = readableName.toLowerCase(); // Convert to lower case
-	n = removeDiacritics(n); // Remove diacritics
-	n = n.replace(" ", "-"); // Replace spaces with hyphens
-	n = n.replace(/[^\w\-]|_/g, ""); // Remove non-alphanumeric characters except hyphens
-	n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
-	return n; //+".local"; // Add .local
 }

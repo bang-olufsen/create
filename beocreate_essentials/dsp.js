@@ -20,6 +20,7 @@ SOFTWARE.*/
 
 var net = require("net"); // for communication over TCP
 var fs = require('fs'); // for filesystem access
+var child_process = require('child_process');
 
 
 var dictionary = {}; // Stores the DSP parameter addresses.
@@ -32,6 +33,7 @@ var sigmaCommandHeaderSize = 14;
 const m_FullScaleIntValue = 16777216;
 var openReadRequests = {};
 var flashCallback = null;
+var checksumCallback = null;
 
 // EXPORT FUNCTIONS
 
@@ -222,11 +224,11 @@ dspClient.on('connect', function(error) {
 dspClient.on('data', function(data) {
 	intRead = data.readInt8(0);
 	
-	if (intRead == 1 || intRead == 0) {
+	/*if (intRead == 1 || intRead == 0) {
 		// A response from EEPROM flash.
 		if (flashCallback) flashCallback(intRead);
 		flashCallback = null;
-	} else {
+	} else {*/
 		response = getSigmaReadResponse(data);
 		addr = response.addr
 		if (openReadRequests.addr) { // Find the callback from the list of open requests.
@@ -235,7 +237,7 @@ dspClient.on('data', function(data) {
 		} else {
 
 		}
-	}
+	//}
 	//console.log(data.readInt8(0));
 });
 
@@ -287,10 +289,42 @@ function readDSP(parameterName, callback, direct) {
 }
 
 function flashEEPROM(filePath, callback) {
-	if (!dspConnected) return false;
+	//if (!dspConnected) return false;
 	flashCallback = callback;
-	EEPROMRequest = new Buffer(createSigmaEEPROMRequest(filePath))
-	dspClient.write(EEPROMRequest);
+	//EEPROMRequest = new Buffer(createSigmaEEPROMRequest(filePath))
+	//dspClient.write(EEPROMRequest);
+	command = "dsptoolkit install-profile"+filePath;
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(null, error);
+		} else {
+			if (stdout.indexOf(" installed") != -1) {
+				flashCallback(true);
+				flashCallback = null;
+			else if (stdout.indexOf("Failed ") != -1) {
+				flashCallback(false);
+				flashCallback = null;
+			}
+		}
+	});
+}
+
+function getChecksum(callback) {
+	checksumCallback = callback;
+	command = "dsptoolkit get-checksum";
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(null, error);
+		} else {
+			if (stdout.indexOf("None") != -1) {
+				checksumCallback(false));
+				checksumCallback = null;
+			else {
+				callback(flashCallback(stdout));
+				checksumCallback = null;
+			}
+		}
+	});
 }
 
 
@@ -327,6 +361,7 @@ function createSigmaWriteRequest(addr, length, data) {
 	var sigmaWriteRequest = new Uint8Array(sigmaCommandHeaderSize + length);
 	sigmaWriteRequest[0] = sigmaCommandWriteCode;
 	//if (safeload) sigmaWriteRequest[1] = 0x0001;
+	sigmaWriteRequest[6] = (sigmaCommandHeaderSize + length); // Request length, as required by the new SigmaTCPServer.
 	sigmaWriteRequest[10] = ((length & 0xFF00) >> 8);
 	sigmaWriteRequest[11] = (length & 0x00FF);
 	

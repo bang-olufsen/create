@@ -20,6 +20,7 @@ SOFTWARE.*/
 // Handles socket communication between the sound system and the client.
 
 var mdns = require('mdns');
+//var dnssd = require('dnssd'); // Replacing mdns.
 var fs = require('fs');
 var server = require('websocket').server;
 var http = require('http');
@@ -33,7 +34,7 @@ module.exports = Communicator;
 function Communicator() {
 	if (! (this instanceof Communicator)) return new Communicator();
 	this.acceptConnections = true;
-	this.announceBeoLink;
+	this.announceService;
 	this.connections = [];
 	this.connectionLinks = [];
 	this.socket;
@@ -75,12 +76,23 @@ Communicator.prototype.start = function start(options) {
 	// ANNOUNCE BONJOUR SERVICE
 	// This enables clients that have Bonjour discovery to find the product without requiring the user to know and type in the hostname.
 	if (options.name) {
-		if (options.txtRecord) {
-			this.announceBeoLink = mdns.createAdvertisement(mdns.tcp('beolink-open'), wsPort, { name: options.name, txtRecord : options.txtRecord });
+		if (options.serviceType) {
+			serviceType = options.serviceType;
 		} else {
-			this.announceBeoLink = mdns.createAdvertisement(mdns.tcp('beolink-open'), wsPort, { name: options.name });
+			serviceType = 'beolink-open';
 		}
-		this.announceBeoLink.start();
+		if (options.advertisePort) {
+			advertisePort = options.advertisePort;
+		} else {
+			advertisePort = wsPort;
+		}
+		if (options.txtRecord) {
+			//this.announceService = new dnssd.Advertisement(dnssd.tcp(serviceType), advertisePort, { name: options.name, txt : options.txtRecord });
+			this.announceService = mdns.createAdvertisement(mdns.tcp(serviceType), advertisePort, { name: options.name, txtRecord : options.txtRecord });
+		} else {
+			this.announceService = mdns.createAdvertisement(mdns.tcp(serviceType), advertisePort, { name: options.name });
+		}
+		this.announceService.start();
 	}
 	
 	this.socket.on('request', function(request) {
@@ -165,6 +177,7 @@ Communicator.prototype.disconnectAll = function disconnectAll() {
 
 Communicator.prototype.stop = function stop() {
 	//server.shutDown();
+	this.announceService.stop();
 }
 
 Communicator.prototype.send = function send(jsonObject, restrictBroadcast) {

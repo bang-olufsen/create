@@ -23,6 +23,7 @@ var child_process = require('child_process');
 
 
 var pi_system_tools = module.exports = {
+	getHostname: getHostname,
 	setHostname: setHostname,
 	ssh: ssh,
 	setSPI: setSPI,
@@ -30,18 +31,56 @@ var pi_system_tools = module.exports = {
 	power: power
 };
 
-function setHostname(hostname, productName, callback) {
-	command = "raspi-config nonint do_hostname "+hostname;
+function getHostname(callback) {
+	command = "hostnamectl --pretty";
 	child_process.exec(command, function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);
 		} else {
-			command = "hostnamectl set-hostname --pretty \""+productName+"\"";
+			uiName = stdout;
+			command = "hostnamectl --static";
 			child_process.exec(command, function(error, stdout, stderr) {
 				if (error) {
 					callback(null, error);
 				} else {
-					callback(true);
+					staticName = stdout;
+					callback({ui: uiName, static: staticName});
+				}
+			});
+		}
+	});
+}
+
+function setHostname(productName, callback) {
+	command = "hostnamectl set-hostname \""+productName+"\"";
+	child_process.exec(command, function(error, stdout, stderr) {
+		if (error) {
+			callback(null, error);
+		} else {
+			command = "hostnamectl --pretty";
+			child_process.exec(command, function(error, stdout, stderr) {
+				if (error) {
+					callback(null, error);
+				} else {
+					uiName = stdout;
+					command = "hostnamectl --static";
+					child_process.exec(command, function(error, stdout, stderr) {
+						if (error) {
+							callback(null, error);
+						} else {
+							staticName = stdout;
+							// Change name in /etc/hosts
+							hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
+							for (var i = 0; i < hostsFile.length; i++) {
+								if (hostsFile[i].indexOf("127.0.1.1") != -1) {
+									hostsFile[i] = "127.0.1.1       "+staticname;
+								}
+							}
+							hostsText = hostsFile.join("\n");
+							fs.writeFileSync("/etc/hosts", hostsText);
+							callback(true, {ui: uiName, static: staticName});
+						}
+					});
 				}
 			});
 		}

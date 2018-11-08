@@ -62,17 +62,17 @@ base)
 
 	echo "Installing Node..." >&3
 	cd /home/pi/ || exit
-	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
-	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz
-	cd /home/pi/node-v8.9.3-linux-armv6l
+	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-armv6l.tar.gz"
+	tar -xvf /home/pi/node-v8.12.0-linux-armv6l.tar.gz
+	cd /home/pi/node-v8.12.0-linux-armv6l
 	cp -R * /usr/local/
 	cd /home/pi/
 	
-	echo "Installing Apache..." >&3
-	apt-get -q --assume-yes install libavahi-compat-libdnssd-dev
+	echo "Installing Apache server and Avahi-Bonjour compatibility layer..." >&3
 	apt-get -q --assume-yes install apache2
+	apt-get -q --assume-yes install libavahi-compat-libdnssd-dev
+	
 	echo "Installing Node modules..." >&3
-	npm install -g npm@4.6.1
 	npm install mdns
 	npm install request
 	npm install websocket
@@ -107,27 +107,15 @@ base)
 	chmod 755 /etc/init.d/beocreate-4ch
 	systemctl enable beocreate-4ch
 	
-	echo "Installing SigmaDSP daemon and reset sequence..." >&3
-	apt-get -q --assume-yes install cmake
-	apt-get -q --assume-yes install wiringpi
-	if [ ! -d  /home/pi/dsp/ ]; then
-		mkdir /home/pi/dsp
-	fi
-	if [ ! -d  /home/pi/bin/ ]; then
-		mkdir /home/pi/bin
-	fi
-	cp /home/pi/create/sigmareset /home/pi/bin/sigmareset
-	chmod 755 /home/pi/bin/sigmareset
-	cd /home/pi/create/SigmaTcpDaemon || exit
-	cmake .
-	make
-	
 	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..." >&3
 	cd /home/pi/ || exit
 	git clone https://github.com/hifiberry/beocreate-tools.git
 	cd /home/pi/beocreate-tools || exit
 	./enable-hifiberry
 	./enable-spi
+	
+	echo "Installing HiFiBerry DSPToolkit and SigmaTCPServer..." >&3
+	bash <(curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit)
 	
 	echo "Installing BeoSetup hotspot..." >&3
 	cd /etc/wpa_supplicant/ || exit
@@ -161,6 +149,7 @@ mixer = Master" > /etc/bt_speaker/config.ini
 
 	echo "Renaming system to beocreate-4ch-blank.local..." >&3
 	raspi-config nonint do_hostname beocreate-4ch-blank
+	hostnamectl set-hostname --pretty "BeoCreate 4-Channel Amplifier"
 	
 	# stop catching ^c at this point
 	trap '' INT
@@ -180,9 +169,9 @@ if (( $# != 2 ))
 		apt-get -q --assume-yes upgrade
 		apt-get -q --assume-yes install portaudio19-dev
 		cd /tmp || exit
-		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
-		unzip spotifyd-2018-05-29-armv6.zip
-		rm spotifyd-2018-05-29-armv6.zip
+		wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.3/spotifyd-2018-10-21-armv6.zip
+		unzip spotifyd-2018-10-21-armv6.zip
+		rm spotifyd-2018-10-21-armv6.zip
 		mkdir -p /opt/spotifyd
 		mv spotifyd /opt/spotifyd
 

@@ -110,6 +110,8 @@ function transitionToScreen(screen) {
 	if (screen != currentScreen) {
 		previousScreen = currentScreen;
 		currentScreen = screen;
+		
+		sendToProduct({header: "navigation", content: {currentScreen: currentScreen}});
 
 		psIndex = screenFlow.indexOf(previousScreen);
 		nsIndex = screenFlow.indexOf(currentScreen);
@@ -558,43 +560,18 @@ function processReceivedData(data) {
 					}
 				}
 			}
-			$("#adjustments-disabled-note").removeClass("hidden");
-			$("#custom-tuning-warning").addClass("hidden");
-			if (data.content.volumeLimit != null) {
-				setVolumeLimit(data.content.volumeLimit, true);	
-				$("#vol-limit").removeClass("disabled");
-				$("#custom-tuning-warning").removeClass("hidden");
-				$("#adjustments-disabled-note").addClass("hidden");
-			} else {
-				$("#vol-limit").addClass("disabled");
+			
+			if (data.content.systemVersion) {
+				$(".system-version").text("Release "+data.content.systemVersion);
+				systemVersion = data.content.systemVersion;
 			}
-			if (data.content.chSelect != null) {
-				$(".channel-select-item").removeClass("selected");
-				$("#channel-select-item-"+data.content.chSelect).addClass("selected");
-				$("#ch-select").removeClass("disabled");
-				$("#custom-tuning-warning").removeClass("hidden");
-				$("#adjustments-disabled-note").addClass("hidden");
-			} else {
-				$(".channel-select-item").removeClass("selected");
-				$("#ch-select").addClass("disabled");
-			}
-			if (data.content.crossoverBands == 3) {
-				$(".3-way-hide").addClass("hidden");
-				$("#custom-tuning-warning").removeClass("hidden");
-				$("#adjustments-disabled-note").addClass("hidden");
-			} else {
-				$(".3-way-hide").removeClass("hidden");
-			}
+			
+			setupSoundAdjustments(data);
 			
 			if (data.content.softwareUpdate) {
 				$("#software-update-menu-item").removeClass("hidden");
 			} else {
 				$("#software-update-menu-item").addClass("hidden");
-			}
-			
-			if (data.content.systemVersion) {
-				$(".system-version").text("Release "+data.content.systemVersion);
-				systemVersion = data.content.systemVersion;
 			}
 			
 			if (data.content.voicePrompts != undefined) {
@@ -1054,6 +1031,49 @@ function selectSoundProfile(index) {
 	}
 }
 
+
+function setupSoundAdjustments(data) {
+	if (data.content.operation && data.content.operation == "checking") {
+		$("#vol-limit").addClass("disabled");
+		$("#ch-select").addClass("disabled");
+	} else {
+		if (systemVersion > 4) {
+			$("#adjustments-disabled-note p.v5").removeClass("hidden");
+			$("#adjustments-disabled-note p.v4").addClass("hidden");
+		} else {
+			$("#adjustments-disabled-note p.v5").elseClass("hidden");
+			$("#adjustments-disabled-note p.v4").removeClass("hidden");
+		}
+		$("#adjustments-disabled-note").removeClass("hidden");
+		$("#custom-tuning-warning").addClass("hidden");
+		if (data.content.volumeLimit != null) {
+			setVolumeLimit(data.content.volumeLimit, true);	
+			$("#vol-limit").removeClass("disabled");
+			if (systemVersion > 4) $("#custom-tuning-warning").removeClass("hidden");
+			$("#adjustments-disabled-note").addClass("hidden");
+		} else {
+			$("#vol-limit").addClass("disabled");
+		}
+		if (data.content.chSelect != null) {
+			$(".channel-select-item").removeClass("selected");
+			$("#channel-select-item-"+data.content.chSelect).addClass("selected");
+			$("#ch-select").removeClass("disabled");
+			if (systemVersion > 4) $("#custom-tuning-warning").removeClass("hidden");
+			$("#adjustments-disabled-note").addClass("hidden");
+		} else {
+			$(".channel-select-item").removeClass("selected");
+			$("#ch-select").addClass("disabled");
+		}
+		if (data.content.crossoverBands == 3) {
+			$(".3-way-hide").addClass("hidden");
+			if (systemVersion > 4) $("#custom-tuning-warning").removeClass("hidden");
+			$("#adjustments-disabled-note").addClass("hidden");
+		} else {
+			$(".3-way-hide").removeClass("hidden");
+		}
+	}
+}
+
 function selectChannel(channel) {
 	$(".channel-select-item").removeClass("selected");
 	$("#channel-select-item-"+channel).addClass("selected");
@@ -1304,11 +1324,17 @@ function help(topic) {
 }
 
 function generateHostname(readableName) {
-	n = readableName.toLowerCase(); // Convert to lower case
-	n = removeDiacritics(n); // Remove diacritics
-	n = n.replace(" ", "-"); // Replace spaces with hyphens
-	n = n.replace(/[^\w\-]|_/g, ""); // Remove non-alphanumeric characters except hyphens
-	n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+	if (systemVersion > 4) {
+		n = readableName.replace(" ", ""); // Remove spaces
+		n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
+		n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+	else {
+		n = readableName.toLowerCase(); // Convert to lower case
+		n = removeDiacritics(n); // Remove diacritics
+		n = n.replace(" ", "-"); // Replace spaces with hyphens
+		n = n.replace(/[^\w\-]|_/g, ""); // Remove non-alphanumeric characters except hyphens
+		n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+	}
 	return n; //+".local"; // Add .local
 }
 

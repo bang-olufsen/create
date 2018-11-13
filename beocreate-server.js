@@ -77,7 +77,7 @@ if (fs.existsSync(beoConfigFile)) {
 			"register": null
 		},
 		"crossoverBands": 1,
-		"checksum": null;
+		"checksum": null
 	};
 	saveConfiguration();
 }
@@ -104,48 +104,54 @@ piSystem.getHostname(function(names) {
 	productName = names.uiName;
 	hostname = names.static;
 	beoCom.start({name: productName}); // Opens the server up for remotes to connect.
-};
+});
 var flashed = beoconfig.setup.flashed;
 var sourceList = [];
 
 var customSoundProfile = false;
-
+var dspInitialised = false;
 
 beoDSP.connectDSP(function(success) {  
 	if (success) {
 		for (var i = 0; i < 3; i++) {
 			// Before the phantom write issue is fixed in the Sigma DSP Daemon, this will read from a register three times to get past them.
 			beoDSP.readDSP(16, function(response) { 
+				if (!dspInitialised) {
+					dspInitialised = true;
+					if (beoconfig.checksum != null) {
+						compareDSPChecksum(beoconfig.checksum, function(result) {
+							if (result == true) {
+								console.log("DSP checksum matches, loading sound adjustments...");
+								dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});
+								dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});
+							} else {
+								console.log("DSP checksum mismatch. Sound adjustments disabled.");
+								dsp({operation: "enableCustom"});
+							}
+						});
+					} else {
+						console.log("No DSP checksum on file. Sound adjustments disabled.");
+						manageSoundProfile({operation: "enableCustom"});
+					}
 			
+					setTimeout(function() {
+						// Set volume at startup (DISABLED, POTENTIALLY DANGEROUS to do here if the server is restarted when something else is playing. This is still found in the old startup script.)
+						/*command = "amixer set Master 90%";
+						child_process.exec(command, function(error, stdout, stderr) {
+							if (error) {
+								//callback(null, error);
+							} else {*/
+								// Play startup sound.
+								startupSound = new Sound();
+								startupSound.play("/home/pi/Music/startup.wav");
+							/*}
+						});*/
+						
+					}, 2000);
+				}
 			}, true);
 		}
-		if (beoconfig.checksum != null) {
-			compareDSPChecksum(beoconfig.checksum, function(result) {
-				if (result == true) {
-					dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});
-					dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});
-				} else {
-					dsp({operation: "enableCustom"});
-				}
-			}
-		} else {
-			manageSoundProfile({operation: "enableCustom"});
-		}
-
-		setTimeout(function() {
-			// Set volume at startup (DISABLED, POTENTIALLY DANGEROUS to do here if the server is restarted when something else is playing. This is still found in the old startup script.)
-			/*command = "amixer set Master 90%";
-			child_process.exec(command, function(error, stdout, stderr) {
-				if (error) {
-					//callback(null, error);
-				} else {*/
-					// Play startup sound.
-					startupSound = new Sound();
-					startupSound.play("/home/pi/Music/startup.wav");
-				/*}
-			});*/
-			
-		}, 2000);
+		
 	}
 });
 
@@ -268,7 +274,7 @@ function navigation(content) {
 						} else {
 							dsp({operation: "enableCustom"});
 						}
-					}
+					});
 				} else {
 					manageSoundProfile({operation: "enableCustom"});
 				}

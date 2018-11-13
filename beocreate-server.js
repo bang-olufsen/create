@@ -37,6 +37,7 @@ var fs = require('fs');
 var xmlStream = require('xml-stream'); // for parsing DSP XMLs
 var http = require('http');
 var removeDiacritics = require('diacritics').remove;
+var child_process = require('child_process');
 
 var beoCom = communicator();
 

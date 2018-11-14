@@ -294,7 +294,7 @@ function flashEEPROM(filePath, callback) {
 	flashCallback = callback;
 	//EEPROMRequest = new Buffer(createSigmaEEPROMRequest(filePath))
 	//dspClient.write(EEPROMRequest);
-	command = "dsptoolkit install-profile"+filePath;
+	command = "dsptoolkit install-profile "+filePath;
 	child_process.exec(command, function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);

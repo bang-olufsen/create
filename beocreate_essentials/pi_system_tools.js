@@ -38,13 +38,13 @@ function getHostname(callback) {
 		if (error) {
 			callback(null, error);
 		} else {
-			uiName = stdout;
+			uiName = stdout.slice(0,-1);
 			command = "hostnamectl --static";
 			child_process.exec(command, function(error, stdout, stderr) {
 				if (error) {
 					callback(null, error);
 				} else {
-					staticName = stdout;
+					staticName = stdout.slice(0,-1);
 					callback({ui: uiName, static: staticName});
 				}
 			});
@@ -63,13 +63,13 @@ function setHostname(productName, callback) {
 				if (error) {
 					callback(null, error);
 				} else {
-					uiName = stdout;
+					uiName = stdout.slice(0,-1);
 					command = "hostnamectl --static";
 					child_process.exec(command, function(error, stdout, stderr) {
 						if (error) {
 							callback(null, error);
 						} else {
-							staticName = stdout;
+							staticName = stdout.slice(0,-1);
 							// Change name in /etc/hosts
 							hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
 							for (var i = 0; i < hostsFile.length; i++) {

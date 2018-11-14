@@ -101,7 +101,8 @@ var soundProfile = beoconfig.setup.profile;
 var hostname = "";
 var productName = "";
 piSystem.getHostname(function(names) {
-	productName = names.uiName;
+	//console.log(names);
+	productName = names.ui;
 	hostname = names.static;
 	beoCom.start({name: productName}); // Opens the server up for remotes to connect.
 });
@@ -118,21 +119,7 @@ beoDSP.connectDSP(function(success) {
 			beoDSP.readDSP(16, function(response) { 
 				if (!dspInitialised) {
 					dspInitialised = true;
-					if (beoconfig.checksum != null) {
-						compareDSPChecksum(beoconfig.checksum, function(result) {
-							if (result == true) {
-								console.log("DSP checksum matches, loading sound adjustments...");
-								dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});
-								dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});
-							} else {
-								console.log("DSP checksum mismatch. Sound adjustments disabled.");
-								dsp({operation: "enableCustom"});
-							}
-						});
-					} else {
-						console.log("No DSP checksum on file. Sound adjustments disabled.");
-						manageSoundProfile({operation: "enableCustom"});
-					}
+					initialiseSoundAdjustments();
 			
 					setTimeout(function() {
 						// Set volume at startup (DISABLED, POTENTIALLY DANGEROUS to do here if the server is restarted when something else is playing. This is still found in the old startup script.)
@@ -249,10 +236,11 @@ function navigation(content) {
 			case "sound-adjustments":
 			case "custom-tuning":
 				beoCom.send({header: "soundAdjustments", content: {status: "checking"}});
+				//console.log("Checking sound profile status...");
 				if (beoconfig.checksum != null) {
 					compareDSPChecksum(beoconfig.checksum, function(result) {
 						if (result == true) {
-							
+							//console.log("Checksum matches.");
 							if (beoconfig.volumeLimit.register != null && !customSoundProfile) {
 								volLimit = beoconfig.volumeLimit.value;
 							} else {
@@ -272,7 +260,8 @@ function navigation(content) {
 							beoCom.send({header: "soundAdjustments", content: {status: "ready", model: soundProfile, volumeLimit: volLimit, chSelect: chSelect, balance: balance, crossoverBands: beoconfig.crossoverBands}});
 							
 						} else {
-							dsp({operation: "enableCustom"});
+							//console.log("Checksum mismatch.");
+							manageSoundProfile({operation: "enableCustom"});
 						}
 					});
 				} else {
@@ -316,7 +305,7 @@ function manageSetup(content) {
 					piSystem.setHostname(productName, function(success, names) {
 						if (success == true) { 
 							console.log("Succesfully set hostname.");
-							beoCom.send({header: "systemName", content: {name: names.uiName, hostname: names.static, model: soundProfile}});
+							beoCom.send({header: "systemName", content: {name: names.ui, hostname: names.static, model: soundProfile}});
 							piSystem.power("reboot");
 						} else {
 							console.log("Error setting hostname.");	
@@ -617,6 +606,24 @@ function manageSoundProfile(content) {
 	}
 }
 
+function initialiseSoundAdjustments() {
+	if (beoconfig.checksum != null) {
+		compareDSPChecksum(beoconfig.checksum, function(result) {
+			if (result == true) {
+				console.log("DSP checksum matches, loading sound adjustments...");
+				dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});
+				dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});
+			} else {
+				console.log("DSP checksum mismatch. Sound adjustments disabled.");
+				dsp({operation: "enableCustom"});
+			}
+		});
+	} else {
+		console.log("No DSP checksum on file. Sound adjustments disabled.");
+		manageSoundProfile({operation: "enableCustom"});
+	}
+}
+
 function compareDSPChecksum(checksum, callback) {
 	beoDSP.getChecksum(function(result) {
 		if (result != null) {
@@ -653,7 +660,7 @@ function flashSoundProfileWithName(stage, fileName, callback) {
 		case 2:
 			beoCom.send({header: "soundProfile", content: {message: "flashing"}});
 			//fs.copyFileSync(dspDownloadLocation+fileName+".xml", dspDownloadLocation+"current.xml"); // Make a copy of the sound profile as "current.xml", so that external software can find it easily.
-			beoDSP.flashEEPROM(dspDownloadLocation+fileName+".xml", function(response) {
+			beoDSP.flashEEPROM(dspDownloadLocation+fileName+".xml", function(response, error) {
 				if (response == 1) { 
 					soundProfile = tempSoundProfile;
 					beoconfig.setup.profile = soundProfile;
@@ -667,8 +674,8 @@ function flashSoundProfileWithName(stage, fileName, callback) {
 						beoconfig.chSelect.value = "mono";
 					}
 					setTimeout(function() {
-						dsp({operation: "setVolumeLimit", limit: beoconfig.volumeLimit.value});
-						dsp({operation: "setChSelect", ch: beoconfig.chSelect.value});	
+						customSoundProfile = false;
+						initialiseSoundAdjustments();
 					}, 1000);
 					console.log("Succesfully flashed the DSP.");
 					beoconfig.setup.flashed = true;
@@ -676,7 +683,7 @@ function flashSoundProfileWithName(stage, fileName, callback) {
 					beoCom.send({header: "soundProfile", content: {message: "done", newModel: soundProfile}});
 					if (callback) callback(true);
 				} else {
-					console.log("Error flashing the DSP.");
+					console.log("Error flashing the DSP: "+error);
 					beoCom.send({header: "soundProfile", content: {message: "flashError"}});
 					if (callback) callback(false);
 				}

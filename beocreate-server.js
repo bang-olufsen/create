@@ -34,6 +34,7 @@ var wifi = require("./beocreate_essentials/wifi_setup");
 var beoSources = require("./beocreate_essentials/sources");
 var Sound = require("aplay");
 var fs = require('fs');
+var util = require('util');
 var xmlStream = require('xml-stream'); // for parsing DSP XMLs
 var http = require('http');
 var removeDiacritics = require('diacritics').remove;
@@ -421,20 +422,26 @@ function getSources() {
 		}
 	});
 }
-
+var setupLog = undefined;
+function logSetup(string) {
+	if (!setupLog) {
+		setupLog = fs.createWriteStream('/home/pi/setup.log', {flags : 'w'});
+	}
+	console.log(string);
+	setupLog.write(util.format(string) + '\n');
+}
 //var automatedSetupStep = 0;
 function doAutomatedSetup(step) {
 	switch (step) {
 		case 1:
-			
 			beoCom.send({header: "bottomProgress", content: "Renaming system..."});
 			piSystem.setHostname(productName, function(success, names) {
 				if (success == true) {
-					console.log("Succesfully set hostname.");
+					logSetup("Succesfully set hostname.");
 					beoCom.send({header: "systemName", content: {name: names.ui, hostname: names.static}});
 					doAutomatedSetup(2);
 				} else {
-					console.log("Error setting hostname.");
+					logSetup("Error setting hostname.");
 				}
 			});
 			break;
@@ -443,14 +450,14 @@ function doAutomatedSetup(step) {
 			if (wifi.mode()) {
 				wifi.mode("normal", function(mode) {
 					if (mode == "normal") { 
-						console.log("Succesfully set Wi-Fi to normal mode.");
+						logSetup("Succesfully set Wi-Fi to normal mode.");
 						doAutomatedSetup(3);
 					} else {
-						console.log("Error setting Wi-Fi to normal mode.");	
+						logSetup("Error setting Wi-Fi to normal mode.");	
 					}
 				});
 			} else {
-				console.log("No Wi-Fi, skipping to next step.");	
+				logSetup("No Wi-Fi, skipping to next step.");	
 				doAutomatedSetup(3);
 			}
 			
@@ -465,22 +472,24 @@ function doAutomatedSetup(step) {
 					doAutomatedSetup(7);
 				}
 			});*/
+				logSetup("Skipping SPI setup.");
 				doAutomatedSetup(4);
 			break;
 		case 4:
 			beoCom.send({header: "bottomProgress", content: "Connecting to Wi-Fi..."});
 			wifi.waitForNetwork(function(connected) {
 				if (connected == true) { 
-					console.log("Network connection detected.");
+					logSetup("Network connection detected.");
 					doAutomatedSetup(4.5);
 				} else {
-					console.log("Network connection not detected, switching back to hotspot.");
+					logSetup("Network connection not detected, switching back to hotspot.");
+					logSetup("Stopping setup.");
 					if (wifi.mode()) {	
 						wifi.mode("hotspot", function(mode) {
 							if (mode == "hotspot") { 
-								console.log("Succesfully set Wi-Fi to hotspot mode.");
+								logSetup("Succesfully set Wi-Fi to hotspot mode.");
 							} else {
-								console.log("Error setting Wi-Fi to hotspot mode.");	
+								logSetup("Error setting Wi-Fi to hotspot mode.");	
 							}
 						});
 					}
@@ -494,8 +503,8 @@ function doAutomatedSetup(step) {
 					console.log("Bluetooth audio receiver installed.");*/
 					if (sourceList.indexOf("bluetooth") == -1) {
 						sourceList.push("bluetooth");
-						beoconfig.sources = sourceList;
-						saveConfiguration();
+						//beoconfig.sources = sourceList;
+						//saveConfiguration();
 					}
 					doAutomatedSetup(5);
 					/*} else {
@@ -522,12 +531,13 @@ function doAutomatedSetup(step) {
 					doAutomatedSetup(7);
 				}
 			});*/
+			logSetup("Installing DSP program...");
 			beoCom.send({header: "bottomProgress", content: "Sound profile..."});
 			flashSoundProfileWithName(1, tempSoundProfile, function(response) {
 				if (response == true) {
 					doAutomatedSetup(7);
 				} else {
-					console.log("Error flashing the DSP.");
+					logSetup("Error flashing the DSP.");
 					beoCom.send({header: "plaintext", content: "Couldn't flash DSP."});
 					doAutomatedSetup(7);
 				}
@@ -536,12 +546,12 @@ function doAutomatedSetup(step) {
 		case 6:
 			beoDSP.flashEEPROM(dspDownloadLocation+soundProfile+".xml", function(response) {
 				if (response == 1) { 
-					console.log("Succesfully flashed the DSP.");
+					logSetup("Succesfully flashed the DSP.");
 					beoconfig.setup.flashed = true;
 					saveConfiguration();
 					doAutomatedSetup(7);
 				} else {
-					console.log("Error flashing the DSP.");
+					logSetup("Error flashing the DSP.");
 					doAutomatedSetup(7);
 				}
 			});
@@ -549,10 +559,10 @@ function doAutomatedSetup(step) {
 		case 7:
 			piSystem.expandFilesystem(function(response) {
 				if (response == true) { 
-					console.log("File system was expanded");
+					logSetup("File system was expanded");
 					doAutomatedSetup(8);
 				} else {
-					console.log("File system already expanded.");
+					logSetup("File system already expanded.");
 					doAutomatedSetup(8);
 				}
 			});
@@ -560,13 +570,14 @@ function doAutomatedSetup(step) {
 		case 8:
 			beoconfig.setup.step = null; // Flag setup as completed
 			saveConfiguration();
+			logSetup("Setup complete. Restarting now.");
 			beoCom.send({header: "bottomProgress", content: "Restarting..."});
 			piSystem.power("reboot");
 			break;
 	}
-	// Turn off hotspot to connect to the internet
-	
 	// Set hostname.
+	
+	// Turn off hotspot to connect to the internet
 	
 	// Enable SPI bus.
 	

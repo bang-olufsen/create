@@ -39,7 +39,7 @@ start)
 
 	# Start the remote control server:
 	echo "Starting remote control server..."
-	forever start -s /home/pi/beocreate-server.js
+	forever start /home/pi/beocreate-server.js
 
 ;;
 *)

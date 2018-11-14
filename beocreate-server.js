@@ -220,7 +220,7 @@ function handshake(content) {
 			beoconfig.setup.voicePrompts = false;
 		}
 		if (setupStep != null) {
-			beoCom.send({header: "setup", content: {status: setupStep, wifiMode: wifi.mode(), hostname: beoconfig.setup.hostname}});
+			beoCom.send({header: "setup", content: {status: setupStep, wifiMode: wifi.mode(), hostname: beoconfig.setup.hostname, serverVersion: releaseVersion}});
 		} else {
 			if (beoconfig.volumeLimit.register != null && !customSoundProfile) {
 				volLimit = beoconfig.volumeLimit.value;

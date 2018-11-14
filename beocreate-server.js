@@ -442,12 +442,13 @@ function doAutomatedSetup(step) {
 			break;
 		case 2:
 			beoCom.send({header: "bottomProgress", content: "Renaming system..."});
-			piSystem.setHostname(productName, function(success) {
+			piSystem.setHostname(productName, function(success, names) {
 				if (success == true) {
 					console.log("Succesfully set hostname.");
+					beoCom.send({header: "systemName", content: {name: names.ui, hostname: names.static}});
 					doAutomatedSetup(3);
 				} else {
-					console.log("Error setting hostname.");	
+					console.log("Error setting hostname.");
 				}
 			});
 			break;

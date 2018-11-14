@@ -45,6 +45,7 @@ function getHostname(callback) {
 					callback(null, error);
 				} else {
 					staticName = stdout.slice(0,-1);
+					if (uiName == "") uiName = staticName;
 					callback({ui: uiName, static: staticName});
 				}
 			});
@@ -53,33 +54,45 @@ function getHostname(callback) {
 }
 
 function setHostname(productName, callback) {
-	command = "hostnamectl set-hostname \""+productName+"\"";
+	command = "hostnamectl set-hostname --pretty \""+productName+"\"";
 	child_process.exec(command, function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);
 		} else {
-			command = "hostnamectl --pretty";
+			n = productName.replace(/ /g, "-"); // Replace spaces with hyphens
+			n = n.replace(/\./g, "-"); // Replace periods with hyphens
+			n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
+			n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+			command = "hostnamectl set-hostname --static "+n;
 			child_process.exec(command, function(error, stdout, stderr) {
 				if (error) {
 					callback(null, error);
 				} else {
-					uiName = stdout.slice(0,-1);
-					command = "hostnamectl --static";
+					command = "hostnamectl --pretty";
 					child_process.exec(command, function(error, stdout, stderr) {
 						if (error) {
 							callback(null, error);
 						} else {
-							staticName = stdout.slice(0,-1);
-							// Change name in /etc/hosts
-							hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
-							for (var i = 0; i < hostsFile.length; i++) {
-								if (hostsFile[i].indexOf("127.0.1.1") != -1) {
-									hostsFile[i] = "127.0.1.1       "+staticName;
+							uiName = stdout.slice(0,-1);
+							command = "hostnamectl --static";
+							child_process.exec(command, function(error, stdout, stderr) {
+								if (error) {
+									callback(null, error);
+								} else {
+									staticName = stdout.slice(0,-1);
+									if (uiName == "") uiName = staticName;
+									// Change name in /etc/hosts
+									hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
+									for (var i = 0; i < hostsFile.length; i++) {
+										if (hostsFile[i].indexOf("127.0.1.1") != -1) {
+											hostsFile[i] = "127.0.1.1       "+staticName;
+										}
+									}
+									hostsText = hostsFile.join("\n");
+									fs.writeFileSync("/etc/hosts", hostsText);
+									callback(true, {ui: uiName, static: staticName});
 								}
-							}
-							hostsText = hostsFile.join("\n");
-							fs.writeFileSync("/etc/hosts", hostsText);
-							callback(true, {ui: uiName, static: staticName});
+							});
 						}
 					});
 				}
@@ -87,6 +100,7 @@ function setHostname(productName, callback) {
 		}
 	});
 }
+
 
 function ssh(trueMode, callback) {
 	if (trueMode != null) {

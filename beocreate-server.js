@@ -618,12 +618,9 @@ function manageSoundProfile(content) {
 }
 
 function compareDSPChecksum(checksum, callback) {
-	command = "dsptoolkit get-checksum";
-	child_process.exec(command, function(error, stdout, stderr) {
-		if (error) {
-			callback(false, error);
-		} else {
-			if (stdout.indexOf(checksum) != -1) {
+	beoDSP.getChecksum(function(result) {
+		if (result != null) {
+			if (result.indexOf(checksum) != -1) {
 				callback(true);
 			} else {
 				callback(false);

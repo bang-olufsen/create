@@ -41,6 +41,7 @@ var dsp = module.exports = {
 	readDictionary: readDictionary,
 	connectDSP: connectDSP,
 	disconnectDSP: disconnectDSP,
+	getChecksum: getChecksum,
 	writeDSP: writeDSP,
 	readDSP: readDSP,
 	flashEEPROM: flashEEPROM,
@@ -301,7 +302,7 @@ function flashEEPROM(filePath, callback) {
 			if (stdout.indexOf(" installed") != -1) {
 				flashCallback(true);
 				flashCallback = null;
-			else if (stdout.indexOf("Failed ") != -1) {
+			} else if (stdout.indexOf("Failed ") != -1) {
 				flashCallback(false);
 				flashCallback = null;
 			}
@@ -314,13 +315,14 @@ function getChecksum(callback) {
 	command = "dsptoolkit get-checksum";
 	child_process.exec(command, function(error, stdout, stderr) {
 		if (error) {
-			callback(null, error);
+			checksumCallback(null);
+			checksumCallback = null;
 		} else {
 			if (stdout.indexOf("None") != -1) {
-				checksumCallback(false));
+				checksumCallback(null);
 				checksumCallback = null;
-			else {
-				callback(flashCallback(stdout));
+			} else {
+				checksumCallback(stdout);
 				checksumCallback = null;
 			}
 		}

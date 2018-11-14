@@ -74,7 +74,7 @@ function setHostname(productName, callback) {
 							hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
 							for (var i = 0; i < hostsFile.length; i++) {
 								if (hostsFile[i].indexOf("127.0.1.1") != -1) {
-									hostsFile[i] = "127.0.1.1       "+staticname;
+									hostsFile[i] = "127.0.1.1       "+staticName;
 								}
 							}
 							hostsText = hostsFile.join("\n");

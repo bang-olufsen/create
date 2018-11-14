@@ -426,31 +426,34 @@ function getSources() {
 function doAutomatedSetup(step) {
 	switch (step) {
 		case 1:
+			
+			beoCom.send({header: "bottomProgress", content: "Renaming system..."});
+			piSystem.setHostname(productName, function(success, names) {
+				if (success == true) {
+					console.log("Succesfully set hostname.");
+					beoCom.send({header: "systemName", content: {name: names.ui, hostname: names.static}});
+					doAutomatedSetup(2);
+				} else {
+					console.log("Error setting hostname.");
+				}
+			});
+			break;
+		case 2:
+			
 			if (wifi.mode()) {
 				wifi.mode("normal", function(mode) {
 					if (mode == "normal") { 
 						console.log("Succesfully set Wi-Fi to normal mode.");
-						doAutomatedSetup(2);
+						doAutomatedSetup(3);
 					} else {
 						console.log("Error setting Wi-Fi to normal mode.");	
 					}
 				});
 			} else {
 				console.log("No Wi-Fi, skipping to next step.");	
-				doAutomatedSetup(2);
+				doAutomatedSetup(3);
 			}
-			break;
-		case 2:
-			beoCom.send({header: "bottomProgress", content: "Renaming system..."});
-			piSystem.setHostname(productName, function(success, names) {
-				if (success == true) {
-					console.log("Succesfully set hostname.");
-					beoCom.send({header: "systemName", content: {name: names.ui, hostname: names.static}});
-					doAutomatedSetup(3);
-				} else {
-					console.log("Error setting hostname.");
-				}
-			});
+			
 			break;
 		case 3:
 			/*piSystem.setSPI(true, function(success) {

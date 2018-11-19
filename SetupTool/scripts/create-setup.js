@@ -17,12 +17,13 @@ SOFTWARE.*/
 
 // BANG & OLUFSEN
 // BeoCreate 4-Channel Amplifier Setup
-// Release 3
+// Release 5
 
 var os;
 var screenFlow = ["welcome", "setup-start", "setup-wifi", "setup-profile", "setup-name", "setup-finish", "overview", "sound-adjustments", "name", "wifi", "profile", "custom-tuning", "guide", "sources", "ssh", "connect-to", "software-update", "about"]; // Indicates where different screens exist spatially within the application.
 var sourceNames = {"bluetooth": "Bluetooth", "shairport-sync": "Shairport-sync", "spotifyd": "Spotifyd"};
 var systemVersion = 0;
+
 window.addEventListener('load', function() {
 	
 	// Enables fastclick.js so that buttons respond immediately.
@@ -235,7 +236,7 @@ function addOrUpdateProduct(hostname, details, update, connectNow) {
 	console.log("addOrUpdateProduct() called with hostname: "+hostname);
 	existingProduct = null;
 	for (var i = 0; i < savedProducts.length; i++) {
-		if (savedProducts[i].hostname == hostname) {
+		if (savedProducts[i].hostname.toLowerCase() == hostname.toLowerCase()) {
 			existingProduct = i;
 		}
 	}
@@ -561,9 +562,11 @@ function processReceivedData(data) {
 				}
 			}
 			
-			if (data.content.systemVersion) {
-				$(".system-version").text("Release "+data.content.systemVersion);
-				systemVersion = data.content.systemVersion;
+			if (data.content.serverVersion) {
+				$(".system-version").text("Release "+data.content.serverVersion);
+				systemVersion = data.content.serverVersion;
+			} else {
+				systemVersion = 0;
 			}
 			
 			setupSoundAdjustments(data);
@@ -604,6 +607,13 @@ function processReceivedData(data) {
 					doSetup(data.content.status);
 				}
 			}
+			if (data.content.serverVersion) {
+				$(".system-version").text("Release "+data.content.serverVersion);
+				systemVersion = data.content.serverVersion;
+			} else {
+				systemVersion = 0;
+			}
+			
 			if (data.content.allowStep) {
 				allowAdvancingToStep = data.content.allowStep;
 				checkIfAllowsNextStep();
@@ -774,6 +784,9 @@ function processReceivedData(data) {
 					$("#adjustments-disabled-note").removeClass("hidden");
 				}
 			}
+			break;
+		case "soundAdjustments":
+			setupSoundAdjustments(data);
 			break;
 		case "ssh":
 			if (data.content.enabled == 1) {
@@ -1000,7 +1013,7 @@ function listSoundProfiles() {
 			extraClasses = "";
 			if (selectedProfile == soundProfiles.models[i].file) extraClasses = " selected";
 			if (soundProfiles.models[i].hidden) extraClasses+= " hidden";
-			$("."+container).append('<div class="sound-profile-item menu-item sound-profile-item-' + soundProfiles.models[i].file + extraClasses + ' icon large left radio" onclick="selectSoundProfile('+i+');"><div class="one-row"><img class="menu-icon" src="images/speakers/'+soundProfiles.models[i].file+'.svg"><div class="unified-label-value"><div class="menu-label">' + soundProfiles.models[i].name + '</div><div class="menu-value">' + soundProfiles.models[i].description + '</div></div><img src="symbols-thin-black/checkmark.svg" class="menu-icon right checkmark"></div></div>');
+			$("."+container).append('<div class="sound-profile-item menu-item sound-profile-item-' + soundProfiles.models[i].file + extraClasses + ' icon large left radio" onclick="selectSoundProfile('+i+');"><div class="one-row"><img class="menu-icon large" src="images/speakers/'+soundProfiles.models[i].file+'.svg"><div class="unified-label-value"><div class="menu-label">' + soundProfiles.models[i].name + '</div><div class="menu-value">' + soundProfiles.models[i].description + '</div></div><img src="symbols-thin-black/checkmark.svg" class="menu-icon right checkmark"></div></div>');
 	}
 	
 }
@@ -1033,7 +1046,7 @@ function selectSoundProfile(index) {
 
 
 function setupSoundAdjustments(data) {
-	if (data.content.operation && data.content.operation == "checking") {
+	if (data.content.status && data.content.status == "checking") {
 		$("#vol-limit").addClass("disabled");
 		$("#ch-select").addClass("disabled");
 	} else {
@@ -1041,7 +1054,7 @@ function setupSoundAdjustments(data) {
 			$("#adjustments-disabled-note p.v5").removeClass("hidden");
 			$("#adjustments-disabled-note p.v4").addClass("hidden");
 		} else {
-			$("#adjustments-disabled-note p.v5").elseClass("hidden");
+			$("#adjustments-disabled-note p.v5").addClass("hidden");
 			$("#adjustments-disabled-note p.v4").removeClass("hidden");
 		}
 		$("#adjustments-disabled-note").removeClass("hidden");
@@ -1049,7 +1062,7 @@ function setupSoundAdjustments(data) {
 		if (data.content.volumeLimit != null) {
 			setVolumeLimit(data.content.volumeLimit, true);	
 			$("#vol-limit").removeClass("disabled");
-			if (systemVersion > 4) $("#custom-tuning-warning").removeClass("hidden");
+			if (systemVersion < 5) $("#custom-tuning-warning").removeClass("hidden");
 			$("#adjustments-disabled-note").addClass("hidden");
 		} else {
 			$("#vol-limit").addClass("disabled");
@@ -1058,7 +1071,7 @@ function setupSoundAdjustments(data) {
 			$(".channel-select-item").removeClass("selected");
 			$("#channel-select-item-"+data.content.chSelect).addClass("selected");
 			$("#ch-select").removeClass("disabled");
-			if (systemVersion > 4) $("#custom-tuning-warning").removeClass("hidden");
+			if (systemVersion < 5) $("#custom-tuning-warning").removeClass("hidden");
 			$("#adjustments-disabled-note").addClass("hidden");
 		} else {
 			$(".channel-select-item").removeClass("selected");
@@ -1066,7 +1079,7 @@ function setupSoundAdjustments(data) {
 		}
 		if (data.content.crossoverBands == 3) {
 			$(".3-way-hide").addClass("hidden");
-			if (systemVersion > 4) $("#custom-tuning-warning").removeClass("hidden");
+			if (systemVersion < 5) $("#custom-tuning-warning").removeClass("hidden");
 			$("#adjustments-disabled-note").addClass("hidden");
 		} else {
 			$(".3-way-hide").removeClass("hidden");
@@ -1182,6 +1195,7 @@ $('input').bind('input propertychange', function() {
 	
 	if ($(this).attr("class") == "text-input-system-name") {
 		generatedHostname = generateHostname($(this).val());
+		//$(".text-input-system-name").val($(this).val());
 		systemName = $(this).val();
 		$(".system-name-input-hostname").text(generatedHostname+".local");
 		if ($(this).val()) {
@@ -1198,7 +1212,8 @@ $('input').bind('input propertychange', function() {
 });
 	
 function saveSystemName(setupStep) {
-	$(".text-input-system-name").val("");
+	//systemName = $(".text-input-system-name").val();
+	//generatedHostname = generateHostname(systemName);
 	if (!setupStep) {
 		if (currentSetupStep == 3) {
 			if (allowNext) {
@@ -1216,6 +1231,8 @@ function saveSystemName(setupStep) {
 			sendToProduct({header: "setup", content: {operation: "setName", hostname: generatedHostname, name: systemName, doAutomatedSetup: true}});
 		}
 	}
+	$(".text-input-system-name").val("");
+	$(".system-name-input-hostname-string").addClass("hidden");
 }
 
 function setVolumeLimit(limit, show) {
@@ -1325,10 +1342,12 @@ function help(topic) {
 
 function generateHostname(readableName) {
 	if (systemVersion > 4) {
-		n = readableName.replace(" ", ""); // Remove spaces
+		// Attempts to format a static hostname with the same logic as hostnamectl on the system.
+		n = readableName.replace(/ /g, "-"); // Replace spaces with hyphens
+		n = n.replace(/\./g, "-"); // Replace periods with hyphens
 		n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
 		n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
-	else {
+	} else {
 		n = readableName.toLowerCase(); // Convert to lower case
 		n = removeDiacritics(n); // Remove diacritics
 		n = n.replace(" ", "-"); // Replace spaces with hyphens

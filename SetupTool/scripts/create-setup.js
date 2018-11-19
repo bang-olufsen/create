@@ -1,3 +1,20 @@
+/*Copyright 2018 Bang & Olufsen A/S
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
 // BANG & OLUFSEN
 // BeoCreate 4-Channel Amplifier Setup
 // Release 3
@@ -5,6 +22,7 @@
 var os;
 var screenFlow = ["welcome", "setup-start", "setup-wifi", "setup-profile", "setup-name", "setup-finish", "overview", "sound-adjustments", "name", "wifi", "profile", "custom-tuning", "guide", "sources", "ssh", "connect-to", "software-update", "about"]; // Indicates where different screens exist spatially within the application.
 var sourceNames = {"bluetooth": "Bluetooth", "shairport-sync": "Shairport-sync", "spotifyd": "Spotifyd"};
+var systemVersion = 0;
 window.addEventListener('load', function() {
 	
 	// Enables fastclick.js so that buttons respond immediately.
@@ -31,7 +49,7 @@ window.addEventListener('load', function() {
 	if (localStorage.beoCreateSoundProfiles) {
 		soundProfiles = JSON.parse(localStorage.beoCreateSoundProfiles);
 	}
-	$.getJSON("http://www.bang-olufsen.com/recreate/setup/profiles.json", function( json ) {
+	$.getJSON("profiles.json", function( json ) {
 		console.log(json);
   		soundProfiles = json;
 		localStorage.beoCreateSoundProfiles = JSON.stringify(json);
@@ -576,6 +594,18 @@ function processReceivedData(data) {
 			
 			if (data.content.systemVersion) {
 				$(".system-version").text("Release "+data.content.systemVersion);
+				systemVersion = data.content.systemVersion;
+			}
+			
+			if (data.content.voicePrompts != undefined) {
+				$("#voice-prompt-toggle").removeClass("hidden");
+				if (data.content.voicePrompts == 1) {
+					$("#voice-prompt-toggle").addClass("on");
+				} else {
+					$("#voice-prompt-toggle").removeClass("on");
+				}
+			} else {
+				$("#voice-prompt-toggle").addClass("hidden");
 			}
 			
 			$("#multi-button span").text("Searching...");
@@ -604,7 +634,7 @@ function processReceivedData(data) {
 			break;
 		case "sources":
 			if (data.content.message == "installing") {
-				notify("Installing "+sourceNames[data.content.source]+"...", "This will take a while. The system will restart after the installation.", "load", true);
+				notify("Installing "+sourceNames[data.content.source]+"...", "This will take a while. The sound system will restart after the installation.", "load", true);
 			}
 			if (data.content.message == true) {
 				notify(sourceNames[data.content.source]+" installed", "Restarting sound system, please wait...", "done", true);
@@ -619,7 +649,12 @@ function processReceivedData(data) {
 			}
 			break;
 		case "systemName":
-			result = addOrUpdateProduct(data.content.hostname, {name: data.content.name, model: data.content.model, newHostname: data.content.hostname}, true);
+			if (productHostname) {
+				hostnameToUpdate = productHostname;
+			} else {
+				hostnameToUpdate = data.content.hostname;
+			}
+			result = addOrUpdateProduct(hostnameToUpdate, {name: data.content.name, model: data.content.model, newHostname: data.content.hostname}, true);
 			if (result === true || result === false) {
 				//
 			} else {
@@ -677,7 +712,13 @@ function processReceivedData(data) {
 					//console.log(network.SSID);
 					hexEscapedNetworkName = network.SSID.decodeEscapeSequence();
 					//console.log(hexEscapedNetworkName);
-					networkName = decodeUTF8(hexEscapedNetworkName);
+					try {
+						networkName = decodeUTF8(hexEscapedNetworkName);
+					} catch (error) {
+						networkName = hexEscapedNetworkName;
+						console.log(error);
+					}
+					
 					//console.log(networkName);
 					extraClasses = "";
 					if (network.current) {//extraClasses += " current";
@@ -764,6 +805,13 @@ function processReceivedData(data) {
 			} else {
 				$(".ssh-disabled").removeClass("hidden");
 				$(".ssh-enabled").addClass("hidden");
+			}
+			break;
+		case "voicePrompts":
+			if (data.content.voicePrompts == 1) {
+				$("#voice-prompt-toggle").addClass("on");
+			} else {
+				$("#voice-prompt-toggle").removeClass("on");
 			}
 			break;
 		case "plainJSON":
@@ -1012,6 +1060,10 @@ function selectChannel(channel) {
 	sendToProduct({header: "dsp", content: {operation: "setChSelect", ch: channel}});   
 }
 
+function toggleVoicePrompts() {
+	sendToProduct({header: "voicePrompts", content: {operation: "toggle"}});  
+}
+
 function disableSoundAdjustments() {
 	sendToProduct({header: "soundProfile", content: {operation: "enableCustom"}});
 	$("#custom-tuning-warning").addClass("hidden");
@@ -1102,8 +1154,8 @@ function cancelText() {
 	}, 520);
 }
 
-generatedHostname = "";
-systemName = "";
+var generatedHostname = "";
+var systemName = "";
 $('input').bind('input propertychange', function() {
     if ($(this).attr("id") == "text-input-plain") validateTextInput();
 	if ($(this).attr("id") == "text-input-password") validateTextInput();

@@ -1,7 +1,7 @@
 CACHE MANIFEST
 
 # BeoCreate Setup Tool
-# Release 3, 2/2018, revision 61
+# Release 4, 6/2018, revision 73
 
 # html files
 index.html
@@ -99,6 +99,8 @@ images/hero.jpg
 # device images
 images/speakers/beovox-cx100.svg
 images/speakers/beovox-cx50.svg
+images/speakers/beovox-rl6000.svg
+images/speakers/beovox-s35.svg
 images/speakers/basic-fullrange.svg
 
 NETWORK:

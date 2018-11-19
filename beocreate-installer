@@ -43,7 +43,7 @@ main () {
 		exit 1
 	fi
 
-	echo -e "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen\n" >&3
+	echo -e "BeoCreate Installer Release 5, (c) 2018 Bang & Olufsen\n" >&3
 	if (( $# == 0 ))
 	then
 		print_usage
@@ -95,7 +95,7 @@ install_upgrade_node() {
 	tar -xvf /home/pi/node-v${NODEVERSION}-linux-armv6l.tar.gz
 	rm /home/pi/node-v${NODEVERSION}-linux-armv6l.tar.gz
 	cd /home/pi/node-v${NODEVERSION}-linux-armv6l
-	cp -R * /usr/local/
+	cp --remove-destination -R * /usr/local/
 	cd /home/pi/
 	rm -rf /home/pi/node-v${NODEVERSION}-linux-armv6l
 	echo "Installing Node modules..." >&3
@@ -209,6 +209,7 @@ reset_to_default_hostname_remove_config() {
 	echo "Renaming system to beocreate-4ch-blank.local..." >&3
 	raspi-config nonint do_hostname beocreate-4ch-blank
 	hostnamectl set-hostname --pretty "BeoCreate 4-Channel Amplifier"
+
 
 	if [ -f /home/pi/beoconfig.json ]; then
 		mv -b -f /home/pi/beoconfig.json /home/pi/beoconfig.json.old

@@ -109,7 +109,6 @@ install_upgrade_node() {
 	su -c "npm install xml-stream" pi
 	su -c "npm install utf8" pi
 	su -c "npm install aplay" pi
-	su -c "npm install diacritics" pi
 	apt-get -q --assume-yes install pigpio
 	su -c "npm install pigpio" pi
 }

@@ -164,10 +164,12 @@ mixer = Master" > /etc/bt_speaker/config.ini
 install_upgrade_create_essentials() {
 	echo "Downloading Bang & Olufsen Create git repository..." >&3
 	apt-get -q --assume-yes install build-essential git xmltoman
+	if [ -d /home/pi/create ]; then
+		rm -rf /home/pi/create
+	fi
 	su -c "git clone https://github.com/bang-olufsen/create.git" pi
-	cd /home/pi/create/
+	# cd /home/pi/create/
 	# su -c "git checkout server-development" pi
-	cd /home/pi/
 
 	echo "Installing BeoCreate Essentials..." >&3
 	su -c "cp -R /home/pi/create/beocreate_essentials /home/pi/beocreate_essentials/" pi

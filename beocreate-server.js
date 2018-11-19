@@ -101,11 +101,15 @@ var setupStep = beoconfig.setup.step;
 var soundProfile = beoconfig.setup.profile;
 var hostname = "";
 var productName = "";
-piSystem.getHostname(function(names) {
+piSystem.getHostname(function(names, error) {
 	//console.log(names);
-	productName = names.ui;
-	hostname = names.static;
-	beoCom.start({name: productName}); // Opens the server up for remotes to connect.
+	if (names != null) {
+		productName = names.ui;
+		hostname = names.static;
+		beoCom.start({name: productName}); // Opens the server up for remotes to connect.
+	} else {
+		console.log(error);
+	}
 });
 var flashed = beoconfig.setup.flashed;
 var sourceList = [];
@@ -434,10 +438,11 @@ function logSetup(string) {
 function doAutomatedSetup(step) {
 	switch (step) {
 		case 1:
+			logSetup("Beginning automatic setup.");
 			beoCom.send({header: "bottomProgress", content: "Renaming system..."});
 			piSystem.setHostname(productName, function(success, names) {
 				if (success == true) {
-					logSetup("Succesfully set hostname.");
+					logSetup("Succesfully set hostname to "+names.ui+"("+names.static+").");
 					beoCom.send({header: "systemName", content: {name: names.ui, hostname: names.static}});
 					doAutomatedSetup(2);
 				} else {
@@ -446,7 +451,7 @@ function doAutomatedSetup(step) {
 			});
 			break;
 		case 2:
-			
+			beoCom.send({header: "bottomProgress", content: "Connecting to Wi-Fi..."});
 			if (wifi.mode()) {
 				wifi.mode("normal", function(mode) {
 					if (mode == "normal") { 
@@ -476,7 +481,7 @@ function doAutomatedSetup(step) {
 				doAutomatedSetup(4);
 			break;
 		case 4:
-			beoCom.send({header: "bottomProgress", content: "Connecting to Wi-Fi..."});
+			beoCom.send({header: "bottomProgress", content: "Waiting for Internet..."});
 			wifi.waitForNetwork(function(connected) {
 				if (connected == true) { 
 					logSetup("Network connection detected.");
@@ -568,9 +573,9 @@ function doAutomatedSetup(step) {
 			});
 			break;
 		case 8:
+			logSetup("Automatic setup complete. Restarting now.");
 			beoconfig.setup.step = null; // Flag setup as completed
 			saveConfiguration();
-			logSetup("Setup complete. Restarting now.");
 			beoCom.send({header: "bottomProgress", content: "Restarting..."});
 			piSystem.power("reboot");
 			break;

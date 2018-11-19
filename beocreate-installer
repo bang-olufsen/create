@@ -42,7 +42,7 @@ if [[ $EUID -ne 0 ]]; then
 	exit 1
 fi
 
-echo -e "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen\n" >&3
+echo -e "BeoCreate Installer Release 5, (c) 2018 Bang & Olufsen\n" >&3
 if (( $# == 0 ))
 then
 	print_usage
@@ -59,48 +59,60 @@ base)
 	# Need another update or following commands can't find packages
 	# That upgrade does something to the sources.
 	apt-get -q --assume-yes update
-
-	echo "Installing Node..." >&3
-	cd /home/pi/ || exit
-	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.12.0/node-v8.12.0-linux-armv6l.tar.gz"
-	tar -xvf /home/pi/node-v8.12.0-linux-armv6l.tar.gz
-	cd /home/pi/node-v8.12.0-linux-armv6l
-	cp -R * /usr/local/
-	cd /home/pi/
 	
 	echo "Installing Apache server and Avahi-Bonjour compatibility layer..." >&3
 	apt-get -q --assume-yes install apache2
 	apt-get -q --assume-yes install libavahi-compat-libdnssd-dev
+
+	echo "Installing Node..." >&3
+	# Specify Node version to install below:
+	NODEVERSION=8.12.0
+	
+	cd /home/pi/ || exit
+	wget -P /home/pi/ https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-armv6l.tar.gz
+	tar -xvf /home/pi/node-v${NODEVERSION}-linux-armv6l.tar.gz
+	rm /home/pi/node-v${NODEVERSION}-linux-armv6l.tar.gz
+	cd /home/pi/node-v${NODEVERSION}-linux-armv6l
+	cp -R * /usr/local/
+	cd /home/pi/
+	rm -rf /home/pi/node-v${NODEVERSION}-linux-armv6l
 	
 	echo "Installing Node modules..." >&3
-	npm install mdns
-	npm install request
-	npm install websocket
-	npm install wireless-tools
-	npm install ping
+	# Some modules should be installed as pi.
+	su -c "npm install mdns" pi
+	su -c "npm install request" pi
+	su -c "npm install websocket" pi
+	su -c "npm install wireless-tools" pi
+	su -c "npm install ping" pi
 	npm install forever -g
-	npm install xml-stream
-	npm install utf8
-	npm install aplay
-	npm install diacritics
+	su -c "npm install xml-stream" pi
+	su -c "npm install utf8" pi
+	su -c "npm install aplay" pi
+	su -c "npm install diacritics" pi
 	apt-get -q --assume-yes install pigpio
-	npm install pigpio
+	su -c "npm install pigpio" pi
 	
 	echo "Downloading Bang & Olufsen Create git repository..." >&3
 	apt-get -q --assume-yes install build-essential git xmltoman
-	git clone https://github.com/bang-olufsen/create.git
+	su -c "git clone https://github.com/bang-olufsen/create.git" pi
+	cd /home/pi/create/
+	# su -c "git checkout server-development" pi # Change to the development branch to test new things
+	cd /home/pi/
 	
 	echo "Installing BeoCreate Essentials..." >&3
-	cp -R /home/pi/create/beocreate_essentials /home/pi/beocreate_essentials/
+	su -c "cp -R /home/pi/create/beocreate_essentials /home/pi/beocreate_essentials/" pi
 	
 	echo "Installing BeoCreate Server..." >&3
-	cp /home/pi/create/beocreate-server.js /home/pi/beocreate-server.js
+	su -c "cp /home/pi/create/beocreate-server.js /home/pi/beocreate-server.js" pi
+	if [ ! -d  /home/pi/dsp/ ]; then
+		su -c "mkdir /home/pi/dsp" pi
+	fi
 	
 	echo "Installing sounds..." >&3
 	if [ ! -d  /home/pi/Music ]; then
-		mkdir /home/pi/Music
+		su -c "mkdir /home/pi/Music" pi
 	fi
-	cp -R /home/pi/create/Sounds/* /home/pi/Music/
+	su -c "cp -R /home/pi/create/Sounds/* /home/pi/Music/" pi
 	
 	echo "Installing system startup script..." >&3
 	cp /home/pi/create/beocreate-4ch /etc/init.d/beocreate-4ch
@@ -109,7 +121,7 @@ base)
 	
 	echo "Disabling onboard audio, enabling HiFiBerry DAC driver and SPI interface..." >&3
 	cd /home/pi/ || exit
-	git clone https://github.com/hifiberry/beocreate-tools.git
+	su -c "git clone https://github.com/hifiberry/beocreate-tools.git"
 	cd /home/pi/beocreate-tools || exit
 	./enable-hifiberry
 	./enable-spi
@@ -133,7 +145,7 @@ base)
 	
 	echo "Installing Bluetooth audio..." >&3
 	cd /home/pi || exit
-	git clone https://github.com/c-larsen/bt-speaker.git
+	su -c "git clone https://github.com/c-larsen/bt-speaker.git" pi
 	cd /home/pi/bt-speaker || exit
 	./install.sh root
 	mkdir /etc/bt_speaker/
@@ -153,9 +165,7 @@ mixer = Master" > /etc/bt_speaker/config.ini
 	
 	# stop catching ^c at this point
 	trap '' INT
-	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)." >&3
-	sleep 10
-	reboot
+	echo "Base system installed. The installation is ready for guided setup. Please restart now – type 'sudo reboot'." >&3
 ;;
 install-source)
 if (( $# != 2 ))

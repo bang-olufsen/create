@@ -224,9 +224,9 @@ install_base_and_reboot() {
 	# Need another update or following commands can't find packages
 	# That upgrade does something to the sources.
 	apt-get -q --assume-yes update
-
-	install_upgrade_node
+	
 	install_upgrade_apache
+	install_upgrade_node
 	install_upgrade_create_essentials
 	install_upgrade_create_tools_enable_audio
 	install_beocreate_hotspot

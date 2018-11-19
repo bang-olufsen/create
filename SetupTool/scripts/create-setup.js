@@ -117,12 +117,12 @@ function upgradeNotification(operation) {
 					$("#system-upgrade-notification").removeClass("hidden");
 				}
 			} else {
-				$("#system-upgrade-notification").removeClass("hidden");
+				$(".system-upgrade-notification").removeClass("hidden");
 			}
 			break;
 		case "dismiss":
 			localStorage.beoCreateUpgradeNotificationDismissed = upgradeNotificationID;
-			$("#system-upgrade-notification").addClass("hidden");
+			$(".system-upgrade-notification").addClass("hidden");
 			break;
 	}
 }
@@ -588,6 +588,7 @@ function processReceivedData(data) {
 			if (data.content.serverVersion) {
 				$(".system-version").text("Release "+data.content.serverVersion);
 				systemVersion = data.content.serverVersion;
+				if (systemVersion > 4) upgradeNotification("dismiss");
 			} else {
 				systemVersion = 0;
 			}

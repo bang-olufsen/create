@@ -34,7 +34,6 @@ body {
 
 a {
 	color: inherit;
-	text-decoration: inherit;
 }
 
 #chrome {
@@ -203,6 +202,11 @@ header .symbol-button.right {
 
 .menu-group.yellow {
 	background-color: #ffe200;
+	color: black;
+}
+
+.menu-group.green {
+	background-color: #d9f7f5;
 	color: black;
 }
 

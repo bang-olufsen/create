@@ -22,7 +22,7 @@ SOFTWARE.*/
 var os;
 var screenFlow = ["welcome", "setup-start", "setup-wifi", "setup-profile", "setup-name", "setup-finish", "overview", "sound-adjustments", "name", "wifi", "profile", "custom-tuning", "guide", "sources", "ssh", "connect-to", "software-update", "about"]; // Indicates where different screens exist spatially within the application.
 var sourceNames = {"bluetooth": "Bluetooth", "shairport-sync": "Shairport-sync", "spotifyd": "Spotifyd"};
-var systemVersion = 0;
+var systemVersion = 5; // Default to a later version, override if necessary.
 
 window.addEventListener('load', function() {
 	
@@ -46,6 +46,8 @@ window.addEventListener('load', function() {
 	}
 	updateProductList();
 	selectProduct(selectedProductIndex, true);
+	
+	upgradeNotification("show");
 	
 	if (localStorage.beoCreateSoundProfiles) {
 		soundProfiles = JSON.parse(localStorage.beoCreateSoundProfiles);
@@ -102,6 +104,27 @@ function getOS() {
 	}
 
   return [os, osUI];
+}
+
+var upgradeNotificationID = "5-11/2018";
+function upgradeNotification(operation) {
+	switch (operation) {
+		case "show":
+			if (localStorage.beoCreateUpgradeNotificationDismissed) {
+				upgradeNotificationDismissedID = localStorage.beoCreateUpgradeNotificationDismissed;
+				if (upgradeNotificationDismissedID != upgradeNotificationID) {
+					// Only show the prompt if it hasn't been dismissed for this version.
+					$("#system-upgrade-notification").removeClass("hidden");
+				}
+			} else {
+				$("#system-upgrade-notification").removeClass("hidden");
+			}
+			break;
+		case "dismiss":
+			localStorage.beoCreateUpgradeNotificationDismissed = upgradeNotificationID;
+			$("#system-upgrade-notification").addClass("hidden");
+			break;
+	}
 }
 
 var currentScreen = "welcome";

@@ -38,7 +38,7 @@ function getHostname(callback) {
 		if (error) {
 			callback(null, error);
 		} else {
-			uiName = stdout.slice(0,-1);
+			uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
 			command = "hostnamectl --static";
 			child_process.exec(command, function(error, stdout, stderr) {
 				if (error) {
@@ -60,6 +60,7 @@ function setHostname(productName, callback) {
 			callback(null, error);
 		} else {
 			n = productName.replace(/ /g, "-"); // Replace spaces with hyphens
+			n = n.replace(/\r?\n|\r/g, ""); // Remove newlines
 			n = n.replace(/\./g, "-"); // Replace periods with hyphens
 			n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
 			n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
@@ -73,7 +74,7 @@ function setHostname(productName, callback) {
 						if (error) {
 							callback(null, error);
 						} else {
-							uiName = stdout.slice(0,-1);
+							uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
 							command = "hostnamectl --static";
 							child_process.exec(command, function(error, stdout, stderr) {
 								if (error) {

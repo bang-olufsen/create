@@ -32,24 +32,15 @@ start)
 	
 	# Reset SigmaDSP:
 	echo "Resetting SigmaDSP..."
-	/home/pi/bin/sigmareset
+	dsptoolkit reset
 	
 	# Setting master volume:
 	amixer sset 'Master' 90%
-
-	# Start SigmaDSP daemon:
-	echo "Starting SigmaDSP daemon..."
-	/home/pi/create/SigmaTcpDaemon/sigmaTcpDaemon > /dev/null &
-	
-	sleep 2
 
 	# Start the remote control server:
 	echo "Starting remote control server..."
 	forever start -s /home/pi/beocreate-server.js
 
-	# Play the startup sound:
-	echo "Playing startup sound..."
-	aplay -q /home/pi/Music/startup.wav
 ;;
 *)
 exit 0

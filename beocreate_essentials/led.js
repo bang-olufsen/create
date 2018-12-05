@@ -24,7 +24,11 @@ var pigpio = require('pigpio'); // For GPIO control.
 
 var led = module.exports = {
 	initialise: initialise,
-	fadeTo: fadeTo
+	terminate: terminate,
+	fadeTo: fadeTo,
+	fadeOut: fadeOut,
+	tempFlash: tempFlash,
+	turnOff: turnOff
 	/*fadeOut: fadeOut,
 	tempFlash: tempFlash,
 	breathe: breathe,
@@ -55,6 +59,11 @@ function initialise(red, green, blue) {
 	}
 }
 
+function terminate() {
+	turnOff();
+	pigpio.terminate(); // pigpio C library terminated here
+}
+
 // Converts plain-language colour names to RGB values.
 function colourNameToRGB(colourName) {
 
@@ -62,6 +71,7 @@ function colourNameToRGB(colourName) {
 
 var fadeInterval = null;
 var ledDelay = null;
+var flashOverride = false;
 
 function fadeTo(options) {
 	// If a fade is in progress, stop it and use the present value as the starting point for transition (previousColour).
@@ -140,7 +150,7 @@ function fadeTo(options) {
 			actualColour[1] = previousColour[1]+stepValues[1];
 			actualColour[2] = previousColour[2]+stepValues[2];
 			//console.log(previousColour[1], colourDifference[1], transitionCompletion*colourDifference[1]);
-			updateLED();
+			if (!flashOverride) updateLED();
 			
 			currentStep++;
 			if (currentStep == steps || currentStep > 255) {
@@ -161,6 +171,28 @@ function fadeOut(options) {
 		options = {rgb: [0, 0, 0]};
 	}
 	fadeTo(options);
+}
+
+function tempFlash(options) {
+	flashOverride = true;
+	actualColour = options.rgb;
+	updateLED();
+	setTimeout(function() {
+		actualColour = selectedColour;
+		flashOverride = false;
+		updateLED();
+	}, 100);
+}
+
+function turnOff() {
+	// If a fade is in progress, stop it.
+	if (fadeInterval != null) {
+		clearInterval(fadeInterval);
+		fadeInterval = null;
+	}
+	selectedColour = [0,0,0];
+	actualColour = [0,0,0];
+	updateLED();
 }
 
 // Writes the actualColour values to the GPIO.

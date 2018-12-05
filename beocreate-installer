@@ -43,7 +43,7 @@ main () {
 		exit 1
 	fi
 
-	echo -e "BeoCreate Installer Release 4, (c) 2018 Bang & Olufsen\n" >&3
+	echo -e "BeoCreate Installer Release 5, (c) 2018 Bang & Olufsen\n" >&3
 	if (( $# == 0 ))
 	then
 		print_usage
@@ -88,32 +88,35 @@ apt_get_update_upgrade() {
 
 install_upgrade_node() {
 	echo "Installing Node..." >&3
+	NODEVERSION=8.12.0 # Specify Node version once here.
+	
 	cd /home/pi/ || exit
-	wget -q -P /home/pi/ "https://nodejs.org/dist/v8.9.3/node-v8.9.3-linux-armv6l.tar.gz"
-	tar -xvf /home/pi/node-v8.9.3-linux-armv6l.tar.gz
-	cd /home/pi/node-v8.9.3-linux-armv6l
+	wget -P /home/pi/ https://nodejs.org/dist/v${NODEVERSION}/node-v${NODEVERSION}-linux-armv6l.tar.gz
+	tar -xvf /home/pi/node-v${NODEVERSION}-linux-armv6l.tar.gz
+	rm /home/pi/node-v${NODEVERSION}-linux-armv6l.tar.gz
+	cd /home/pi/node-v${NODEVERSION}-linux-armv6l
 	cp --remove-destination -R * /usr/local/
 	cd /home/pi/
+	rm -rf /home/pi/node-v${NODEVERSION}-linux-armv6l
+	echo "Installing Node modules..." >&3
+	# Most modules should be installed as pi.
+	su -c "npm install mdns" pi
+	su -c "npm install request" pi
+	su -c "npm install websocket" pi
+	su -c "npm install wireless-tools" pi
+	su -c "npm install ping" pi
+	npm install forever -g
+	su -c "npm install xml-stream" pi
+	su -c "npm install utf8" pi
+	su -c "npm install aplay" pi
+	apt-get -q --assume-yes install pigpio
+	su -c "npm install pigpio" pi
 }
 
 install_upgrade_apache() {
-	echo "Installing Apache..." >&3
+	echo "Installing Apache and Avahi-Bonjour compatibility layer..." >&3
 	apt-get -q --assume-yes install libavahi-compat-libdnssd-dev
 	apt-get -q --assume-yes install apache2
-	echo "Installing Node modules..." >&3
-	npm install -g npm@4.6.1
-	npm install mdns
-	npm install request
-	npm install websocket
-	npm install wireless-tools
-	npm install ping
-	npm install forever -g
-	npm install xml-stream
-	npm install utf8
-	npm install aplay
-	npm install diacritics
-	apt-get -q --assume-yes install pigpio
-	npm install pigpio
 }
 
 install_beocreate_hotspot() {
@@ -163,39 +166,32 @@ install_upgrade_create_essentials() {
 	if [ -d /home/pi/create ]; then
 		rm -rf /home/pi/create
 	fi
-	git clone https://github.com/bang-olufsen/create.git
+	su -c "git clone https://github.com/bang-olufsen/create.git" pi
+	# cd /home/pi/create/
+	# su -c "git checkout server-development" pi
 
 	echo "Installing BeoCreate Essentials..." >&3
-	cp -R /home/pi/create/beocreate_essentials /home/pi/beocreate_essentials/
+	su -c "cp -R /home/pi/create/beocreate_essentials /home/pi/beocreate_essentials/" pi
 
 	echo "Installing BeoCreate Server..." >&3
-	cp /home/pi/create/beocreate-server.js /home/pi/beocreate-server.js
+	su -c "cp /home/pi/create/beocreate-server.js /home/pi/beocreate-server.js" pi
+	if [ ! -d  /home/pi/dsp/ ]; then
+		su -c "mkdir /home/pi/dsp" pi
+	fi
 
 	echo "Installing sounds..." >&3
 	if [ ! -d  /home/pi/Music ]; then
-		mkdir /home/pi/Music
+		su -c "mkdir /home/pi/Music" pi
 	fi
-	cp -R /home/pi/create/Sounds/* /home/pi/Music/
+	su -c "cp -R /home/pi/create/Sounds/* /home/pi/Music/" pi
 
 	echo "Installing system startup script..." >&3
 	cp /home/pi/create/beocreate-4ch /etc/init.d/beocreate-4ch
 	chmod 755 /etc/init.d/beocreate-4ch
 	systemctl enable beocreate-4ch
 
-	echo "Installing SigmaDSP daemon and reset sequence..." >&3
-	apt-get -q --assume-yes install cmake
-	apt-get -q --assume-yes install wiringpi
-	if [ ! -d  /home/pi/dsp/ ]; then
-		mkdir /home/pi/dsp
-	fi
-	if [ ! -d  /home/pi/bin/ ]; then
-		mkdir /home/pi/bin
-	fi
-	cp /home/pi/create/sigmareset /home/pi/bin/sigmareset
-	chmod 755 /home/pi/bin/sigmareset
-	cd /home/pi/create/SigmaTcpDaemon || exit
-	cmake .
-	make
+	echo "Installing HiFiBerry DSPToolkit and SigmaTCPServer..." >&3
+	bash <(curl https://raw.githubusercontent.com/hifiberry/hifiberry-dsp/master/install-dsptoolkit)
 }
 
 install_upgrade_create_tools_enable_audio() {
@@ -213,6 +209,8 @@ install_upgrade_create_tools_enable_audio() {
 reset_to_default_hostname_remove_config() {
 	echo "Renaming system to beocreate-4ch-blank.local..." >&3
 	raspi-config nonint do_hostname beocreate-4ch-blank
+	hostnamectl set-hostname --pretty "BeoCreate 4-Channel Amplifier"
+
 
 	if [ -f /home/pi/beoconfig.json ]; then
 		mv -b -f /home/pi/beoconfig.json /home/pi/beoconfig.json.old
@@ -226,9 +224,9 @@ install_base_and_reboot() {
 	# Need another update or following commands can't find packages
 	# That upgrade does something to the sources.
 	apt-get -q --assume-yes update
-
-	install_upgrade_node
+	
 	install_upgrade_apache
+	install_upgrade_node
 	install_upgrade_create_essentials
 	install_upgrade_create_tools_enable_audio
 	install_beocreate_hotspot
@@ -237,9 +235,7 @@ install_base_and_reboot() {
 
 	# stop catching ^c at this point
 	trap - INT
-	echo "Base installed. The installation is ready for guided setup. Rebooting in 10 seconds (press Control+C to cancel)." >&3
-	sleep 10
-	reboot
+	echo "Base system installed. The installation is ready for guided setup. Please restart now – type 'sudo reboot'." >&3
 }
 
 install_upgrade_spotifyd() {
@@ -247,9 +243,9 @@ install_upgrade_spotifyd() {
 	apt_get_update_upgrade
 	apt-get -q --assume-yes install portaudio19-dev
 	cd /tmp || exit
-	wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.1/spotifyd-2018-05-29-armv6.zip
-	unzip spotifyd-2018-05-29-armv6.zip
-	rm spotifyd-2018-05-29-armv6.zip
+	wget https://github.com/Spotifyd/spotifyd/releases/download/v0.2.3/spotifyd-2018-10-21-armv6.zip
+	unzip spotifyd-2018-10-21-armv6.zip
+	rm spotifyd-2018-10-21-armv6.zip
 	mkdir -p /opt/spotifyd
 	mv spotifyd /opt/spotifyd
 

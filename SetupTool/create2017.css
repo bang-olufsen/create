@@ -1,8 +1,11 @@
 /* @override 
 	http://localhost:8888/create2017.css */
 
+/* Uses the Metropolis typeface by Chris Simpson, https://github.com/chrismsimpson/Metropolis */
+@import "fonts/metropolis.css";
+
 body {
-	font-family: "Gotham A", -apple-system, sans-serif;
+	font-family: "Metropolis", -apple-system, sans-serif;
 	margin: 0;
 	padding: 0;
 	font-size: 16px;

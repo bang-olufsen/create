@@ -280,13 +280,13 @@ function navigation(content) {
 function manageSetup(content) {
 	switch (content.operation) {
 		case "getStatus":
-			beoCom.send({header: "setup", content: {status: setupStep}});
+			beoCom.send({header: "setup", content: {status: setupStep, serverVersion: releaseVersion}});
 			break;
 		case "requestStep":
 			setupStep = content.step;
 			switch (content.step) {
 				case 0:
-					beoCom.send({header: "setup", content: {allowStep: 1}});
+					beoCom.send({header: "setup", content: {allowStep: 1, serverVersion: releaseVersion}});
 					break;
 				case 1:
 					wifi.listAvailable(function(availableNetworks) {  
@@ -603,7 +603,7 @@ function manageSoundProfile(content) {
 		if (tempSoundProfile != soundProfile) {
 			shouldFlashSoundProfile = true;
 		}
-		beoCom.send({header: "setup", content: {allowStep: 3}});
+		beoCom.send({header: "setup", content: {allowStep: 3, serverVersion: releaseVersion}});
 		if (content.flashNow) {
 			flashSoundProfileWithName(1, tempSoundProfile);
 		}

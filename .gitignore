@@ -82,5 +82,5 @@ typings/
 # Espresso files
 *.Espresso
 
-# Reservi
-/Beocreate2/Reservi/*
+# Dynamically generated directories
+/Beocreate2/beo-settings/*

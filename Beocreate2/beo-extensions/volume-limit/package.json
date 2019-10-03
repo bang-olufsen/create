@@ -1,0 +1,24 @@
+{
+  "name": "@beocreate/volume-limit",
+  "version": "0.5.0",
+  "description": "DSP volume limit control for Beocreate sound system.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "volume",
+    "limit",
+    "dsp",
+    "sound",
+    "beocreate",
+    "bang",
+    "olufsen"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT"
+}

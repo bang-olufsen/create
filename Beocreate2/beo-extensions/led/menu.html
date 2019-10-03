@@ -1,0 +1,42 @@
+<div class="menu-screen" id="led" data-icon="led.svg" data-menu-title="Status Light" data-context="interact">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Status Light</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>Attach an RGB LED to the expansion connector to use as a simple product status indicator.</p>
+			
+			<h2>Pin Assignment</h2>
+			<div class="button-row">
+				<div class="button pill red">Pin 5</div>
+				<div class="button pill green">Pin 6</div>
+				<div class="button pill blue">Pin 12</div>
+			</div>
+			
+			<h2>Colour Calibration</h2>
+			<div class="slider-wrap">
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/dark.svg); mask-image: url(€/symbols-black/dark.svg);"></div>
+				<div class="led-colour-slider red"></div>
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/light.svg); mask-image: url(€/symbols-black/light.svg);"></div>
+			</div>
+			<div class="slider-wrap">
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/dark.svg); mask-image: url(€/symbols-black/dark.svg);"></div>
+				<div class="led-colour-slider green"></div>
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/light.svg); mask-image: url(€/symbols-black/light.svg);"></div>
+			</div>
+			<div class="slider-wrap">
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/dark.svg); mask-image: url(€/symbols-black/dark.svg);"></div>
+				<div class="led-colour-slider blue"></div>
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/light.svg); mask-image: url(€/symbols-black/light.svg);"></div>
+			</div>
+			
+			<p>For best colour accuracy, adjust maximum brightness of each individual colour until the light appears neutral white.</p>
+			
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/led-client.js"></script>

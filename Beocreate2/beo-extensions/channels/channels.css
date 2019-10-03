@@ -1,0 +1,44 @@
+/* @override 
+	http://beocreate-core.local/extensions/channels/channels.css */
+	
+.stereo-toggle-wrap {
+	border: 1px solid var(--menu-line);
+	border-top: none;
+	margin: -5px auto 30px;
+	display: flex;
+	justify-content: center;
+	width: 66.6%;
+}
+
+.dark .stereo-toggle-wrap {
+	border-color: var(--menu-line-dark);
+}
+
+.stereo-toggle-wrap > div {
+	margin-bottom: -18px;
+	width: 50%;
+}
+
+.stereo-toggle-wrap .button {
+	margin-bottom: 0;
+}
+
+#simple-stereo-control .button img {
+	display: block;
+	margin-right: 0.1em;
+	width: 21px;
+	height: 21px;
+}
+
+.popup-content .daisy-chain-header-image-wrap {
+	background-color: var(--ultra-light-grey);
+}
+
+.dark .popup-content .daisy-chain-header-image-wrap {
+	background-color: var(--ultra-light-grey-dark);
+}
+
+.popup-content .daisy-chain-header-image-wrap > .popup-header-image {
+	bottom: 10px;
+	top: 10px;
+}

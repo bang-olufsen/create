@@ -1,0 +1,28 @@
+{
+  "name": "@beocreate/beo4",
+  "version": "0.5.0",
+  "description": "Integrate Bang & Olufsen infrared remotes with Beocreate sound systems (via a microcontroller).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "serialport",
+    "bang",
+    "olufsen",
+    "audio",
+    "beocreate",
+    "infrared",
+    "beo4",
+    "beolink"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "dependencies": {
+    "serialport": "^7.1.5"
+  }
+}

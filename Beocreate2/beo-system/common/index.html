@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	
+	<title>Beocreate</title>
+	
+	
+	<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="BeoCreate" />
+	<link rel="apple-touch-icon" href="common/apple-touch-icon.png?v=1" />
+	
+	<link rel="stylesheet" type="text/css" href="common/beostyle2018.css" />
+	<script type="text/javascript" src="common/scripts/jquery-1.10.2.min.js"></script>
+	<script type="text/javascript" src="common/scripts/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="common/scripts/jquery.ui.touch-punch.min.js"></script>
+	<script src='common/scripts/underscore-min.js'></script>
+	<script src='common/scripts/modernizr.js'></script>
+	<script src='common/scripts/fastclick.js'></script>
+	<script src='common/scripts/beo-ui.js'></script>
+	<script src='common/scripts/beo-extensions.js'></script>
+	<script src='common/scripts/beo-comms.js'></script>
+	<script src='common/scripts/beo-dspcalc.js'></script>
+</head>
+<body class="disconnected" style="opacity: 0;">
+	<div class="plexi" id="nav-back-plate" onclick="toggleMainMenu();"></div>
+	
+	
+	<nav class="bar top-level">
+		<div class="nav-content">
+			
+		</div>
+		<div class="reload-button" onclick="window.location.reload();"></div>
+	</nav>
+	
+	<nav class="full top-level">
+		<div class="nav-content dark">
+		<!-- 
+		SIDEBAR
+		- assembled client-side
+		- based on extensions included in the UI
+		-->
+		</div>
+	</nav>
+	
+	<div class="plexi" id="ask-back-plate" onclick="ask();"></div>
+	<div class="ask" id="ask">
+		<div class="ask-content">
+			<div class="menu-content ask-menu-content" id="ask-menu-content">
+				<h2>Unprotected Network</h2>
+				<p>Are you sure you want to add this network? If this is your network, you should protect it with a password.</p>
+				<div class="ask-buttons">
+					
+					<div class="button pill black default">Add Network</div>
+					<div class="button pill grey cancel" onclick="ask();">Cancel</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	
+	
+	<div class="plexi" id="open-popup-back-plate" onclick="popupBackplateClick('#open-popup', '#open-popup-back-plate', true);"></div>
+	<div id="open-popup" class="popup-view">
+		<div class="popup-content">
+			<!-- Open popup: can be used by extensions to show popup views -->
+		</div>
+	</div>
+	
+	
+	<div class="plexi" id="text-input-back-plate" onclick="cancelText();"></div>
+	<div id="text-input" class="popup-view">
+		<div class="popup-content">
+				<header class="popup">
+					<div class="button symbol left" onclick="cancelText();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+					<h1>Title</h1>
+					<div class="button symbol right disabled" id="text-input-submit" onclick="submitText();" style="-webkit-mask-image: url(common/symbols-black/done.svg); mask-image: url(common/symbols-black/done.svg);"></div>
+				</header>
+				<div class="menu-content">
+					<p id="text-prompt">Text prompt.</p>
+					<form id="text-fields" action="javascript:submitText();">
+						<input type="text" name="text-input" value="" id="text-input-plain" autocorrect="off" autocapitalize="off" placeholder="Placeholder">
+						<input type="password" name="password-input" id="text-input-password" placeholder="Password" value="" autocomplete="current-password">
+						<input type="submit" value="Submit" id="submit-text">
+					</form>
+				</div>
+		</div>
+	</div>
+	
+	<div class="hud-notification">
+		<div class="hud-notification-content">
+			<img src="common/beo-attention-animate.svg" class="beo-load">
+			<h1></h1>
+			<p></p>
+			<div class="button pill black hidden">Action</div>
+		</div>
+	</div>
+	
+ 	
+	<div id="extensions">
+		
+		<!-- DYNAMIC UI CONTENT
+		- all UI sections ("extensions") currently installed
+		- added on the server before serving the page
+		-->
+		<beo-dynamic-ui></beo-dynamic-ui>
+	</div>
+	
+	<div class="setup-navigation">
+		<div class="button pill black disabled" onclick="nextSetupStep();">Next Step</div>
+	</div>
+	
+	
+	
+	<div class="player-bar setup-hide">
+		<div class="player-bar-wrap">
+			<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();"></div>
+			<div id="player-bar-info-area">
+				<!--
+				<h3>Partir avec moi</h3>
+				<h4>Poets of the Fall</h4>-->
+				<div class="active-source">
+					<div class="symbol active-source-icon hidden" style="-webkit-mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg); mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg);"></div><span class="active-source-name"></span>
+				</div>
+			</div>
+			<div class="slider-wrap white" id="player-bar-volume-wrap">
+				<img class="symbol" src="common/symbols-white/volume-mute.svg">
+				<div class="master-volume-slider white" id="player-bar-volume-slider"></div>
+				<img class="symbol" src="common/symbols-white/volume.svg">
+			</div>
+			<img class="button symbol" id="player-bar-menu-button" src="common/symbols-white/menu.svg" alt="Main Menu" onclick="toggleMainMenu();">
+			<div class="reload-button" onclick="window.location.reload();"></div>
+		</div>
+	</div>
+	<beo-now-playing></beo-now-playing>
+	
+	
+	<beo-translations></beo-translations>
+	<beo-scripts></beo-scripts>
+	<!--<nav class="favourites"> -->
+		<!-- 
+		TAB BAR
+		- assembled client-side
+		- based on extensions included in the UI
+		-->
+		<!--
+		<div id="favourite-0" onclick="showExtension(0);">
+			<img src="">
+			<span>Favourite 1</span>
+		</div>
+		<div id="favourite-1" onclick="showExtension(1);">
+			<img src="">
+			<span>Favourite 2</span>
+		</div>
+		<div id="favourite-2" onclick="showExtension(2);">
+			<img src="">
+			<span>Favourite 3</span>
+		</div>
+		<div id="favourite-3" onclick="showExtension(3);">
+			<img src="">
+			<span>Favourite 4</span>
+		</div>
+		<div onclick="toggleMainMenu();">
+			<img src="common/symbols-white/menu.svg">
+			<span>Menu</span>
+		</div>
+		<div class="reload-button" onclick="window.location.reload();"></div>
+	</nav>-->
+	
+	
+</body>
+</html>

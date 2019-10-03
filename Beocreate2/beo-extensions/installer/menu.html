@@ -1,0 +1,114 @@
+<div class="menu-screen" id="installer" data-icon="update.svg" data-menu-title="Install & Update" data-extension-name="Installer" data-built-in="1" data-context="product-information" data-stylesheet="installer.css">
+	
+	<header>
+		<div class="back-button master setup"></div>
+		<h1>Install &amp; Update</h1>
+	</header>
+	
+	<div class="scroll-area">
+		
+		<div class="menu-content">
+			<!--<div class="button pill grey" onclick="installer.openExtensionBrowser();">Add Extension…</div>-->
+			<h2>Updates</h2>
+			<p class="up-to-date">No updates are available at this time.</p>
+			<p class="updates-available hidden">The following updates are available:</p>
+			<p class="checking-for-updates hidden">Checking for updates…</p>
+			<div class="updates-list-container hidden">
+			
+			</div>
+			<div class="menu-item icon update-all hidden" onclick="installer.updateAll();">
+				<div class="menu-icon" style="-webkit-mask-image: url(extensions/installer/symbols-black/update.svg); mask-image: url(extensions/installer/symbols-black/update.svg);"></div>
+				<div class="menu-text-wrap">
+				<div class="menu-label">Update All</div>
+				</div>
+			</div>
+			<hr>
+			<div class="menu-item icon" onclick="installer.openExtensionBrowser();">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(commom/symbols-black/add.svg);"></div>
+				<div class="menu-label">Add Extension...</div>
+			</div>
+			<h2 class="disclosure" data-disclosure=".extensions-list-container">Installed Extensions</h2>
+			<div class="extensions-list-container hidden">
+			
+			</div>
+			<!--
+			<hr>
+			<div class="menu-item static">
+				<div class="menu-text-wrap">
+					<div class="menu-label">System Version</div>
+					<div class="menu-value system-version">N/A</div>
+				</div>
+			</div>-->
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="extension-info-prompt-built-in">
+		<h2 class="ask-dynamic-0">Extension</h2>
+		<p>Version <span class="ask-dynamic-1">N/A</span></p>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="ask();">Done</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="extension-info-prompt-removable">
+		<h2 class="ask-dynamic-0">Extension</h2>
+		<p>Version <span class="ask-dynamic-1">N/A</span></p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="installer.removeExtension();">Remove Extension</div>
+			<div class="button pill black cancel default" onclick="ask();">Done</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="remove-extension-prompt">
+		<h2>Remove <span class="ask-dynamic-0">Extension</span>?</h2>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="installer.removeExtension(true);">Remove</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="popup-content hidden" id="extension-browser-popup">
+		<header class="popup">
+			<div class="button symbol left" onclick="installer.closeExtensionBrowser();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Add Extension</h1>
+			
+		</header>
+		
+		<div class="scroll-area">
+			<div class="menu-content">
+				
+				<p class="hidden centre no-extensions-available">No new extensions are currently available.</p>
+				<!--<p>Extensions add functionality to the sound system.</p>-->
+				<div class="available-extensions">
+					
+					<h2 class="sources-title">Sources</h2>
+					<div class="available-extensions-sources">
+						
+					</div>
+					
+					<h2 class="other-title">More</h2>
+					<div class="available-extensions-other">
+						
+					</div>
+					
+				</div>
+				<!--<hr>-->
+				<div class="button pill grey">Import Extension…</div>
+				<!--
+				<hr>
+				
+				<h2>Extension Lists</h2>
+				
+				<div class="extension-lists">
+					
+				</div>
+				<div class="menu-item icon" onclick="installer.addList();">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(commom/symbols-black/add.svg);"></div>
+					<div class="menu-label">Add List...</div>
+				</div>-->
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/installer-client.js"></script>

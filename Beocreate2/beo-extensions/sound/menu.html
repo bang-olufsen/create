@@ -1,0 +1,27 @@
+<div class="menu-screen large-title" id="sound" data-icon="sound-signature.svg" data-menu-title="Sound" data-stylesheet="sound.css" data-built-in="1">
+	<header>
+		<div class="back-button master setup"></div>
+		<h1 data-translation="headerTitle">Sound</h1>
+		<!--<div class="button symbol right advanced-adjustment" style="background-image: url(€/symbols-black/view-flowchart.svg);" data-text="Show Flowchart">-->
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<h2>Basics</h2>
+			<div class="beo-dynamic-menu basic"></div>
+			<h2>Adjustments</h2>
+			<div class="beo-dynamic-menu adjustments"></div>
+			<h2 class="advanced-adjustment">Advanced</h2>
+			<div class="beo-dynamic-menu advanced"></div>
+			<hr><!-- Convenient to use that class just to hide the separator -->
+			<div class="menu-item toggle" id="advanced-sound-adjustments-toggle" onclick="sound.toggleAdvancedSoundAdjustments();">
+				<div class="menu-label">Show Advanced Settings</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<!--<p>Show additional sound adjustment features.</p>-->
+		</div>
+		
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/sound-client.js"></script>

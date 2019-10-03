@@ -78,3 +78,9 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Espresso files
+*.Espresso
+
+# Reservi
+/Beocreate2/Reservi/*

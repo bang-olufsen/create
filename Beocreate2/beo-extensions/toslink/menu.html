@@ -1,0 +1,30 @@
+<div class="menu-screen source" id="toslink" data-icon="toslink.svg" data-menu-title="Optical Input">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Optical Input</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="menu-spacer top"></div>
+			<div class="menu-item static" id="toslink-status">
+				<div class="menu-label">Status</div>
+				<div class="menu-value ball toslink-status"></div>
+			</div>
+			<hr>
+			<div class="menu-item toggle on" id="toslink-enabled-toggle" onclick="toslink.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			
+			<div class="menu-item toggle disabled" id="toslink-stops-other-sources-toggle" onclick="toslink.toggleStopsOtherSources();">
+				<div class="menu-label">Auto-Stop Other Sources</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p id="toslink-error-prompt">Optical input status can't be determined with the current DSP program.</p>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/toslink-client.js"></script>

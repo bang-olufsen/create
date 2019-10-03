@@ -1,0 +1,19 @@
+{
+  "name": "@beocreate/choose-country",
+  "version": "0.5.0",
+  "description": "Wi-Fi country selector for BeoCreate system",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wifi",
+    "country",
+    "beocreate"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "dependencies": {
+    "country-list": "^2.1.0"
+  }
+}

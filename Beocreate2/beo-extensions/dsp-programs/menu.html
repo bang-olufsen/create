@@ -1,0 +1,75 @@
+<div class="menu-screen" id="dsp-programs" data-icon="dsp.svg" data-menu-title="DSP Programs" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced">
+	<header>
+		<div class="back-button master"></div>
+		<h1 data-translation="headerTitle">DSP Programs</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>A DSP program determines the sound processing flow and which sound adjustment features are available.</p>
+			<div id="current-dsp-program-wrap">
+				<div class="menu-item checkmark left icon checked" onclick="dsp_programs.getPreview();">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+						<div class="menu-text-wrap">
+							<div class="menu-label current-dsp-program-name">Beocreate Universal</div>
+						</div>
+				</div>
+				<hr>
+			</div>
+			<h2>Available Programs</h2>
+			<div class="dsp-program-list">
+			
+			</div>
+			<div class="button pill grey">Import Program...</div>
+			<!--<p>Looking for model-specific sound profiles? They are now <a href="#" onclick="jumpToSoundPresets();">sound presets</a>.</p>-->
+		</div>
+	</div>
+	
+	<div class="popup-content hidden" id="dsp-program-preview-popup">
+		<header class="popup">
+			<div class="button symbol left" onclick="dsp_programs.closePreview();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>DSP Program</h1>
+			<div class="button symbol right setup-hide" onclick="dsp_programs.shareProgram();" style="-webkit-mask-image: url(common/symbols-black/share.svg); mask-image: url(common/symbols-black/share.svg);"></div>
+		</header>
+		
+		<div class="scroll-area">
+			<div class="menu-content">
+				<div class="dsp-program-information centre">
+					<h1>Program Name</h1>
+					<p>Version 1</p>
+				</div>
+				<hr class="margin-bottom">
+				<div class="dsp-program-warnings">
+					<p class="warning no-dsp-metadata">The program has no metadata. Volume and other sound adjustments can't be controlled.</p>
+					<p class="warning no-checksum">Program fingerprint (checksum) is missing. The fingerprint is used to determine which DSP program is active.</p>
+					<p class="warning no-volume-control-register">Volume control register is not defined. Volume can't be controlled.</p>
+					<p class="warning no-sample-rate">Sampling rate is not defined. Filters can't be controlled.</p>
+				</div>
+				<div class="dsp-program-metadata-wrap">
+					<h2 class="disclosure" data-disclosure=".dsp-program-metadata-inner">Program Metadata</h2>
+					<p class="dsp-program-metadata-inner hidden">Metadata lists basic information about the DSP program. It also tells the system, which sound adjustments are supported and where to find them.</p>
+					<div class="dsp-program-metadata hidden dsp-program-metadata-inner">
+						
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<footer>
+			<div class="button pill black hidden install" onclick="dsp_programs.installProgram();">Install This Program</div>
+			<div class="button pill grey hidden reinstall" onclick="dsp_programs.reinstallProgram();">Reinstall This Program</div>
+		</footer>
+	</div>
+	
+	<div class="ask-menu" id="install-dsp-program-prompt">
+		<h2>Install This DSP Program?</h2>
+		<p>The the program currently stored in the DSP memory will be overwritten.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill black default" onclick="dsp_programs.installProgram(true);">Install Program</div>
+			<div class="button pill grey cancel" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/dsp-programs-client.js"></script>

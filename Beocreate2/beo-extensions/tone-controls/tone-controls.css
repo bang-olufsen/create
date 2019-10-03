@@ -1,0 +1,186 @@
+/* @override 
+	http://beocreate-core.local/extensions/tone-controls/tone-controls.css
+	http://beocreate-4-encore.local/extensions/tone-controls/tone-controls.css
+	 */
+	
+#tone-touch-tab {
+	height: 100%;
+	position: relative;
+	/*margin: 10px;*/
+}
+
+#tone-touch-area {
+	box-sizing: border-box;
+	position: absolute;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center;
+	/*background-color: #345267;*/
+	background-color: #173e4b;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+}
+
+.dark #tone-touch-area {
+	background-color: #282828;
+}
+
+
+.tone-touch-field {
+	width: 50%;
+	height: 50%;
+	display: flex;
+	justify-content: center;
+	box-sizing: border-box;
+	text-transform: uppercase;
+	letter-spacing: var(--uppercase-spacing);
+	padding: 1.5em 1.4em 1.5em 1.5em;
+	font-size: 0.8em;
+	position: absolute;
+	color: rgba(255,255,255,0.5);
+	transition: background-color 0.1s linear;
+}
+
+.tone-touch-field.upper {
+	align-items: flex-start;
+	top: 0;
+}
+
+.tone-touch-field.lower {
+	align-items: flex-end;
+	bottom: 0;
+}
+
+.tone-touch-field.left {
+	left: 0;
+}
+
+.tone-touch-field.right {
+	right: 0;
+}
+
+#tone-touch-dot {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	background-color: white;
+	position: absolute;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	top: 50%;
+	left: 50%;
+	margin-left: -30px;
+	margin-top: -30px;
+	box-sizing: border-box;
+	padding-top: var(--font-spacing-compensation);
+	cursor: move;
+	color: transparent;
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+	transition: box-shadow 0.5s ease, left 0.3s ease, top 0.3s ease, color 0.5s ease, width 0.3s ease, height 0.3s ease, margin-left 0.3s ease, margin-top 0.3s ease, font-size 0.3s ease, transform 0.5s ease, background-color 0.5s ease;
+}
+
+.dark #tone-touch-dot {
+	background-color: #777;
+	border: 1px solid rgba(255,255,255,0.1);
+}
+
+#tone-touch-dot.text {
+	color: rgba(0,0,0,0.5);
+}
+
+#tone-touch-dot.number {
+	color: rgba(0,0,0,0.5);
+	font-size: 1em;
+}
+
+#tone-touch-dot:active {
+	transition: box-shadow 0.2s ease, color 0.3s ease, transform 0.2s ease;
+	/*transform: scale(1.1);*/
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+	background-color: var(--ultra-light-grey);
+}
+
+.dark #tone-touch-dot:active {
+	background-color: #888;
+}
+
+.dark #tone-touch-dot.text {
+	color: rgba(255,255,255,0.5);
+}
+
+#tone-touch-dot span {
+	text-transform: uppercase;
+	letter-spacing: var(--uppercase-spacing);
+	font-size: 0.7em;
+	font-weight: 500;
+	transition: opacity 0.5s ease;
+	padding-left: var(--uppercase-spacing);
+}
+
+#tone-touch-scale-area {
+	/*background-color: rgba(255,0,0,0.5);*/
+	width: 200px;
+	height: 200px;
+	position: absolute;
+	top: -75px;
+	left: -75px;
+	border-radius: 50%;
+}
+
+.no-touch #tone-touch-scale-area {
+	border-radius: 0;
+	border-left: 2px solid;
+	border-right: 2px solid;
+	border-color: silver;
+	width: 2px;
+	height: 16px;
+	top: 50%;
+	right: 5px;
+	left: auto;
+	cursor: ew-resize;
+	margin-top: -8px;
+	transition: border-color 0.3s ease;
+	display: none;
+}
+
+.number #tone-touch-scale-area,
+.text #tone-touch-scale-area {
+	border-color: transparent;
+}
+
+.tone-touch-field.upper.left {
+	/*width: calc(50% + 1px);
+	height: calc(50% + 1px);*/
+	/*box-shadow: inset -1px -1px rgba(0, 0, 0, 0.05);*/
+}
+
+.tone-touch-field.upper.right {
+	/*height: calc(50% + 1px);*/
+}
+
+.tone-touch-field.lower.right {
+	/*box-shadow: inset 1px 1px rgba(0, 0, 0, 0.05);*/
+}
+
+.tone-touch-field.lower.left {
+	/*width: calc(50% + 1px);*/
+}
+
+#tone-touch-field-1 {
+	background-color: rgba(0,0,0,0.1);
+}
+
+#tone-touch-field-2 {
+	background-color: rgba(0,0,0,0.12);
+}
+
+#tone-touch-field-3 {
+	background-color: rgba(0,0,0,0.2);
+}
+
+#tone-touch-field-4 {
+	background-color: rgba(0,0,0,0.23);
+}

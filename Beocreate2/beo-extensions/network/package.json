@@ -1,0 +1,20 @@
+{
+  "name": "@beocreate/network",
+  "version": "0.5.0",
+  "description": "Wi-Fi and Ethernet setup for BeoCreate systems",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "beocreate",
+    "wifi",
+    "ethernet",
+    "network"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "dependencies": {
+    "wireless-tools": "^0.19.0"
+  }
+}

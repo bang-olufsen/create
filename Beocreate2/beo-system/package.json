@@ -1,0 +1,29 @@
+{
+  "name": "beocreate-2",
+  "version": "2.0.0",
+  "description": "Software for Beocreate sound systems",
+  "main": "beo-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "beocreate",
+    "bang",
+    "&",
+    "olufsen",
+    "audio",
+    "sound",
+    "loudspeakers"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "dependencies": {
+    "aplay": "^1.2.0",
+    "eventemitter3": "^3.1.2",
+    "express": "^4.17.1"
+  }
+}

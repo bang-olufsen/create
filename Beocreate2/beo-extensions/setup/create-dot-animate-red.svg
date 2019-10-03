@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+	<circle cx="50" cy="50" r="3.5" style="fill:#FF3E46;" />
+	<circle id="ring-1" cx="0" cy="0" r="3" style="fill:none;stroke:#FF3E46;stroke-width:1px;" transform="translate(50 50)" />
+	<circle id="ring-2" cx="0" cy="0" r="3" style="fill:none;stroke:#FF3E46;stroke-width:1px;" transform="translate(50 50)" />
+	
+<animate attributeName="r"
+	xlink:href="#ring-1"
+	id="aring1"
+    from="3"
+    to="30"
+    begin="5s;aring1.end+5s"
+    dur="2s"
+    keyTimes="0;1"
+    keySplines="0.1 0.2 0.2 1"
+    calcMode="spline"
+/>
+
+<animate attributeName="r"
+	xlink:href="#ring-2"
+	id="aring2"
+    from="3"
+    to="30"
+    begin="5.25s;aring2.end+5s"
+    dur="2s"
+    keyTimes="0;1"
+    keySplines="0.2 0.2 0.2 1"
+    calcMode="spline"
+/>
+
+<animate attributeName="opacity"
+	xlink:href="#ring-1"
+	from="1"
+	to="0"
+	begin="0s;aring1.end+5s"
+	dur="2s"
+/>
+
+<animate attributeName="opacity"
+	xlink:href="#ring-2"
+	from="1"
+	to="0"
+	begin="5.25s;aring2.end+5s"
+	dur="2s"
+/></svg>

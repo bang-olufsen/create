@@ -1,0 +1,190 @@
+<div class="menu-screen large-title" id="network" data-icon="wifi-3.svg" data-menu-title="Network" data-built-in="1">
+	<header>
+		<div class="back-button master setup"></div>
+		<h1>Network</h1>
+		<div class="button symbol right search-for-networks-button" style="-webkit-mask-image: url(/common/symbols-black/refresh.svg); mask-image: url(/common/symbols-black/refresh.svg);" onclick="network.refreshWifi();" data-text="Look for Networks"></div>
+		<div class="button symbol right loading wifi-scanning hidden disabled"></div>
+	</header>
+	
+	
+	<div class="scroll-area">
+		
+		<div class="tabs-container network-tabs">
+			<div class="tabs">
+				<div class="selected" data-select-tab="network-wireless">Wireless</div>
+				<div data-select-tab="network-wired">Wired</div>
+			</div>
+		</div>
+		
+		<div class="tab visible" data-tab-id="network-wireless" data-tab-callback="network.showingWifiTab">
+		<div class="menu-content">
+			<p class="setup-prompt">Connect to a network to stream music and control the sound system.</p>
+			<!--<div class="menu-item icon setup-only" onclick="showMenuTab('network-wired');">
+				<img class="menu-icon" src="€/symbols-black/wired-network.svg">
+				<div class="menu-label">Set Up Wired...</div>
+			</div>-->
+			<div class="wifi-connected-wrap hidden">
+				<div class="wifi-connected-container">
+					<!--<h2>Connected</h2>-->
+					<div class="menu-item icon wifi-connected-item">						<div class="menu-icon wifi-connected-signal" style="-webkit-mask-image: url(€/symbols-black/wifi.svg); mask-image: url(€/symbols-black/wifi.svg);"></div>
+							<div class="menu-label wifi-connected-ssid">Network</div>
+							<div class="menu-value">Connected</div>
+							<div class="menu-icon right wifi-connected-lock hidden" style="-webkit-mask-image: url(€/symbols-black/lock.svg); mask-image: url(€/symbols-black/lock.svg);"></div>
+						<!--<div class="menu-custom-markup">
+							<p>Connected</p>
+						</div>-->
+					</div>
+					<hr>
+				</div>
+			</div>
+			
+			<div class="available-networks-wrap">
+				
+				<div class="available-networks">
+					
+				</div>
+				
+			</div>
+			
+			<div class="menu-item icon" onclick="network.addOtherNetwork();">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(commom/symbols-black/add.svg);"></div>
+				<div class="menu-label">Add Other Network...</div>
+			</div>
+				
+			<div class="saved-networks-wrap">
+				<h2 class="disclosure on" data-disclosure=".saved-networks">Saved Networks</h2>
+				<div class="saved-networks">
+					
+				</div>
+			</div>
+			
+			<hr class="setup-hide">
+			
+			<div class="menu-item icon setup-hide" onclick="network.showIPAddressSettings('wifi');">
+				<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/wired-network.svg); mask-image: url(€/symbols-black/wired-network.svg);"></div>
+				<div class="menu-label">IP Address</div>
+				<div class="menu-value wifi-ip">N/A</div>
+			</div>
+			
+			<div class="beo-dynamic-menu setup-hide wi-fi"></div>
+		</div>
+	</div>
+	
+	
+	
+	
+	<div class="tab" data-tab-id="network-wired" data-tab-callback="network.showingEthernetTab">
+		<div class="menu-content">
+			<p class="setup-prompt">Connect to a network to stream music and control the sound system.</p>
+			
+			<div class="menu-item icon static">
+				<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/wired-network.svg); mask-image: url(€/symbols-black/wired-network.svg);"></div>
+				<div class="menu-label">Ethernet</div>
+				<div class="menu-value ethernet-status ball">N/A</div>
+			</div>
+			
+			
+			<hr class="setup-hide">
+			<div class="menu-item icon setup-hide" onclick="network.showIPAddressSettings('ethernet');">
+				<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/wired-network.svg); mask-image: url(€/symbols-black/wired-network.svg);"></div>
+				<div class="menu-label">IP Address</div>
+				<div class="menu-value ethernet-ip">N/A</div>
+			</div>
+		</div>
+	</div>
+	
+	</div>
+	
+	<div class="ask-menu" id="add-open-network-prompt">
+		<h2><span class="ask-dynamic-0">Network</span> is an open network</h2>
+		<p>Open networks can be insecure. If you control this network, please protect it with a password.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="network.addNetwork(true);">Add Anyway</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="saved-network-secure-prompt">
+		<h2><span class="ask-dynamic-0">Network</span></h2>
+		<p class="ask-dynamic-1"></p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="network.updatePassword();">Update Password</div>
+			<div class="button pill grey" onclick="network.forgetNetwork();">Forget Network</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="saved-network-open-prompt">
+		<h2><span class="ask-dynamic-0">Network</span></h2>
+		<p class="ask-dynamic-1"></p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="network.updatePassword();">Add Password</div>
+			<div class="button pill grey" onclick="network.forgetNetwork();">Forget Network</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="forget-network-prompt">
+		<h2>Forget <span class="ask-dynamic-0">Network</span>?</h2>
+		<p>The product will no longer connect to this network.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="network.forgetNetwork(true);">Forget</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	
+	<div class="popup-content hidden" id="ip-address-wifi-popup">
+		<header class="popup">
+			<div class="button symbol left" onclick="network.showIPAddressSettings(false);" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Wireless IP Address</h1>
+		</header>
+		
+		<div class="scroll-area">
+			
+			<div class="menu-content">
+				<div class="segmented-control disabled" id="wifi-ip-address-mode-control">
+					<div onclick="network.setAutomaticWifiIPAddress(true);" class="left selected">Automatic</div>
+					<div onclick="network.setAutomaticWifiIPAddress(false);" class="mono">Manual</div>
+				</div>
+				<div class="menu-item static wifi-ip-menu-item">
+					<div class="menu-label">IP Address</div>
+					<div class="menu-value wifi-ip">N/A</div>
+				</div>
+				<div class="menu-item static wifi-subnetmask-menu-item">
+					<div class="menu-label">Subnet Mask</div>
+					<div class="menu-value wifi-subnetmask">N/A</div>
+				</div>
+				<p>Setting up a static IP address is not yet available.</p>
+			</div>
+		</div>
+	</div>
+	
+	<div class="popup-content hidden" id="ip-address-ethernet-popup">
+		<header class="popup">
+			<div class="button symbol left" onclick="network.showIPAddressSettings(false);" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Ethernet IP Address</h1>
+		</header>
+		
+		<div class="scroll-area">
+			
+			<div class="menu-content">
+				<div class="segmented-control disabled" id="ethernet-ip-address-mode-control">
+					<div onclick="network.setAutomaticEthernetIPAddress(true);" class="left selected">Automatic</div>
+					<div onclick="network.setAutomaticEthernetIPAddress(false);" class="mono">Manual</div>
+				</div>
+				<div class="menu-item static ethernet-ip-menu-item">
+					<div class="menu-label">IP Address</div>
+					<div class="menu-value ethernet-ip">N/A</div>
+				</div>
+				<div class="menu-item static ethernet-subnetmask-menu-item">
+					<div class="menu-label">Subnet Mask</div>
+					<div class="menu-value ethernet-subnetmask">N/A</div>
+				</div>
+				<p>Setting up a static IP address is not yet available.</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/network-client.js"></script>

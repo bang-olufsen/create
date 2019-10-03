@@ -1,0 +1,8 @@
+/* @override 
+	http://beocreate-core.local/extensions/installer/installer.css
+	http://beocreate-4-encore.local/extensions/installer/installer.css */
+	
+.available-extensions.sources-only .available-extensions-other,
+.available-extensions.sources-only .other-title {
+	display: none;
+}

@@ -1,0 +1,180 @@
+const {app, BrowserWindow, ipcMain} = require('electron');
+const windowStateKeeper = require('electron-window-state');
+const dnssd = require('dnssd');
+const bonjour = require('nbonjour').create();
+const drivelist = require('drivelist');
+var shell = require('electron').shell;
+  
+  // Keep a global reference of the window object, if you don't, the window will
+  // be closed automatically when the JavaScript object is garbage collected.
+  let win
+  
+  function createWindow () {
+    // Create the browser window.
+	let mainWindowState = windowStateKeeper({
+	    defaultWidth: 820,
+	    defaultHeight: 600
+	  });
+    //win = new BrowserWindow({width: 800, height: 600, minWidth: 450, minHeight: 300, acceptFirstMouse: true, titleBarStyle: 'hiddenInset', title: "Bang & Olufsen Create", webPreferences: { scrollBounce: false }});
+	win = new BrowserWindow({
+		x: mainWindowState.x,
+		y: mainWindowState.y,
+		width: mainWindowState.width,
+		height: mainWindowState.height, 
+		minWidth: 450, 
+		minHeight: 300, 
+		acceptFirstMouse: true, 
+		titleBarStyle: "hiddenInset", 
+		title: "Bang & Olufsen Create", 
+		backgroundColor: '#fff', 
+		webPreferences: { experimentalFeatures: false}
+	});
+	
+	mainWindowState.manage(win);
+  
+    // and load the index.html of the app.
+    win.loadFile('index.html')
+    
+    win.webContents.on('did-finish-load', () => {
+      startDiscovery();
+      //listDrives();
+    })
+  
+    // Open the DevTools.
+    //win.webContents.openDevTools()
+  
+    // Emitted when the window is closed.
+    win.on('closed', () => {
+      // Dereference the window object, usually you would store windows
+      // in an array if your app supports multi windows, this is the time
+      // when you should delete the corresponding element.
+      win = null
+    })
+    
+    win.on('focus', () => {
+    	win.webContents.send('windowEvent', "activate");
+		//if (browser) console.log("Products discovered: "+browser.list().length);
+		//if (products.length == 0) startDiscovery();
+    });
+    
+    win.on('blur', () => {
+    	win.webContents.send('windowEvent', "resignActive");
+    });
+	
+	win.webContents.on('new-window', function(event, url){
+	  event.preventDefault();
+	  shell.openExternal(url);
+	});
+}
+  
+  // This method will be called when Electron has finished
+  // initialization and is ready to create browser windows.
+  // Some APIs can only be used after this event occurs.
+  app.on('ready', createWindow)
+  
+  // Quit when all windows are closed.
+  app.on('window-all-closed', () => {
+    // On macOS it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
+  
+  app.on('activate', () => {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (win === null) {
+      createWindow()
+    }
+    
+  })
+  
+// FIND BEOCREATE SYSTEMS
+var browser = null;
+var browserLegacy = null; // for "BeoCreate 1" systems
+  
+function startDiscovery() { // Start or restart discovery.
+  	if (!browser) {
+	  	/*browser = new dnssd.Browser(dnssd.tcp('beo-settings'));
+	  	browserLegacy = new dnssd.Browser(dnssd.tcp('beolink-open'));
+  		
+  		browser.on('serviceUp', service => discoveryEvent("up", service));
+  		browser.on('serviceDown', service => discoveryEvent("down", service));
+  		
+  		browserLegacy.on('serviceUp', service => discoveryEvent("up", service));
+  		browserLegacy.on('serviceDown', service => discoveryEvent("down", service));*/
+  		
+  		browser = bonjour.find({type: "beo-settings"});
+  		browser.on('up', function (service) {
+  			console.log(service);
+  			console.log(service.rawTxt[0].toString('utf8').split("="));
+  		});
+  		browser.on('down', function (service) {
+  				console.log(service);		
+  			});
+  	} else {
+  		browser.stop();
+  		//browserLegacy.stop();
+  	}
+  	
+	browser.start();
+	//browserLegacy.start();
+  
+}
+
+var products = [];
+function discoveryEvent(upDown, service) {
+	console.log(upDown, service);
+	//console.log(upDown, service);
+	productIndex = -1;
+	for (var i = 0; i < products.length; i++) {
+		if (products[i].fullname == service.fullname) {
+			productIndex = i;
+		}
+	}
+	if (productIndex == -1) {
+		if (upDown == "up") {
+			newProductIndex = products.push(service) - 1; // Add product
+			products[newProductIndex].instanceCount = 1;
+			win.webContents.send('addProduct', service);
+			console.log("Added product.");
+			//console.log("Adding product with name "+service.fullname);
+		}
+	} else {
+		if (upDown == "down") {
+			console.log("Product down.");
+			if (products[productIndex].instanceCount > 1) {
+				products[productIndex].instanceCount--;
+			} else {
+				products.splice(productIndex, 1); // Remove product
+				console.log("Removed product.");
+				win.webContents.send('removeProduct', productIndex);
+				//console.log("Removing product with name "+service.fullname);
+			}
+		} else {
+			products[productIndex].instanceCount++;
+		}
+	}
+	// Send the product list to the UI
+	//win.webContents.send('discoveredProducts', products);
+	
+}
+
+ipcMain.on("getAllProducts", (event, arg) => {
+	win.webContents.send('discoveredProducts', products);
+}); 
+
+// SD CARD LOGIC
+
+function listDrives() {
+	drivelist.list((error, drives) => {
+		if (error) {
+			throw error;
+		}
+		
+		
+		
+		console.log(drives);
+	});
+}

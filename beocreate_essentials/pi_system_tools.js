@@ -19,13 +19,14 @@ SOFTWARE.*/
 
 // Can perform some basic Raspberry Pi system tasks, such as setting hostname, expanding root file system and power management (shutdown, reboot).
 
-var child_process = require('child_process');
+var exec = require('child_process').exec;
 var fs = require('fs');
 
 
 var pi_system_tools = module.exports = {
 	getHostname: getHostname,
 	setHostname: setHostname,
+	getSerial: getSerial,
 	ssh: ssh,
 	setSPI: setSPI,
 	expandFilesystem: expandFilesystem,
@@ -33,19 +34,19 @@ var pi_system_tools = module.exports = {
 };
 
 function getHostname(callback) {
-	command = "hostnamectl --pretty";
-	child_process.exec(command, function(error, stdout, stderr) {
+	command = "/usr/bin/hostnamectl --pretty";
+	exec(command, function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);
 		} else {
 			uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
-			command = "hostnamectl --static";
-			child_process.exec(command, function(error, stdout, stderr) {
+			command = "/usr/bin/hostnamectl --static";
+			exec(command, function(error, stdout, stderr) {
 				if (error) {
 					callback(null, error);
 				} else {
 					staticName = stdout.slice(0,-1);
-					if (uiName == "") uiName = staticName;
+					if (uiName == "") uiName = null;
 					callback({ui: uiName, static: staticName});
 				}
 			});
@@ -54,8 +55,8 @@ function getHostname(callback) {
 }
 
 function setHostname(productName, callback) {
-	command = "hostnamectl set-hostname --pretty \""+productName+"\"";
-	child_process.exec(command, function(error, stdout, stderr) {
+	command = "/usr/bin/hostnamectl set-hostname --pretty \""+productName+"\"";
+	exec(command, function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);
 		} else {
@@ -64,24 +65,24 @@ function setHostname(productName, callback) {
 			n = n.replace(/\./g, "-"); // Replace periods with hyphens
 			n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
 			n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
-			command = "hostnamectl set-hostname --static "+n;
-			child_process.exec(command, function(error, stdout, stderr) {
+			command = "/usr/bin/hostnamectl set-hostname --static "+n;
+			exec(command, function(error, stdout, stderr) {
 				if (error) {
 					callback(null, error);
 				} else {
-					command = "hostnamectl --pretty";
-					child_process.exec(command, function(error, stdout, stderr) {
+					command = "/usr/bin/hostnamectl --pretty";
+					exec(command, function(error, stdout, stderr) {
 						if (error) {
 							callback(null, error);
 						} else {
 							uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
-							command = "hostnamectl --static";
-							child_process.exec(command, function(error, stdout, stderr) {
+							command = "/usr/bin/hostnamectl --static";
+							exec(command, function(error, stdout, stderr) {
 								if (error) {
 									callback(null, error);
 								} else {
 									staticName = stdout.slice(0,-1);
-									if (uiName == "") uiName = staticName;
+									if (uiName == "") uiName = null;
 									// Change name in /etc/hosts
 									hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
 									for (var i = 0; i < hostsFile.length; i++) {
@@ -92,6 +93,9 @@ function setHostname(productName, callback) {
 									hostsText = hostsFile.join("\n");
 									fs.writeFileSync("/etc/hosts", hostsText);
 									callback(true, {ui: uiName, static: staticName});
+									setTimeout(function() {
+										exec("systemctl restart avahi-daemon");
+									}, 500);
 								}
 							});
 						}
@@ -102,6 +106,20 @@ function setHostname(productName, callback) {
 	});
 }
 
+function getSerial(callback) {
+	// Get serial number from CPUInfo (can be used as a unique reference to the system)
+	serial = null;
+	if (fs.existsSync("/proc/cpuinfo", "utf8")) {
+		cpuInfo = fs.readFileSync("/proc/cpuinfo", "utf8").split('\n');
+		for (var i = 0; i < cpuInfo.length; i++) {
+			if (cpuInfo[i].indexOf("Serial\t") != -1) {
+				serial = cpuInfo[i].split(": ")[1];
+			}
+		}
+	}
+	callback(serial);
+}
+
 
 function ssh(trueMode, callback) {
 	if (trueMode != null) {
@@ -110,8 +128,8 @@ function ssh(trueMode, callback) {
 		} else if (trueMode == false) {
 			mode = 1;
 		}
-		command = "raspi-config nonint do_ssh "+mode;
-		child_process.exec(command, function(error, stdout, stderr) {
+		command = "/usr/bin/raspi-config nonint do_ssh "+mode;
+		exec(command, function(error, stdout, stderr) {
 			if (error) {
 				callback(null, error);
 			} else {
@@ -119,8 +137,8 @@ function ssh(trueMode, callback) {
 			}
 		});
 	} else {
-		command = "raspi-config nonint get_ssh";
-		child_process.exec(command, function(error, stdout, stderr) {
+		command = "/usr/bin/raspi-config nonint get_ssh";
+		exec(command, function(error, stdout, stderr) {
 			if (error) {
 				callback(null, error);
 			} else {
@@ -142,8 +160,8 @@ function setSPI(mode, callback) {
 		} else {
 			mode = 1;
 		}
-		command = "raspi-config nonint do_spi "+mode;
-		child_process.exec(command, function(error, stdout, stderr) {
+		command = "/usr/bin/raspi-config nonint do_spi "+mode;
+		exec(command, function(error, stdout, stderr) {
 			if (error) {
 				callback(null, error);
 			} else {
@@ -154,15 +172,15 @@ function setSPI(mode, callback) {
 }
 
 function expandFilesystem(callback) {
-	command = "raspi-config nonint get_can_expand";
-	child_process.exec(command, function(error, stdout, stderr) {
+	command = "/usr/bin/raspi-config nonint get_can_expand";
+	exec(command, function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);
 		} else if (stdout) {
 			if (stdout.indexOf("0") != -1) {
 				// Can expand, do it
-				command = "raspi-config nonint do_expand_rootfs";
-				child_process.exec(command, function(error, stdout, stderr) {
+				command = "/usr/bin/raspi-config nonint do_expand_rootfs";
+				exec(command, function(error, stdout, stderr) {
 					if (error) {
 						callback(null, error);
 					} else {
@@ -180,15 +198,15 @@ function expandFilesystem(callback) {
 function power(operation) {
 	// Calling a power function will naturally exit the script.
 	if (operation == "reboot") {
-		child_process.exec("reboot", function(error, stdout, stderr) {
-			//
+		exec("/bin/systemctl reboot", function(error, stdout, stderr) {
+			//process.exit(0);
 		});
-		process.exit(0);
+		//process.exit(0);
 	}
 	if (operation == "shutdown") {
-		child_process.exec("shutdown -H now", function(error, stdout, stderr) {
+		exec("/bin/systemctl poweroff", function(error, stdout, stderr) {
 			//
 		});
-		process.exit(0);
+		//process.exit(0);
 	}
 }

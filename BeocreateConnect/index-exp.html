@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Bang &amp; Olufsen Create</title>
+		<link rel="stylesheet" type="text/css" href="beocreate-app2019.css" />
+		
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+		<script src="scripts/jquery-1.10.2.min.js"></script>
+		<script>if (window.module) module = window.module;</script>
+		<script src="scripts/ui.js"></script>
+    </head>
+	<body class="beocreate-1">
+		
+		
+		<div id="sidebar">
+			<div id="title-bar"></div>
+			
+			<div id="sidebar-scroll-area">
+			<h2>Products</h2>
+				
+				<div class="collection found-products">
+					<div class="collection-item set-up" onclick="setUpNew();">
+						<img class="square-helper" src="images/square-helper.png"> 
+						<div class="collection-item-content">
+							
+							<div class="collection-item-text free-form">
+								
+								<div class="collection-label">Set Up New</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="collection-item no-products">
+						<img class="square-helper" src="images/square-helper.png"> 
+						<div class="collection-item-content">
+							
+							<div class="collection-item-text free-form">
+								
+								<div class="collection-label">Products found on the network will appear here</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="collection-item configure discovered">
+						<img class="square-helper" src="images/square-helper.png"> 
+						<div class="collection-item-content">
+							<img class="collection-icon" src="images/product-images/beovox-cx50.png">
+							<div class="collection-item-text">
+								<div class="collection-label upper">Beovox CX 50</div>
+								<div class="collection-label lower">Kitchen</div>
+							</div>
+						</div>
+					</div>
+					<div class="collection-item configure discovered new">
+						<img class="square-helper" src="images/square-helper.png"> 
+						<div class="collection-item-content">
+							<img class="collection-icon" src="images/product-images/beovox-cx100.png">
+							<div class="collection-item-text">
+								<div class="collection-label upper">Beovox CX 100</div>
+								<div class="collection-label lower">Living Room</div>
+							</div>
+						</div>
+					</div>
+					<div class="collection-item configure discovered">
+						<img class="square-helper" src="images/square-helper.png"> 
+						<div class="collection-item-content">
+							<img class="collection-icon" src="images/product-images/beocreate-core-mk1.png">
+							<div class="collection-item-text">
+								<div class="collection-label upper">&nbsp;</div>
+								<div class="collection-label lower">BeoCreate Core</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="collection-item spacer"></div>
+					<div class="collection-item spacer"></div>
+					<div class="collection-item spacer"></div>
+				</div>
+					
+			</div>
+			</div>
+		</div>
+		
+		<div class="content-area">
+		
+		
+			<div class="app-section" id="set-up-new">
+				
+				
+				<div class="menu-screen" id="set-up-new-start">
+					<div class="scroll-area">
+						<div class="menu-content">
+							<!--<div class="menu-group">
+								<h1>Set Up New</h1>
+							</div>-->
+							<div class="menu-group">
+								<div class="cards">
+									<div class="card">
+										<img class="card-image" src="images/sd-card.jpg">
+										<div class="card-content">
+											<h2>Prepare a MicroSD Card</h2>
+											<p>Install the necessary software for the product.</p>
+											<div class="button pill">Prepare Card</div>
+										</div>
+									</div>
+									
+									<div class="card" onclick="startAssistant('findAndSetUp');">
+										<img class="card-image" src="images/setup-card.jpg">
+										<div class="card-content">
+											<h2>First-Time Setup</h2>
+											<p>Turn on, find and set up the product.</p>
+											<div class="button pill">Find and Set Up</div>
+										</div>
+									</div>
+								</div>
+								
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div class="menu-screen" id="sd-to-product">
+					<div class="scroll-area">
+						<div class="banner-image" style="background-image: url(images/mood-images/sd-mood.jpg);"></div>
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Insert the MicroSD card to the slot on the Raspberry Pi</h1>
+							</div>
+								
+						</div>
+					</div>
+				</div>
+				
+				<div class="menu-screen" id="connect-power">
+					<div class="scroll-area">
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Make sure your product has power</h1>
+								<p>Use a compatible, 12-24 V power adapter.</p>
+							</div>
+								
+						</div>
+					</div>
+				</div>
+				
+				<div class="menu-screen" id="wait-for-discovery">
+					<div class="scroll-area">
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Find your product</h1>
+								<p class="beocreate-1-hide">Connect to a Wi-Fi hotspot that looks like <strong>BeoCreate Setup 12345678</strong>. It may take a few minutes for the hotspot to appear.</p>
+								<p class="beocreate-1-only">Connect to a Wi-Fi hotspot called <strong>BeoSetup</strong>. It may take a few minutes for the hotspot to appear.</p>
+								
+								<!--
+								<a href="#" onclick="disclosure('wired-instructions');">Set up with Ethernet instead.</a>
+								<div class="highlight setup-wifi-highlight">
+									<img src="images/symbols-black/wifi-3.svg">
+									<span>BeoCreate Setup 12345678</span>
+								</div>-->
+								
+								<div class="disclosure-content" id="wired-instructions">
+									<h2>Set up with Ethernet</h2>
+									<p>Connect the product to a network with an Ethernet cable. Make sure this computer is on the same network.</p>
+								</div>
+								<p>Once the product is found, select it from below.</p>
+							</div>
+							
+						
+							<div class="menu-group">
+									
+									<div class="collection found-products new-only">
+										
+										<div class="collection-item no-products">
+											<img class="square-helper" src="images/square-helper.png"> 
+											<div class="collection-item-content">
+												
+												<div class="collection-item-text free-form">
+													
+													<div class="collection-label">Found products will appear here</div>
+												</div>
+											</div>
+										</div>
+										
+										
+										<div class="collection-item spacer"></div>
+										<div class="collection-item spacer"></div>
+										<div class="collection-item spacer"></div>
+									</div>
+										
+								</div>
+						
+						</div>
+					</div>
+				</div>
+				
+				
+			</div>
+			
+		
+			<iframe class="app-section" id="product-view"></iframe>
+		
+		
+		</div>
+		
+		<div id="assistant-bar">
+			<div class="button pill grey" id="assistant-previous" onclick="assistantFlow('previous');">
+				Previous Step
+			</div>
+			<div class="button pill black" id="assistant-next" onclick="assistantFlow('next');">
+				Next Step
+			</div>
+		</div>
+			
+	</body>
+</html>

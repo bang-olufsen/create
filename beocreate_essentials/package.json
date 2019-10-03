@@ -1,0 +1,33 @@
+{
+  "name": "beocreate_essentials",
+  "version": "1.1.0",
+  "description": "Essential tools for sound systems based on BeoCreate 4-Channel Amplifier.",
+  "main": "beocreate_essentials.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bang-olufsen/create.git"
+  },
+  "keywords": [
+    "beocreate",
+    "raspberry",
+    "pi",
+    "bang & olufsen",
+    "audio",
+    "sound",
+    "dsp"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bang-olufsen/create/issues"
+  },
+  "homepage": "https://github.com/bang-olufsen/create#readme",
+  "dependencies": {
+    "dnssd": "^0.4.1",
+    "websocket": "^1.0.28",
+    "wireless-tools": "^0.19.0"
+  }
+}

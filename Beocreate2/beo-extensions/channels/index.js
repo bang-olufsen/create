@@ -18,10 +18,10 @@ SOFTWARE.*/
 // BEOCREATE CHANNEL SETUP
 
 var _ = require('underscore');
+var beoDSP = require('../../beocreate_essentials/dsp');
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	var extensions = globals.extensions;
 	
 	var version = require("./package.json").version;

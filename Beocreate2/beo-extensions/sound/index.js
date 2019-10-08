@@ -18,14 +18,11 @@ SOFTWARE.*/
 // BEOCREATE SYSTEM SOUND CORE
 
 var exec = require('child_process').exec;
+var beoDSP = require('../../beocreate_essentials/dsp');
 
-// BEOCREATE ESSENTIALS
-//console.log(path.dirname(process.mainModule.filename));
-//var beoDSP = require('/home/pi/beo-playground/dsp.js');
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	var systemVolume = globals.volume;
 	var debug = globals.debug;
 	
@@ -47,6 +44,7 @@ module.exports = function(beoBus, globals) {
 
 			beoDSP.connectDSP(function(success) {  
 				if (success) {
+					beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "sound"}});
 					beoBus.emit('dsp', {header: "connected", content: true});
 				}
 			}); // Opens a link with the SigmaDSP daemon.
@@ -59,6 +57,13 @@ module.exports = function(beoBus, globals) {
 				
 			}
 			
+		}
+		
+		if (event.header == "shutdown") {
+			beoDSP.disconnectDSP(function() {
+				beoBus.emit("general", {header: "shutdownComplete", content: {extension: "sound"}});
+				if (debug) console.log("Disconnected from DSP.");
+			});
 		}
 	});
 	

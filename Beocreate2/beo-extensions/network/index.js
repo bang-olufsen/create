@@ -18,7 +18,7 @@ SOFTWARE.*/
 // BEOCREATE NETWORK SETUP
 
 var child_process = require('child_process');
-var networkCore = require('/home/pi/beocreate_essentials/networking');
+var networkCore = require('../../beocreate_essentials/networking');
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
@@ -205,6 +205,9 @@ module.exports = function(beoBus, globals) {
 					if (networkHardware.wifi && networkCore.getSetupNetworkStatus()) {
 						networkCore.setupNetwork();
 					}
+					if (extensions["setup"] && extensions["setup"].leaveSetupFlow) {
+						extensions["setup"].leaveSetupFlow("network");
+					}
 					checkInternetConnection(function(status) {
 						if (debug && status == true) console.log("Network: internet connection is working.");
 					});
@@ -290,7 +293,7 @@ module.exports = function(beoBus, globals) {
 								setConnectionMode({mode: "connected"});
 							}
 						});
-						if (!sawPreviousNetworks && !wifiScanning) {
+						if (!sawPreviousNetworks && !wifiScanning && !globals.setup) {
 							wifiScan(function(networks, error) {
 								if (error) {
 									// Error scanning, but ignore it.

@@ -16,6 +16,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 // PAIRING FOR TWO BEOCREATE 4-CHANNEL AMPLIFIERS
+var beoDSP = require('../../beocreate_essentials/dsp');
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;

@@ -61,7 +61,8 @@
 	min-width: 50px;
 }
 
-#setup .menu-content {
+#setup .menu-content,
+#setup-finish .menu-content {
 	padding-top: 10%;
 	margin-left: auto;
 	margin-right: auto;
@@ -108,7 +109,8 @@ body:not(.dark) #setupsetup-light {
 	}
 	
 	
-	#setup .menu-content {
+	#setup .menu-content,
+	#setup-finish .menu-content {
 		text-align: left;
 		width: 330px;
 		margin-left: 10%;

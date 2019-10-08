@@ -375,12 +375,14 @@ var selectedExtension = null;
 var selectedParentMenu = null;
 var menuState = {};
 var navigating = false;
+var historyConstructed = false;
 
-function showExtension(extension, direction, fromBackButton) {
+function showExtension(extension, direction, fromBackButton, invisibly) {
 	/* Arguments:
 		- extension (required): the id of the extension to show.
-		- direction (optional): specifies from which direction (left/right) the new extension is brought on screen. Used during setup to show extensions, that wouldn't normally be related, in a coherent flow. This also enables the back button to traverse this flow, also on top-level menus, instead of following the parent-submenu structure.
+		- direction (optional): specifies from which direction ("left"/"right") the new extension is brought on screen. Used during setup to show extensions, that wouldn't normally be related, in a coherent flow. This also enables the back button to traverse this flow, also on top-level menus, instead of following the parent-submenu structure.
 		- fromBackButton: indicates that the back button initiated this navigation, which means that the back button for the next screen shouldn't be altered.
+		- invisibly: when extension history is constructed, this flag should be set. It will move extensions to their right places without animations and won't show the current one (also the "activated" function won't get triggered).
 	
 	*/
 	if (!navigating) { // Prevent navigation if another transition is in progress
@@ -421,21 +423,33 @@ function showExtension(extension, direction, fromBackButton) {
 			}
 			
 			direction == "left" ? outDirection = "right" : outDirection = "left";
-			$(sectionToFadeOut).addClass("faded-out animating "+outDirection);
-			$(sectionToFadeIn).addClass("animating");
-			
-			setTimeout(function() {
+			if (!invisibly) {
+				$(sectionToFadeOut).addClass("faded-out animating "+outDirection);
+				$(sectionToFadeIn).addClass("animating");
+				
+				setTimeout(function() {
+					$(sectionToFadeOut).removeClass("block faded-out left right");
+				}, 500);
+				setTimeout(function() {
+					$(sectionToFadeIn).addClass("block faded-out "+direction);
+				}, 550);
+				setTimeout(function() {
+					$(sectionToFadeIn).removeClass("faded-out left right");
+				}, 600);
+				setTimeout(function() {
+					$(sectionToFadeIn+", "+sectionToFadeOut).removeClass("animating");
+				}, 1100);
+			} else {
+				$(sectionToFadeOut).addClass("faded-out "+outDirection).removeClass("block");
+				$(sectionToFadeIn).removeClass("left right faded-out "+direction);
+				/* $(sectionToFadeOut).addClass("faded-out animating "+outDirection);
+				$(sectionToFadeIn).addClass("animating");
 				$(sectionToFadeOut).removeClass("block faded-out left right");
-			}, 500);
-			setTimeout(function() {
 				$(sectionToFadeIn).addClass("block faded-out "+direction);
-			}, 550);
-			setTimeout(function() {
 				$(sectionToFadeIn).removeClass("faded-out left right");
-			}, 600);
-			setTimeout(function() {
-				$(sectionToFadeIn+", "+sectionToFadeOut).removeClass("animating");
-			}, 1100);
+				$(sectionToFadeIn+", "+sectionToFadeOut).removeClass("animating"); */
+			}
+			
 		}
 		
 		if (extensions[newExtension].parentMenu) {
@@ -454,15 +468,19 @@ function showExtension(extension, direction, fromBackButton) {
 				// There's already another submenu open for this menu, close it here first – but only if it's not the menu we actually want to open.
 				if (menuState[selectedParentMenu].submenu != newExtension) {
 					menuToClose = menuState[selectedParentMenu].submenu;
-					$("#" + menuToClose).addClass("hidden-right");
-					setTimeout(function() {
-						$("#" + menuToClose).removeClass("block");
-					}, 600);
+					if (!invisibly) {
+						$("#" + menuToClose).addClass("hidden-right");
+						setTimeout(function() {
+							$("#" + menuToClose).removeClass("block");
+						}, 600);
+					} else {
+						$("#" + menuToClose).removeClass("block").addClass("hidden-right");
+					}
 				}
 			}
 			
 			menuState[selectedParentMenu].submenu = newExtension;
-			activatedExtension(newExtension);
+			if (!invisibly) activatedExtension(newExtension);
 			
 			if (selectedExtension && direction) {
 				backTitle = $("#"+selectedExtension).attr("data-menu-title");
@@ -473,26 +491,44 @@ function showExtension(extension, direction, fromBackButton) {
 			}
 			
 			if (!direction) {
-				$("#" + newExtension).addClass("block new");
-				setTimeout(function() {
-					$("#" + newExtension).removeClass("hidden-right");
-					$("#" + selectedParentMenu).addClass("hidden-left");
-					$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
-				}, 50);
-			}
-			if (direction) {
-				setTimeout(function() {
+				if (!invisibly) {
 					$("#" + newExtension).addClass("block new");
+					setTimeout(function() {
+						$("#" + newExtension).removeClass("hidden-right");
+						$("#" + selectedParentMenu).addClass("hidden-left");
+						$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
+					}, 50);
+				} else {
+					$("#" + newExtension).addClass("block");
 					$("#" + newExtension).removeClass("hidden-right");
 					$("#" + selectedParentMenu).addClass("hidden-left");
 					$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
-				}, 550);
+				}
+			} else if (direction) {
+				if (!invisibly) {
+					setTimeout(function() {
+						$("#" + newExtension).addClass("block new");
+						$("#" + newExtension).removeClass("hidden-right");
+						$("#" + selectedParentMenu).addClass("hidden-left");
+						$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
+					}, 550);
+				} else {
+					$("#" + newExtension).addClass("block");
+					$("#" + newExtension).removeClass("hidden-right");
+					$("#" + selectedParentMenu).addClass("hidden-left");
+					$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
+				}
 			}
-			setTimeout(function() {
+			if (!invisibly) {
+				setTimeout(function() {
+					$("#" + selectedParentMenu).removeClass("block");
+					$("#" + newExtension).removeClass("new");
+					navigating = false;
+				}, 600);
+			} else {
 				$("#" + selectedParentMenu).removeClass("block");
-				$("#" + newExtension).removeClass("new");
 				navigating = false;
-			}, 600);
+			}
 		
 		} else {
 		/* The extension is a parent menu. Considerations:
@@ -514,40 +550,60 @@ function showExtension(extension, direction, fromBackButton) {
 				navigating = false;
 				if (direction) {
 					if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu) {
-						$("#" + selectedParentMenu).addClass("block").removeClass("hidden-left");
+						$("#" + selectedParentMenu).addClass("block");
+						$("#" + selectedParentMenu).removeClass("hidden-left");
 						$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right").removeClass("block");
+						
 					}
-					activatedExtension(newExtension);
+					if (!invisibly) activatedExtension(newExtension);
 				} else if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu) {
-					activatedExtension(menuState[selectedParentMenu].submenu);
+					if (!invisibly) activatedExtension(menuState[selectedParentMenu].submenu);
 				} else {
-					activatedExtension(newExtension);
+					if (!invisibly) activatedExtension(newExtension);
 				}
 			} else {
 				// This is the same top level menu as previously.
 				if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu) {
 					// There's already another submenu open for this menu, close it.
-					activatedExtension(selectedParentMenu);
+					if (!invisibly) activatedExtension(selectedParentMenu);
 					if (!direction) {
-						$("#" + selectedParentMenu).addClass("block new");
-						setTimeout(function() {
+						if (!invisibly) {
+							$("#" + selectedParentMenu).addClass("block new");
+							setTimeout(function() {
+								$("#" + selectedParentMenu).removeClass("hidden-left");
+								$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right");
+							}, 50);
+						} else {
+							$("#" + selectedParentMenu).addClass("block");
 							$("#" + selectedParentMenu).removeClass("hidden-left");
 							$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right");
-						}, 50);
+						}
 					}
 					if (direction) {
-						setTimeout(function() {
-							$("#" + selectedParentMenu).addClass("block new");
+						if (!invisibly) {
+							setTimeout(function() {
+								$("#" + selectedParentMenu).addClass("block new");
+								$("#" + selectedParentMenu).removeClass("hidden-left");
+								$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right");
+							}, 550);
+						} else {
+							$("#" + selectedParentMenu).addClass("block");
 							$("#" + selectedParentMenu).removeClass("hidden-left");
 							$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right");
-						}, 550);
+						}
 					}
-					setTimeout(function() {
+					if (!invisibly) {
+						setTimeout(function() {
+							$("#" + menuState[selectedParentMenu].submenu).removeClass("block");
+							$("#" + selectedParentMenu).removeClass("new");
+							menuState[selectedParentMenu].submenu = undefined;
+							navigating = false;
+						}, 600);
+					} else {
 						$("#" + menuState[selectedParentMenu].submenu).removeClass("block");
-						$("#" + selectedParentMenu).removeClass("new");
 						menuState[selectedParentMenu].submenu = undefined;
 						navigating = false;
-					}, 600);
+					}
 				} else {
 					navigating = false;
 				}
@@ -577,12 +633,36 @@ function showExtension(extension, direction, fromBackButton) {
 		$('nav .nav-item[data-extension-id="'+selectedParentMenu+'"]').addClass("selected");
 		$('nav .nav-item[data-extension-id="'+selectedParentMenu+'"] .menu-icon').attr("src", extensions[selectedParentMenu].assetPath+"/symbols-white/"+extensions[selectedParentMenu].icon);
 		
-		if (interfaceMode == 2 && mainMenuVisible) toggleMainMenu();
+		if (interfaceMode == 2 && mainMenuVisible && !invisibly) toggleMainMenu();
 		selectedExtension = newExtension;
 	}
 	
 }
 
+
+function showExtensionWithHistory(extensionHistory, extension) {
+	// The function will construct the back-button history up until the "extension to select minus one" – for the last step, the function will call "showExtension".
+	// extensionHistory: the path from left to right as an array.
+	// extension: the extension to select. The history will be constructed only up until this extension.
+	if (extensionHistory[0] != extension) {
+		console.log("First extension to show is not '"+extension+"', constructing history…");
+		for (var i = 0; i < extensionHistory.length; i++) {
+			if (extensionHistory[i] == extension) {
+				console.log("History constructed, now showing '"+extensionHistory[i]+"' normally…");
+				showExtension(extensionHistory[i], "right", false);
+				break;
+			} else {
+				console.log("Showing '"+extensionHistory[i]+"' invisibly to construct history…");
+				showExtension(extensionHistory[i], "right", false, true);
+			}
+		}
+	} else {
+		// Just select the extension, no need to reconstruct history.
+		console.log("History construction not necessary, showing '"+extension+"' normally…");
+		showExtension(extension);
+	}
+	historyConstructed = true;
+}
 
 
 

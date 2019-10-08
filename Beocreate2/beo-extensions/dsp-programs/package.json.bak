@@ -21,6 +21,7 @@
   "author": "Bang & Olufsen",
   "license": "MIT",
   "dependencies": {
+    "onoff": "^4.1.3",
     "underscore": "^1.9.1",
     "xml-js": "^1.6.11"
   }

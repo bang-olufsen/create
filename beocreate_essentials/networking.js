@@ -48,6 +48,13 @@ var wifiConfigModified = 0;
 var setupNetworkName = "";
 var setupNetworkActive = false;
 
+var wifiConfigPath = null;
+if (fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf")) {
+	var wifiConfigPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
+} else if (fs.existsSync("/etc/wpa_supplicant.conf")) {
+	var wifiConfigPath = "/etc/wpa_supplicant.conf";
+}
+
 
 
 // GET NETWORK STATUS
@@ -365,11 +372,11 @@ function channelToFrequency(channel) {
 // CONFIGURATION R/W
 // Enables the script to manipulate wpa_supplicant configuration as a JavaScript object.
 function readWifiConfiguration() {
-	modified = fs.statSync("/etc/wpa_supplicant/wpa_supplicant.conf").mtimeMs;
+	modified = fs.statSync(wifiConfigPath).mtimeMs;
 	if (modified != wifiConfigModified) { // Check if the config file has been modified since it was last accessed. Only read and parse if that's the case.
 		wifiConfigModified = modified;
 		wifiConfiguration = {networks: []};
-		rawConfig = fs.readFileSync("/etc/wpa_supplicant/wpa_supplicant.conf", "utf8"); // Load raw config file
+		rawConfig = fs.readFileSync(wifiConfigPath, "utf8"); // Load raw config file
 		configLines = rawConfig.split("\n"); // Remove whitespace and split into lines.
 		currentNetworkEntry = -1;
 		for (var i = 0; i < configLines.length; i++) {
@@ -461,8 +468,8 @@ function saveWifiConfiguration(reconfigure) {
 		config.push(networkItem);
 	}
 	//return config.join("\n");
-	fs.writeFileSync("/etc/wpa_supplicant/wpa_supplicant.conf", config.join("\n"));
-	wifiConfigModified = fs.statSync("/etc/wpa_supplicant/wpa_supplicant.conf").mtimeMs; // Update the new modification time.
+	fs.writeFileSync(wifiConfigPath, config.join("\n"));
+	wifiConfigModified = fs.statSync(wifiConfigPath).mtimeMs; // Update the new modification time.
 	if (reconfigure) {
 		exec('wpa_cli -i wlan0 reconfigure', function(error, stdout, stderr){
 		    if (error !== null) {

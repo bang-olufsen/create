@@ -17,11 +17,12 @@ SOFTWARE.*/
 
 // BEOCREATE TOSLINK
 
+var beoDSP = require('../../beocreate_essentials/dsp');
+
 module.exports = function(beoBus, globals) {
 	var module = {};
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
-	var debug = false;
+	var debug = globals.debug;
 	
 	var metadata = {};
 	var defaultSettings = {
@@ -36,11 +37,6 @@ module.exports = function(beoBus, globals) {
 	
 	beoBus.on('general', function(event) {
 		
-		if (event.header == "startup") {
-			
-			if (event.content.debug) debug = event.content.debug;
-			
-		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "toslink") {

@@ -460,7 +460,7 @@ function flashEEPROM(filePath, callback) {
 	flashCallback = callback;
 	//EEPROMRequest = new Buffer(createSigmaEEPROMRequest(filePath))
 	//dspClient.write(EEPROMRequest);
-	exec("dsptoolkit install-profile "+filePath, function(error, stdout, stderr) {
+	exec("dsptoolkit --timeout 60 install-profile "+filePath, function(error, stdout, stderr) {
 		if (error) {
 			flashCallback(null, error);
 		} else {

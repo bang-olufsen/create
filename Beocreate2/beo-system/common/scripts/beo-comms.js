@@ -33,8 +33,9 @@ var productConnectionNotificationTimeout = null;
 
 function connectToCurrentProduct() {
 	// Although the UI markup and assets are served over HTTP directly from the product, WebSocket protocol is then used for realtime communication between the UI and the product.
-	productAddress = window.location.hostname;
-	if (!simulation && noExtensions == false) connectProduct();
+	productAddress = window.location.host;
+	if (productAddress.indexOf(":") == -1) productAddress += ":80";
+	if (!simulation && noExtensions == false && productAddress) connectProduct();
 	//notify(false, "connection");
 }
 
@@ -46,7 +47,7 @@ function connectProduct() {
 	connecting = true;
 	
 	console.log("Connecting to " + productAddress + "...");
-	productConnection = new WebSocket('ws://' + productAddress + ':80', ["beo-remote"]);
+	productConnection = new WebSocket('ws://' + productAddress, ["beo-remote"]);
 	
 	productConnectionNotificationTimeout = setTimeout(function() {
 		// Show "Connecting..." with a timeout so that it doesn't flash every time the UI loads.

@@ -17,7 +17,7 @@ SOFTWARE.*/
 
 // BEOCREATE PRODUCT INFORMATION
 
-var piSystem = require("/home/pi/beocreate_essentials/pi_system_tools");
+var piSystem = require("../../beocreate_essentials/pi_system_tools");
 var fs = require("fs");
 
 module.exports = function(beoBus, globals) {
@@ -69,7 +69,10 @@ module.exports = function(beoBus, globals) {
 					} else {
 						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name that contains the system ID ("Beocreate_a1b2c3d4").
 						if (!systemID) systemID = "new";
-						piSystem.setHostname("Beocreate_"+systemID, function(success, response) {
+						piSystem.setHostname("Beocreate_"+systemID.replace(/^0+/, ''), function(success, response) {
+							if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
+								extensions["setup"].joinSetupFlow("product-information", {after: ["choose-country", "network", "sound-preset"], allowAdvancing: true});
+							}
 							if (success == true) { 
 								systemName = response;
 								if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");

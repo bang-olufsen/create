@@ -6,13 +6,15 @@ var canStartSources = false;
 var currentSource = null;
 var cacheIndex = 0;
 
+var noSoundExtension = (typeof sound == "undefined");
+
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			if ($("#now-playing").hasClass("visible")) {
 				send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
 			}
-			send({target: "sound", header: "getVolume"});
+			if (noSoundExtension) send({target: "sound", header: "getVolume"});
 		}
 	}
 	
@@ -21,7 +23,7 @@ $(document).on("general", function(event, data) {
 
 $(document).on("sound", function(event, data) {
 	
-	if (data.header == "systemVolume") {
+	if (data.header == "systemVolume" && noSoundExtension) {
 		if (data.content.volume != undefined) {
 			systemVolume = data.content.volume;
 			updateSystemVolumeSliders();
@@ -34,6 +36,16 @@ $(document).on("now-playing", function(event, data) {
 	
 	if (data.header == "metadata") {
 		if (data.content.metadata != undefined) {
+			/*
+			Contents:
+			content.cacheIndex = a number that increments every time metadata changes on the sound system, used to check if metadata needs to be sent.
+			content.metadata.picture = URL or base64-encoded image data. 
+				- false: remove picture
+				- true: use previous picture
+			content.metadata.artist
+			content.metadata.album
+			content.metadata.title
+			*/
 			/*if (data.content.metadata.title) {
 				$(".now-playing-title").text(data.content.metadata.title);
 			}
@@ -329,7 +341,7 @@ $(document).on("ui", function(event, data) {
 
 
 function updateSystemVolumeSliders() {
-	if (adjustingSystemVolume == false) {
+	if (adjustingSystemVolume == false && systemVolume != null) {
 		$(".master-volume-slider").slider("value", systemVolume.percentage);
 	}
 }
@@ -342,23 +354,24 @@ function unmute(fade = false) {
 	send({target: "sound", header: "unmute", content: {fade: fade}});
 }
 
-
-$(".master-volume-slider").slider({
-	range: "min",
-	min: 0,
-	max: 100,
-	value: 0,
-	slide: function( event, ui ) {	
-		send({target: "sound", header: "setVolume", content: {percentage: ui.value}});
-	},
-	start: function(event, ui) {
-		adjustingSystemVolume = true;
-	},
-	stop: function(event, ui) {
-		adjustingSystemVolume = false;
-		updateSystemVolumeSliders();
-	}
-});
+if (noSoundExtension) {
+	$(".master-volume-slider").slider({
+		range: "min",
+		min: 0,
+		max: 100,
+		value: 0,
+		slide: function( event, ui ) {	
+			send({target: "sound", header: "setVolume", content: {percentage: ui.value}});
+		},
+		start: function(event, ui) {
+			adjustingSystemVolume = true;
+		},
+		stop: function(event, ui) {
+			adjustingSystemVolume = false;
+			updateSystemVolumeSliders();
+		}
+	});
+}
 
 return {
 	showNowPlaying: showNowPlaying,

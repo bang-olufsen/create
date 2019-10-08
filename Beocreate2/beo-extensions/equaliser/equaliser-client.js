@@ -135,7 +135,8 @@ function generateSettingsPreview(settings) {
 }
 
 return {
-	generateSettingsPreview: generateSettingsPreview
+	generateSettingsPreview: generateSettingsPreview,
+	setFilterProto: setFilterProto
 };
 
 })();

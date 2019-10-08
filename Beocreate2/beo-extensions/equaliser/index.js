@@ -17,11 +17,10 @@ SOFTWARE.*/
 
 // BEOCREATE SPEAKER EQUALISER
 
-
+var beoDSP = require('../../beocreate_essentials/dsp');
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	var debug = globals.debug;
 	var extensions = globals.extensions;
 	

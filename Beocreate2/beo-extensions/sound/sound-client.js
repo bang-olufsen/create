@@ -19,12 +19,12 @@ $(document).on("sound", function(event, data) {
 		}
 	}
 	
-	/*if (data.header == "systemVolume") {
+	if (data.header == "systemVolume") {
 		if (data.content.volume != undefined) {
 			systemVolume = data.content.volume;
 			updateSystemVolumeSliders();
 		}
-	}*/
+	}
 });
 
 function toggleAdvancedSoundAdjustments(enabled) {
@@ -53,7 +53,7 @@ function showAdvancedSoundAdjustmentsEnabled(enabled) {
 	
 }
 
-/*function updateSystemVolumeSliders() {
+function updateSystemVolumeSliders() {
 	if (adjustingSystemVolume == false) {
 		$(".master-volume-slider").slider("value", systemVolume.percentage);
 	}
@@ -83,11 +83,11 @@ $(".master-volume-slider").slider({
 		adjustingSystemVolume = false;
 		updateSystemVolumeSliders();
 	}
-});*/
+});
 
 return {
-	//unmute: unmute,
-	//mute: mute,
+	unmute: unmute,
+	mute: mute,
 	toggleAdvancedSoundAdjustments: toggleAdvancedSoundAdjustments
 }
 

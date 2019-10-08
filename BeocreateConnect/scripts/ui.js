@@ -420,7 +420,7 @@ function getProductInfo(product) {
 	if (product.legacyProduct) {
 		classes.push("legacy", "configure");
 	} else {
-		if (product.productImage != null) image = "http://"+product.addresses[0]+product.productImage;
+		if (product.productImage != null) image = "http://"+product.addresses[0]+":"+product.port+product.productImage;
 		if (product.modelName != null) model = product.modelName;
 		if (model.toLowerCase() == "beocreate 4-channel amplifier") model = "Beocreate";
 		classes.push("configure");
@@ -450,7 +450,7 @@ function configureProduct(fullname, fromDiscovery) {
 		setTimeout(function() {
 			productNotification();
 		}, 600);
-		productIP = products[fullname].addresses[0];
+		productIP = products[fullname].addresses[0]+":"+products[fullname].port;
 		selectedProduct = JSON.parse(JSON.stringify(products[fullname]));
 		src = $("#product-view").attr("src");
 		if (!src || fromDiscovery || src.indexOf("http://"+productIP+"/") == -1 || productConnectionStatus == "disconnected") {

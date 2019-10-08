@@ -19,10 +19,10 @@ SOFTWARE.*/
 
 var fs = require('fs');
 var path = require('path');
+var beoDSP = require('../../beocreate_essentials/dsp');
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	var extensions = globals.extensions;
 	var presetDirectory = systemDirectory+"/../beo-sound-presets"; // Sound presets directory sits next to the system directory
 	
@@ -177,7 +177,11 @@ module.exports = function(beoBus, globals) {
 						}
 					}
 				}
-				
+				if (!settings.selectedSoundPreset) {
+					if (extensions["setup"] && extensions["setup"].allowAdvancing) {
+						extensions["setup"].allowAdvancing("sound-preset", true);
+					}
+				}
 				settings.selectedSoundPreset = event.content.presetID;
 				
 				beoBus.emit("settings", {header: "saveSettings", content: {extension: "sound-preset", settings: settings}});

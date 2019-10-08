@@ -17,15 +17,18 @@ SOFTWARE.*/
 
 // BEOCREATE DSP PROGRAM MANAGER
 
+var beoDSP = require('../../beocreate_essentials/dsp');
 var xmlJS = require('xml-js');
 var fs = require('fs');
 var _ = require('underscore');
-const Gpio = require('onoff').Gpio;
-const mutePin = new Gpio(2, 'out');
+Gpio = null;
+//const Gpio = require('onoff').Gpio;
+if (Gpio) {
+	const mutePin = new Gpio(2, 'out');
+}
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	var debug = globals.debug;
 	
 	var currentMetadata = {};
@@ -176,7 +179,7 @@ module.exports = function(beoBus, globals) {
 			});
 		}
 		
-		if (event.header == "gpioMuteTest") {
+		if (event.header == "gpioMuteTest" && Gpio) {
 			if (event.content.mute) {
 				mutePin.writeSync(true);
 			} else {

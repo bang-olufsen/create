@@ -30,13 +30,17 @@ var EventEmitter = require('eventemitter3');
 var aplay = require('aplay');
 
 // Beocreate Essentials
-var beoCom = require("/home/pi/beocreate_essentials/communication")();
-var beoDSP = require('/home/pi/beocreate_essentials/dsp');
-var piSystem = require('/home/pi/beocreate_essentials/pi_system_tools');
+var beoCom = require("../beocreate_essentials/communication")();
+var piSystem = require('../beocreate_essentials/pi_system_tools');
 
 // END DEPENDENCIES
 
 var systemVersion = require("./package.json").version;
+var defaultsystemConfiguration = {
+	"cardType": "Beocreate 4-Channel Amplifier",
+	"port": 80
+};
+var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
 
 
 var systemStatus = "normal"; 
@@ -49,7 +53,7 @@ var systemVolume = {percentage: null, absolute: null};
 var extensionsRequestingShutdownTime = [];
 
 global.systemDirectory = __dirname;
-var settingsDirectory = systemDirectory+"/../beo-settings"; // Settings directory sits next to the beo-system directory.
+var settingsDirectory = "/etc/beocreate"; // Settings directory sits next to the beo-system directory.
 var systemLanguage = "en";
 
 var debugMode = false;
@@ -63,6 +67,20 @@ cmdArgs = process.argv.slice(2);
 if (cmdArgs.indexOf("v") != -1) debugMode = 1;
 if (cmdArgs.indexOf("vv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
+
+
+// LOAD SYSTEM SETTINGS
+// Contains sound card type, port to use, possibly disabled extensions.
+if (fs.existsSync(settingsDirectory+"/system.json")) {
+	try {
+		systemConfiguration = JSON.parse( // Read settings file.
+			fs.readFileSync(settingsDirectory+"/system.json")
+		);
+	} catch (error) {
+		var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
+	}
+}
+
 
 // BEOBUS
 
@@ -186,10 +204,12 @@ function getAllSettings() {
 		//console.log(sources);
 		if (settingsFiles.length != 0) {
 			for (var s = 0; s < settingsFiles.length; s++) {
-				if (settingsFiles[s].indexOf(".json") != -1) { // Check that this is a JSON file.
+				if (settingsFiles[s].indexOf(".json") != -1 && settingsFiles[s] != "system.json") { // Check that this is a JSON file.
+					
 					settings = JSON.parse( // Read settings file.
 						fs.readFileSync(settingsDirectory+"/"+settingsFiles[s])
 					);
+					
 					// Return the parsed JSON.
 					beoBus.emit(settingsFiles[s].split(".json")[0], {header: "settings", content: {settings: settings}});
 					if (debugMode == 2) console.log("Settings loaded for '"+settingsFiles[s].split(".json")[0]+"'.");
@@ -200,7 +220,6 @@ function getAllSettings() {
 		fs.mkdirSync(settingsDirectory);
 	}
 }
-
 
 
 // LOAD EXTENSIONS, ASSEMBLE UI AND START SERVERS
@@ -214,7 +233,7 @@ var selectedExtension = null;
 
 // HTTP & EXPRESS SERVERS
 var expressServer = express();
-var beoServer = http.createServer(expressServer).listen(80); // Create a HTTP server.
+var beoServer = http.createServer(expressServer).listen(systemConfiguration.port); // Create a HTTP server.
 
 //expressServer.use(express.static(systemDirectory, {etag: false})); // For static assets.
 expressServer.use("/common", express.static(systemDirectory+"/common", {etag: false})); // For product images.
@@ -252,7 +271,7 @@ beoBus.on('product-information', function(event) {
 		
 		if (!commsActive) {
 			if (debugMode) console.log("Starting Bonjour advertisement...");
-			beoCom.start({name: event.content.systemName, serviceType: "beocreate", server: beoServer, port: 9000, advertisePort: 80, txtRecord: {"type": event.content.modelID, "typeui": event.content.modelName, "id": event.content.systemID, "image": event.content.productImage, "status": systemStatus}}, function() {
+			beoCom.start({name: event.content.systemName, serviceType: "beocreate", server: beoServer, advertisePort: systemConfiguration.port, txtRecord: {"type": event.content.modelID, "typeui": event.content.modelName, "id": event.content.systemID, "image": event.content.productImage, "status": systemStatus}}, function() {
 				commsActive = true;
 			});
 			setTimeout(function() {
@@ -270,7 +289,7 @@ beoBus.on('product-information', function(event) {
 			if (extensions['product-information'] && extensions['product-information'].getProductInformation) {
 				productInfo = extensions['product-information'].getProductInformation();
 				beoCom.stopBonjour(function() {
-					beoCom.startBonjour({name: productInfo.systemName, serviceType: "beocreate", advertisePort: 80, txtRecord: {"type": productInfo.modelID, "typeui": productInfo.modelName, "id": productInfo.systemID, "image": productInfo.productImage, "status": systemStatus}}, function() {
+					beoCom.startBonjour({name: productInfo.systemName, serviceType: "beocreate", advertisePort: systemConfiguration.port, txtRecord: {"type": productInfo.modelID, "typeui": productInfo.modelName, "id": productInfo.systemID, "image": productInfo.productImage, "status": systemStatus}}, function() {
 						commsActive = true;
 					}); 
 				});
@@ -309,6 +328,17 @@ function assembleBeoUI() {
 			navigationItems = [];
 		}
 		extensionsNames = fs.readdirSync(extensionsPath);
+		if (systemConfiguration.disabledExtensions && systemConfiguration.disabledExtensions.length > 0) {
+			tempExtensionsNames = [];
+			for (var e = 0; e < extensionsNames.length; e++) {
+				if (disabledExtensions.indexOf(extensionsNames[e]) == -1) {
+					tempExtensionsNames.push(extensionsNames[e]);
+				} else {
+					if (debugMode) console.log("Extension '"+extensionsNames[e]+"' is disabled and won't be loaded.");
+				}
+			}
+			extensionsNames = tempExtensionsNames;
+		}
 		
 		allExtensions = {};
 		menuStructure = [];
@@ -454,7 +484,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 			require.resolve(fullPath);
 			try {
 				extensions[extensionName] = require(fullPath)(beoBus, {
-					dsp: beoDSP, 
+					systemConfiguration: systemConfiguration,
 					volume: systemVolume, 
 					extensions: extensions, 
 					setup: false, 
@@ -752,26 +782,24 @@ function completeShutdownForExtension(extensionID) {
 }
 
 function completeShutdown() {
-	beoDSP.disconnectDSP(function() {
-		if (debugMode) console.log("Disconnected from DSP.");
-		beoCom.stop(function() {
-			if (debugMode) console.log("Stopped WebSocket and Bonjour advertisement.");
-			beoServer.close(function() {
-				if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");
-			    if (powerCommand) {
-			    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+".");
-			    	piSystem.power(powerCommand);
-			    } 
-			   
-				/*setTimeout(function() {
-					log();
-				}, 100);*/
-				
-				console.log("Exiting Beocreate 2.");
-			    process.exit(0);
-			});
+	
+	beoCom.stop(function() {
+		if (debugMode) console.log("Stopped WebSocket and Bonjour advertisement.");
+		beoServer.close(function() {
+			if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");
+		    if (powerCommand) {
+		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+".");
+		    	piSystem.power(powerCommand);
+		    } 
+		   
+			/*setTimeout(function() {
+				log();
+			}, 100);*/
 			
+			console.log("Exiting Beocreate 2.");
+		    process.exit(0);
 		});
+		
 	});
 	
 }

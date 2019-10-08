@@ -30,31 +30,34 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			selectedExtension = event.content;
-			if (setupFlow.length > 0) {
+			if (setupFlow.length > 2) {
 				checkIfMoreSteps(true);
+				beoBus.emit("ui", {target: "setup", header: "extensionChanged", content: {selectedExtension: selectedExtension}});
 			}
 		}
 		
 	});
 	
-	var setupFlow = [];
+	var setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
+	// Setup is in the flow by default and two times, because it shows both introduction and finish screens.
 	
 	beoBus.on('setup', function(event) {
 
 		if (event.header == "getSetupStatus") {
 			// The client always asks for this when it connects.
-			if (setupFlow.length == 0) {
-				// No extensions in the setup flow.
-				beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension}});
+			if (setupFlow.length == 2) {
+				// No (actual) extensions in the setup flow.
+				beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: setup, selectedExtension: selectedExtension}});
 			} else {
 				if (!setup) {
 					// Setup will start with the first extension when the client connects for the first time.
 					setup = true;
-					setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
+					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
+					selectedExtension = setupFlow[0].extension;
 					beoBus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: setupFlow[0].extension}});
+					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, reset: true}});
 				} else {
-					// If setup is already underway, just send the current status. The UI will should pick up.
+					// If setup is already underway, just send the current status. The UI should pick up.
 					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension}});
 				}
 			}
@@ -66,13 +69,14 @@ module.exports = function(beoBus, globals) {
 				if (setupFlow[i].extension == selectedExtension) {
 					if (setupFlow[i+1]) {
 						// Command the next step.
-						beoBus.emit("ui", {target: "setup", header: "showExtension", content: {extension: setupFlow[i+1].extension, lastStep: true}});
+						beoBus.emit("setup", {header: "advancing", content: {fromExtension: selectedExtension}});
+						beoBus.emit("ui", {target: "setup", header: "showExtension", content: {extension: setupFlow[i+1].extension}});
 					} else {
 						// No more extensions, finish.
-						setupFlow = [];
+						setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
 						setup = false;
 						beoBus.emit("setup", {header: "finishingSetup"});
-						beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension}});
+						beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
 					}
 					break;
 				}
@@ -83,6 +87,7 @@ module.exports = function(beoBus, globals) {
 	
 	function joinSetupFlow(extension, options) {
 		// An extension can join the setup flow at any time, but it might not get its preferred placement if some extension have already been shown to the user.
+		
 		joins = true;
 		for (var i = 0; i < setupFlow.length; i++) {
 			// Check that this extension doesn't already exist in the flow.
@@ -91,24 +96,28 @@ module.exports = function(beoBus, globals) {
 				break;
 			}
 		}
+		if (extension == "setup" && extension == "setup-finish") joins = false;
 		if (joins) {
 			// Create an entry.
-			newStep = {extension: extension, shown: false, allowAdvancing: false};
+			allowAdvancing = (options.allowAdvancing) ? true : false
+			newStep = {extension: extension, shown: false, allowAdvancing: allowAdvancing};
 			if (options.before) newStep.before = options.before;
 			if (options.after) newStep.after = options.after;
 			// Next, determine the placement.
-			newIndex = setupFlow.length; // Default to adding the extension to the end.
+			endIndex = setupFlow.length-1; // Default to adding the extension to the end, but before the finishing step.
 			
 			// First fill out these indexes, then check if we need to resolve conflicts:
 			beforeExisting = null; // If the new extension wants to be before an existing one.
 			beforeNew = null; // If an existing extension wants to be before the new one.
 			afterExisting = null; // If the new extension wants to be after an existing one.
 			afterNew = null; // If an existing extension wants to be after the new one.
-			
-			for (var i = 0; i < setupFlow.length; i++) {
+			lastShown = 0;
+						
+			for (var i = 1; i < setupFlow.length; i++) {
 				if (newStep.before) {
 					if (newStep.before.indexOf(setupFlow[i].extension) != -1) {
-						beforeExisting = i;
+						// Only find the first extension that matches.
+						if (beforeExisting == null) beforeExisting = i;
 					}
 				}
 				if (newStep.after) {
@@ -116,42 +125,66 @@ module.exports = function(beoBus, globals) {
 						afterExisting = i+1;
 					}
 				}
+				if (setupFlow[i].before) {
+					if (setupFlow[i].before.indexOf(newStep.extension) != -1) {
+						beforeNew = i+1;
+					}
+				}
+				if (setupFlow[i].after) {
+					if (setupFlow[i].after.indexOf(newStep.extension) != -1) {
+						afterNew = i1;
+					}
+				}
+				if (setupFlow[i].shown) lastShown = i+1;
+			}
+			if (beforeExisting == null && afterExisting == null && beforeNew == null && afterNew == null) {
+				placedIndex = endIndex;
+			} else {
+				placedIndex = Math.max(beforeExisting, afterExisting, beforeNew, afterNew, lastShown);
 			}
 			
-			setupFlow.splice(newIndex, 0, newStep); // Add to the flow.
+			setupFlow.splice(placedIndex, 0, newStep); // Add to the flow.
 			beoBus.emit("ui", {target: "setup", header: "joinSetupFlow", content: {extension: extension, setupFlow: setupFlow}});
 			if (debug) console.log("Extension '"+extension+"' joined setup flow.");
 			checkIfMoreSteps();
 		}
-		
 		return joins;
 	}
 	
 	function allowAdvancing(extension, allow) {
 		// Controls whether or not the "Next Step" button is enabled for a given extension.
-		for (var i = 0; i < setupFlow.length; i++) {
-			if (setupFlow[i].extension == extension) {
-				setupFlow[i].allowAdvancing = allow;
-				beoBus.emit("ui", {target: "setup", header: "allowAdvancing", content: {extension: extension, allow: allow}});
-				break;
+		if (extension != "setup" && extension != "setup-finish") {
+			for (var i = 0; i < setupFlow.length; i++) {
+				if (setupFlow[i].extension == extension) {
+					setupFlow[i].allowAdvancing = allow;
+					beoBus.emit("ui", {target: "setup", header: "allowAdvancing", content: {extension: extension, allow: allow}});
+					break;
+				}
 			}
 		}
-		
 	}
 	
 	function leaveSetupFlow(extension) {
 		// If an extension decides it doesn't need setup anymore, it can leave the setup flow even during setup if it hasn't been shown yet.
 		leaves = false;
-		for (var i = 0; i < setupFlow.length; i++) {
-			if (setupFlow[i].extension == extension && !setupFlow[i].shown) {
-				leaves = true;
-				break;
+		if (extension != "setup" && extension != "setup-finish") {
+			for (var i = 0; i < setupFlow.length; i++) {
+				if (setupFlow[i].extension == extension) {
+					if (!setupFlow[i].shown) {
+						leaves = true;
+					} else {
+						// If the extension can't be removed (it has been already shown), allow advancing over it.
+						setupFlow[i].allowAdvancing = true;
+						beoBus.emit("ui", {target: "setup", header: "allowAdvancing", content: {extension: extension, allow: true}});
+					}
+					break;
+				}
 			}
-		}
-		if (leaves) {
-			setupFlow.splice(i, 1);
-			beoBus.emit("ui", {target: "setup", header: "leaveSetupFlow", content: {extension: extension, setupFlow: setupFlow}});
-			checkIfMoreSteps();
+			if (leaves) {
+				setupFlow.splice(i, 1);
+				beoBus.emit("ui", {target: "setup", header: "leaveSetupFlow", content: {extension: extension, setupFlow: setupFlow}});
+				checkIfMoreSteps();
+			}
 		}
 		return leaves;
 	}

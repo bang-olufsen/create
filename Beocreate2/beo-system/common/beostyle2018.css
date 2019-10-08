@@ -1121,9 +1121,8 @@ nav.full .nav-content:before {
 
 hr {
 	/*height: calc( var(--menu-height) / 2);*/
-	border-color: var(--menu-line);
-	border-style: solid;
-	border-bottom: none;
+	border: none;
+	border-top: 1px solid var(--menu-line);
 	margin-bottom: 10px;
 	margin-top: 10px;
 }

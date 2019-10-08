@@ -17,9 +17,10 @@ SOFTWARE.*/
 
 // BEOCREATE TONE CONTROLS
 
+var beoDSP = require('../../beocreate_essentials/dsp');
+
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	var debug = globals.debug;
 	var systemVolume = globals.volume;
 	var Fs = null;

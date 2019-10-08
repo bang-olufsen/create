@@ -17,14 +17,15 @@ SOFTWARE.*/
 
 // VOLUME LIMIT
 
+var beoDSP = require('../../beocreate_essentials/dsp');
+
 module.exports = function(beoBus, globals) {
 	var module = {};
 	var beoBus = beoBus;
-	var beoDSP = globals.dsp;
 	
 	var version = require("./package.json").version;
 	
-	var debug = false;
+	var debug = globals.debug;
 	var metadata = {};
 	
 	var defaultSettings = {
@@ -43,10 +44,6 @@ module.exports = function(beoBus, globals) {
 	beoBus.on('general', function(event) {
 		//console.log("Volume Limit received general event: "+event);
 		
-		if (event.header == "startup") {
-			
-			if (event.content.debug) debug = true;
-		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "volume-limit") {

@@ -45,6 +45,10 @@ $(document).on("product-information", function(event, data) {
 		//extensions["product-information"].title = systemName;
 		$(".model-name").text(modelName);
 		$(".system-version").text(systemVersion);
+		/*if (data.content.hifiberryOS != undefined) {
+			setAsHifiberryOS(data.content.hifiberryOS == true);
+		}*/
+		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) $(".card-type").text(data.content.systemConfiguration.cardType);
 		toggleSystemIDFormat(true);
 		document.title = systemName;
 		sendToProductView({header: "systemName", content: {name: systemName}});
@@ -74,7 +78,12 @@ $(document).on("product-information", function(event, data) {
 			if (document.domain.indexOf(".local") != -1) {
 				if (document.domain != data.content.staticName.toLowerCase()+".local") {
 					// If the browser is using the local hostname to connect, redirect to the new hostname. With IP address this is not necessary as that doesn't change.
-					window.location.replace("http://"+data.content.staticName.toLowerCase()+".local");
+					if (window.location.host.indexOf(":") != -1) {
+						port = ":"+window.location.host.split(":")[1];
+					} else {
+						port = "";
+					}
+					window.location.replace("http://"+data.content.staticName.toLowerCase()+".local"+port);
 				}
 			}
 		}
@@ -107,6 +116,10 @@ $(document).on("product-information", function(event, data) {
 	}
 	
 });
+
+if ($("body").hasClass("hifiberry-os")) {
+	$(".os-name").text("HiFiBerryOS");
+}
 
 function toggleSystemIDFormat(updateOnly) {
 	if (!updateOnly) {

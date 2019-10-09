@@ -6,7 +6,6 @@ var canStartSources = false;
 var currentSource = null;
 var cacheIndex = 0;
 
-var noSoundExtension = (typeof sound == "undefined");
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -14,21 +13,9 @@ $(document).on("general", function(event, data) {
 			if ($("#now-playing").hasClass("visible")) {
 				send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
 			}
-			if (noSoundExtension) send({target: "sound", header: "getVolume"});
 		}
 	}
 	
-});
-
-
-$(document).on("sound", function(event, data) {
-	
-	if (data.header == "systemVolume" && noSoundExtension) {
-		if (data.content.volume != undefined) {
-			systemVolume = data.content.volume;
-			updateSystemVolumeSliders();
-		}
-	}
 });
 
 $(document).on("now-playing", function(event, data) {
@@ -340,47 +327,12 @@ $(document).on("ui", function(event, data) {
 });
 
 
-function updateSystemVolumeSliders() {
-	if (adjustingSystemVolume == false && systemVolume != null) {
-		$(".master-volume-slider").slider("value", systemVolume.percentage);
-	}
-}
-
-function mute(fade = false) {
-	send({target: "sound", header: "mute", content: {fade: fade}});
-}
-
-function unmute(fade = false) {
-	send({target: "sound", header: "unmute", content: {fade: fade}});
-}
-
-if (noSoundExtension) {
-	$(".master-volume-slider").slider({
-		range: "min",
-		min: 0,
-		max: 100,
-		value: 0,
-		slide: function( event, ui ) {	
-			send({target: "sound", header: "setVolume", content: {percentage: ui.value}});
-		},
-		start: function(event, ui) {
-			adjustingSystemVolume = true;
-		},
-		stop: function(event, ui) {
-			adjustingSystemVolume = false;
-			updateSystemVolumeSliders();
-		}
-	});
-}
-
 return {
 	showNowPlaying: showNowPlaying,
 	hideNowPlaying: hideNowPlaying,
 	toggleShowAlbumName: toggleShowAlbumName,
 	playButtonPress: playButtonPress,
 	transport: transport,
-	mute: mute,
-	unmute: unmute,
 	enableSourceStart: enableSourceStart
 }
 

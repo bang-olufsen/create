@@ -63,6 +63,7 @@ function setHostname(productName, callback) {
 			n = productName.replace(/ /g, "-"); // Replace spaces with hyphens
 			n = n.replace(/\r?\n|\r/g, ""); // Remove newlines
 			n = n.replace(/\./g, "-"); // Replace periods with hyphens
+			n = n.replace(/_/g, "-"); // Replace underscores with hyphens
 			n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
 			n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
 			command = "/usr/bin/hostnamectl set-hostname --static "+n;

@@ -24,7 +24,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
 	var extensions = globals.extensions;
-	var presetDirectory = systemDirectory+"/../beo-sound-presets"; // Sound presets directory sits next to the system directory
+	var presetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory sits next to the system directory
 	
 	var version = require("./package.json").version;
 	

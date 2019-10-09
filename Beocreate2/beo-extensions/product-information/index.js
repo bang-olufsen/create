@@ -32,7 +32,7 @@ module.exports = function(beoBus, globals) {
 	var hasInternet = false;
 	
 	var systemID = null;
-	var systemNames = {ui: "BeoCreate 4-Channel Amplifier", static: "beocreate-4-channel-amplifier"};
+	var systemName = {ui: null, static: null};
 	var systemVersion = null;
 	
 	var defaultSettings = {
@@ -42,9 +42,11 @@ module.exports = function(beoBus, globals) {
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
+	var hifiberryOS = (globals.systemConfiguration.cardType && globals.systemConfiguration.cardType.indexOf("Beocreate") == -1) ? true : false;
+	
 	var productIdentities = {};
 	
-	var imageDirectory = systemDirectory+"/../beo-product-images/";
+	var imageDirectory = dataDirectory+"/beo-product-images/";
 	if (!fs.existsSync(imageDirectory)) fs.mkdirSync(imageDirectory);
 	
 	beoBus.on('general', function(event) {
@@ -69,7 +71,7 @@ module.exports = function(beoBus, globals) {
 					} else {
 						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name that contains the system ID ("Beocreate_a1b2c3d4").
 						if (!systemID) systemID = "new";
-						piSystem.setHostname("Beocreate_"+systemID.replace(/^0+/, ''), function(success, response) {
+						piSystem.setHostname("Beocreate-"+systemID.replace(/^0+/, ''), function(success, response) {
 							if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
 								extensions["setup"].joinSetupFlow("product-information", {after: ["choose-country", "network", "sound-preset"], allowAdvancing: true});
 							}
@@ -88,7 +90,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "product-information") {
-				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: settings.productImage, systemVersion: systemVersion, systemID: systemID}});
+				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: settings.productImage, systemVersion: systemVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: globals.systemConfiguration}});
 			}
 		}
 	});
@@ -285,22 +287,40 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	downloadQueue = [];
-	function downloadProductImage(url) {
+	function downloadProductImage(queue, downloaded, failed) {
 		if (hasInternet) {
-			if (!url && downloadQueue.length > 0) {
-				for (var i = 0; i < downloadQueue.length; i++) {
-					download(downloadQueue[i], imageDirectory, null, function(success, err) {
-		
-					});
+			fromURL = null;
+			if (queue != false && queue != null) {
+				if (typeof queue == "string") {
+					fromURL = queue;
+					queue = false;
+				} else {
+					if (Array.isArray(queue)) {
+						// The queue is a queue, take the first item.
+						fromURL = queue.shift();
+						if (queue.length == 0) queue = false;
+					} else {
+						// The "queue" is an object (a single entry).
+						fromURL = queue;
+						queue = false;
+					}
 				}
+			} else if (queue == false) {
+				// No more queue items, trigger callback.
 				downloadQueue = [];
+				if (callback) callback(downloaded, failed);
 			} else {
-				download(url, imageDirectory, null, function(success, err) {
-					
+				console.error("No extensions to download.");
+				if (callback) callback(false);
+			}
+			
+			if (fromURL) {
+				download(downloadQueue[i], imageDirectory, null, function(success, err) {
+					downloadProductImage(queue, downloaded, failed);
 				});
 			}
 		} else {
-			downloadQueue.push(url);
+			if (typeof queue == "string") downloadQueue.push(queue);
 		}
 	}
 	

@@ -370,6 +370,7 @@ dspClient.on('data', function(data) {
 			theXML = Buffer.concat(bufferArray).toString('utf8');
 			xmlCallback(theXML);
 			xmlCallback = null;
+			clearTimeout(xmlTimeout);
 			bufferArray = []; // Clear buffer.
 		}
 	} else {
@@ -527,11 +528,15 @@ function resetDSP(callback) {
 }
 
 var xmlCallback = null;
+var xmlTimeout = null;
 function getXML(callback) {
 	xmlCallback = callback;
-	
 	xmlRequest = Buffer.from(createHifiberryRequest(hifiberryCommandXMLCode));
 	dspClient.write(xmlRequest);
+	xmlTimeout = setTimeout(function() {
+		if (xmlCallback) xmlCallback(null);
+		xmlCallback = null;
+	}, 2000);
 }
 
 

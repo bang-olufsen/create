@@ -38,7 +38,7 @@ module.exports = function(beoBus, globals) {
 	
 	var dspPrograms = {};
 	
-	var dspDirectory = systemDirectory+"/../beo-dsp-programs"; // DSP program directory sits next to the system directory.
+	var dspDirectory = dataDirectory+"/beo-dsp-programs"; // DSP program directory sits next to the system directory.
 	
 	if (!fs.existsSync(dspDirectory)) fs.mkdirSync(dspDirectory);
 	
@@ -195,7 +195,7 @@ module.exports = function(beoBus, globals) {
 				currentChecksum = checksum;
 				beoDSP.getXML(function(response) {
 					// Reads the current program from the DSP.
-					metadata = parseDSPMetadata(response);
+					metadata = (response != null) ? parseDSPMetadata(response) : null;
 					
 					if (metadata) {
 						callback(metadata);
@@ -203,6 +203,7 @@ module.exports = function(beoBus, globals) {
 						// If no metadata was received from the DSP, check if any of the stored programs contains the same checksum and use that metadata.
 						for (program in dspPrograms) {
 							if (dspPrograms[program].checksum == currentChecksum) {
+								if (debug) console.log("No XML received from the DSP, but '"+program+"' matches, using its metadata instead.");
 								callback(dspPrograms[program].metadata);
 								break;
 							}

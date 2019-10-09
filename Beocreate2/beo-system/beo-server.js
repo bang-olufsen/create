@@ -36,12 +36,13 @@ var piSystem = require('../beocreate_essentials/pi_system_tools');
 // END DEPENDENCIES
 
 var systemVersion = require("./package.json").version;
-var defaultsystemConfiguration = {
+var defaultSystemConfiguration = {
 	"cardType": "Beocreate 4-Channel Amplifier",
-	"port": 80
+	"port": 80,
+	"language": "en"
 };
-var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
-
+var systemConfiguration = JSON.parse(JSON.stringify(defaultSystemConfiguration));
+if (!systemConfiguration.language) systemConfiguration.language = "en";
 
 var systemStatus = "normal"; 
 /* Possible status codes: 
@@ -53,8 +54,7 @@ var systemVolume = {percentage: null, absolute: null};
 var extensionsRequestingShutdownTime = [];
 
 global.systemDirectory = __dirname;
-var settingsDirectory = "/etc/beocreate"; // Settings directory sits next to the beo-system directory.
-var systemLanguage = "en";
+global.dataDirectory = "/etc/beocreate"; // Data directory for settings, sound presets, product images, etc.
 
 var debugMode = false;
 var daemonMode = false;
@@ -71,10 +71,10 @@ if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 
 // LOAD SYSTEM SETTINGS
 // Contains sound card type, port to use, possibly disabled extensions.
-if (fs.existsSync(settingsDirectory+"/system.json")) {
+if (fs.existsSync(dataDirectory+"/system.json")) {
 	try {
 		systemConfiguration = JSON.parse( // Read settings file.
-			fs.readFileSync(settingsDirectory+"/system.json")
+			fs.readFileSync(dataDirectory+"/system.json")
 		);
 	} catch (error) {
 		var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
@@ -153,9 +153,9 @@ beoBus.on("settings", function(event) {
 	// Handles the saving and retrieval of configuration files for extensions.
 	if (event.header == "getSettings") {
 		if (event.content.extension) {
-			if (fs.existsSync(settingsDirectory+"/"+event.content.extension+".json")) { 
+			if (fs.existsSync(dataDirectory+"/"+event.content.extension+".json")) { 
 				settings = JSON.parse( // Read settings file.
-					fs.readFileSync(settingsDirectory+"/"+event.content.extension+".json")
+					fs.readFileSync(dataDirectory+"/"+event.content.extension+".json")
 				);
 				// Return the parsed JSON.
 				beoBus.emit(event.content.extension, {header: "settings", content: {settings: settings}});
@@ -177,7 +177,7 @@ beoBus.on("settings", function(event) {
 
 function saveSettings(extension, settings, immediately) {
 	if (immediately) { // Save immediately.
-		fs.writeFileSync(settingsDirectory+"/"+extension+".json", JSON.stringify(settings));
+		fs.writeFileSync(dataDirectory+"/"+extension+".json", JSON.stringify(settings));
 		if (debugMode == 2) console.log("Settings saved for '"+extension+"' (immediately).");
 	} else { // Add to the queue.
 		settingsToBeSaved[extension] = settings;
@@ -191,7 +191,7 @@ function saveSettings(extension, settings, immediately) {
 function savePendingSettings() {
 	for (var extension in settingsToBeSaved) {
 	    if (settingsToBeSaved.hasOwnProperty(extension)) {
-	        fs.writeFileSync(settingsDirectory+"/"+extension+".json", JSON.stringify(settingsToBeSaved[extension]));
+	        fs.writeFileSync(dataDirectory+"/"+extension+".json", JSON.stringify(settingsToBeSaved[extension]));
 			if (debugMode == 2) console.log("Settings saved for '"+extension+"'.");
 	    }
 	}
@@ -199,15 +199,15 @@ function savePendingSettings() {
 }
 
 function getAllSettings() {
-	if (fs.existsSync(settingsDirectory)) {
-		settingsFiles = fs.readdirSync(settingsDirectory);
+	if (fs.existsSync(dataDirectory)) {
+		settingsFiles = fs.readdirSync(dataDirectory);
 		//console.log(sources);
 		if (settingsFiles.length != 0) {
 			for (var s = 0; s < settingsFiles.length; s++) {
 				if (settingsFiles[s].indexOf(".json") != -1 && settingsFiles[s] != "system.json") { // Check that this is a JSON file.
 					
 					settings = JSON.parse( // Read settings file.
-						fs.readFileSync(settingsDirectory+"/"+settingsFiles[s])
+						fs.readFileSync(dataDirectory+"/"+settingsFiles[s])
 					);
 					
 					// Return the parsed JSON.
@@ -217,7 +217,7 @@ function getAllSettings() {
 			}
 		}
 	} else {
-		fs.mkdirSync(settingsDirectory);
+		fs.mkdirSync(dataDirectory);
 	}
 }
 
@@ -235,16 +235,19 @@ var selectedExtension = null;
 var expressServer = express();
 var beoServer = http.createServer(expressServer).listen(systemConfiguration.port); // Create a HTTP server.
 
-//expressServer.use(express.static(systemDirectory, {etag: false})); // For static assets.
-expressServer.use("/common", express.static(systemDirectory+"/common", {etag: false})); // For product images.
-expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: false})); // For product images.
-expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: false})); // For extensions.
+etags = (debugMode) ? false : true; // Disable etags (caching) when running with debug.
+expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For product images.
+expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For product images.
+expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For extensions.
 expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
 	if (beoUI != false) {
 		res.status(200);
-		res.send(assembleBeoUI()); // No cache - use in development
-	  	//res.send(beoUI); // Cached version - use this in production
+		if (debugMode) {
+			res.send(assembleBeoUI()); // No cache - use in development/debug
+	  	} else {
+	  		res.send(beoUI); // Cached version - use this in production
+	  	}
 	} else {
 		// Return an error page.
 		//fileServer.serveFile('./common/ui-error.html', 500, {}, request, response);
@@ -328,7 +331,17 @@ function assembleBeoUI() {
 			navigationItems = [];
 		}
 		extensionsNames = fs.readdirSync(extensionsPath);
-		if (systemConfiguration.disabledExtensions && systemConfiguration.disabledExtensions.length > 0) {
+		if (systemConfiguration.enabledExtensions && systemConfiguration.enabledExtensions.length > 0) {
+			tempExtensionsNames = [];
+			for (var e = 0; e < extensionsNames.length; e++) {
+				if (enabledExtensions.indexOf(extensionsNames[e]) != -1) {
+					tempExtensionsNames.push(extensionsNames[e]);
+				} else {
+					if (debugMode) console.log("Extension '"+extensionsNames[e]+"' is listed to be loaded, excluding unlisted extensions.");
+				}
+			}
+			extensionsNames = tempExtensionsNames;
+		} else if (systemConfiguration.disabledExtensions && systemConfiguration.disabledExtensions.length > 0) {
 			tempExtensionsNames = [];
 			for (var e = 0; e < extensionsNames.length; e++) {
 				if (disabledExtensions.indexOf(extensionsNames[e]) == -1) {
@@ -373,6 +386,13 @@ function assembleBeoUI() {
 							allExtensions[sources[so]] = loadExtensionWithPath(sources[so], __dirname+"/sources/"+sources[so], "sources", true);
 						}
 					}*/
+				} else {
+					for (var i = 0; i < menuStructure.length; i++) {
+						if (menuStructure[i].menu == extensionsNames[e]) {
+							menuStructure.splice(i, 1);
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -464,7 +484,8 @@ function assembleBeoUI() {
 	}
 	
 	if (fs.existsSync(__dirname+'/common/index.html')) {
-		completeUI = fs.readFileSync(systemDirectory+'/common/index.html', "utf8").replace("<html>", '<html lang="'+systemLanguage+'">').replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-translations>", "").replace("<beo-translations>", translations).replace("</beo-scripts>", "").replace("<beo-scripts>", scripts.join("\n"));
+		bodyClass = (systemConfiguration.cardType && systemConfiguration.cardType.indexOf("Beocreate") == -1) ? '<body class="hifiberry-os ' : '<body class="';
+		completeUI = fs.readFileSync(systemDirectory+'/common/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClass).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-translations>", "").replace("<beo-translations>", translations).replace("</beo-scripts>", "").replace("<beo-scripts>", scripts.join("\n"));
 		
 		
 		return completeUI;
@@ -477,69 +498,89 @@ function assembleBeoUI() {
 
 
 function loadExtensionWithPath(extensionName, fullPath, basePath) {
-	// Load the Node code for this extension
-	extensionLoadedSuccesfully = false;
-	if (!extensionsLoaded) {
-		try {
-			require.resolve(fullPath);
-			try {
-				extensions[extensionName] = require(fullPath)(beoBus, {
-					systemConfiguration: systemConfiguration,
-					volume: systemVolume, 
-					extensions: extensions, 
-					setup: false, 
-					selectedExtension: selectedExtension, 
-					debug: debugMode,
-					daemon: daemonMode,
-					sendToUI: sendToUI,
-					download: download,
-					downloadJSON: downloadJSON
-				});
-				extensionLoadedSuccesfully = true;
-			}
-			catch (error) {
-				console.log("Error loading extension '"+extensionName+"':");
-				console.log(error);
-				extensionLoadedSuccesfully = false;
-			}
-		}
-		catch (error) {
-			if (debugMode) console.log("Extension '"+extensionName+"' has no server-side code.");
-			extensionLoadedSuccesfully = true;
-		}
-	}
 	
-	extensionHasUI = false;
 	isSource = false;
 	if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() && fs.existsSync(fullPath+'/menu.html')) { 
-		// A directory is a menu and its menu.html exists
-		menu = fs.readFileSync(fullPath+'/menu.html', "utf8").replace('>', ' data-asset-path="'+basePath+'/'+extensionName+'">'); // Read the menu from file and add asset path.
-		if (menu.indexOf('<div class="menu-screen source') != -1) isSource = true; 
-		menu = menu.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path
-		//menu = menu.split('€systemName').join(systemName); // Replace the special character in src with the correct asset path
+		// A directory is a menu and its menu.html exists.
+		menu = fs.readFileSync(fullPath+'/menu.html', "utf8"); // Read the menu from file.
 		
-		context = menu.match(/data-context="(.*?)"/g); // Get menu context (who it wants as a parent menu, if any).
-		if (context != null) context = context[0].slice(14, -1).split("/")[0];
-		
-		// Load a translation array, if it exists.
-		if (systemLanguage != "en" && fs.existsSync(fullPath+'/translations/'+systemLanguage+'.json')) {
-			translations[menuPath] = JSON.parse(fs.readFileSync(fullPath+'/translations/'+systemLanguage+'.json', "utf8"));
+		// First check if this extension is included or excluded with this hardware.
+		shouldIncludeExtension = true;
+		enableWith = menu.match(/data-enable-with="(.*?)"/g);
+		disableWith = menu.match(/data-disable-with="(.*?)"/g);
+		if (enableWith != null || disableWith != null) {
+			shouldIncludeExtension = false;
+			cardType = systemConfiguration.cardType.toLowerCase();
+			if (enableWith != null) {
+				if (enableWith[0].slice(18, -1).toLowerCase().split(", ").indexOf(cardType) != -1) 
+					shouldIncludeExtension = true;
+			} else if (disableWith != null) {
+				if (disableWith[0].slice(19, -1).toLowerCase().split(", ").indexOf(cardType) == -1) shouldIncludeExtension = true;
+			}
 		}
 		
-		extensionHasUI = true;
-	}
-	
-	if (!extensionsLoaded) extensionsList[extensionName] = ({hasUI: extensionHasUI, isSource: isSource, loadedSuccesfully: extensionLoadedSuccesfully});
-	
-	if (extensionHasUI) {
-		// Extract scripts into a separate array
-		extensionScripts = menu.match(/^<script.*/gm);
-		menu = menu.replace(/^<script.*/gm, "");
-		return {menu: menu, scripts: extensionScripts, context: context, isSource: isSource};
-		//return menu;
+		
+		if (shouldIncludeExtension) {
+			menu = menu.replace('>', ' data-asset-path="'+basePath+'/'+extensionName+'">'); // Add asset path.
+			if (menu.indexOf('<div class="menu-screen source') != -1) isSource = true; 
+			menu = menu.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path
+			//menu = menu.split('€systemName').join(systemName); // Replace the special character in src with the correct asset path
+			
+			context = menu.match(/data-context="(.*?)"/g); // Get menu context (who it wants as a parent menu, if any).
+			if (context != null) context = context[0].slice(14, -1).split("/")[0];
+			
+			// Load a translation array, if it exists.
+			if (systemConfiguration.language != "en" && fs.existsSync(fullPath+'/translations/'+systemConfiguration.language+'.json')) {
+				translations[menuPath] = JSON.parse(fs.readFileSync(fullPath+'/translations/'+systemConfiguration.language+'.json', "utf8"));
+			}
+			
+			// Load the Node code for this extension
+			extensionLoadedSuccesfully = false;
+			if (!extensionsLoaded) {
+				try {
+					require.resolve(fullPath);
+					try {
+						extensions[extensionName] = require(fullPath)(beoBus, {
+							systemConfiguration: systemConfiguration,
+							volume: systemVolume, 
+							extensions: extensions, 
+							setup: false, 
+							selectedExtension: selectedExtension, 
+							debug: debugMode,
+							daemon: daemonMode,
+							sendToUI: sendToUI,
+							download: download,
+							downloadJSON: downloadJSON
+						});
+						extensionLoadedSuccesfully = true;
+					}
+					catch (error) {
+						console.log("Error loading extension '"+extensionName+"':");
+						console.log(error);
+						extensionLoadedSuccesfully = false;
+					}
+				}
+				catch (error) {
+					if (debugMode) console.log("Extension '"+extensionName+"' has no server-side code.");
+					extensionLoadedSuccesfully = true;
+				}
+			}
+			if (!extensionsLoaded) extensionsList[extensionName] = ({isSource: isSource, loadedSuccesfully: extensionLoadedSuccesfully});
+			
+			// Extract scripts into a separate array
+			extensionScripts = menu.match(/^<script.*/gm);
+			menu = menu.replace(/^<script.*/gm, "");
+			return {menu: menu, scripts: extensionScripts, context: context, isSource: isSource};
+		} else {
+			return null;
+		}
 	} else {
 		return null;
 	}
+	
+	
+	
+	
 }
 
 

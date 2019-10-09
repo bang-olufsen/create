@@ -259,7 +259,6 @@ function prepareMenus() {
 	}
 }
 
-
 var configuredTabs = [];
 
 function prepareTabBar() {

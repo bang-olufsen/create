@@ -30,7 +30,7 @@ module.exports = function(beoBus, globals) {
 	
 	var settings = {"advancedSoundAdjustmentsEnabled": false};
 	
-	
+	var volumeMixer = "DSPVolume";
 	var metadata = {};
 	
 	beoBus.on('general', function(event) {
@@ -41,13 +41,14 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "startup") {
 			
-
-			beoDSP.connectDSP(function(success) {  
-				if (success) {
-					beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "sound"}});
-					beoBus.emit('dsp', {header: "connected", content: true});
-				}
-			}); // Opens a link with the SigmaDSP daemon.
+			if (globals.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
+				beoDSP.connectDSP(function(success) {  
+					if (success) {
+						beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "sound"}});
+						beoBus.emit('dsp', {header: "connected", content: true});
+					}
+				}); // Opens a link with the SigmaDSP daemon.
+			}
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -85,7 +86,6 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	var previousVolume = 0;
-	var adjustingVolume = false;
 	var sourceHandlesVolumeControl = false;
 	var sourceVolumeControlTimeout = null;
 	var sourceVolumeControlOverride = false;
@@ -105,18 +105,10 @@ module.exports = function(beoBus, globals) {
 				}
 				break;
 			case "sourceHandlesVolumeControl":
-				if (event.content.sourceHandlesVolumeControl) {
-					sourceHandlesVolumeControl = true;
-				} else {
-					sourceHandlesVolumeControl = false;
-				}
+				sourceHandlesVolumeControl = (event.content.sourceHandlesVolumeControl) ? true : false;
 				break;
 			case "setVolume":
 				setVolume(event.content);
-				break;
-			case "stopAdjustingVolume":
-				adjustingVolume = false;
-				//sourceVolumeControlOverride = false;
 				break;
 			case "mute":
 				fade = false;
@@ -124,13 +116,11 @@ module.exports = function(beoBus, globals) {
 				mute(true, fade);
 				break;
 			case "unmute":
-				fade = false;
-				if (event.content.fade) fade = true;
+				fade = (event.content.fade) ? true : false;
 				mute(false, fade);
 				break;
 			case "toggleMute":
-				fade = false;
-				if (event.content.fade) fade = true;
+				fade = (event.content.fade) ? true : false;
 				mute(undefined, fade);
 				break;
 			case "updateVolume":
@@ -145,11 +135,7 @@ module.exports = function(beoBus, globals) {
 				});
 				break;
 			case "advancedSoundAdjustmentsEnabled":
-				if (event.content.enabled) {
-					settings.advancedSoundAdjustmentsEnabled = true;
-				} else {
-					settings.advancedSoundAdjustmentsEnabled = false;
-				}
+				settings.advancedSoundAdjustmentsEnabled = (event.content.enabled) ? true : false;
 				
 				beoBus.emit("settings", {header: "saveSettings", content: {extension: "sound", settings: settings}});
 				beoBus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
@@ -182,7 +168,7 @@ module.exports = function(beoBus, globals) {
 		}
 		
 		if (volumeCommand != null) {
-			exec("amixer set DSPVolume "+volumeCommand, function(error, stdout, stderr) {
+			exec("amixer set "+volumeMixer+" "+volumeCommand, function(error, stdout, stderr) {
 				if (error) {
 					//callback(null, error);
 				} else {
@@ -263,7 +249,7 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	function updateVolume(callback) {
-		exec("amixer get DSPVolume", function(error, stdout, stderr) {
+		exec("amixer get "+volumeMixer, function(error, stdout, stderr) {
 			if (error) {
 				//callback(null, error);
 			} else {

@@ -239,53 +239,56 @@ module.exports = function(beoBus, globals) {
 	function processAudioControlMetadata(metadata) {
 
 		extension = matchAudioControlSourceToExtension(metadata.playerName);
-		
-		if (metadata.playerState != allSources[extension].playerState) {
-			// Player state updated _for this source_.
-			allSources[extension].playerState = metadata.playerState;
-			
-			if (metadata.playerState != "stopped" && metadata.playerState != "unknown") {
-				if (allSources[extension].active == false) sourceActivated(extension);
-			} else {
-				if (allSources[extension].active == true) sourceDeactivated(extension);
+		if (extension) {
+			if (metadata.playerState != allSources[extension].playerState) {
+				// Player state updated _for this source_.
+				allSources[extension].playerState = metadata.playerState;
+				
+				if (metadata.playerState != "stopped" && metadata.playerState != "unknown") {
+					if (allSources[extension].active == false) sourceActivated(extension);
+				} else {
+					if (allSources[extension].active == true) sourceDeactivated(extension);
+				}
+				
+				beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 			}
 			
-			beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
-		}
-		
-		if (metadata.title != allSources[extension].metadata.title ||
-			metadata.artist != allSources[extension].metadata.artist ||
-			metadata.albumTitle != allSources[extension].metadata.album) {
-			// Metadata updated.
-			allSources[extension].metadata.title = metadata.title;
-			allSources[extension].metadata.artist = metadata.artist;
-			allSources[extension].metadata.album = metadata.albumTitle;
-			allSources[extension].metadata.loved = metadata.loved;
-			allSources[extension].metadata.picture = metadata.artUrl;
-			allSources[extension].metadata.picturePort = settings.port;
-			beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
-		}
-		
-		if (extension != currentAudioControlSource) {
-			// If the active source indicated in AudioControl metadata changes, there won't be status updates for the previous source. Read it manually.
-			currentAudioControlSource = extension;
-			audioControlGet("status");
+			if (metadata.title != allSources[extension].metadata.title ||
+				metadata.artist != allSources[extension].metadata.artist ||
+				metadata.albumTitle != allSources[extension].metadata.album) {
+				// Metadata updated.
+				allSources[extension].metadata.title = metadata.title;
+				allSources[extension].metadata.artist = metadata.artist;
+				allSources[extension].metadata.album = metadata.albumTitle;
+				allSources[extension].metadata.loved = metadata.loved;
+				allSources[extension].metadata.picture = metadata.artUrl;
+				allSources[extension].metadata.picturePort = settings.port;
+				beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
+			}
+			
+			if (extension != currentAudioControlSource) {
+				// If the active source indicated in AudioControl metadata changes, there won't be status updates for the previous source. Read it manually.
+				currentAudioControlSource = extension;
+				audioControlGet("status");
+			}
 		}
 	}
 	
 	function matchAudioControlSourceToExtension(acSource) {
 		// Determine which extension this belongs to.
 		extension = null;
-		if (allSources[acSource.toLowerCase()]) {
-			extension = acSource.toLowerCase();
-		} else {
-			for (source in allSources) {
-				if (allSources[source].aka && allSources[source].aka.indexOf(acSource) != -1) {
-					extension = source;
-					break;
+		if (acSource) {
+			if (allSources[acSource.toLowerCase()]) {
+				extension = acSource.toLowerCase();
+			} else {
+				for (source in allSources) {
+					if (allSources[source].aka && allSources[source].aka.indexOf(acSource) != -1) {
+						extension = source;
+						break;
+					}
 				}
+				if (!extension) extension = "bluetooth"; // Bluetooth sources can have various names.
 			}
-			if (!extension) extension = "bluetooth"; // Bluetooth sources can have various names.
 		}
 		return extension;
 	}

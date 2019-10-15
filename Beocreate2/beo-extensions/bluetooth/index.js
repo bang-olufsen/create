@@ -66,7 +66,7 @@ module.exports = function(beoBus, globals) {
 			if (event.content.enabled != undefined) {
 				setBluetoothStatus(event.content.enabled, function(newStatus, error) {
 					beoBus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {bluetoothEnabled: newStatus}});
-					if (sources) sources.setSourceOptions("bluetooth", {enabled: newStatus});
+					if (sources) sources.setSourceOptions("bluetooth", {enabled: newStatus, playerState: "stopped"});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("bluetooth");
 					}

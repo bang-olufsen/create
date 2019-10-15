@@ -255,7 +255,8 @@ module.exports = function(beoBus, globals) {
 			
 			if (metadata.title != allSources[extension].metadata.title ||
 				metadata.artist != allSources[extension].metadata.artist ||
-				metadata.albumTitle != allSources[extension].metadata.album) {
+				metadata.albumTitle != allSources[extension].metadata.album||
+				metadata.artUrl != allSources[extension].metadata.picture) {
 				// Metadata updated.
 				allSources[extension].metadata.title = metadata.title;
 				allSources[extension].metadata.artist = metadata.artist;

@@ -66,7 +66,11 @@ module.exports = function(beoBus, globals) {
 				
 			}
 			
-			checkIfAudioControlAvailable(getALSAMixers(determineVolumeControl()));
+			checkIfAudioControlAvailable(function() {
+				getALSAMixers(function() {
+					determineVolumeControl();
+				});
+			});
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -362,20 +366,25 @@ module.exports = function(beoBus, globals) {
 			url: "http://127.0.1.1:"+sourcesSettings.port+"/api/volume",
 			body: {"percent": volume}
 		}, function(err, res, body) {
-			if (res.statusCode == 200) {
-				try {
-					if (body.percent != undefined) {
-						callback(body.percent);
-					} else {
-						callback(null);
-						if (debug) console.error("Volume value not returned.");
-					}
-				} catch (error) {
-					callback(null);
-					if (debug) console.error("Volume control not set up properly.");
-				}
-			} else {
+			if (err) {
+				if (debug) console.log("Could not set volume: " + err);
 				callback(null);
+			} else {
+				if (res.statusCode == 200) {
+					try {
+						if (body.percent != undefined) {
+							callback(body.percent);
+						} else {
+							callback(null);
+							if (debug) console.error("Volume value not returned.");
+						}
+					} catch (error) {
+						callback(null);
+						if (debug) console.error("Volume control not set up properly.");
+					}
+				} else {
+					callback(null);
+				}
 			}
 		});
 	}
@@ -388,6 +397,7 @@ module.exports = function(beoBus, globals) {
 			}, function(err, res, body) {
 				if (err) {
 					if (debug) console.log("Could not retrieve volume: " + err);
+					callback(null);
 				} else {
 					if (res.statusCode == 200) {
 						try {

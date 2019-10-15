@@ -22,6 +22,14 @@
 			</div>
 			<div class="button pill grey">Import Program...</div>
 			<!--<p>Looking for model-specific sound profiles? They are now <a href="#" onclick="jumpToSoundPresets();">sound presets</a>.</p>-->
+			<h2 class="disclosure" data-disclosure="#dsp-programs-advanced">Advanced</h2>
+			<div id="dsp-programs-advanced" class="hidden">
+				<div class="menu-item toggle" id="mute-unknown-enabled-toggle" onclick="dsp_programs.toggleMuteUnknown();">
+					<div class="menu-label">Mute Unknown Programs</div>
+					<div class="menu-toggle"></div>
+				</div>
+				<p>Keeps the amplifier muted if one of the listed DSP programs is not detected.</p>
+			</div>
 		</div>
 	</div>
 	
@@ -68,6 +76,17 @@
 			
 			<div class="button pill black default" onclick="dsp_programs.installProgram(true);">Install Program</div>
 			<div class="button pill grey cancel" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="disable-mute-unknown-programs-prompt">
+		<h2>Mute Unknown Programs</h2>
+		<p class="warning"><strong>Important safety notice:</strong> if this setting is disabled and a DSP program fails to install correctly, the system may produce loud and disturbing noises, putting your hearing and speakers at risk.</p>
+		<p>By disabling the setting, you acknowledge that you understand this.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill grey" onclick="dsp_programs.toggleMuteUnknown(true);">Disable</div>
+			<div class="button pill black cancel default" onclick="ask();">Keep Enabled</div>
 		</div>
 	</div>
 </div>

@@ -2,6 +2,7 @@ var dsp_programs = (function() {
 
 var programs = {};
 var previewedDSPProgram = null;
+var muteUnknown = false;
 
 
 $(document).on("dsp-programs", function(event, data) {
@@ -30,9 +31,11 @@ $(document).on("dsp-programs", function(event, data) {
 			
 			$(".no-dsp-metadata").addClass("hidden");
 			$(".dsp-program-metadata-wrap").removeClass("hidden");
+			$("#dsp-program-preview-popup footer .reinstall").removeClass("disabled");
 		} else {
 			$(".no-dsp-metadata").removeClass("hidden");
 			$(".dsp-program-metadata-wrap").addClass("hidden");
+			$("#dsp-program-preview-popup footer .reinstall").addClass("disabled");
 		}
 		
 		if (data.content.current) {
@@ -104,6 +107,16 @@ $(document).on("dsp-programs", function(event, data) {
 			notify({title: "DSP program installation failed", message: "Program was succesfully written, but didn't persist in memory. Please try installing the program again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
 		}
 	}
+	
+	if (data.header == "muteUnknownPrograms") {
+		if (data.content.muteUnknown) {
+			muteUnknown = true;
+			$("#mute-unknown-enabled-toggle").addClass("on");
+		} else {
+			muteUnknown = false;
+			$("#mute-unknown-enabled-toggle").removeClass("on");
+		}
+	}
 });
 
 
@@ -135,12 +148,27 @@ function jumpToSoundPresets() {
 	showExtension("sound-preset");
 }
 
+function toggleMuteUnknown(confirmed) {
+	if (muteUnknown) {
+		if (!confirmed) {
+			ask("disable-mute-unknown-programs-prompt");
+		} else {
+			ask();
+			send({target: "dsp-programs", header: "muteUnknown", content: {muteUnknown: false}});
+		}
+	} else {
+		// When enabling, just do it.
+		send({target: "dsp-programs", header: "muteUnknown", content: {muteUnknown: true}});
+	}
+}
+
 return {
 	jumpToSoundPresets: jumpToSoundPresets,
 	getPreview: getPreview,
 	closePreview: closePreview,
 	reinstallProgram: reinstallProgram,
-	installProgram: installProgram
+	installProgram: installProgram,
+	toggleMuteUnknown: toggleMuteUnknown
 };
 
 })();

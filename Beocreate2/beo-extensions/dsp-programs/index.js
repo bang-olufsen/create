@@ -19,6 +19,7 @@ SOFTWARE.*/
 
 var beoDSP = require('../../beocreate_essentials/dsp');
 var xmlJS = require('xml-js');
+var execSync = require("child_process").execSync;
 var fs = require('fs');
 var _ = require('underscore');
 Gpio = null;
@@ -39,6 +40,11 @@ module.exports = function(beoBus, globals) {
 	var dspPrograms = {};
 	
 	var dspDirectory = dataDirectory+"/beo-dsp-programs"; // DSP program directory sits next to the system directory.
+	
+	var defaultSettings = {
+		"muteUnknownPrograms": true
+	};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
 	if (!fs.existsSync(dspDirectory)) fs.mkdirSync(dspDirectory);
 	
@@ -98,6 +104,7 @@ module.exports = function(beoBus, globals) {
 					}
 				}
 				beoBus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active}});
+				beoBus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
 			}
 		}
 	});
@@ -114,25 +121,33 @@ module.exports = function(beoBus, globals) {
 			if (event.content.program) {
 				metadata = dspPrograms[event.content.program].metadata;
 				current = false;
-				name = dspPrograms[event.content.program].name;
-				if (metadata.profileVersion) {
-					version = metadata.profileVersion.value[0];
-				} else {
-					version = null;
+				if (metadata) {
+					name = dspPrograms[event.content.program].name;
+					if (metadata.profileVersion) {
+						version = metadata.profileVersion.value[0];
+					} else {
+						version = null;
+					}
+					id = event.content.program;
 				}
-				id = event.content.program;
 			} else {
 				metadata = currentMetadata;
 				current = true;
-				name = getProgramName(metadata);
-				if (metadata.profileVersion) {
-					version = metadata.profileVersion.value[0];
-				} else {
-					version = null;
+				if (metadata) {
+					name = getProgramName(metadata);
+					if (metadata.profileVersion) {
+						version = metadata.profileVersion.value[0];
+					} else {
+						version = null;
+					}
+					id = null;
 				}
-				id = null;
 			}
-			beoBus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {id: id, metadata: metadata, name: name, version: version, current: current}});
+			if (metadata) {
+				beoBus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {id: id, metadata: metadata, name: name, version: version, current: current}});
+			} else {
+				beoBus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {metadata: false, current: current}});
+			}
 			
 		}
 		
@@ -195,10 +210,21 @@ module.exports = function(beoBus, globals) {
 				mutePin.writeSync(false);
 			}
 		}
+		
+		if (event.header == "muteUnknown") {
+			if (event.content.muteUnknown) {
+				settings.muteUnknownPrograms = true;
+			} else {
+				settings.muteUnknownPrograms = false;
+			}
+			beoBus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
+			beoBus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
+		}
 	});
 	
 	function getCurrentChecksumAndMetadata(callback) {
 		if (callback) {
+			amplifierMute(true);
 			beoDSP.getChecksum(function(checksum) {
 				if (debug) console.log("DSP checksum is: "+checksum+".");
 				currentChecksum = checksum;
@@ -207,21 +233,33 @@ module.exports = function(beoBus, globals) {
 					metadata = (response != null) ? parseDSPMetadata(response) : null;
 					
 					if (metadata) {
+						amplifierMute(false);
 						callback(metadata, true);
 					} else {
 						// If no metadata was received from the DSP, check if any of the stored programs contains the same checksum and use that metadata.
+						programMatch = null;
 						for (program in dspPrograms) {
 							if (dspPrograms[program].checksum == currentChecksum) {
-								if (debug) console.log("No XML received from the DSP, but '"+program+"' matches, using its metadata instead.");
-								callback(dspPrograms[program].metadata, false);
+								programMatch = program;
 								break;
+							}
+						}
+						if (programMatch) {
+							if (debug) console.log("No XML received from the DSP, but '"+program+"' matches, using its metadata instead.");
+							amplifierMute(false);
+							callback(dspPrograms[programMatch].metadata, false);
+						} else {
+							if (!settings.muteUnknownPrograms) {
+								if (debug) console.log("No matching metadata found.");
+								amplifierMute(false);
+							} else {
+								if (debug) console.log("No matching metadata found, keeping amplifier muted.");
 							}
 							callback(null);
 						}
 					}
 				});
 			});
-			
 		}
 	}
 	
@@ -326,6 +364,7 @@ module.exports = function(beoBus, globals) {
 						}
 					}
 					
+					
 				});
 		});
 	}
@@ -335,6 +374,7 @@ module.exports = function(beoBus, globals) {
 		path = dspDirectory+"/"+dspPrograms[reference].filename;
 		if (dspPrograms[reference] && fs.existsSync(path)) {
 			beoBus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "flashing"}});
+			amplifierMute(true);
 			if (debug) console.log("Flashing DSP program '"+reference+"'...");
 			beoDSP.flashEEPROM(path, function(result, error) {
 				if (!error) {
@@ -394,6 +434,18 @@ module.exports = function(beoBus, globals) {
 				checksum = getChecksumFromMetadata(metadata);
 				callback(filename, name, checksum, metadata);
 			});
+		}
+	}
+	
+	function amplifierMute(mute) {
+		if (mute) {
+			if (debug) console.log("Muting amplifier through GPIO...");
+			execSync("gpio mode 2 out");
+			execSync("gpio write 2 1");
+		} else {
+			if (debug) console.log("Unmuting amplifier through GPIO...");
+			execSync("gpio write 2 0");
+			execSync("gpio mode 2 in");
 		}
 	}
 

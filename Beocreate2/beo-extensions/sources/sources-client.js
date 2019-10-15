@@ -14,19 +14,7 @@ $(document).on("general", function(event, data) {
 });
 
 $(document).on("sources", function(event, data) {
-	if (data.header == "activeSources") {
-		
-		if (data.content.activeSources != undefined) {
-			
-			activeSources = data.content.activeSources;
-			if (data.content.currentSource != undefined) {
-				currentSource = data.content.currentSource;
-			} else {
-				currentSource = null;
-			}
-			showActiveSources();
-		}
-	}
+
 	
 	if (data.header == "sources") {
 		

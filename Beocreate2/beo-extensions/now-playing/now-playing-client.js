@@ -130,7 +130,7 @@ function enableSourceStart(startableSources) {
 
 function showNowPlaying() {
 	$("#now-playing").removeClass("hidden");
-	send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
+	//send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
 	setTimeout(function() {
 		$(".player-bar").addClass("shifted");
 		$("#now-playing").addClass("visible");

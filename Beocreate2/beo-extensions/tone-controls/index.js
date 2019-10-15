@@ -117,8 +117,8 @@ module.exports = function(beoBus, globals) {
 				
 			} else {
 				metadata = {};
-				canCanDoToneControl.toneControls = 0;
-				canCanDoToneControl.ambience = 0;
+				canDoToneControl.toneControls = 0;
+				canDoToneControl.ambience = 0;
 			}
 			
 		}

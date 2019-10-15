@@ -47,6 +47,37 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "startup") {
 			
 			readAllDSPPrograms();
+			
+			beoDSP.connectDSP(function(success) {  
+				if (success) {
+					beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "dsp-programs"}});
+					beoBus.emit('dsp', {header: "connected", content: true});
+					
+					getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
+						currentMetadata = metadata;
+						
+						if (metadata) {
+							if (debug == 2) {
+								console.dir(metadata);
+							} else if (debug) {
+								console.log("Received metadata from DSP.");
+							}
+							beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+						} else {
+							if (debug) console.log("No metadata found for current DSP program.");
+							beoBus.emit('dsp', {header: "metadata", content: {metadata: null}});
+						}
+						
+					});
+				}
+			}); // Opens a link with the SigmaDSP daemon.
+		}
+		
+		if (event.header == "shutdown") {
+			beoDSP.disconnectDSP(function() {
+				beoBus.emit("general", {header: "shutdownComplete", content: {extension: "dsp-programs"}});
+				if (debug) console.log("Disconnected from DSP.");
+			});
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -73,29 +104,7 @@ module.exports = function(beoBus, globals) {
 	
 	beoBus.on('dsp', function(event) {
 		
-		if (event.header == "connected") {
-			
-			if (event.content == true) {
-				
-				getCurrentChecksumAndMetadata(function(metadata) {
-					currentMetadata = metadata;
-					
-					if (metadata) {
-						if (debug == 2) {
-							console.dir(metadata);
-						} else if (debug) {
-							console.log("Received metadata from DSP.");
-						}
-						beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata}});
-					} else {
-						if (debug) console.log("No metadata found for current DSP program.");
-					}
-					
-				});
-			
-			}
-			
-		}
+		
 	});
 	
 	beoBus.on('dsp-programs', function(event) {
@@ -198,13 +207,13 @@ module.exports = function(beoBus, globals) {
 					metadata = (response != null) ? parseDSPMetadata(response) : null;
 					
 					if (metadata) {
-						callback(metadata);
+						callback(metadata, true);
 					} else {
 						// If no metadata was received from the DSP, check if any of the stored programs contains the same checksum and use that metadata.
 						for (program in dspPrograms) {
 							if (dspPrograms[program].checksum == currentChecksum) {
 								if (debug) console.log("No XML received from the DSP, but '"+program+"' matches, using its metadata instead.");
-								callback(dspPrograms[program].metadata);
+								callback(dspPrograms[program].metadata, false);
 								break;
 							}
 							callback(null);
@@ -291,7 +300,7 @@ module.exports = function(beoBus, globals) {
 		beoBus.emit("now-playing", {header: "transport", content: {action: "stop"}}); // Stop music playback if possible.
 		installAndCheckDSPProgram(program, function(result) {
 			// The function will independently send status updates to UI.
-				getCurrentChecksumAndMetadata(function(metadata) {
+				getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
 					currentMetadata = metadata;
 					
 					if (metadata) {
@@ -300,9 +309,10 @@ module.exports = function(beoBus, globals) {
 						} else if (debug) {
 							console.log("Received metadata from DSP.");
 						}
-						beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata}});
+						beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
 					} else {
 						if (debug) console.log("No metadata found for current DSP program.");
+						beoBus.emit('dsp', {header: "metadata", content: {metadata: null}});
 					}
 					
 					name = getProgramName(currentMetadata);

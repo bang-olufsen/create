@@ -18,10 +18,11 @@ SOFTWARE.*/
 // SHAIRPORT-SYNC (AIRPLAY) INTEGRATION FOR BEOCREATE
 
 var fs = require("fs");
+var exec = require('child_process').exec;
+
 var net = require("net");
 var dnssd = require("dnssd"); // for service discovery.
 var request = require('request'); // for sending HTTP requests to the DACP server
-var exec = require('child_process').exec;
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
@@ -32,14 +33,33 @@ module.exports = function(beoBus, globals) {
 	var shairportSyncVersion = null;
 	var configuration = {};
 	
+	var shairportSyncEnabled = false;
+	var sources = null;
+	
 	var airPlayAvailable = false;
 	var airPlayMetadataStream = null;
 	var airPlayMetadataPath = "/tmp/shairport-sync-metadata";
 	
-	
 	beoBus.on('general', function(event) {
 		
 		if (event.header == "startup") {
+			
+			if (globals.extensions.sources &&
+				globals.extensions.sources.setSourceOptions &&
+				globals.extensions.sources.sourceDeactivated) {
+				sources = globals.extensions.sources;
+			}
+			
+			if (sources) {
+				getShairportSyncStatus(function(enabled) {
+					sources.setSourceOptions("shairport-sync", {
+						enabled: true,
+						transportControls: true,
+						usesHifiberryControl: true,
+						aka: ["ShairportSync"]
+					});
+				});
+			}
 			
 			// Get version number.
 			exec("shairport-sync -V", function(error, stdout, stderr) {
@@ -59,7 +79,6 @@ module.exports = function(beoBus, globals) {
 				streamMetadata();
 				startDiscovery();
 			}
-			
 		}
 		
 		if (event.header == "shutdown") {
@@ -74,11 +93,11 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "shairport-sync") {
-				ssncVersion = (shairportSyncVersion) ? shairportSyncVersion.split("-")[0] : null;
+				ssncVersion = (shairportSyncVersion) ? shairportSyncVersion.split("-")[0] : false;
 				readShairportSyncConfiguration();
 				ssncPassword = (configuration.general.password) ? true : false;
 				
-				beoBus.emit("ui", {target: "shairport-sync", header: "configuration", content: {usesPassword: ssncPassword, version: ssncVersion}});
+				beoBus.emit("ui", {target: "shairport-sync", header: "configuration", content: {usesPassword: ssncPassword, version: ssncVersion, shairportSyncEnabled: shairportSyncEnabled}});
 				
 			}
 		}
@@ -98,6 +117,20 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
+	airPlayVolumeSendTimeout = null;
+	beoBus.on('sound', function(event) {
+		
+		if (event.header == "systemVolume" && !isNaN(event.content.volume)) {
+			clearTimeout(airPlayVolumeSendTimeout);
+			airPlayVolumeSendTimeout = setTimeout(function() {
+				airPlayVolume = convertAirPlayVolume(event.content.volume, 1);
+				sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
+			}, 500);
+		}
+		
+		
+	});
+	
 	beoBus.on('shairport-sync', function(event) {
 		
 		if (event.header == "setPassword") {
@@ -112,88 +145,66 @@ module.exports = function(beoBus, globals) {
 			
 		}
 		
-		if (event.header == "toggleEnabled") {
+		if (event.header == "shairportSyncEnabled") {
 			
-		}
-		
-		if (event.header == "transport" && event.content.action) {
-			if (debug == 2) console.log("Shairport-sync transport command: "+event.content.action+".");
-			switch (event.content.action) {
-				case "playPause":
-					sendDACPCommand("playpause");
-					break;
-				case "play":
-					sendDACPCommand("play");
-					break;
-				case "stop":
-					sendDACPCommand("pause");
-					break;
-				case "next":
-					sendDACPCommand("nextitem");
-					break;
-				case "previous":
-					sendDACPCommand("previtem");
-					break;
+			if (event.content.enabled != undefined) {
+				setShairportSyncStatus(event.content.enabled, function(newStatus, error) {
+					beoBus.emit("ui", {target: "shairport-sync", header: "configuration", content: {shairportSyncEnabled: newStatus}});
+					if (sources) sources.setSourceOptions("shairport-sync", {enabled: newStatus});
+					if (newStatus == false) {
+						if (sources) sources.sourceDeactivated("shairport-ync");
+					}
+					if (error) {
+						beoBus.emit("ui", {target: "shairportSync", header: "errorTogglingShairportSync", content: {}});
+					}
+				});
 			}
 		
 		}
 		
-		if (event.header == "startSource") {
-			if (event.content.sourceID) {
-				if (controllableSources[event.content.sourceID]) {
-					sendDACPCommand("play", controllableSources[event.content.sourceID].daid);
-				}
-			}
-		}
-		
-		if (event.header == "stop") {
-			sendDACPCommand("pause");
-			if (event.content.reason && event.content.reason == "sourceActivated") {
-				if (debug) console.log("shairport-sync was stopped by another source.");
-			}
-		}
-		
-		if (event.header == "setVolume") {
-			if (event.content.percentage != undefined) {
-				airPlayVolume = convertAirPlayVolume(event.content.percentage, 1);
-				sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
-			}
-		}
+	
 		
 		
 	});
 	
-	var streamClosedForShutdown = false;
-	function streamMetadata() {
-		streamClosedForShutdown = false;
-		airPlayMetadataStream = fs.createReadStream(airPlayMetadataPath); // read from shairport-sync metadata
-		
-		if (debug) console.log("Reading shairport-sync metadata from: "+airPlayMetadataPath+"...");
-		airPlayMetadataStream.setEncoding('utf8');
-		
-		airPlayMetadataStream.on('data', processAirPlayMetadata);
-		
-		/*airPlayMetadataStream.on('open', function() {
-			
-		});*/
-		beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "shairport-sync"}});
-		
-		airPlayMetadataStream.on('close', function(error) {
-			if (!error) {
-				if (debug) console.log("AirPlay metadata stream closed.");
-				airPlayMetadataStream.destroy();
-				if (!streamClosedForShutdown) streamMetadata();
-				
+	function getShairportSyncStatus(callback) {
+		exec("systemctl is-active --quiet shairport-sync.service").on('exit', function(code) {
+			if (code == 0) {
+				shairportSyncEnabled = true;
+				callback(true);
 			} else {
-				if (debug) console.log("Error closing shairport-sync metadata stream: "+error);
+				shairportSyncEnabled = false;
+				callback(false);
 			}
-		});
-		
-		airPlayMetadataStream.on('error', function(error) {
-			if (debug) console.log("Error in shairport-sync metadata stream: "+error);
 		});
 	}
 	
+	function setShairportSyncStatus(enabled, callback) {
+		if (enabled) {
+			exec("systemctl enable --now shairport-sync.service").on('exit', function(code) {
+				if (code == 0) {
+					shairportSyncEnabled = true;
+					if (debug) console.log("Shairport-sync enabled.");
+					callback(true);
+				} else {
+					shairportSyncEnabled = false;
+					callback(false, true);
+				}
+			});
+		} else {
+			exec("systemctl disable --now shairport-sync.service").on('exit', function(code) {
+				shairportSyncEnabled = false;
+				if (code == 0) {
+					callback(false);
+					if (debug) console.log("Shairport-sync disabled.");
+				} else {
+					callback(false, true);
+				}
+			});
+		}
+	}
+	
+		
 	function configureShairportSync(section, option, value, relaunch) {
 		readShairportSyncConfiguration();
 		if (!configuration[section]) {
@@ -207,8 +218,8 @@ module.exports = function(beoBus, globals) {
 			delete configuration[section][option];
 		}
 		writeShairportSyncConfiguration();
-		if (relaunch) {
-			exec("systemctl restart shairport-sync", function(error, stdout, stderr) {
+		if (relaunch && shairportSyncEnabled) {
+			exec("systemctl restart shairport-sync.service", function(error, stdout, stderr) {
 				if (error) {
 					if (debug) console.error("Relaunching shairport-sync failed: "+error);
 				} else {
@@ -270,12 +281,42 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	// PLAYBACK
 	
-	var picture = null;
-	var pictureReceivedRecently = false;
-	var lastMetadata = {artist: null, album: null};
-	var airPlayMetadata = {extension: "shairport-sync"};
+	
+	// DACP IMPLEMENTATION
+	
+	
+	var streamClosedForShutdown = false;
+	function streamMetadata() {
+		streamClosedForShutdown = false;
+		airPlayMetadataStream = fs.createReadStream(airPlayMetadataPath); // read from shairport-sync metadata
+		
+		if (debug) console.log("Reading shairport-sync metadata from: "+airPlayMetadataPath+"...");
+		airPlayMetadataStream.setEncoding('utf8');
+		
+		airPlayMetadataStream.on('data', processAirPlayMetadata);
+		
+		/*airPlayMetadataStream.on('open', function() {
+			
+		});*/
+		beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "shairport-sync"}});
+		
+		airPlayMetadataStream.on('close', function(error) {
+			if (!error) {
+				if (debug) console.log("AirPlay metadata stream closed.");
+				airPlayMetadataStream.destroy();
+				if (!streamClosedForShutdown) streamMetadata();
+				
+			} else {
+				if (debug) console.log("Error closing shairport-sync metadata stream: "+error);
+			}
+		});
+		
+		airPlayMetadataStream.on('error', function(error) {
+			if (debug) console.log("Error in shairport-sync metadata stream: "+error);
+		});
+	}
+	
 	
 	var activeRemote = {daid: null, acre: null};
 	var dacpServices = {};
@@ -295,102 +336,44 @@ module.exports = function(beoBus, globals) {
 				dataSubitems = dataItems[i].split("</code><length>");
 				//console.log(thisDataItem+"--end--");
 				typeAndCode = dataSubitems[0].split("</type><code>");
-				theCode = Buffer.from(typeAndCode[1], 'hex').toString("ascii");
-				theType = Buffer.from(typeAndCode[0].slice(12), 'hex').toString("ascii");
-				decodedData = "";
-				if (!dataSubitems[1].startsWith("0")) {
-					encodedDataSubitems = dataSubitems[1].split("</length><data encoding=\"base64\">");
-					data64 = encodedDataSubitems[1].slice(0, -7);
-					if (theCode != "PICT") {
-						decodedData = Buffer.from(data64, 'base64').toString();
+				if (typeAndCode[1]) {
+					theCode = Buffer.from(typeAndCode[1], 'hex').toString("ascii");
+					theType = Buffer.from(typeAndCode[0].slice(12), 'hex').toString("ascii");
+					decodedData = "";
+					if (!dataSubitems[1].startsWith("0")) {
+						encodedDataSubitems = dataSubitems[1].split("</length><data encoding=\"base64\">");
+						data64 = encodedDataSubitems[1].slice(0, -7);
+						if (theCode != "PICT") {
+							decodedData = Buffer.from(data64, 'base64').toString();
+						}
 					}
-				}
-				if ("PICT pbeg pend pfls prsm pvol prgr mdst mden snam snua stal daid acre dapo asal asar asgn minm clip".indexOf(theCode) != -1) {
-					// TO DEBUG, UNCOMMENT FOLLOWING:
-					//console.log(theType, theCode, ":", decodedData);
-				}
-				switch (theCode) {
-					case "daid":
-						activeRemote.daid = decodedData;
-						combineDACPInformation("daid", decodedData);
-						break;
-					case "acre":
-						activeRemote.acre = decodedData;
-						combineDACPInformation("acre", decodedData);
-						break;
-					case "pend":
-						airPlayMetadata.artist = false;
-						airPlayMetadata.album = false;
-						airPlayMetadata.title = false;
-						beoBus.emit("now-playing", {header: "metadata", content: airPlayMetadata});
-						beoBus.emit("sources", {header: "sourceDeactivated", content: {extension: "shairport-sync"}});
-						beoBus.emit("now-playing", {header: "playerState", content: {state: "stopped", extension: "shairport-sync"}});
-			
-						//activeRemote.daid = null;
-						//activeRemote.acre = null;
-						break;
-					case "pbeg":
-						beoBus.emit("sources", {header: "sourceActivated", content: {extension: "shairport-sync", stopOthers: true, transportControls: true, volumeControl: true}});
-						beoBus.emit("now-playing", {header: "playerState", content: {state: "playing", extension: "shairport-sync"}});
-						break;
-					case "pfls":
-						beoBus.emit("now-playing", {header: "playerState", content: {state: "stopped", extension: "shairport-sync"}});
-						break;
-					case "prsm":
-						// Moved to prgr
-						break;
-					case "prgr":
-						beoBus.emit("now-playing", {header: "playerState", content: {state: "playing", extension: "shairport-sync"}});
-						break;
-					case "mdst":
-						if (theType == "ssnc") {
-							//beoBus.emit("now-playing", {header: "playerState", content: {state: "playing", extension: "shairport-sync"}});
-							lastMetadata.artist = airPlayMetadata.artist;
-							lastMetadata.album = airPlayMetadata.album;
-							airPlayMetadata.artist = false;
-							airPlayMetadata.album = false;
-							airPlayMetadata.title = false;
-						}
-						break;
-					case "mden":
-						beoBus.emit("now-playing", {header: "metadata", content: airPlayMetadata});
-						break;
-					case "PICT":
-						if (data64.length > 30) {
-							beoBus.emit("now-playing", {header: "metadata", content: {picture: "data:image/png;base64,"+data64, extension: "shairport-sync"}});
-							
-						} else {
-							beoBus.emit("now-playing", {header: "metadata", content: {picture: false, extension: "shairport-sync"}});
-						}
-						pictureReceivedRecently = true;
-						setTimeout(function() {
-							pictureReceivedRecently = false;
-						}, 1000);
-						break;
-					case "minm":
-						airPlayMetadata.title = decodedData;
-						break;
-					case "asal":
-						if (lastMetadata.album != decodedData && !pictureReceivedRecently) {
-							beoBus.emit("now-playing", {header: "metadata", content: {picture: false, extension: "shairport-sync"}});
-						}
-						airPlayMetadata.album = decodedData;
-						break;
-					case "asar":
-						airPlayMetadata.artist = decodedData;
-						break;
-					case "pvol":
-						beoBus.emit("sound", {header: "updateVolume"});
-						/*volumeValues = decodedData.split(",");
-						if (volumeValues[0] == -144) {
-							volumeIsMuted = true;
-							self.emit('playback', {volume: -1});
-						} else {
-							volumeIsMuted = false;
-							lastVolume = convertAirPlayVolume(volumeValues[0], 0);
-							self.emit('playback', {volume: lastVolume});
-						}*/
-						break;
+					
+					if ("PICT pbeg pend pfls prsm pvol prgr mdst mden snam snua stal daid acre dapo asal asar asgn minm clip".indexOf(theCode) != -1) {
+						// TO DEBUG, UNCOMMENT FOLLOWING:
+						//console.log(theType, theCode, ":", decodedData);
+					}
+					switch (theCode) {
+						case "daid":
+							activeRemote.daid = decodedData;
+							combineDACPInformation("daid", decodedData);
+							break;
+						case "acre":
+							activeRemote.acre = decodedData;
+							combineDACPInformation("acre", decodedData);
+							break;
+						case "pvol":
+							//beoBus.emit("sound", {header: "updateVolume"});
+							/*volumeValues = decodedData.split(",");
+							if (volumeValues[0] == -144) {
+								volumeIsMuted = true;
+								self.emit('playback', {volume: -1});
+							} else {
+								volumeIsMuted = false;
+								lastVolume = convertAirPlayVolume(volumeValues[0], 0);
+								self.emit('playback', {volume: lastVolume});
+							}*/
+							break;
+					}
 				}
 			}
 	
@@ -425,17 +408,14 @@ module.exports = function(beoBus, globals) {
 						console.log("DACP error: " + err);
 					}
 					if (res.statusCode == 200) {
-						  	//data = daap.decode(res.body);
-							//console.log(daap.decode(body));
-							//console.log(body);
-					  		//sendToClient("cres "+JSON.stringify(daapParser.parse(body)));
+						  	
 					  } else if (res.statusCode == 204) {
-							//sendToClient("cres OK");
+							
 					}
 				});
 			}
 		} else {
-			console.log("No controllable source found.");
+			//console.log("No controllable source found.");
 		}
 	}
 
@@ -477,7 +457,7 @@ module.exports = function(beoBus, globals) {
 		for (source in controllableSources) {
 			if (!controllableSources[source].inLimbo) sources[source] = controllableSources[source];
 		}
-		beoBus.emit("sources", {header: "startableSources", content: {extension: "shairport-sync", sources: sources}});
+		//beoBus.emit("sources", {header: "startableSources", content: {extension: "shairport-sync", sources: sources}});
 	}
 	
 	// DACP SERVICE DISCOVERY
@@ -523,7 +503,7 @@ module.exports = function(beoBus, globals) {
 			}
 		}
 	}
-	
+		
 	
 	// Check if string ends with string: string.endsWith(suffix);
 	String.prototype.endsWith = function(suffix) {

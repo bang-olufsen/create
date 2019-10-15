@@ -47,7 +47,7 @@ function connectProduct() {
 	connecting = true;
 	
 	console.log("Connecting to " + productAddress + "...");
-	productConnection = new WebSocket('ws://' + productAddress, ["beo-remote"]);
+	productConnection = new WebSocket('ws://' + productAddress, ["beocreate"]);
 	
 	productConnectionNotificationTimeout = setTimeout(function() {
 		// Show "Connecting..." with a timeout so that it doesn't flash every time the UI loads.

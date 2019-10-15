@@ -48,7 +48,10 @@ $(document).on("product-information", function(event, data) {
 		/*if (data.content.hifiberryOS != undefined) {
 			setAsHifiberryOS(data.content.hifiberryOS == true);
 		}*/
-		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) $(".card-type").text(data.content.systemConfiguration.cardType);
+		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
+			$(".card-type").text(data.content.systemConfiguration.cardType);
+			//console.log(data.content.systemConfiguration.cardType);
+		}
 		toggleSystemIDFormat(true);
 		document.title = systemName;
 		sendToProductView({header: "systemName", content: {name: systemName}});
@@ -116,10 +119,6 @@ $(document).on("product-information", function(event, data) {
 	}
 	
 });
-
-if ($("body").hasClass("hifiberry-os")) {
-	$(".os-name").text("HiFiBerryOS");
-}
 
 function toggleSystemIDFormat(updateOnly) {
 	if (!updateOnly) {

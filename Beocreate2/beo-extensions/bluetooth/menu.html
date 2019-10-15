@@ -6,12 +6,13 @@
 	</header>
 	
 	<div class="scroll-area">
-		<div class="menu-content beo-dynamic-menu">
-			<div class="menu-item toggle" id="bluetooth-discoverable-toggle" onclick="$(this).toggleClass('on');">
-				<div class="menu-label">Discoverable</div>
+		<div class="menu-content">
+			<div class="menu-item toggle" id="bluetooth-toggle" onclick="bluetooth.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p>Previously connected devices can still connect to play over Bluetooth.</p>
+			
+			<p>Connect to '<span class="system-name">the product</span>' in the Bluetooth settings on your device to play music.</p>
 		</div>
 	</div>
 </div>

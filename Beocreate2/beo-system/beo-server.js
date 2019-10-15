@@ -50,7 +50,6 @@ var systemStatus = "normal";
 	'yellow': something requires attention, not critical
 	'red': something has failed miserably, critical
 */
-var systemVolume = {percentage: null, absolute: null};
 var extensionsRequestingShutdownTime = [];
 
 global.systemDirectory = __dirname;
@@ -84,7 +83,7 @@ if (fs.existsSync(dataDirectory+"/system.json")) {
 
 // BEOBUS
 
-// A shared 'bus' where different parts of the system can talk to each other.
+// A shared 'bus' where different parts of the system can broadcast messages.
 var beoBus = new EventEmitter();
 //beoBus.setMaxListeners(0); // An unknown, potentially large number of listeners can be listening to the same events, so let's not limit that. This is not available with eventemitter3.
 
@@ -253,6 +252,17 @@ expressServer.get("/", function (req, res) {
 		//fileServer.serveFile('./common/ui-error.html', 500, {}, request, response);
 	}
 });
+// REST API endpoint to talk to extensions.
+expressServer.use(express.json());
+expressServer.post("/:extension/:header", function (req, res) {
+	//console.log(req.body);
+	beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
+	res.status(200);
+	res.send("OK");
+});
+
+// START WEBSOCKET
+beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});
 
 
 getAllSettings();
@@ -266,15 +276,16 @@ if (debugMode) {
 	playProductSound("startup");
 }
 
-var commsActive = false;
+/*var commsActive = false;
 var bonjourStartedRecently = true;
+
 beoBus.on('product-information', function(event) {
 	
 	if (event.header == "productIdentity") {
 		
 		if (!commsActive) {
 			if (debugMode) console.log("Starting Bonjour advertisement...");
-			beoCom.start({name: event.content.systemName, serviceType: "beocreate", server: beoServer, advertisePort: systemConfiguration.port, txtRecord: {"type": event.content.modelID, "typeui": event.content.modelName, "id": event.content.systemID, "image": event.content.productImage, "status": systemStatus}}, function() {
+			beoCom.startBonjour({name: event.content.systemName, serviceType: "beocreate", server: beoServer, advertisePort: systemConfiguration.port, txtRecord: {"type": event.content.modelID, "typeui": event.content.modelName, "id": event.content.systemID, "image": event.content.productImage, "status": systemStatus}}, function() {
 				commsActive = true;
 			});
 			setTimeout(function() {
@@ -317,7 +328,7 @@ beoBus.on('network', function(event) {
 		//}
 	}
 });
-
+*/
 
 
 
@@ -542,9 +553,9 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 					try {
 						extensions[extensionName] = require(fullPath)(beoBus, {
 							systemConfiguration: systemConfiguration,
-							volume: systemVolume, 
-							extensions: extensions, 
-							setup: false, 
+							extensions: extensions,
+							extensionsList: extensionsList,
+							setup: false,
 							selectedExtension: selectedExtension, 
 							debug: debugMode,
 							daemon: daemonMode,
@@ -824,8 +835,8 @@ function completeShutdownForExtension(extensionID) {
 
 function completeShutdown() {
 	
-	beoCom.stop(function() {
-		if (debugMode) console.log("Stopped WebSocket and Bonjour advertisement.");
+	beoCom.stopSocket(function() {
+		if (debugMode) console.log("Stopped WebSocket communication.");
 		beoServer.close(function() {
 			if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");
 		    if (powerCommand) {

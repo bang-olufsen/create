@@ -20,6 +20,7 @@ stateRestored = false;
 uiSettings = {
 	disclosure: {}
 };
+isHifiberryOS = false;
 
 $( document ).ready(function() {
 	// FASTCLICK
@@ -29,7 +30,7 @@ $( document ).ready(function() {
 	if (("standalone" in window.navigator) && window.navigator.standalone){
 		$("body").addClass("standalone");
 	}
-	
+	if ($("body").hasClass("hifiberry-os")) isHifiberryOS = true;
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
 	prepareMenus();
@@ -159,10 +160,14 @@ function prepareMenus() {
 				
 				if (extensionCounter == 0) {
 					// TOP LEVEL MENU
-		
+					
+					iconName = $(this).attr("data-icon");
+					if (isHifiberryOS && $(this).attr("data-icon-hifiberry")) {
+						iconName = $(this).attr("data-icon-hifiberry");
+					}
 					menuOptions = {
 						onclick: 'showExtension(\''+$(this).attr("id")+'\');',
-						icon: $(this).attr("data-asset-path")+"/symbols-"+sidebarContentColour+"/"+$(this).attr("data-icon"),
+						icon: $(this).attr("data-asset-path")+"/symbols-"+sidebarContentColour+"/"+iconName,
 						id: $(this).attr("id")+'-menu-item',
 						data: {"data-extension-id": $(this).attr("id")},
 						classes: ["nav-item"]
@@ -191,10 +196,14 @@ function prepareMenus() {
 				} else {
 					// SUBMENUS
 					
+					iconName = $(this).attr("data-icon");
+					if (isHifiberryOS && $(this).attr("data-icon-hifiberry")) {
+						iconName = $(this).attr("data-icon-hifiberry");
+					}
 					menuOptions = {
 						label: $(this).attr("data-menu-title"),
 						onclick: 'showExtension(\''+$(this).attr("id")+'\');',
-						icon: $(this).attr("data-asset-path")+"/symbols-black/"+$(this).attr("data-icon"), // Still not quite sure if it looks better with or without icons.
+						icon: $(this).attr("data-asset-path")+"/symbols-black/"+iconName, // Still not quite sure if it looks better with or without icons.
 						id: $(this).attr("id")+'-menu-item',
 						chevron: true,
 						data: {"data-extension-id": $(this).attr("id")},

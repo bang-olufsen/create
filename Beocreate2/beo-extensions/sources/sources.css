@@ -1,5 +1,6 @@
 /* @override 
-	http://beocreate-core.local/extensions/sources/sources.css */
+	http://beocreate-core.local/extensions/sources/sources.css
+	http://hifiberry.local:81/extensions/sources/sources.css */
 	
 .active-source {
 	display: flex;
@@ -19,4 +20,13 @@
 	letter-spacing: var(--uppercase-spacing);
 	text-transform: uppercase;
 	font-size: 0.7em;
+	transition: opacity 0.5s ease;
+}
+
+.active-source.icon-only .active-source-name {
+	display: none;
+}
+
+.active-source.icon-only {
+	padding-right: 20px;
 }

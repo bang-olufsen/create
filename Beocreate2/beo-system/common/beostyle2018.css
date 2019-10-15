@@ -1,5 +1,6 @@
 /* @override 
 	http://beocreate-core.local/common/beostyle2018.css
+	http://hifiberry.local:81/common/beostyle2018.css
 	http://olohuone.local/common/beostyle2018.css */
 /* 
 
@@ -115,7 +116,9 @@ body.dark {
 	--font-spacing-compensation: 0.15em;
 }
 
-.hidden, .hidden-2 {
+.hidden, 
+.hidden-2, 
+.hifiberry-os .hifiberry-hide {
 	display: none !important;
 }
 
@@ -591,9 +594,11 @@ nav.favourites div:active img {
 }
 
 #player-bar-info-area {
-	flex-grow: 1;
 	padding-right: 15px;
 	text-align: left;
+	display: flex;
+	margin-right: auto;
+	max-width: calc(100vw - 350px);
 }
 
 .player-bar .button.symbol {
@@ -604,10 +609,30 @@ nav.favourites div:active img {
 	opacity: 1;
 }
 
+.player-bar .now-playing-titles {
+	overflow: hidden;
+	transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.player-bar .now-playing-titles.logo {
+	transform: translateY(0.4em);
+	opacity: 0;
+}
+
+.player-bar .now-playing-titles.one-row {
+	transform: translateY(0.4em);
+}
+
+.player-bar .now-playing-titles.one-row h4 {
+	opacity: 0;
+}
 
 .player-bar h3,
 .player-bar h4 {
 	margin: 0;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .player-bar h3 {
@@ -619,6 +644,7 @@ nav.favourites div:active img {
 .player-bar h4 {
 	font-weight: 400;
 	font-size: 0.7em;
+	transition: opacity 0.5s ease;
 	/*text-transform: uppercase;
 	letter-spacing: var(--uppercase-spacing);*/
 	color: gray;
@@ -633,7 +659,6 @@ nav.favourites div:active img {
 	margin-left: auto;
 	flex-grow: 1;
 	max-width: 250px;
-	margin-right: auto;
 }
 
 /* @end */
@@ -3464,6 +3489,10 @@ header .button.symbol:after {
 
 #player-bar-info-area {
 	display: none;
+}
+
+#player-bar-volume-wrap {
+	margin-right: auto;
 }
 	
 }

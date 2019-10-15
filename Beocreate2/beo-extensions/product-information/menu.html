@@ -1,4 +1,4 @@
-<div class="menu-screen full-width" id="product-information" data-icon="create.svg" data-menu-title="About" data-menu-title-class="system-name" data-extension-name="Product Information" data-stylesheet="product-information.css" data-built-in="1">
+<div class="menu-screen full-width" id="product-information" data-icon="create.svg" data-icon-hifiberry="hifiberry.svg" data-menu-title="About" data-menu-title-class="system-name" data-extension-name="Product Information" data-stylesheet="product-information.css" data-built-in="1">
 	
 	<header>
 		<div class="back-button master setup"></div>
@@ -37,26 +37,19 @@
 			<div class="menu-content-wrap no-full-width" id="about-menu-content-wrap">
 				<div class="menu-content no-full-width">
 					
-					<!--<div id="collab">
-						<img class="symbol button" src="€/symbols-black/beo.svg">
-						<img class="symbol button" src="€/symbols-black/hifiberry.svg">
-					</div>-->
-					<!--<p class="centre">BeoCreate 4-Channel Amplifier was created in 2017 in collaboration between Bang &amp; Olufsen and HiFiBerry. Software is open source.</p>-->
 					
-					<!--<h2 data-translation="technicalInfoTitle">Technical Information</h2>-->
-					<!--<div class="menu-item">
-						<div class="menu-label">Version</div>
-						<div class="menu-value system-version">X</div>
+					<div class="about-texts">
+						<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
+						<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>
+						
+						<p class="about-line-0 card-type">DAC+ DSP</p>
+						
+						<p class="about-line-1" id="copy-beocreate">&copy; 2017–2019 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry</p>
+						<p class="about-line-1" id="copy-hifiberry-os">&copy; 2017–2019 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen</p>
+						
+						<p class="about-line-2">System ID <span class="serial-number" onclick="product_information.toggleSystemIDFormat();"></span> | v<span class="system-version">X.X</span></p>
+						
 					</div>
-					<div class="menu-item" onclick="product_information.toggleSystemIDFormat();">
-						<div class="menu-label">Raspberry Pi ID</div>
-						<div class="menu-value serial-number">N/A</div>
-					</div>
-					<hr>-->
-					<h1 class="no-margin-top os-name">Beocreate 2</h1>
-					<p id="about-line-0" class="card-type">DAC+ DSP</p>
-					<p id="about-line-1">System ID <span class="serial-number" onclick="product_information.toggleSystemIDFormat();"></span> | v<span class="system-version">X.X</span></p>
-					<p id="about-line-2">&copy; 2017–2019 Bang &amp; Olufsen x HiFiBerry</p>
 					<hr>
 					<div class="beo-dynamic-menu"></div>
 					<div class="menu-item icon" onclick="ask('product-shutdown-prompt');">
@@ -66,17 +59,16 @@
 					
 					
 					
-					<!-- LIKE NO ONE ELSE -->
+					<!-- EXIST TO CREATE -->
 				</div>
 			</div>
 		</div>
 	</div>
 	
 	<div class="ask-menu" id="product-appearance-prompt">
-		<h2>Product Appearance</h2>
 		<div class="ask-buttons">
-			<div class="button pill grey" onclick="ask();product_information.changeProductName();">Change Name…</div>
-			<div class="button pill grey" onclick="ask();product_information.startCustomisation();">Change Icon &amp; Model…</div>
+			<div class="button pill grey" onclick="ask();product_information.changeProductName();">Change Product Name…</div>
+			<div class="button pill grey" onclick="ask();product_information.startCustomisation();">Change Icon…</div>
 			<div class="button pill black cancel" onclick="ask();">Cancel</div>
 		</div>
 	</div>
@@ -123,7 +115,7 @@
 					
 					
 				</div>
-				<p>These settings do not change sound. For sound adjustments, go to the <a href="#" onclick="product_information.jumpToSoundAdjustments();">Sound section</a>.</p>
+				<p class="hifiberry-hide">These settings do not change sound. For sound adjustments, go to the <a href="#" onclick="product_information.jumpToSoundAdjustments();">Sound section</a>.</p>
 				
 			</div>
 		</div>

@@ -13,8 +13,7 @@
   "keywords": [
     "beocreate",
     "bluetooth",
-    "avrcp",
-    "dbus"
+    "avrcp"
   ],
   "author": "Bang & Olufsen",
   "license": "MIT",
@@ -22,7 +21,5 @@
     "url": "https://github.com/bang-olufsen/create/issues"
   },
   "homepage": "https://github.com/bang-olufsen/create#readme",
-  "dependencies": {
-    "dbus-native": "^0.4.0"
-  }
+  "dependencies": {}
 }

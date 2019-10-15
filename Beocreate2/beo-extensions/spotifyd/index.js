@@ -1,4 +1,4 @@
-/*Copyright 2018 Bang & Olufsen A/S
+/*Copyright 2019 Bang & Olufsen A/S
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -15,121 +15,111 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-// SPOTIFY CONNECT (SPOTIFYD) INTEGRATION FOR BEOCREATE
+// SPOTIFYD CONTROL FOR BEOCREATE
 
-var fs = require("fs");
-var exec = require('child_process').exec;
+var exec = require("child_process").exec;
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
 	var debug = globals.debug;
-	
 	var version = require("./package.json").version;
 	
-	var spotifydVersion = null;
-	var configuration = {};
 	
+	var sources = null;
+	
+	var spotifydEnabled = false;
 	
 	beoBus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			// Get version number.
-			exec("shairport-sync -V", function(error, stdout, stderr) {
-				if (error) {
-					if (debug) console.error("Error querying spotifyd version: "+error);
-				} else {
-					spotifydVersion = stdout;
-				}
-			});
+			if (globals.extensions.sources &&
+				globals.extensions.sources.setSourceOptions &&
+				globals.extensions.sources.sourceDeactivated) {
+				sources = globals.extensions.sources;
+			}
 			
+			if (sources) {
+				getSpotifydStatus(function(enabled) {
+					sources.setSourceOptions("spotifyd", {
+						enabled: enabled,
+						transportControls: true,
+						usesHifiberryControl: true
+					});
+				});
+			}
 			
-			
-		}
-		
-		if (event.header == "shutdown") {
 			
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "spotifyd") {
-				spotifydVersion = (spotifydVersion) ? spotifydVersion.split("-")[0] : null;
-				
-				beoBus.emit("ui", {target: "spotifyd", header: "configuration", content: {version: spotifydVersion}});
-				
+				beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: {spotifydEnabled: spotifydEnabled}});
 			}
 		}
-	});
-	
-	
-	beoBus.on('product-information', function(event) {
-		
-		if (event.header == "systemNameChanged") {
-			// Listen to changes in system name and update the shairport-sync display name.
-			if (event.content.systemName) {
-				configureSpotifyd("general", "name", event.content.systemName);
-			}
-			
-		}
-		
-		
 	});
 	
 	beoBus.on('spotifyd', function(event) {
 		
-		
-		
-		if (event.header == "toggleEnabled") {
+		if (event.header == "spotifydEnabled") {
 			
-		}
-		
-		if (event.header == "transport" && event.content.action) {
-			if (debug) console.log("Spotifyd transport command: "+event.content.action+".");
-			switch (event.content.action) {
-				case "playPause":
-					
-					break;
-				case "play":
-					
-					break;
-				case "stop":
-					
-					break;
-				case "next":
-					
-					break;
-				case "previous":
-					
-					break;
+			if (event.content.enabled != undefined) {
+				setSpotifydStatus(event.content.enabled, function(newStatus, error) {
+					beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: {spotifydEnabled: newStatus}});
+					if (sources) sources.setSourceOptions("spotifyd", {enabled: newStatus});
+					if (newStatus == false) {
+						if (sources) sources.sourceDeactivated("spotifyd");
+					}
+					if (error) {
+						beoBus.emit("ui", {target: "spotifyd", header: "errorTogglingSpotifyd", content: {}});
+					}
+				});
 			}
 		
 		}
-		
-		if (event.header == "startSource") {
-			
-		}
-		
-		if (event.header == "stop") {
-
-			if (event.content.reason && event.content.reason == "sourceActivated") {
-				if (debug) console.log("spotifyd was stopped by another source.");
-			}
-		}
-		
-		if (event.header == "setVolume") {
-			if (event.content.percentage != undefined) {
-				
-			}
-		}
-		
-		
 	});
 	
 	
+	function getSpotifydStatus(callback) {
+		exec("systemctl is-active --quiet spotify.service").on('exit', function(code) {
+			if (code == 0) {
+				spotifydEnabled = true;
+				callback(true);
+			} else {
+				spotifydEnabled = false;
+				callback(false);
+			}
+		});
+	}
 	
-
+	function setSpotifydStatus(enabled, callback) {
+		if (enabled) {
+			exec("systemctl enable --now spotify.service").on('exit', function(code) {
+				if (code == 0) {
+					spotifydEnabled = true;
+					if (debug) console.log("Spotifyd enabled.");
+					callback(true);
+				} else {
+					spotifydEnabled = false;
+					callback(false, true);
+				}
+			});
+		} else {
+			exec("systemctl disable --now spotify.service").on('exit', function(code) {
+				spotifydEnabled = false;
+				if (code == 0) {
+					callback(false);
+					if (debug) console.log("Spotifyd disabled.");
+				} else {
+					callback(false, true);
+				}
+			});
+		}
+	}
 	
 	return {
 		version: version
-	};
+	}
+	
 };
+

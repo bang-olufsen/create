@@ -7,15 +7,19 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
-			
+			<div class="menu-item toggle" id="shairport-sync-enabled-toggle" onclick="shairport_sync.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<hr>
 			<div class="menu-item toggle" id="shairport-sync-password-toggle" onclick="shairport_sync.toggleUsePasswordForShairportSync();">
-				<div class="menu-label">Use Password for AirPlay</div>
+				<div class="menu-label">Use Password</div>
 				<div class="menu-toggle"></div>
 			</div>
 			<div id="shairport-sync-change-password" class="button pill grey disabled" onclick="shairport_sync.setShairportSyncPassword();">Change Password…</div>
-			<h2>About</h2>
-			<p>AirPlay support is powered by the <a href="https://github.com/mikebrady/shairport-sync/" target="_blank">shairport-sync</a> open-source project.</p>
-			<p class="shairport-sync-version-container">shairport-sync version <span class="shairport-sync-version"></span></p>
+			<p class="margin-top">Stream music from iOS devices and Mac computers.</p>
+			<p>AirPlay support is powered by the <a href="https://github.com/mikebrady/shairport-sync/" target="_blank">shairport-sync</a> open-source project<span class="shairport-sync-version-container"> (version <span class="shairport-sync-version"></span>)</span>.</p>
+			
 		</div>
 	</div>
 	

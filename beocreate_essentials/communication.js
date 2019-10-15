@@ -31,11 +31,13 @@ var util = require('util');
 
 module.exports = BeoCom;
 
+var acceptedProtocols = [];
 var acceptConnections = true;
 var announceService;
 var connections = [];
 var connectionLinks = [];
 var socket;
+var wsPort = 0;
 var connectionID = 0;
 
 function BeoCom() {
@@ -45,7 +47,7 @@ function BeoCom() {
 
 util.inherits(BeoCom, eventEmitter);
 
-BeoCom.prototype.start = function(options, callback) {
+BeoCom.prototype.startSocket = function(options, callback) {
 	self = this;
 	
 	if (!options) options = {};
@@ -55,6 +57,13 @@ BeoCom.prototype.start = function(options, callback) {
 	} else {
 		wsPort = 1337; // Default port.
 	}
+	
+	if (options.acceptedProtocols) {
+		acceptedProtocols = options.acceptedProtocols;
+	} else {
+		acceptedProtocols = [];
+	}
+	
 	if (options.server) {
 		// Use an existing server instance.
 		socket = new server({
@@ -79,23 +88,14 @@ BeoCom.prototype.start = function(options, callback) {
 		}
 	}
 	
-	this.startBonjour(options);
-	
 	socket.on('request', function(request) {
 		
 		
 		if (request.requestedProtocols) {
-			switch (request.requestedProtocols[0]) {
-				// We'll assume only one type of protocol is requested.
-				case "beo-remote":
-				case "beocreate-remote":
-				case "beo-computer":
-				case "beo-source":
-					protocol = request.requestedProtocols[0];
-					break;
-				default:
-					protocol = null;
-					break;
+			if (acceptedProtocols.indexOf(request.requestedProtocols[0]) != -1) {
+				protocol = request.requestedProtocols[0];
+			} else {
+				protocol = null;
 			}
 		} else {
 			protocol = null;
@@ -184,6 +184,10 @@ BeoCom.prototype.startBonjour = function(options, callback) {
 	}
 }
 
+BeoCom.prototype.isBonjourStarted = function() {
+	return bonjourStarted;
+}
+
 function addClient(connection, protocol) {
 	connectionID++;
 	newConnection = {ID: connectionID, protocol: protocol}
@@ -226,16 +230,14 @@ BeoCom.prototype.disconnectAll = function() {
 	socket.closeAllConnections();
 }
 
-BeoCom.prototype.stop = function(callback) {
+BeoCom.prototype.stopSocket = function(callback) {
 	if (socket) {
 		socket.shutDown();
 	}
+	if (callback) callback(true);
 	/*bonjour.unpublishAll(function(result) {
 		if (callback) callback(result);
 	}); */
-	this.stopBonjour(function(result) {
-		if (callback) callback(result);
-	});
 }
 
 BeoCom.prototype.stopBonjour = function(callback) {
@@ -246,6 +248,9 @@ BeoCom.prototype.stopBonjour = function(callback) {
 		});
 		//announceService.stop();
 		//if (callback) callback(true);
+	} else {
+		bonjourStarted = false;
+		if (callback) callback(true);
 	}
 }
 

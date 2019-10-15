@@ -1,13 +1,13 @@
 var sources = (function() {
 
 startableSources = {};
-activeSources = {};
+allSources = {};
 currentSource = null;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			send({target: "sources", header: "getActiveSources"});
+			send({target: "sources", header: "getSources"});
 		}
 	}
 	
@@ -25,6 +25,21 @@ $(document).on("sources", function(event, data) {
 				currentSource = null;
 			}
 			showActiveSources();
+		}
+	}
+	
+	if (data.header == "sources") {
+		
+		if (data.content.sources != undefined) {
+			
+			allSources = data.content.sources;
+			if (data.content.currentSource != undefined) {
+				currentSource = data.content.currentSource;
+			} else {
+				currentSource = null;
+			}
+			showActiveSources();
+			updateDisabledSources();
 		}
 	}
 	
@@ -59,6 +74,29 @@ function showActiveSources() {
 	} else {
 		$(".active-source").removeClass("visible");
 	}
+}
+
+function updateDisabledSources() {
+	// Move disabled and enabled sources to their own sections.
+	disabledSources = 0;
+	for (source in allSources) {
+		if (allSources[source].enabled == true) {
+			if ($('.disabled-sources .menu-item[data-extension-id="'+source+'"]')) {
+				$(".enabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+			}
+		} else {
+			if ($('.enabled-sources .menu-item[data-extension-id="'+source+'"]')) {
+				$(".disabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+				disabledSources++;
+			}
+		}
+	}
+	if (disabledSources) {
+		$(".disabled-sources-header").removeClass("hidden");
+	} else {
+		$(".disabled-sources-header").addClass("hidden");
+	}
+	
 }
 
 function getStartableSources() {

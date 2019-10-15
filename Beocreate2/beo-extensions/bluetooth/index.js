@@ -17,38 +17,109 @@ SOFTWARE.*/
 
 // BEOCREATE ELEMENTS MODULE
 
-module.exports = function(beoBus) {
-	var module = {};
+var exec = require("child_process").exec;
+
+module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
+	var debug = globals.debug;
+	var version = require("./package.json").version;
+	
+	
+	var sources = null;
+	
+	var bluetoothEnabled = false;
 	
 	beoBus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
+			if (globals.extensions.sources &&
+				globals.extensions.sources.setSourceOptions &&
+				globals.extensions.sources.sourceDeactivated) {
+				sources = globals.extensions.sources;
+			}
+			
+			if (sources) {
+				getBluetoothStatus(function(enabled) {
+					sources.setSourceOptions("bluetooth", {
+						enabled: enabled,
+						transportControls: true,
+						usesHifiberryControl: true
+					});
+				});
+			}
 			
 			
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "bluetooth") {
-				
+				beoBus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {bluetoothEnabled: bluetoothEnabled}});
 			}
 		}
 	});
 	
-
+	beoBus.on('bluetooth', function(event) {
+		
+		if (event.header == "bluetoothEnabled") {
+			
+			if (event.content.enabled != undefined) {
+				setBluetoothStatus(event.content.enabled, function(newStatus, error) {
+					beoBus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {bluetoothEnabled: newStatus}});
+					if (sources) sources.setSourceOptions("bluetooth", {enabled: newStatus});
+					if (newStatus == false) {
+						if (sources) sources.sourceDeactivated("bluetooth");
+					}
+					if (error) {
+						beoBus.emit("ui", {target: "bluetooth", header: "errorTogglingBluetooth", content: {}});
+					}
+				});
+			}
+		
+		}
+	});
 	
-	return module;
+	
+	function getBluetoothStatus(callback) {
+		exec("systemctl is-active --quiet bluetoothd.service bluealsa.service bluealsa-aplay.service").on('exit', function(code) {
+			if (code == 0) {
+				bluetoothEnabled = true;
+				callback(true);
+			} else {
+				bluetoothEnabled = false;
+				callback(false);
+			}
+		});
+	}
+	
+	function setBluetoothStatus(enabled, callback) {
+		if (enabled) {
+			exec("systemctl enable --now bluetoothd.service bluealsa.service bluealsa-aplay.service").on('exit', function(code) {
+				if (code == 0) {
+					bluetoothEnabled = true;
+					if (debug) console.log("Bluetooth enabled.");
+					callback(true);
+				} else {
+					bluetoothEnabled = false;
+					callback(false, true);
+				}
+			});
+		} else {
+			exec("systemctl disable --now bluetoothd.service bluealsa.service bluealsa-aplay.service").on('exit', function(code) {
+				bluetoothEnabled = false;
+				if (code == 0) {
+					callback(false);
+					if (debug) console.log("Bluetooth disabled.");
+				} else {
+					callback(false, true);
+				}
+			});
+		}
+	}
+	
+	return {
+		version: version
+	}
+
 };
 
-
-
-
-/*var dbus = require('dbus-native');
-var systemBus = dbus.systemBus();
-
-var srv = systemBus.getService('org.freedesktop.DBus');
-srv.getInterface('/org/freedesktop/DBus', 'org.freedesktop.DBus.Properties', function(err, obj) {
-    obj.addListener('NameAcquired', console.log);
-    obj.addListener('PropertiesChanged', console.log);
-});*/

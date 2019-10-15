@@ -55,7 +55,7 @@ function showAdvancedSoundAdjustmentsEnabled(enabled) {
 
 function updateSystemVolumeSliders() {
 	if (adjustingSystemVolume == false) {
-		$(".master-volume-slider").slider("value", systemVolume.percentage);
+		$(".master-volume-slider").slider("value", systemVolume);
 	}
 }
 
@@ -74,7 +74,7 @@ $(".master-volume-slider").slider({
 	max: 100,
 	value: 0,
 	slide: function( event, ui ) {	
-		send({target: "sound", header: "setVolume", content: {percentage: ui.value}});
+		send({target: "sound", header: "setVolume", content: ui.value});
 	},
 	start: function(event, ui) {
 		adjustingSystemVolume = true;

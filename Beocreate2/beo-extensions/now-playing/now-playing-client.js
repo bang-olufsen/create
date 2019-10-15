@@ -5,14 +5,15 @@ var adjustingSystemVolume = false;
 var canStartSources = false;
 var currentSource = null;
 var cacheIndex = 0;
+var playerState = "stopped";
 
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			if ($("#now-playing").hasClass("visible")) {
+			//if ($("#now-playing").hasClass("visible")) {
 				send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
-			}
+			//}
 		}
 	}
 	
@@ -22,7 +23,7 @@ $(document).on("now-playing", function(event, data) {
 
 	
 	if (data.header == "metadata") {
-		if (data.content.metadata != undefined) {
+		if (data.content.metadata != undefined && Object.keys(data.content.metadata).length > 0) {
 			/*
 			Contents:
 			content.cacheIndex = a number that increments every time metadata changes on the sound system, used to check if metadata needs to be sent.
@@ -44,7 +45,7 @@ $(document).on("now-playing", function(event, data) {
 				$("#artwork-wrap-inner").attr("data-album", data.content.metadata.album);
 			}
 			if (data.content.metadata.title != undefined) {
-				artistAlbum = false
+				artistAlbum = false;
 				if (data.content.metadata.artist) {
 					artistAlbum = data.content.metadata.artist;
 					if (data.content.metadata.album) {
@@ -53,30 +54,30 @@ $(document).on("now-playing", function(event, data) {
 						toggleShowAlbumName(true);
 					}
 				}
-				topText(data.content.metadata.title, artistAlbum);
+				setNowPlayingTitles(data.content.metadata.title, artistAlbum);
 			}
 			
 			if (data.content.metadata.picture != undefined) {
 				if (data.content.metadata.picture != false && data.content.metadata.picture != true) {
-					$(".artwork-bg").css("background-image", "url(" + data.content.metadata.picture + ")");
-					$(".artwork-img").attr("src", data.content.metadata.picture).removeClass("placeholder");
+					loadArtwork(data.content.metadata.picture, data.content.metadata.picturePort);
 				} else if (data.content.metadata.picture != true) {
-					$(".artwork-bg").css("background-image", "none");
-					$(".artwork-img").attr("src", $("#now-playing").attr("data-asset-path")+"/placeholder.png").addClass("placeholder");
+					loadArtwork();
 				}
+			} else {
+				loadArtwork();
 			}
 			if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
 		} else {
-			topText(false, false);
+			setNowPlayingTitles(false, false);
 			toggleShowAlbumName(true);
-			$(".artwork-bg").css("background-image", "none");
-			$(".artwork-img").attr("src", $("#now-playing").attr("data-asset-path")+"/placeholder.png").addClass("placeholder");
+			loadArtwork();
 			$(".artwork-img").attr("alt", "").attr("data-album", "");
 			$("#artwork-wrap-inner").attr("data-album", "");
 		}
 	}
 	
 	if (data.header == "playerState") {
+		playerState = data.content.state;
 		if (data.content.state == "playing") {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
 		} else {
@@ -88,13 +89,13 @@ $(document).on("now-playing", function(event, data) {
 });
 
 $(document).on("sources", function(event, data) {
-	if (data.header == "activeSources") {
+	if (data.header == "sources") {
 		
-		if (data.content.activeSources != undefined) {
+		if (data.content.sources != undefined) {
 			
 			if (data.content.currentSource != undefined) {
 				currentSource = data.content.currentSource;
-				if (activeSources[currentSource].transportControls) {
+				if (data.content.sources[currentSource].transportControls) {
 					$("#now-playing-transport").removeClass("disabled");
 				} else {
 					$("#now-playing-transport").addClass("disabled").removeClass("play-only");
@@ -158,6 +159,11 @@ function transport(action) {
 
 function playButtonPress() {
 	if (currentSource) {
+		if (playerState == "playing") {
+			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
+		} else if (playerState == "paused" || playerState == "stopped") {
+			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+		}
 		transport("playPause");
 	} else if (canStartSources) {
 		if (sources && sources.showStartableSources) sources.showStartableSources();
@@ -172,6 +178,32 @@ function toggleShowAlbumName(hide) {
 	}
 }
 
+function loadArtwork(url, port) {
+	if (url) {
+		if (url.indexOf("http") == 0) {
+			// Remote url, use as is.
+			imageURL = url;
+		} else {
+			if (port) {
+				imageURL = window.location.protocol+"//"+window.location.hostname+":"+port+"/"+url;
+			} else {
+				imageURL = url;
+			}
+		}
+		$(".artwork-bg").css("background-image", "url(" + imageURL + ")");
+		$(".artwork-img").attr("src", imageURL).removeClass("placeholder");
+	} else {
+		// Load appropriately branded placeholder artwork.
+		$(".artwork-bg").css("background-image", "none");
+		if ($("body").hasClass("hifiberry-os")) {
+			$(".artwork-img").attr("src", $("#now-playing").attr("data-asset-path")+"/placeholder-hifiberry.png").addClass("placeholder");
+		} else {
+			$(".artwork-img").attr("src", $("#now-playing").attr("data-asset-path")+"/placeholder.png").addClass("placeholder");
+		}
+	}
+}
+
+
 
 // MANAGE AND SWITCH TOP TEXT AND BANG & OLUFSEN LOGO
 
@@ -182,8 +214,9 @@ var tempTopTextTimeout;
 var topTextNotifyTimeout;
 var newFirstRow = "";
 var newSecondRow = "";
+var sourceNameTimeout;
 
-function topText(firstRow, secondRow, temp) {
+function setNowPlayingTitles(firstRow, secondRow, temp) {
 	/* Value interpretation
     text: change text to this
     true: use previous text
@@ -222,17 +255,25 @@ function topText(firstRow, secondRow, temp) {
 
 
 		if (newFirstRow == "" && newSecondRow == "") { // Both rows are empty, show Bang & Olufsen logo.
-			$("#top-text").addClass("logo").removeClass("one-row");
+			$(".now-playing-titles").addClass("logo").removeClass("one-row");
+			clearTimeout(sourceNameTimeout);
+			sourceNameTimeout = setTimeout(function() {
+				$("#player-bar-info-area .active-source").removeClass("icon-only");
+			}, 550);
 			evaluateTextScrolling(false);
 		} else if (newFirstRow != "" && newSecondRow == "") { // Second row is empty, hide it.
-			$("#top-text h1").text(newFirstRow).attr("data-content", newFirstRow);
+			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
 			//$("#top-text .second-row").text(newSecondRow).attr("data-content", newSecondRow);
-			$("#top-text").addClass("one-row").removeClass("logo");
+			$(".now-playing-titles").addClass("one-row").removeClass("logo");
+			$("#player-bar-info-area .active-source").addClass("icon-only");
+			clearTimeout(sourceNameTimeout);
 			evaluateTextScrolling();
 		} else { // Both rows have text, show them.
-			$("#top-text h1").text(newFirstRow).attr("data-content", newFirstRow);
-			$("#top-text h2").text(newSecondRow).attr("data-content", newSecondRow);
-			$("#top-text").removeClass("logo one-row");
+			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
+			$(".now-playing-titles .second-row").text(newSecondRow).attr("data-content", newSecondRow);
+			$(".now-playing-titles").removeClass("logo one-row");
+			$("#player-bar-info-area .active-source").addClass("icon-only");
+			clearTimeout(sourceNameTimeout);
 			evaluateTextScrolling();
 			clearTimeout(topTextNotifyTimeout);
 			/*topTextNotifyTimeout = setTimeout(function() {
@@ -244,7 +285,7 @@ function topText(firstRow, secondRow, temp) {
 			tempTopTextTimeout = setTimeout(function() {
 
 				tempTopTextTimeout = null;
-				topText(previousFirstRow, previousSecondRow);
+				setNowPlayingTitles(previousFirstRow, previousSecondRow);
 			}, 2000);
 		}
 	}
@@ -333,7 +374,8 @@ return {
 	toggleShowAlbumName: toggleShowAlbumName,
 	playButtonPress: playButtonPress,
 	transport: transport,
-	enableSourceStart: enableSourceStart
+	enableSourceStart: enableSourceStart,
+	loadArtwork: loadArtwork
 }
 
 })();

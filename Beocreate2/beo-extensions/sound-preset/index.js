@@ -277,11 +277,11 @@ module.exports = function(beoBus, globals) {
 				
 				if (extensions["product-information"].getProductImage) {
 					image = extensions["product-information"].getProductImage(imageName);
-					if (productIdentity != false) productIdentity.productImage = image.path + image.filename;
+					if (productIdentity != false) productIdentity.productImage = image[1];
 				} else {
-					image = {path: "/common/", filename: "beocreate.png"};
+					image = [false, "/common/beocreate-generic.png"];
 				}
-				compactPresetList[presetFileName].productImage = image.path + image.filename;
+				compactPresetList[presetFileName].productImage = image[1];
 				
 			} else {
 				if (debug) console.log("Sound preset '"+presetFileName+"' did not include a preset name or product model name. Skipping.");

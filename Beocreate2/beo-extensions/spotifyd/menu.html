@@ -7,13 +7,14 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
-			
-			<h2>About</h2>
-			<p>Spotify Connect support is powered by the <a href="https://github.com/Spotifyd/spotifyd" target="_blank">spotifyd</a> open-source project. Spotify Premium subscription is required.</p>
-			<p class="spotifyd-version-container">spotifyd version <span class="spotifyd-version"></span></p>
+			<div class="menu-item toggle" id="spotifyd-enabled-toggle" onclick="spotifyd.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p>Stream and control music from the Spotify application. A Premium subscription is required.</p>
+			<p>Spotify Connect support is powered by the <a href="https://github.com/Spotifyd/spotifyd" target="_blank">spotifyd</a> open-source project.</p>
 		</div>
 	</div>
-	
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/spotifyd-client.js"></script>

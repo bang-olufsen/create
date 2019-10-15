@@ -13,7 +13,7 @@
 			<img class="square-helper" src="common/square-helper.png">
 			<div id="artwork-wrap-inner">
 				<!--<div id="artwork-wrap-inner-2">-->
-					<img src="€/placeholder.png" onclick="now_playing.toggleShowAlbumName();" alt="Album Artwork" class="artwork-img placeholder" />
+					<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" alt="Album Artwork" class="artwork-img placeholder" />
 				<!--</div>-->
 			</div>
 			<img class="square-helper" src="common/square-helper.png">
@@ -23,9 +23,9 @@
 	<div id="now-playing-control-area">
 		
 		
-		<div id="top-text" class="logo">
-			<div class="h1-wrap"><h1 class="now-playing-title"></h1></div>
-			<div class="h2-wrap"><h2 class="now-playing-artist"></h2></div>
+		<div id="top-text" class="now-playing-titles logo">
+			<div class="h1-wrap"><h1 class="now-playing-title first-row"></h1></div>
+			<div class="h2-wrap"><h2 class="now-playing-artist second-row"></h2></div>
 			<img id="top-text-beo-logo" src="common/bangolufsen-w.svg">
 		</div>
 		<div id="now-playing-control-area-wrap">

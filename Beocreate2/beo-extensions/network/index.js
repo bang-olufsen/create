@@ -72,6 +72,11 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "populateWifiUI") {
 			
 			networks = networkCore.listSavedNetworks();
+			if (networks.length > 0 && globals.setup) {
+				if (extensions["setup"] && extensions["setup"].allowAdvancing) {
+					extensions["setup"].allowAdvancing("network");
+				}
+			}
 			beoBus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 			
 			wifiScan();
@@ -131,6 +136,12 @@ module.exports = function(beoBus, globals) {
 						if (debug) console.log("Network '"+event.content.ssid+"' was updated.");
 					}
 					networks = networkCore.listSavedNetworks();
+					if (networks.length > 0 && globals.setup) {
+						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
+							extensions["setup"].allowAdvancing("network", true);
+						}
+					}
+					wifiScan();
 					beoBus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 				} else {
 					if (debug) console.error("Network '"+event.content.ssid+"' already exists.");
@@ -146,6 +157,12 @@ module.exports = function(beoBus, globals) {
 					beoBus.emit("ui", {target: "network", header: "networkRemoved", content: {ssid: event.content.ssid}});
 					if (debug) console.log("Network '"+event.content.ssid+"' was removed.");
 					networks = networkCore.listSavedNetworks();
+					wifiScan();
+					if (networks.length == 0 && globals.setup) {
+						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
+							extensions["setup"].allowAdvancing("network", false);
+						}
+					}
 					beoBus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 				} else {
 					if (debug) console.error("Network '"+event.content.ssid+"' was not removed, because it was not found.");
@@ -293,7 +310,7 @@ module.exports = function(beoBus, globals) {
 								setConnectionMode({mode: "connected"});
 							}
 						});
-						if (!sawPreviousNetworks && !wifiScanning && !globals.setup) {
+						if (!sawPreviousNetworks && !wifiScanning) {
 							wifiScan(function(networks, error) {
 								if (error) {
 									// Error scanning, but ignore it.
@@ -301,9 +318,11 @@ module.exports = function(beoBus, globals) {
 									if (networks.length > 0) {
 										for (var i = 0; i < networks.length; i++) {
 											if (networks[i].added) {
-												sawPreviousNetworks = true; // Set this flag so that we don't constantly turn on and off the hotspot, if a network that has a familiar SSID doesn't actually work.
-												if (debug) console.log("Network: hotspot is on, but a previously added network was seen.");
-												setConnectionMode({mode: "initial"});
+												if (!globals.setup) {
+													sawPreviousNetworks = true; // Set this flag so that we don't constantly turn on and off the hotspot, if a network that has a familiar SSID doesn't actually work.
+													if (debug) console.log("Network: hotspot is on, but a previously added network was seen.");
+													setConnectionMode({mode: "initial"});
+												}
 												break;
 											}
 										}

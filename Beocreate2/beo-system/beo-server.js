@@ -15,11 +15,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-// BEOCREATE SYSTEM 2
+// BEOCREATE 2
 
 // DEPENDENCIES
 
 //var log = require("why-is-node-running");
+process.env.NODE_PATH = "/usr/lib/node_modules";
 
 var http = require('http');
 var https = require('https');

@@ -17,10 +17,12 @@ SOFTWARE.*/
 
 // BEOCREATE 2
 
-// DEPENDENCIES
 
-//var log = require("why-is-node-running");
-process.env.NODE_PATH = "/usr/lib/node_modules";
+// Set NODE_PATH first, so that the buildroot-installed modules are found:
+process.env.NODE_PATH = "/usr/lib/node_modules/";
+require('module').Module._initPaths();
+
+// DEPENDENCIES
 
 var http = require('http');
 var https = require('https');
@@ -276,61 +278,6 @@ if (debugMode) {
 	// Play startup sound:
 	playProductSound("startup");
 }
-
-/*var commsActive = false;
-var bonjourStartedRecently = true;
-
-beoBus.on('product-information', function(event) {
-	
-	if (event.header == "productIdentity") {
-		
-		if (!commsActive) {
-			if (debugMode) console.log("Starting Bonjour advertisement...");
-			beoCom.startBonjour({name: event.content.systemName, serviceType: "beocreate", server: beoServer, advertisePort: systemConfiguration.port, txtRecord: {"type": event.content.modelID, "typeui": event.content.modelName, "id": event.content.systemID, "image": event.content.productImage, "status": systemStatus}}, function() {
-				commsActive = true;
-			});
-			setTimeout(function() {
-				bonjourStartedRecently = false;
-			}, 2000);
-			// Start accepting socket connections and advertise the HTTP server on Bonjour. Port for the socket is currently ignored, because the it shares the same server and port with HTTP.
-		} else {
-			beoCom.updateTxtRecord({"type": event.content.modelID, "typeui": event.content.modelName, "id": event.content.systemID, "image": event.content.productImage, "status": systemStatus});
-			// If communications are already active, update the TXT record instead.
-		}
-	}
-	
-	if (event.header == "systemNameChanged") {
-		if (commsActive) {
-			if (extensions['product-information'] && extensions['product-information'].getProductInformation) {
-				productInfo = extensions['product-information'].getProductInformation();
-				beoCom.stopBonjour(function() {
-					beoCom.startBonjour({name: productInfo.systemName, serviceType: "beocreate", advertisePort: systemConfiguration.port, txtRecord: {"type": productInfo.modelID, "typeui": productInfo.modelName, "id": productInfo.systemID, "image": productInfo.productImage, "status": systemStatus}}, function() {
-						commsActive = true;
-					}); 
-				});
-			}
-		}
-	}
-});
-
-var bonjourRestartDelay = null;
-beoBus.on('network', function(event) {
-	
-	if (event.header == "newIPAddresses") {
-		//if (event.content == true) {
-			if (commsActive && !bonjourStartedRecently) {
-				if (debugMode) console.log("New IP addresses, restarting Bonjour advertisement...");
-				console.log(event.content.ipv4);
-				clearTimeout(bonjourRestartDelay);
-				bonjourRestartDelay = setTimeout(function() {
-					beoCom.restartBonjour(); 
-				}, 2000);
-			}
-		//}
-	}
-});
-*/
-
 
 
 function assembleBeoUI() {

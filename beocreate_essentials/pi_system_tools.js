@@ -77,6 +77,9 @@ function setHostname(productName, callback) {
 							callback(null, error);
 						} else {
 							uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
+							if (fs.existsSync("/etc/systemname")) {
+								fs.writeFileSync("/etc/systemname", uiName);
+							}
 							command = "/usr/bin/hostnamectl --static";
 							exec(command, function(error, stdout, stderr) {
 								if (error) {

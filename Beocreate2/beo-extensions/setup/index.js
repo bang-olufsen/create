@@ -132,7 +132,7 @@ module.exports = function(beoBus, globals) {
 				}
 				if (setupFlow[i].after) {
 					if (setupFlow[i].after.indexOf(newStep.extension) != -1) {
-						afterNew = i1;
+						afterNew = i;
 					}
 				}
 				if (setupFlow[i].shown) lastShown = i+1;

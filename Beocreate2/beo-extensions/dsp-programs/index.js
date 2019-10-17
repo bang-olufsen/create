@@ -384,13 +384,13 @@ module.exports = function(beoBus, globals) {
 						if (debug) console.log("Program write complete, checking EEPROM...");
 						beoDSP.checkEEPROM(function(matches) {
 							if (matches) {
-								callback(true);
 								beoBus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "success"}});
 								if (debug) console.log("Memory contents match with installed program.");
+								callback(true);
 							} else {
-								callback(false);
 								if (debug) console.log("Memory contents did not match with installed program.");
 								beoBus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "fail"}});
+								callback(false);
 							}
 						});
 					} else {
@@ -439,13 +439,13 @@ module.exports = function(beoBus, globals) {
 	
 	function amplifierMute(mute) {
 		if (mute) {
-			if (debug) console.log("Muting amplifier through GPIO...");
 			execSync("gpio mode 2 out");
 			execSync("gpio write 2 1");
+			if (debug) console.log("Muted amplifier through GPIO.");
 		} else {
-			if (debug) console.log("Unmuting amplifier through GPIO...");
 			execSync("gpio write 2 0");
 			execSync("gpio mode 2 in");
+			if (debug) console.log("Unmuted amplifier through GPIO.");
 		}
 	}
 

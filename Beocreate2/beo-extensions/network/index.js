@@ -27,6 +27,11 @@ module.exports = function(beoBus, globals) {
 	
 	var version = require("./package.json").version;
 	
+	var defaultSettings = {
+		"useHifiberryHotspot": true
+	};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
 	var networkHardware = {wifi: false, ethernet: false};
 	
 	var hasLocalConnection = false;
@@ -34,6 +39,7 @@ module.exports = function(beoBus, globals) {
 	var cachedIPAddresses = {wifi: null, ethernet: null}; // If IP addresses change, the system should rebroadcast its zeroconf advertisement.
 	
 	var testNoEthernet = false; // Set to true to make Ethernet a "stealth" interface: even when connected, the system will consider it disconnected to allow testing automated hotspot functions.
+	
 	
 	beoBus.on('general', function(event) {
 		
@@ -68,6 +74,14 @@ module.exports = function(beoBus, globals) {
 	
 	
 	beoBus.on('network', function(event) {
+		
+		if (event.header == "settings") {
+			
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+			
+		}
 		
 		if (event.header == "populateWifiUI") {
 			
@@ -172,6 +186,15 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
+	beoBus.on('setup', function(event) {
+	
+		if (event.header == "advancing" && event.content.extension == "network") {
+			beoBus.emit("ui", {target: "network", header: "savingSettings"});
+			setConnectionMode({mode: "initial"});
+		}
+				
+	});
+	
 	var wifiScanning = false;
 	function wifiScan(callback) {
 		if (!wifiScanning) {
@@ -208,10 +231,7 @@ module.exports = function(beoBus, globals) {
 					// Rapid checks when system starts or after exiting hotspot mode;
 					connectionCheckMax = 10;
 					if (debug) console.log("Network: checking for local network...");
-					if (networkHardware.wifi && networkCore.getSetupNetworkStatus()) {
-						if (debug) console.log("Network: switching off setup hotspot...");
-						networkCore.setupNetwork();
-					}
+					setupNetwork();
 					beoBus.emit("led", {header: "blink", content: {options: {interval: 0.5, colour: "white"}}});
 					interval = 3;
 					break;
@@ -228,6 +248,7 @@ module.exports = function(beoBus, globals) {
 					checkInternetConnection(function(status) {
 						if (debug && status == true) console.log("Network: internet connection is working.");
 					});
+					beoBus.emit("ui", {target: "network", header: "connected"});
 					beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "white", then: {action: "fadeTo", colour: "red", after: 2, speed: "slow"}}}});
 					interval = 60;
 					break;
@@ -238,17 +259,7 @@ module.exports = function(beoBus, globals) {
 					break;
 				case "hotspot":
 					// Start hotspot. During hotspot mode, periodically check if previously set up Wi-Fi networks become available, switch hotspot off in that case.
-					hotspotName = "";
-					if (extensions["product-information"] && extensions["product-information"].getProductInformation) {
-						info = extensions["product-information"].getProductInformation();
-						if (info.systemID) {
-							// Hotspot name contains the Raspberry Pi ID to allow multiple hotspots to coexist.
-							hotspotName = "Beocreate_Setup_"+info.systemID.replace(/^0+/, '');
-						}
-					}
-					if (!hotspotName) hotspotName = "Beocreate_Setup";
-					if (debug) console.log("Network: starting setup hotspot with name: '"+hotspotName+"'...");
-					networkCore.setupNetwork(hotspotName);
+					setupNetwork(true);
 					if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
 						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["sound-preset", "product-information"]});
 					}
@@ -333,6 +344,54 @@ module.exports = function(beoBus, globals) {
 						break;
 				}
 			}, interval*1000);
+		}
+	}
+	
+	
+	function setupNetwork(start) {
+		if (start) {
+			hotspotName = "";
+			hotspotPrefix = "Beocreate";
+			if (globals.systemConfiguration.cardType) {
+				if (globals.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
+					hotspotPrefix = "Beocreate";
+				} else {
+					hotspotPrefix = "HiFiBerry";
+				}
+			}
+			if (extensions["product-information"] && extensions["product-information"].getProductInformation) {
+				info = extensions["product-information"].getProductInformation();
+				if (info.systemID) {
+					// Hotspot name contains the Raspberry Pi ID to allow multiple hotspots to coexist.
+					hotspotName = hotspotPrefix+"_Setup_"+info.systemID.replace(/^0+/, '');
+				}
+			}
+			if (!hotspotName) hotspotName = hotspotPrefix+"_Setup";
+			if (debug) console.log("Network: starting setup hotspot with name: '"+hotspotName+"'...");
+		}
+		if (!settings.useHifiberryHotspot) {
+			if (start) {
+				networkCore.setupNetwork(hotspotName);
+			} else {
+				if (networkHardware.wifi && networkCore.getSetupNetworkStatus()) {
+					networkCore.setupNetwork();
+				}
+			}
+		} else {
+			if (start) {
+				if (fs.existsSync("/etc/tempap-hostapd.conf")) {
+					hotspotConfig = fs.readFileSync("/etc/tempap-hostapd.conf", "utf8").split('\n');
+					for (var i = 0; i < hotspotConfig.length; i++) {
+						if (hotspotConfig[i].indexOf("ssid=") != -1) {
+							hotspotConfig[i] = "ssid="+hotspotName;
+						}
+					}
+					fs.writeFileSync("/etc/tempap-hostapd.conf", hotspotConfig.join("\n"));
+				}
+				child_process.exec("systemctl start tempap.service");
+			} else {
+				child_process.exec("systemctl stop tempap.service");
+			}
 		}
 	}
 	

@@ -189,7 +189,7 @@ module.exports = function(beoBus, globals) {
 	beoBus.on('setup', function(event) {
 	
 		if (event.header == "advancing" && event.content.extension == "network") {
-			beoBus.emit("ui", {target: "network", header: "savingSettings"});
+			beoBus.emit("ui", {target: "network", header: "exitingHotspot"});
 			setConnectionMode({mode: "initial"});
 		}
 				

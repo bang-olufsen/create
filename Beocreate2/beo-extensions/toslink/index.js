@@ -26,7 +26,7 @@ module.exports = function(beoBus, globals) {
 	
 	var metadata = {};
 	var defaultSettings = {
-			"toslinkEnabled": true, 
+			"toslinkEnabled": false, 
 			"toslinkStopsOtherSources": true
 		};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));

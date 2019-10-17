@@ -187,10 +187,18 @@ var network = (function() {
 		
 		if (data.header == "exitingHotspot") {
 			// When the product applies new network settings, the connection will be temporarily lost. Inform Beocreate app of this so that it knows to auto-reconnect.
-			sendToProductView({header: "autoReconnect", content: {status: "rebooting", systemID: product_information.systemID(), systemName: product_information.systemName()}});
+			sendToProductView({header: "autoReconnect", content: {status: "networkConnect", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 			notify({title: "Applying network settings…", message: "Make sure your device is connected to the same network as the product.", icon: "attention", timeout: false, id: "applyingNetworkSettings"});
 			noConnectionNotifications = true;
-			maxConnectionAttempts = 10;
+			maxConnectionAttempts = 20;
+		}
+		
+		if (data.header == "connected") {
+			if (noConnectionNotifications) {
+				notify(false, "applyingNetworkSettings");
+				noConnectionNotifications = false;
+				maxConnectionAttempts = 5;
+			}
 		}
 	});
 	

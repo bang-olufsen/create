@@ -89,8 +89,11 @@ module.exports = function(beoBus, globals) {
 					} else {
 						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name that contains the system ID ("Beocreate-a1b2c3d4").
 						if (!systemID) systemID = "new";
-						if (!hifiberryOS) newName = "Beocreate-"+systemID.replace(/^0+/, '');
-						if (hifiberryOS) newName = "HiFiBerry";
+						if (!hifiberryOS) {
+							newName = "Beocreate-"+systemID.replace(/^0+/, '');
+						} else {
+							newName = "HiFiBerry";
+						}
 						piSystem.setHostname(newName, function(success, response) {
 							if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
 								extensions["setup"].joinSetupFlow("product-information", {after: ["choose-country", "network", "sound-preset"], allowAdvancing: true});

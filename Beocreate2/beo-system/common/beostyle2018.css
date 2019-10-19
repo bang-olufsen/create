@@ -1612,9 +1612,9 @@ div.symbol {
 }
 
 div.symbol.loading {
-	-webkit-mask-image: url(/common/symbols-black/loading.svg);
-	mask-image: url(/common/symbols-black/loading.svg);
-	animation: spin 2s linear infinite;
+	-webkit-mask-image: url(/common/symbols-black/wait-star.svg);
+	mask-image: url(/common/symbols-black/wait-star.svg);
+	/*animation: spin 2s linear infinite;*/
 }
 
 p.success, 

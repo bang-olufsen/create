@@ -20,7 +20,7 @@ stateRestored = false;
 uiSettings = {
 	disclosure: {}
 };
-isHifiberryOS = false;
+hifiberryOS = false;
 
 $( document ).ready(function() {
 	// FASTCLICK
@@ -30,7 +30,7 @@ $( document ).ready(function() {
 	if (("standalone" in window.navigator) && window.navigator.standalone){
 		$("body").addClass("standalone");
 	}
-	if ($("body").hasClass("hifiberry-os")) isHifiberryOS = true;
+	if ($("body").hasClass("hifiberry-os")) hifiberryOS = true;
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
 	prepareMenus();
@@ -162,7 +162,7 @@ function prepareMenus() {
 					// TOP LEVEL MENU
 					
 					iconName = $(this).attr("data-icon");
-					if (isHifiberryOS && $(this).attr("data-icon-hifiberry")) {
+					if (hifiberryOS && $(this).attr("data-icon-hifiberry")) {
 						iconName = $(this).attr("data-icon-hifiberry");
 					}
 					menuOptions = {
@@ -197,7 +197,7 @@ function prepareMenus() {
 					// SUBMENUS
 					
 					iconName = $(this).attr("data-icon");
-					if (isHifiberryOS && $(this).attr("data-icon-hifiberry")) {
+					if (hifiberryOS && $(this).attr("data-icon-hifiberry")) {
 						iconName = $(this).attr("data-icon-hifiberry");
 					}
 					menuOptions = {
@@ -1000,8 +1000,15 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 			notificationIcon = "";
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
-				icon = "common/beo-attention-animate.svg";
-				$(".hud-notification img").addClass("beo-load").removeClass("hidden");
+				icon = "common/symbols-black/wait-star.svg"
+				/*if (!hifiberryOS) {
+					icon = "common/create-wait-animate.svg";
+				} else {
+					icon = "common/hifiberry-wait-animate.svg";
+				}
+				// Also add beo-load class.
+				*/
+				$(".hud-notification img").removeClass("hidden");
 				$(".hud-notification img").attr("src", icon);
 				notificationIcon = "attention";
 			}

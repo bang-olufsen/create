@@ -79,6 +79,9 @@ module.exports = function(beoBus, globals) {
 						currentCountryCode = newCountry;
 						countryName = (currentCountryCode != null) ? countryList.getName(currentCountryCode) : null;
 						beoBus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
+						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
+							extensions["setup"].allowAdvancing("choose-country", true);
+						}
 					}
 				}
 			}

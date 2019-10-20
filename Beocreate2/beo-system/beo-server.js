@@ -271,6 +271,15 @@ beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});
 getAllSettings();
 
 beoBus.emit('general', {header: "startup", content: {debug: debugMode, systemVersion: systemVersion, extensions: extensionsList}});
+
+if (systemConfiguration.runAtStart) {
+	try {
+		exec(systemConfiguration.runAtStart);
+	} catch (error) {
+		console.error("Could not run 'at start' command: "+error);
+	}
+}
+
 if (debugMode) {
 	// If we're in debug, don't play startup sound, just output to log.
 	console.log("System startup.");

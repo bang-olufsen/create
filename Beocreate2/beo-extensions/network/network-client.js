@@ -292,7 +292,7 @@ var network = (function() {
 	
 	function addOtherNetwork(input) {
 		if (!input) {
-			startTextInput(3, "Add Other Network", "Type the name of the network to add. If the network has no password, leave it blank.", {placeholders: {password: "Password", text: "Network name"}, minLength: {text: 1, password: 6}, optional: {password: true}}, addOtherNetwork);
+			startTextInput(3, "Add Other Network", "Type the name of the network to add. If the network has no password, leave it blank.", {placeholders: {password: "Password", text: "Network name"}, minLength: {text: 1, password: 6}, optional: {password: true}}, network.addOtherNetwork);
 		} else {
 			if (!input.password) input.password = false;
 			send({target: "network", header: "addNetwork", content: {ssid: input.text, password: input.password}});

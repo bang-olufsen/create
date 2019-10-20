@@ -18,6 +18,7 @@ SOFTWARE.*/
 // SPOTIFYD CONTROL FOR BEOCREATE
 
 var exec = require("child_process").exec;
+var fs = require("fs");
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
@@ -27,7 +28,11 @@ module.exports = function(beoBus, globals) {
 	
 	var sources = null;
 	
-	var spotifydEnabled = false;
+	var settings = {
+		spotifydEnabled: false,
+		loggedInAs: false
+	};
+	var configuration = {};
 	
 	beoBus.on('general', function(event) {
 		
@@ -49,14 +54,33 @@ module.exports = function(beoBus, globals) {
 				});
 			}
 			
-			
+			readSpotifydConfiguration();
+			console.log(configuration);
+			if (configuration.global.username && !configuration.global.username.comment && configuration.global.password && !configuration.global.password.comment) {
+				settings.loggedInAs = configuration.global.username.value;
+			} else {
+				settings.loggedInAs = false;
+			}
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "spotifyd") {
-				beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: {spotifydEnabled: spotifydEnabled}});
+				beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 			}
 		}
+	});
+	
+	beoBus.on('product-information', function(event) {
+		
+		if (event.header == "systemNameChanged") {
+			// Listen to changes in system name and update the spotifyd display name.
+			if (event.content.systemName) {
+				configureSpotifyd({section: "global", option: "device_name", value: event.content.systemName.split(" ").join("")}, true)
+			}
+			
+		}
+		
+		
 	});
 	
 	beoBus.on('spotifyd', function(event) {
@@ -65,7 +89,7 @@ module.exports = function(beoBus, globals) {
 			
 			if (event.content.enabled != undefined) {
 				setSpotifydStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: {spotifydEnabled: newStatus}});
+					beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 					if (sources) sources.setSourceOptions("spotifyd", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("spotifyd");
@@ -77,16 +101,49 @@ module.exports = function(beoBus, globals) {
 			}
 		
 		}
+		
+		
+		if (event.header == "logIn") {
+			if (event.content.username && event.content.password) {
+				configureSpotifyd([
+					{section: "global", option: "username", value: event.content.username},
+					{section: "global", option: "password", value: event.content.password}
+				], true, function(success, error) {
+					if (success) {
+						settings.loggedInAs = event.content.username;
+						beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+					} else {
+						beoBus.emit("ui", {target: "spotifyd", header: "logInError"});
+						configureSpotifyd([
+							{section: "global", option: "username", remove: true},
+							{section: "global", option: "password", remove: true}
+						], true);
+						settings.loggedInAs = false;
+						beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+					}
+				});
+			}
+		}
+		
+		if (event.header == "logOut") {
+			settings.loggedInAs = false;
+			configureSpotifyd([
+				{section: "global", option: "username", remove: true},
+				{section: "global", option: "password", remove: true}
+			], true, function() {
+				beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+			});
+		}
 	});
 	
 	
 	function getSpotifydStatus(callback) {
 		exec("systemctl is-active --quiet spotify.service").on('exit', function(code) {
 			if (code == 0) {
-				spotifydEnabled = true;
+				settings.spotifydEnabled = true;
 				callback(true);
 			} else {
-				spotifydEnabled = false;
+				settings.spotifydEnabled = false;
 				callback(false);
 			}
 		});
@@ -96,7 +153,7 @@ module.exports = function(beoBus, globals) {
 		if (enabled) {
 			exec("systemctl enable --now spotify.service").on('exit', function(code) {
 				if (code == 0) {
-					spotifydEnabled = true;
+					settings.spotifydEnabled = true;
 					if (debug) console.log("Spotifyd enabled.");
 					callback(true);
 				} else {
@@ -106,7 +163,7 @@ module.exports = function(beoBus, globals) {
 			});
 		} else {
 			exec("systemctl disable --now spotify.service").on('exit', function(code) {
-				spotifydEnabled = false;
+				settings.spotifydEnabled = false;
 				if (code == 0) {
 					callback(false);
 					if (debug) console.log("Spotifyd disabled.");
@@ -115,6 +172,95 @@ module.exports = function(beoBus, globals) {
 				}
 			});
 		}
+	}
+	
+	function configureSpotifyd(options, relaunch, callback) {
+		readSpotifydConfiguration();
+		if (typeof options == "object" && !Array.isArray(options)) {
+			options = [options];
+		}
+		for (var i = 0; i < options.length; i++) {
+			if (options[i].section && options[i].option) {
+				if (!configuration[options[i].section]) configuration[options[i].section] = {};
+				if (options[i].value) {
+					if (debug) console.log("Configuring spotifyd (setting "+options[i].option+" in "+options[i].section+")...")
+					configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
+				} else {
+					if (configuration[options[i].section][options[i].option]) {
+						if (options[i].remove) {
+							if (debug) console.log("Configuring spotifyd (removing "+options[i].option+" in "+options[i].section+")...")
+							delete configuration[options[i].section][options[i].option];
+						} else {
+							if (debug) console.log("Configuring spotifyd (commenting out "+options[i].option+" in "+options[i].section+")...")
+							configuration[options[i].section][options[i].option].comment = true;
+						}
+					}
+				}
+			}
+		}
+		writeSpotifydConfiguration();
+		if (relaunch && settings.spotifydEnabled) {
+			exec("systemctl restart spotify.service", function(error, stdout, stderr) {
+				if (error) {
+					if (debug) console.error("Relaunching spotifyd failed: "+error);
+					if (callback) callback(false, error);
+				} else {
+					if (debug) console.error("Spotifyd was relaunched.");
+					if (callback) callback(true);
+				}
+			});
+		} else {
+			if (callback) callback(true);
+		}
+	}
+	
+	spotifydConfigModified = 0;
+	function readSpotifydConfiguration() {
+		modified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
+		if (modified != spotifydConfigModified) {
+			// Reads configuration into a JavaScript object for easy access.
+			spotifydConfig = fs.readFileSync("/etc/spotifyd.conf", "utf8").split('\n');
+			section = null;
+			for (var i = 0; i < spotifydConfig.length; i++) {
+				// Find settings sections.
+				if (spotifydConfig[i].indexOf("[") != -1 && spotifydConfig[i].indexOf("]") != -1) {
+					section = spotifydConfig[i].trim().slice(1, -1);
+					configuration[section] = {};
+				} else {
+					if (section != null) {
+						line = spotifydConfig[i].trim();
+						comment = (line.charAt(0) == "#") ? true : false;
+						if (comment) {
+							lineItems = line.slice(1).split("=");
+						} else {
+							lineItems = line.split("=");
+						}
+						if (lineItems.length == 2) {
+							value = lineItems[1].trim();
+							configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	function writeSpotifydConfiguration() {
+		// Saves current configuration back into the file.
+		spotifydConfig = [];
+		for (section in configuration) {
+			spotifydConfig.push("["+section+"]");
+			for (option in configuration[section]) {
+				if (configuration[section][option].comment) {
+					line = "#"+option+" = "+configuration[section][option].value;
+				} else {
+					line = option+" = "+configuration[section][option].value;
+				}
+				spotifydConfig.push(line);
+			}
+		}
+		fs.writeFileSync("/etc/spotifyd.conf", spotifydConfig.join("\n"));
+		spotifydConfigModified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
 	}
 	
 	return {

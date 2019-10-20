@@ -393,7 +393,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		- invisibly: when extension history is constructed, this flag should be set. It will move extensions to their right places without animations and won't show the current one (also the "activated" function won't get triggered).
 	
 	*/
-	if (!navigating) { // Prevent navigation if another transition is in progress
+	if (!navigating && extensions[extension]) { // Prevent navigation if another transition is in progress
 	
 		navigating = true;
 		if (isNaN(extension)) { // Selecting tab with name (from a menu item).
@@ -708,9 +708,20 @@ function restoreState(theMenu) {
 		if (!theMenu) theMenu = null;
 		if (theMenu == null && localStorage.beoCreateSelectedExtension != undefined) {
 			theMenu = localStorage.beoCreateSelectedExtension;
-		} 
+		}
 		if (!extensions[theMenu]) theMenu = $(".menu-screen").first().attr("id");
-		showExtension(theMenu);
+		if (window.location.hash && extensions[window.location.hash.substring(1)]) {
+			// The URL hash can be used to open a specific extension.
+			if (window.location.hash == "#now-playing") {
+				// Now Playing is a special case, because it opens on top of other extensions.
+				showExtension(theMenu);
+				if (now_playing && now_playing.showNowPlaying) now_playing.showNowPlaying();
+			} else {
+				showExtension(window.location.hash.substring(1));
+			}
+		} else {
+			showExtension(theMenu);
+		}
 		send({target: "ui", header: "getUISettings"});
 		stateRestored = true;
 	} else {

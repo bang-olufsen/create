@@ -40,6 +40,7 @@ $(document).on("setup", function(event, data) {
 				setTimeout(function() {
 					showExtension("product-information");
 					delete menuState.setup.submenu;
+					$(".back-button.master").removeClass("visible");
 					$("#setup-finish").removeClass("block").addClass("hidden-right");
 					$("#setup").removeClass("hidden-left").addClass("block");
 					$("body").removeClass("setup").css("opacity", "1");

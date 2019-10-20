@@ -1617,6 +1617,10 @@ div.symbol.loading {
 	/*animation: spin 2s linear infinite;*/
 }
 
+div.symbol.static {
+	pointer-events: none;
+}
+
 p.success, 
 p.warning {
 	margin-left: 35px;

@@ -1,65 +1,64 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:serif="http://www.serif.com/" width="100%" height="100%" viewBox="0 0 150 150" version="1.1" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
-	<rect id="Artboard1" x="25" y="25" width="100" height="100" style="fill:none;"/>
-	<g id="Layer-1" serif:id="Layer 1">
-		<path d="M75,44.987c16.576,0 30.012,13.437 30.012,30.012c0,16.575 -13.436,30.014 -30.012,30.014c-16.573,0 -30.012,-13.439 -30.012,-30.014c0,-16.544 13.389,-29.961 30.012,-30.012Zm1.393,40.603c1.035,-4.537 4.062,-7.722 6.755,-7.107c2.693,0.614 4.039,4.796 3.004,9.333c-1.035,4.538 -4.061,7.723 -6.755,7.108c-2.693,-0.614 -4.039,-4.797 -3.004,-9.334Zm-10.336,-9.925c3.981,-3.052 8.778,-3.49 10.703,-0.978c1.926,2.512 0.256,7.03 -3.726,10.082c-3.982,3.052 -8.778,3.49 -10.703,0.978c-1.926,-2.512 -0.256,-7.03 3.726,-10.082Zm23.476,-2.604c1.815,-0.592 4.07,1.323 5.033,4.274c0.962,2.95 0.271,5.827 -1.544,6.419c-1.814,0.592 -4.069,-1.323 -5.032,-4.274c-0.963,-2.951 -0.271,-5.827 1.543,-6.419Zm-26.1,-11.101c5.041,-0.393 9.323,1.715 9.556,4.704c0.234,2.99 -3.67,5.737 -8.711,6.13c-5.041,0.393 -9.323,-1.715 -9.557,-4.705c-0.233,-2.989 3.671,-5.736 8.712,-6.129Zm24.076,3.354c0.895,-1.179 2.802,-1.24 4.256,-0.136c1.455,1.103 1.909,2.956 1.015,4.135c-0.895,1.179 -2.802,1.24 -4.256,0.137c-1.454,-1.104 -1.909,-2.957 -1.015,-4.136Zm-5.782,-6.549c0.895,-1.179 2.802,-1.24 4.256,-0.136c1.454,1.104 1.908,2.957 1.013,4.135c-0.894,1.179 -2.801,1.24 -4.255,0.136c-1.454,-1.104 -1.909,-2.957 -1.014,-4.135Zm-13.809,-2.921c0.864,-1.701 3.813,-1.942 6.58,-0.536c2.768,1.406 4.313,3.929 3.448,5.631c-0.864,1.701 -3.813,1.942 -6.58,0.536c-2.768,-1.406 -4.312,-3.929 -3.448,-5.631Z"/>
-		<circle id="ring-1" cx="0" cy="0" r="28.5" transform="translate(75 75)" style="fill:none;stroke:#000;stroke-width:1px;" />
-		<circle id="ring-2" cx="0" cy="0" r="28.5" transform="translate(75 75)" style="fill:none;stroke:#000;stroke-width:1px;" />
-		<circle id="ring-3" cx="0" cy="0" r="28.5" transform="translate(75 75)" style="fill:none;stroke:#000;stroke-width:1px;" />
-		
-		<animate attributeName="r"
-			xlink:href="#ring-1"
-		    from="28.5"
-		    to="72"
-		    begin="0s"
-		    dur="2.4s"
-		    repeatCount="indefinite"
-		/>
-		
-		<animate attributeName="r"
-			xlink:href="#ring-2"
-		    from="28.5"
-		    to="72"
-		    begin="0.8s"
-		    dur="2.4s"
-		    repeatCount="indefinite"
-		/>
-		
-		<animate attributeName="r"
-			xlink:href="#ring-3"
-		    from="28.5"
-		    to="72"
-		    begin="1.6s"
-		    dur="2.4s"
-		    repeatCount="indefinite"
-		/>
-		
-		<animate attributeName="opacity"
-			xlink:href="#ring-1"
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg width="100%" height="100%" viewBox="0 0 150 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;"><rect id="Artboard1" x="25" y="25" width="100" height="100" style="fill:none;"/><g id="Layer-1" serif:id="Layer 1"><path id="section-4" d="M96.279,72.677c2.641,-0.862 5.924,1.926 7.325,6.221c1.402,4.296 0.395,8.483 -2.247,9.345c-2.641,0.862 -5.924,-1.926 -7.325,-6.221c-1.402,-4.296 -0.395,-8.483 2.247,-9.345Z" style="fill-opacity:0.2;"/><path id="section-1" d="M64.813,47.615c1.259,-2.477 5.551,-2.827 9.579,-0.78c4.029,2.046 6.278,5.719 5.019,8.196c-1.258,2.477 -5.55,2.827 -9.579,0.781c-4.028,-2.047 -6.277,-5.719 -5.019,-8.197Z" style="fill-opacity:0.2;"/><path id="section-2" d="M84.915,51.866c1.302,-1.715 4.078,-1.804 6.195,-0.197c2.117,1.607 2.778,4.304 1.476,6.02c-1.303,1.716 -4.079,1.804 -6.195,0.197c-2.117,-1.606 -2.778,-4.304 -1.476,-6.02Z" style="fill-opacity:0.2;"/><path id="section-3" d="M93.333,61.401c1.302,-1.716 4.077,-1.805 6.194,-0.199c2.118,1.606 2.779,4.304 1.477,6.02c-1.302,1.716 -4.078,1.805 -6.195,0.198c-2.117,-1.606 -2.779,-4.303 -1.476,-6.019Z" style="fill-opacity:0.2;"/><path id="section-5" d="M77.15,90.916c1.506,-6.605 5.913,-11.241 9.833,-10.347c3.921,0.895 5.881,6.983 4.374,13.588c-1.507,6.605 -5.913,11.241 -9.833,10.346c-3.921,-0.894 -5.881,-6.982 -4.374,-13.587Z" style="fill-opacity:0.2;"/><path id="section-7" d="M58.284,56.517c7.339,-0.572 13.572,2.497 13.912,6.849c0.339,4.352 -5.343,8.35 -12.682,8.923c-7.338,0.572 -13.571,-2.497 -13.911,-6.849c-0.339,-4.352 5.343,-8.35 12.681,-8.923Z" style="fill-opacity:0.2;"/><path id="section-6" d="M62.104,76.469c5.796,-4.443 12.778,-5.082 15.581,-1.425c2.803,3.657 0.373,10.233 -5.424,14.676c-5.796,4.443 -12.778,5.081 -15.581,1.425c-2.803,-3.657 -0.373,-10.233 5.424,-14.676Z" style="fill-opacity:0.2;"/></g>
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-1"
 			from="1"
-			to="0"
+			to="0.2"
 			begin="0s"
-			dur="2.4s"
+			dur="1.4s"
 			repeatCount="indefinite"
 		/>
 		
-		<animate attributeName="opacity"
-			xlink:href="#ring-2"
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-2"
 			from="1"
-			to="0"
+			to="0.2"
+			begin="0.2s"
+			dur="1.4s"
+			repeatCount="indefinite"
+		/>
+		
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-3"
+			from="1"
+			to="0.2"
+			begin="0.4s"
+			dur="1.4s"
+			repeatCount="indefinite"
+		/>
+		
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-4"
+			from="1"
+			to="0.2"
+			begin="0.6s"
+			dur="1.4s"
+			repeatCount="indefinite"
+		/>
+		
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-5"
+			from="1"
+			to="0.2"
 			begin="0.8s"
-			dur="2.4s"
+			dur="1.4s"
 			repeatCount="indefinite"
 		/>
 		
-		<animate attributeName="opacity"
-			xlink:href="#ring-3"
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-6"
 			from="1"
-			to="0"
-			begin="1.6s"
-			dur="2.4s"
+			to="0.2"
+			begin="1s"
+			dur="1.4s"
 			repeatCount="indefinite"
 		/>
-	</g>
+		
+		<animate attributeName="fill-opacity"
+			xlink:href="#section-7"
+			from="1"
+			to="0.2"
+			begin="1.2s"
+			dur="1.4s"
+			repeatCount="indefinite"
+		/>
 </svg>

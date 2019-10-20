@@ -41,6 +41,8 @@ $( document ).ready(function() {
 	connectToCurrentProduct();
 	
 	$("body").css("opacity", "1");
+	
+	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "common/apple-touch-icon-hifiberry.png");
 });
 
 darkAppearance = false;
@@ -1011,14 +1013,14 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 			notificationIcon = "";
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
-				icon = "common/symbols-black/wait-star.svg"
-				/*if (!hifiberryOS) {
+				//icon = "common/symbols-black/wait-star.svg"
+				if (!hifiberryOS) {
 					icon = "common/create-wait-animate.svg";
 				} else {
 					icon = "common/hifiberry-wait-animate.svg";
 				}
-				// Also add beo-load class.
-				*/
+				$(".hud-notification img").addClass("beo-load");
+		
 				$(".hud-notification img").removeClass("hidden");
 				$(".hud-notification img").attr("src", icon);
 				notificationIcon = "attention";

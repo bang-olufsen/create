@@ -55,7 +55,6 @@ module.exports = function(beoBus, globals) {
 			}
 			
 			readSpotifydConfiguration();
-			console.log(configuration);
 			if (configuration.global.username && !configuration.global.username.comment && configuration.global.password && !configuration.global.password.comment) {
 				settings.loggedInAs = configuration.global.username.value;
 			} else {
@@ -75,7 +74,7 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "systemNameChanged") {
 			// Listen to changes in system name and update the spotifyd display name.
 			if (event.content.systemName) {
-				configureSpotifyd({section: "global", option: "device_name", value: event.content.systemName.split(" ").join("")}, true)
+				configureSpotifyd({section: "global", option: "device_name", value: event.content.systemName.split(" ").join("")}, true);
 			}
 			
 		}

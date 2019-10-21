@@ -18,6 +18,7 @@ SOFTWARE.*/
 // BEOCREATE NETWORK SETUP
 
 var child_process = require('child_process');
+var fs = require("fs");
 var networkCore = require('../../beocreate_essentials/networking');
 
 module.exports = function(beoBus, globals) {

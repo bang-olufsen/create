@@ -203,6 +203,10 @@ function loadArtwork(url, port) {
 	}
 }
 
+function loadSmallSampleArtwork() {
+	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
+}
+
 
 
 // MANAGE AND SWITCH TOP TEXT AND BANG & OLUFSEN LOGO
@@ -375,7 +379,8 @@ return {
 	playButtonPress: playButtonPress,
 	transport: transport,
 	enableSourceStart: enableSourceStart,
-	loadArtwork: loadArtwork
+	loadArtwork: loadArtwork,
+	loadSmallSampleArtwork: loadSmallSampleArtwork
 }
 
 })();

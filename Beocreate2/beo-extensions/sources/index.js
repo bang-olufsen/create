@@ -24,7 +24,6 @@ module.exports = function(beoBus, globals) {
 	
 	var version = require("./package.json").version;
 	
-	var audioControlAvailable = false;
 	
 	var allSources = {};
 	var activeSources = {};
@@ -109,8 +108,20 @@ module.exports = function(beoBus, globals) {
 				break;
 			case "transport":
 				if (currentSource && allSources[currentSource].transportControls) {
-					if (allSources[currentSource].usesHifiberryControl && audioControlAvailable) {
-						audioControl(event.content.action);
+					if (allSources[currentSource].usesHifiberryControl) {
+						audioControl(event.content.action, function(success) {
+							if (!success) {
+								switch (event.content.action) {
+									case "playPause":
+									case "play":
+									case "stop":
+									case "next":
+									case "previous":
+										beoBus.emit(currentSource, {header: "transport", content: {action: event.content.action}});
+										break;
+								}
+							}
+						});
 					} else {
 						switch (event.content.action) {
 							case "playPause":
@@ -120,6 +131,22 @@ module.exports = function(beoBus, globals) {
 							case "previous":
 								beoBus.emit(currentSource, {header: "transport", content: {action: event.content.action}});
 								break;
+						}
+					}
+				}
+				break;
+			case "toggleLove":
+				if (currentSource && allSources[currentSource].canLove) {
+					if (!allSources[currentSource].metadata.loved) {
+						love = true;
+					} else {
+						love = false;
+					}
+					if (allSources[currentSource].usesHifiberryControl) {
+						if (love) {
+							audioControl("love");
+						} else {
+							audioControl("unlove");
 						}
 					}
 				}
@@ -165,21 +192,30 @@ module.exports = function(beoBus, globals) {
 	}
 
 
-	function audioControl(operation) {
+	function audioControl(operation, callback) {
 		switch (operation) {
 			case "playPause":
 			case "play":
 			case "stop":
 			case "next":
 			case "previous":
-				request.post("http://127.0.1.1:"+settings.port+"/api/player/"+operation.toLowerCase(), function(err, res, body) {
-					if (err) {
-						if (debug) console.log("Could not send HiFiBerry control command: " + err);
-					}
-				});
+				endpoint = "/api/player/"+operation.toLowerCase();
+				break;
+			case "love":
+			case "unlove":
+				endpoint = "/api/track/"+operation.toLowerCase();
 				break;
 		}
-
+		if (endpoint) {
+			request.post("http://127.0.1.1:"+settings.port+endpoint, function(err, res, body) {
+				if (err) {
+					if (debug) console.log("Could not send HiFiBerry control command: " + err);
+					if (callback) callback(false, err);
+				} else {
+					if (callback) callback(true);
+				}
+			});
+		}
 	}
 	
 	sampleData = {
@@ -209,11 +245,13 @@ module.exports = function(beoBus, globals) {
 				for (var i = 0; i < overview.players.length; i++) {
 					// Go through each source, see their status and update accordingly.
 					extension = matchAudioControlSourceToExtension(overview.players[i].name);
-
+					
+					if (overview.players[i].state == "unknown") overview.players[i].state = "stopped";
+					
 					if (allSources[extension].playerState != overview.players[i].state) {
 						allSources[extension].playerState = overview.players[i].state;
 						
-						if (overview.players[i].state != "stopped" && overview.players[i].state != "unknown") {
+						if (overview.players[i].state != "stopped") {
 							if (allSources[extension].active == false) sourceActivated(extension);
 						} else {
 							// If this source is no longer active, deactivate it.
@@ -240,11 +278,13 @@ module.exports = function(beoBus, globals) {
 
 		extension = matchAudioControlSourceToExtension(metadata.playerName);
 		if (extension) {
+			if (metadata.playerState == "unknown") metadata.playerState = "stopped";
+			
 			if (metadata.playerState != allSources[extension].playerState) {
 				// Player state updated _for this source_.
 				allSources[extension].playerState = metadata.playerState;
-				
-				if (metadata.playerState != "stopped" && metadata.playerState != "unknown") {
+
+				if (metadata.playerState != "stopped") {
 					if (allSources[extension].active == false) sourceActivated(extension);
 				} else {
 					if (allSources[extension].active == true) sourceDeactivated(extension);
@@ -265,6 +305,10 @@ module.exports = function(beoBus, globals) {
 				allSources[extension].metadata.picture = metadata.artUrl;
 				allSources[extension].metadata.picturePort = settings.port;
 				beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
+				// "Love track" support.
+				if (allSources[extension].canLove != metadata.loveSupported) {
+					setSourceOptions(extension, {canLove: metadata.loveSupported});
+				}
 			}
 			
 			if (extension != currentAudioControlSource) {
@@ -411,7 +455,7 @@ module.exports = function(beoBus, globals) {
 				stopOthers: true,
 				transportControls: false,
 				usesHifiberryControl: false,
-				specialControls: [],
+				canLove: false,
 				startableSources: [],
 				metadata: {}
 			};
@@ -433,7 +477,7 @@ module.exports = function(beoBus, globals) {
 		if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
 		if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
 		if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
-		if (options.specialControls) allSources[extension].specialControls = options.specialControls; // Display additional action buttons in Now Playing, such as a heart (love) or a list (browse).
+		if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
 		if (options.startableSources) allSources[extension].startableSources = options.startableSources; // Add a list of startable sources under the main source (e.g. multiple AirPlay senders).
 		if (options.playerState) allSources[extension].playerState = options.playerState;
 		
@@ -445,9 +489,8 @@ module.exports = function(beoBus, globals) {
 				console.log("All sources registered.");
 				beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
 				audioControlGet("status", function(result) {
-					audioControlAvailable = result;
-					if (audioControlAvailable) audioControlGet("metadata");
-				}); // Checks if AudioControl is available and gets status of sources.
+					audioControlGet("metadata");
+				});
 			}
 		}
 	}

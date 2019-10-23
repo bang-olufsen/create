@@ -177,6 +177,10 @@ module.exports = function(beoBus, globals) {
 				beoBus.emit("sources", {header: "transport", content: {action: event.content.action}});
 			}
 		}
+		
+		if (event.header == "toggleLove") {
+			beoBus.emit("sources", {header: "toggleLove"});
+		}
 	});
 	
 	

@@ -1,4 +1,5 @@
 var inElectron = false;
+var debug = true;
 
 var ipc;
 var shell;
@@ -367,6 +368,7 @@ if (ipc) {
 				$(".found-products .discovered[data-product-fullname=\""+fullname+"\"]").remove();
 			}, 400);
 		}
+		if (debug) console.log("Removing", fullname);
 		//updateProductLists();
 	});
 }
@@ -383,6 +385,7 @@ function updateProductLists() {
 	if (Object.keys(products).length != 0) {
 		$(".no-products").addClass("hidden");
 	}
+	if (debug) console.log("Products:", Object.keys(products).length);
 }
 
 function addProduct(product) {
@@ -403,6 +406,7 @@ function addProduct(product) {
 	setTimeout(function() {
 		$(".found-products .discovered[data-product-fullname=\""+product.fullname+"\"]").removeClass("animated-hide");
 	}, 100);
+	if (debug) console.log("Adding", product.fullname);
 }
 
 function updateProduct(product) {

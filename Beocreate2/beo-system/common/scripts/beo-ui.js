@@ -1399,6 +1399,31 @@ function prepareTextInput() {
 }
 
 
+// UPLOAD FILES
+
+var uploadToExtension = null;
+function uploadFile(options, extension) {
+	if (options && options.title && extension) {
+		uploadToExtension = extension;
+		$("#upload h2").text(options.title);
+		if (options.message) {
+			$("#upload p").text(options.message).removeClass("hidden");
+		} else {
+			$("#upload p").addClass("hidden");
+		}
+		$("#upload, #upload-back-plate").addClass("block");
+		setTimeout(function() {
+			$("#upload, #upload-back-plate").addClass("visible");
+		}, 150);
+	} else {
+		$("#upload, #upload-back-plate").removeClass("visible");
+		setTimeout(function() {
+			$("#upload, #upload-back-plate").removeClass("block");
+		}, 500);
+	}
+}
+
+
 // SUPPORT
 
 // https://stackoverflow.com/questions/359788/how-to-execute-a-javascript-function-when-i-have-its-name-as-a-string

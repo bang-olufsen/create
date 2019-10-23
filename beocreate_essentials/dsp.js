@@ -293,7 +293,7 @@ var connectTimeoutCycle = 0;
 function connectDSP(callback, socketAddress) {
 	if (!dspConnected) {
 		connectTimeoutCycle = 0;
-		if (!socketAddress) socketAddress = 'localhost';
+		if (!socketAddress) socketAddress = '127.0.1.1';
 		if (callback) connectCallback = callback;
 		dspClient.connect(8086, socketAddress, function() {
 			//if (callback) callback(true);
@@ -317,7 +317,9 @@ function isConnected() {
 
 
 dspClient.on('error', function(error) {
-	//console.log(error);
+	console.error("Error connecting to DSP server:", error);
+	
+	dspClient.destroy();
 	if (connectTimeoutCycle < 10) {
 		// Retry 10 times, waiting 2 seconds after error.
 		connectTimeoutCycle++;
@@ -325,7 +327,7 @@ dspClient.on('error', function(error) {
 			connectDSP();
 		}, 2000);
 	} else {
-		//console.log("Could not connect to the DSP server, tried again 10 times.");
+		console.error("Could not connect to the DSP server, tried again 10 times.");
 	}
 });
 

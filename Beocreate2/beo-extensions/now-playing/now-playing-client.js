@@ -66,6 +66,12 @@ $(document).on("now-playing", function(event, data) {
 			} else {
 				loadArtwork();
 			}
+			
+			if (data.content.metadata.loved) {
+				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart-cross.svg");
+			} else {
+				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart.svg");
+			}
 			if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
 		} else {
 			setNowPlayingTitles(false, false);
@@ -101,9 +107,15 @@ $(document).on("sources", function(event, data) {
 					$("#now-playing-transport").addClass("disabled").removeClass("play-only");
 					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
 				}
+				if (data.content.sources[currentSource].canLove) {
+					functionRow("love", true);
+				} else {
+					functionRow("love", false);
+				}
 			} else {
 				currentSource = null;
 				$("#now-playing-transport").addClass("disabled");
+				functionRow("love", false);
 				toggleShowAlbumName(true);
 				enableSourceStart();
 			}
@@ -146,6 +158,44 @@ function hideNowPlaying() {
 	}, 600);
 }
 
+var functionRowVisible = false;
+var functionRowItems = {
+	love: {visible: false}
+}
+var functionRowTimeout;
+
+function functionRow(item, show) {
+	
+	if (functionRowItems[item]) {
+		functionRowItems[item].visible = (show) ? true : false;
+		
+		visibleItems = 0;
+		for (functionItem in functionRowItems) {
+			if (functionRowItems[functionItem].visible == true) visibleItems++;
+		}
+		clearTimeout(functionRowTimeout);
+		if (visibleItems == 0) {
+			functionRowVisible = false;
+			$("#now-playing-function-row").removeClass("visible");
+			functionRowTimeout = setTimeout(function() {
+				for (functionItem in functionRowItems) {
+					$("#now-playing-function-row .function-item-"+functionItem).addClass("hidden");
+				}
+			}, 500);
+		} else {
+			functionRowVisible = true;
+			$("#now-playing-function-row").addClass("visible");
+			for (functionItem in functionRowItems) {
+				if (functionRowItems[functionItem].visible) {
+					$("#now-playing-function-row .function-item-"+functionItem).removeClass("hidden");
+				} else {
+					$("#now-playing-function-row .function-item-"+functionItem).addClass("hidden");
+				}
+			}
+		}
+	}
+}
+
 
 function transport(action) {
 	switch (action) {
@@ -155,6 +205,10 @@ function transport(action) {
 			send({target: "now-playing", header: "transport", content: {action: action}});
 			break;
 	}
+}
+
+function toggleLove() {
+	send({target: "now-playing", header: "toggleLove"});
 }
 
 function playButtonPress() {
@@ -380,7 +434,9 @@ return {
 	transport: transport,
 	enableSourceStart: enableSourceStart,
 	loadArtwork: loadArtwork,
-	loadSmallSampleArtwork: loadSmallSampleArtwork
+	loadSmallSampleArtwork: loadSmallSampleArtwork,
+	toggleLove: toggleLove,
+	functionRow: functionRow
 }
 
 })();

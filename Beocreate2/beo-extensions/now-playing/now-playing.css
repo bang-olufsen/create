@@ -42,6 +42,8 @@
 	filter: blur(0);
 }
 
+/* @group Controls */
+
 #now-playing-control-area {
 	background-color: #222;
 	color: white;
@@ -81,7 +83,67 @@
 	padding-right: 20px;
 	padding-left: 20px;
 }
-	
+
+
+#now-playing-chevron {
+	/*margin: 10px;
+	position: relative;
+	z-index: 1;*/
+}
+
+#now-playing-transport {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 1em;
+	margin-top: 0.5em;
+}
+
+#now-playing-transport.disabled {
+	opacity: 1 !important;
+}
+
+#now-playing-transport.disabled .symbol.button {
+	opacity: 0.2;
+	pointer-events: none;
+}
+
+#now-playing-transport.disabled.play-only .play-button {
+	opacity: 1;
+	pointer-events: all;
+}
+
+#now-playing-transport .symbol.button:not(.small) {
+	width: 42px;
+	height: 42px;
+	margin-right: 10px;
+	margin-left: 10px;
+}
+
+#now-playing-function-row {
+	display: flex;
+	justify-content: space-around;
+	padding-bottom: 10px;
+	transform: translateY(20px);
+	opacity: 0;
+	transition: opacity 0.3s ease, transform 0.3s ease;
+	pointer-events: none;
+	height: 21px;
+}
+
+#now-playing-function-row.visible {
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: all;
+}
+
+#now-playing-function-row .button {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+/* @end */
+
 /* @group Top Text & Logo */
 
 #top-text {
@@ -171,6 +233,8 @@
 }
 
 /* @end */
+
+/* @group Artwork */
 
 #now-playing-artwork-area {
 	position: relative;
@@ -304,36 +368,4 @@
 	background-color: var(--ultra-light-grey-dark);
 }
 
-#now-playing-chevron {
-	/*margin: 10px;
-	position: relative;
-	z-index: 1;*/
-}
-
-#now-playing-transport {
-	display: flex;
-	justify-content: center;
-	margin-bottom: 1em;
-	margin-top: 0.5em;
-}
-
-#now-playing-transport.disabled {
-	opacity: 1 !important;
-}
-
-#now-playing-transport.disabled .symbol.button {
-	opacity: 0.2;
-	pointer-events: none;
-}
-
-#now-playing-transport.disabled.play-only .play-button {
-	opacity: 1;
-	pointer-events: all;
-}
-
-#now-playing-transport .symbol.button {
-	width: 42px;
-	height: 42px;
-	margin-right: 10px;
-	margin-left: 10px;
-}
+/* @end */

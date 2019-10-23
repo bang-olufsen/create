@@ -47,13 +47,15 @@ module.exports = function(beoBus, globals) {
 	var defaultSettings = {
 		"modelID": "beocreate-4ca-mk1", 
 		"modelName": "BeoCreate 4-Channel Amplifier",
-		"productImage": "/product-images/beocreate-4ca-mk1.png"
+		"productImage": "/product-images/beocreate-4ca-mk1.png",
+		"bonjourEnabled": false
 	};
 	if (hifiberryOS) {
 		defaultSettings = {
 			"modelID": "hifiberry", 
 			"modelName": "HiFiBerry",
-			"productImage": false
+			"productImage": false,
+			"bonjourEnabled": false
 		};
 	}
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
@@ -217,7 +219,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "newIPAddresses") {
 			//if (event.content == true) {
-				if (!bonjourStartedRecently) {
+				if (!bonjourStartedRecently && settings.bonjourEnabled) {
 					if (debug) console.log("New IP addresses, restarting Bonjour advertisement...");
 					clearTimeout(bonjourRestartDelay);
 					bonjourRestartDelay = setTimeout(function() {
@@ -232,26 +234,28 @@ module.exports = function(beoBus, globals) {
 	var bonjourRestartDelay = null;
 	
 	function startOrUpdateBonjour(newData) {
-		systemStatus = (!globals.setup) ? "normal" : "yellow";
-		if (!beoCom.isBonjourStarted()) {
-			// Bonjour is currently not advertising, start.
-			if (debug) console.log("Advertising system as '"+systemName.ui+"'...");
-			beoCom.startBonjour({name: systemName.ui, serviceType: "beocreate", advertisePort: globals.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
-			beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "product-information"}});
-			setTimeout(function() {
-				bonjourStartedRecently = false;
-			}, 2000);
-		} else {
-			// Bonjour is already advertising, see what needs to be done.
-			if (newData == "status" || newData == "model") {
-				// If new data is system status or model change, only update TXT record.
-				if (debug) console.log("Updating TXT record of Bonjour advertisement...");
-				beoCom.updateTxtRecord({"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus});
+		if (settings.bonjourEnabled) {
+			systemStatus = (!globals.setup) ? "normal" : "yellow";
+			if (!beoCom.isBonjourStarted()) {
+				// Bonjour is currently not advertising, start.
+				if (debug) console.log("Advertising system as '"+systemName.ui+"'...");
+				beoCom.startBonjour({name: systemName.ui, serviceType: "beocreate", advertisePort: globals.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
+				beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "product-information"}});
+				setTimeout(function() {
+					bonjourStartedRecently = false;
+				}, 2000);
 			} else {
-				// For anything else, stop and restart advertisement.
-				beoCom.stopBonjour(function() {
-					startOrUpdateBonjour(); // Run this again, easy.
-				});
+				// Bonjour is already advertising, see what needs to be done.
+				if (newData == "status" || newData == "model") {
+					// If new data is system status or model change, only update TXT record.
+					if (debug) console.log("Updating TXT record of Bonjour advertisement...");
+					beoCom.updateTxtRecord({"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus});
+				} else {
+					// For anything else, stop and restart advertisement.
+					beoCom.stopBonjour(function() {
+						startOrUpdateBonjour(); // Run this again, easy.
+					});
+				}
 			}
 		}
 	}

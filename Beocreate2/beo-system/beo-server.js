@@ -22,6 +22,8 @@ SOFTWARE.*/
 process.env.NODE_PATH = "/usr/lib/node_modules/";
 require('module').Module._initPaths();
 
+process.on('warning', e => console.warn(e.stack));
+
 // DEPENDENCIES
 
 var http = require('http');
@@ -45,7 +47,6 @@ var defaultSystemConfiguration = {
 	"language": "en"
 };
 var systemConfiguration = JSON.parse(JSON.stringify(defaultSystemConfiguration));
-if (!systemConfiguration.language) systemConfiguration.language = "en";
 
 var systemStatus = "normal"; 
 /* Possible status codes: 
@@ -75,9 +76,7 @@ if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 // Contains sound card type, port to use, possibly disabled extensions.
 if (fs.existsSync(dataDirectory+"/system.json")) {
 	try {
-		systemConfiguration = JSON.parse( // Read settings file.
-			fs.readFileSync(dataDirectory+"/system.json")
-		);
+		systemConfiguration = Object.assign(systemConfiguration, JSON.parse(fs.readFileSync(dataDirectory+"/system.json")));
 	} catch (error) {
 		var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
 	}
@@ -258,7 +257,7 @@ expressServer.get("/", function (req, res) {
 // REST API endpoint to talk to extensions.
 expressServer.use(express.json());
 expressServer.post("/:extension/:header", function (req, res) {
-	//console.log(req.body);
+	if (debugMode == 2) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
 	beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
 	res.status(200);
 	res.send("OK");

@@ -3038,6 +3038,26 @@ input[type=submit] {
 
 /* @end */
 
+/* @group File Uploads */
+
+input[type=file]#file-input {
+	position: relative;
+	font: inherit;
+	position: absolute;
+	z-index: -1;
+	opacity: 0;
+}
+
+#file-input-label {
+	display: block;
+	height: 20vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+/* @end */
+
 /* @end */
 
 /* @group Notification Overlay */
@@ -3727,7 +3747,7 @@ h1.large-title {
 	padding: 5% 10% 10%;
 }
 
-#ask .menu-content {
+.ask .menu-content {
 	padding: calc(10% - 20px) 10% 10%;
 }
 

@@ -438,7 +438,7 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	function amplifierMute(mute) {
-		if (mute) {
+		/*if (mute) {
 			execSync("gpio mode 2 out");
 			execSync("gpio write 2 1");
 			if (debug) console.log("Muted amplifier through GPIO.");
@@ -446,7 +446,7 @@ module.exports = function(beoBus, globals) {
 			execSync("gpio write 2 0");
 			execSync("gpio mode 2 in");
 			if (debug) console.log("Unmuted amplifier through GPIO.");
-		}
+		}*/
 	}
 
 	

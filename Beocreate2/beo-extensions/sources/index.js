@@ -143,11 +143,14 @@ module.exports = function(beoBus, globals) {
 						love = false;
 					}
 					if (allSources[currentSource].usesHifiberryControl) {
-						if (love) {
-							audioControl("love");
-						} else {
-							audioControl("unlove");
-						}
+						action = (love) ? "love" : "unlove";
+						
+						audioControl(action, function(success) {
+							if (success) {
+								allSources[currentSource].metadata.loved = love;
+								beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[currentSource].metadata, extension: currentSource}});
+							}
+						});
 					}
 				}
 				break;

@@ -68,9 +68,11 @@ $(document).on("now-playing", function(event, data) {
 			}
 			
 			if (data.content.metadata.loved) {
-				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart-cross.svg");
+				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-colour/heart-red.svg");
+				$("#love-button").addClass("loved");
 			} else {
 				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart.svg");
+				$("#love-button").removeClass("loved");
 			}
 			if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
 		} else {

@@ -425,11 +425,10 @@ function readWifiConfiguration() {
 					}
 					break;
 			}
-			
-			// Filter out empty network entries:
-			if (wifiConfiguration.networks) {
-				wifiConfiguration.networks = wifiConfiguration.networks.filter(value => Object.keys(value).length !== 0);
-			}
+		}
+		// Filter out empty network entries:
+		if (wifiConfiguration.networks) {
+			wifiConfiguration.networks = wifiConfiguration.networks.filter(value => Object.keys(value).length !== 0);
 		}
 	} else {
 		// console.log("Config has not been modified.");

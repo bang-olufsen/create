@@ -43,6 +43,7 @@ module.exports = function(beoBus, globals) {
 	var systemID = null;
 	var systemName = {ui: null, static: null};
 	var systemVersion = null;
+	var hifiberryVersion = null;
 	
 	var defaultSettings = {
 		"modelID": "beocreate-4ca-mk1", 
@@ -72,6 +73,10 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "startup") {
 			systemVersion = event.content.systemVersion;
 			systemVersionReadable = event.content.systemVersionReadable;
+			
+			if (fs.existsSync("/etc/hifiberry.version")) {
+				hifiberryVersion = fs.readFileSync("/etc/hifiberry.version", "utf8");
+			}
 			
 			piSystem.getSerial(function(serial) {
 				if (serial != null) {
@@ -116,7 +121,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "product-information") {
-				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemVersion: systemVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: globals.systemConfiguration}});
+				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: globals.systemConfiguration}});
 			}
 		}
 		

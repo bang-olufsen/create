@@ -9,6 +9,7 @@ var productImage = ""
 var showFullSystemID = false;
 var systemVersion = 0;
 var systemVersionReadable = "";
+var hifiberryVersion = null;
 
 var productIdentities = {};
 
@@ -42,17 +43,15 @@ $(document).on("product-information", function(event, data) {
 		$(".product-image").attr("src", productImage);
 		$(".product-image-bg").css("background-image", "url("+productImage+")");
 		$(".system-name").text(systemName);
-		//extensions["product-information"].title = systemName;
 		$(".model-name").text(modelName);
 		$(".system-version").text(systemVersion);
-		/*if (data.content.hifiberryOS != undefined) {
-			setAsHifiberryOS(data.content.hifiberryOS == true);
-		}*/
 		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
 			$(".card-type").text(data.content.systemConfiguration.cardType);
-			//console.log(data.content.systemConfiguration.cardType);
 		}
-		toggleSystemIDFormat(true);
+		if (data.content.hifiberryVersion) {
+			hifiberryVersion = data.content.hifiberryVersion;
+		}
+		cycleSystemInformation(true);
 		document.title = systemName;
 		sendToProductView({header: "systemName", content: {name: systemName}});
 	}
@@ -130,6 +129,31 @@ function toggleSystemIDFormat(updateOnly) {
 		systemIDString = systemID.replace(/^0+/, '');
 	}
 	$(".serial-number").text(systemIDString);
+}
+
+currentSystemInfo = 0;
+function cycleSystemInformation(updateOnly) {
+	if (!updateOnly) {
+		currentSystemInfo++;
+		if (currentSystemInfo > 3) currentSystemInfo = 0;
+	}
+	if (currentSystemInfo == 0 && !hifiberryVersion) currentSystemInfo = 1;
+	
+	switch (currentSystemInfo) {
+		case 0: // HiFiBerryOS version ("release")
+			infoText = "Release "+hifiberryVersion;
+			break;
+		case 1: // Beocreate version
+			infoText = "Beocreate "+systemVersion;
+			break;
+		case 2:
+			infoText = "Raspberry Pi ID "+systemID.replace(/^0+/, '');
+			break;
+		case 3:
+			infoText = "Raspberry Pi ID "+systemID;
+			break;
+	}
+	$(".system-info-cycle").text(infoText);
 }
 
 function changeProductName(name) {
@@ -224,7 +248,7 @@ return {
 	restartProduct: restartProduct,
 	shutdownProduct: shutdownProduct,
 	jumpToSoundAdjustments: jumpToSoundAdjustments,
-	toggleSystemIDFormat: toggleSystemIDFormat
+	cycleSystemInformation: cycleSystemInformation
 };
 
 })();

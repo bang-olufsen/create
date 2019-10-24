@@ -354,7 +354,10 @@ module.exports = function(beoBus, globals) {
 				for (source in allSources) {
 					if (source != extension && 
 						allSources[source].active) {
-						if (allSources[source].usesHifiberryControl && !audioControlStopped) {
+						if (allSources[source].usesHifiberryControl && 
+							!audioControlStopped && 
+							!allSources[extension].usesHifiberryControl) {
+							// Only issue AudioControl pause command once, and only if the new source is not controlled by it (AudioControl will by itself take care of stopping the other source in other cases).
 							audioControl("pause");
 							audioControlStopped = true;
 						} else {

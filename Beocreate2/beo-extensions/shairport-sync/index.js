@@ -53,7 +53,7 @@ module.exports = function(beoBus, globals) {
 			if (sources) {
 				getShairportSyncStatus(function(enabled) {
 					sources.setSourceOptions("shairport-sync", {
-						enabled: true,
+						enabled: enabled,
 						transportControls: true,
 						usesHifiberryControl: true,
 						aka: ["ShairportSync"]
@@ -152,7 +152,7 @@ module.exports = function(beoBus, globals) {
 					beoBus.emit("ui", {target: "shairport-sync", header: "configuration", content: {shairportSyncEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("shairport-sync", {enabled: newStatus});
 					if (newStatus == false) {
-						if (sources) sources.sourceDeactivated("shairport-ync");
+						if (sources) sources.sourceDeactivated("shairport-sync");
 					}
 					if (error) {
 						beoBus.emit("ui", {target: "shairportSync", header: "errorTogglingShairportSync", content: {}});

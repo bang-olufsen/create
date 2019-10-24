@@ -18,6 +18,7 @@ SOFTWARE.*/
 // SQUEEZelite CONTROL FOR BEOCREATE
 
 var exec = require("child_process").exec;
+var fs = require("fs");
 
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
@@ -58,6 +59,29 @@ module.exports = function(beoBus, globals) {
 				beoBus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: squeezeliteEnabled}});
 			}
 		}
+	});
+	
+	beoBus.on('product-information', function(event) {
+		
+		if (event.header == "systemNameChanged") {
+			// Listen to changes in system name and update the shairport-sync display name.
+			if (event.content.systemName && fs.existsSync("/var/squeezelite/squeezelite.name")) {
+				fs.writeFileSync("/var/squeezelite/squeezelite.name", event.content.systemName);
+				if (debug) console.log("System name updated for Squeezelite.");
+				if (squeezeliteEnabled) {
+					exec("systemctl restart squeezelite.service lmsmpris.service").on('exit', function(code) {
+						if (code == 0) {
+							// Success
+						} else {
+							
+						}
+					});
+				}
+			}
+			
+		}
+		
+		
 	});
 	
 	beoBus.on('squeezelite', function(event) {

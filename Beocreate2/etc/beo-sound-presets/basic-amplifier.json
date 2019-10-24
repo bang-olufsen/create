@@ -1,11 +1,8 @@
 {
-	"product-information": {
-		"modelID": "beocreate-4ca-mk1",
-		"modelName": "Beocreate 4-Channel Amplifier"
-	},
 	"sound-preset": {
 		"presetName": "Basic Amplifier",
 		"presetVersion": 1,
+		"productIdentity": "beocreate-4ca-mk1",
 		"description": "A basic preset with four full-range channels. Suitable for use as a normal, standalone amplifier.",
 		"fallbackDSP": "beocreate-universal"
 	},

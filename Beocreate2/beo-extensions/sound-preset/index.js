@@ -24,7 +24,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 module.exports = function(beoBus, globals) {
 	var beoBus = beoBus;
 	var extensions = globals.extensions;
-	var presetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory sits next to the system directory
+	var presetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory.
 	
 	var version = require("./package.json").version;
 	
@@ -39,7 +39,7 @@ module.exports = function(beoBus, globals) {
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
-	if (!fs.existsSync(presetDirectory)) fs.mkdirSync(presetDirectory);
+	var productIdentitiesFetched = false;
 	
 	
 	beoBus.on('general', function(event) {
@@ -60,6 +60,32 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "sound-preset") {
+				
+				if (!productIdentitiesFetched) {
+					if (extensions["product-information"] && extensions["product-information"].getProductIdentity) {
+						for (preset in compactPresetList) {
+							identityName = null;
+							identity = null;
+							if (fullPresetList[preset]["sound-preset"] && fullPresetList[preset]["sound-preset"].productIdentity) {
+								identity = extensions["product-information"].getProductIdentity(fullPresetList[preset]["sound-preset"].productIdentity);
+								identityName = fullPresetList[preset]["sound-preset"].productIdentity;
+							} else if (fullPresetList[preset]["product-information"] && fullPresetList[preset]["product-information"].modelID) {
+								identity = extensions["product-information"].getProductIdentity(fullPresetList[preset]["product-information"].modelID);
+								identityName = fullPresetList[preset]["product-information"].modelID;
+							}
+							if (identity) {
+								if (identity.manufacturer && identity.manufacturer == "Bang & Olufsen") {
+									compactPresetList[preset].bangOlufsenProduct = true;
+								}
+								if (identity.productImage[1]) {
+									compactPresetList[preset].productImage = identity.productImage[1];
+								}
+								compactPresetList[preset].productIdentity = identityName;
+							}
+						}
+					}
+					productIdentitiesFetched = true;
+				}
 				
 				beoBus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, selectedSoundPreset: settings.selectedSoundPreset}});
 				
@@ -96,6 +122,10 @@ module.exports = function(beoBus, globals) {
 						
 						// "Preflights" the selected sound preset by sending the settings to the sound adjustment extensions. The extensions will check them against the DSP metadata and their own capabilities and return a compatibility report.
 						checkedPresetContent = {};
+						identity = null;
+						if (compactPresetList[presetID].productIdentity) {
+							identity = identity = extensions["product-information"].getProductIdentity(compactPresetList[presetID].productIdentity);
+						}
 						for (soundAdjustment in fullPresetList[presetID]) {
 							switch (soundAdjustment) {
 								case "sound-preset":
@@ -105,6 +135,7 @@ module.exports = function(beoBus, globals) {
 									}
 									break;
 								case "presetName":
+								case "product-information":
 									
 									break;
 								default:
@@ -142,7 +173,7 @@ module.exports = function(beoBus, globals) {
 						preset.bangOlufsenProduct = compactPresetList[presetID].bangOlufsenProduct;
 						
 						
-						beoBus.emit("ui", {target: "sound-preset", header: "presetPreview", content: {preset: preset, currentDSPProgram: programName}});
+						beoBus.emit("ui", {target: "sound-preset", header: "presetPreview", content: {preset: preset, productIdentity: identity, currentDSPProgram: programName}});
 						
 					}
 				}
@@ -175,6 +206,11 @@ module.exports = function(beoBus, globals) {
 								}	
 								break;
 						}
+					}
+				}
+				if (!event.content.excludedSettings || event.content.excludedSettings.indexOf("product-information") == -1) {
+					if (extensions["product-information"] && extensions["product-information"].setProductIdentity) {
+						extensions["product-information"] && extensions["product-information"].setProductIdentity(compactPresetList[presetID].productIdentity);
 					}
 				}
 				if (!settings.selectedSoundPreset) {
@@ -222,17 +258,15 @@ module.exports = function(beoBus, globals) {
 	
 	function readLocalPresets() {
 		presetFiles = fs.readdirSync(presetDirectory);
-		productIdentities = [];
 		for (var i = 0; i < presetFiles.length; i++) {
-			identity = readPresetFromFile(presetDirectory+"/"+presetFiles[i]);
-			if (identity != false) productIdentities.push(identity); // Collect product identities from presets and make them automatically available to product-information.
+			readPresetFromFile(presetDirectory+"/"+presetFiles[i]);
 		}
-		beoBus.emit("product-information", {header: "addProductIdentities", content: {identities: productIdentities}});
+		//beoBus.emit("product-information", {header: "addProductIdentities", content: {identities: productIdentities}});
 	}
 	
 	function readPresetFromFile(presetPath) {
 		presetFileName = path.basename(presetPath, path.extname(presetPath));
-		productIdentity = false;
+		
 		try {
 			preset = JSON.parse(fs.readFileSync(presetPath, "utf8"));
 			
@@ -241,10 +275,6 @@ module.exports = function(beoBus, globals) {
 				preset['product-information'].modelName) {
 				// Product identity record contains a model name.
 				presetName = preset['product-information'].modelName;
-				productIdentity.modelName = presetName;
-				if (preset['product-information'].modelID) {
-					productIdentity = {modelName: preset['product-information'].modelName, modelID: preset['product-information'].modelID};
-				}
 			}
 			if (preset['sound-preset'] != undefined && 
 				preset['sound-preset'].presetName) {
@@ -259,29 +289,10 @@ module.exports = function(beoBus, globals) {
 			if (presetName != null) {
 				// If the preset has a name, it qualifies.
 				fullPresetList[presetFileName] = preset;
-				compactPresetList[presetFileName] = {presetName: presetName, fileName: presetFileName};
+				compactPresetList[presetFileName] = {presetName: presetName, fileName: presetFileName, productImage: "/common/beocreate-generic.png"};
 				
-				imageName = null;
-				if (preset['product-information'] != undefined) {
-					if (preset['product-information'].manufacturer && preset['product-information'].manufacturer == "Bang & Olufsen") {
-						compactPresetList[presetFileName].bangOlufsenProduct = true;
-					} else {
-						compactPresetList[presetFileName].bangOlufsenProduct = false;
-					}
-					
-					if (preset['product-information'].modelID) imageName = preset['product-information'].modelID;
-					if (preset['product-information'].productImage) imageName = preset['product-information'].productImage;
-				} else {
-					compactPresetList[presetFileName].bangOlufsenProduct = false;
-				}
+				compactPresetList[presetFileName].bangOlufsenProduct = false;
 				
-				if (extensions["product-information"].getProductImage) {
-					image = extensions["product-information"].getProductImage(imageName);
-					if (productIdentity != false) productIdentity.productImage = image[1];
-				} else {
-					image = [false, "/common/beocreate-generic.png"];
-				}
-				compactPresetList[presetFileName].productImage = image[1];
 				
 			} else {
 				if (debug) console.log("Sound preset '"+presetFileName+"' did not include a preset name or product model name. Skipping.");
@@ -290,7 +301,6 @@ module.exports = function(beoBus, globals) {
 		} catch (error) {
 			if (debug) console.error("JSON data for sound preset '"+presetFileName+"' is invalid. Skipping.");
 		}
-		return productIdentity;
 	}
 
 	

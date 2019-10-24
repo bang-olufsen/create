@@ -285,7 +285,7 @@ module.exports = function(beoBus, globals) {
 						filter.b1 != undefined &&
 						filter.b2 != undefined) {
 						// We have coefficients. Expects A0 to always be 1.
-						if (debug) console.log("Applying a filter from coefficients for channel "+channel.toUpperCase()+"...");
+						if (debug == 2) console.log("Applying a filter from coefficients for channel "+channel.toUpperCase()+"...");
 						coeffs = [1, filter.a1, filter.a2, filter.b0, filter.b1, filter.b2];
 					} else if (filter.type != undefined) {
 						// Parametric filter. Generate coefficients based on filter type.

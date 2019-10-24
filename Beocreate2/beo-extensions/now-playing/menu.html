@@ -6,45 +6,48 @@
 			<div class="symbol active-source-icon hidden" style="-webkit-mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg); mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg);"></div><span class="active-source-name"></span>
 		</div>
 	</header>
-	
-	<div id="now-playing-artwork-area">
-		<div id="now-playing-artwork-wrap">
-			<!--<div class="artwork-bg" style="background-image: url(€/placeholder.svg);"></div>-->
-			<img class="square-helper" src="common/square-helper.png">
-			<div id="artwork-wrap-inner">
-				<!--<div id="artwork-wrap-inner-2">-->
-					<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow" />
-					<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" alt="Album Artwork" class="artwork-img placeholder" id="main-artwork" />
-				<!--</div>-->
+	<div id="now-playing-content">
+		<div id="now-playing-artwork-area">
+			<div id="now-playing-artwork-wrap">
+				<!--<div class="artwork-bg" style="background-image: url(€/placeholder.svg);"></div>-->
+				<div id="now-playing-landscape-artwork-background"></div>
+				<img class="square-helper" src="common/square-helper.png">
+				<div id="artwork-wrap-inner">
+					<!--<div id="artwork-wrap-inner-2">-->
+						<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">
+						<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" alt="Album Artwork" class="artwork-img placeholder" id="main-artwork" />
+					<!--</div>-->
+				</div>
+				<img class="square-helper" src="common/square-helper.png">
 			</div>
-			<img class="square-helper" src="common/square-helper.png">
 		</div>
-	</div>
-	
-	<div id="now-playing-control-area">
 		
-		
-		<div id="top-text" class="now-playing-titles logo">
-			<div class="h1-wrap"><h1 class="now-playing-title first-row"></h1></div>
-			<div class="h2-wrap"><h2 class="now-playing-artist second-row"></h2></div>
-			<img id="top-text-beo-logo" src="common/bangolufsen-w.svg">
-		</div>
-		<div id="now-playing-control-area-wrap">
-			<div id="now-playing-transport" class="disabled">
-				<img src="€/symbols-white/previous-track.svg" onclick="now_playing.transport('previous');" class="button symbol" alt="Previous Track" />
-				<img src="€/symbols-white/play.svg" onclick="now_playing.playButtonPress();" alt="Play or Pause" class="play-button button symbol" />
-				<img src="€/symbols-white/next-track.svg" onclick="now_playing.transport('next');" class="button symbol" alt="Next Track" />
+		<div id="now-playing-control-area">
+			
+			<div id="now-playing-text-area-wrap">
+				<div id="top-text" class="now-playing-titles logo">
+					<div class="h1-wrap"><h1 class="now-playing-title first-row"></h1></div>
+					<div class="h2-wrap"><h2 class="now-playing-artist second-row"></h2></div>
+					<!--<img id="top-text-beo-logo" src="common/bangolufsen-w.svg">-->
+				</div>
+			</div>
+			<div id="now-playing-control-area-wrap">
+				<div id="now-playing-transport" class="disabled">
+					<img src="€/symbols-white/previous-track.svg" onclick="now_playing.transport('previous');" class="button symbol" alt="Previous Track" draggable="false" />
+					<img src="€/symbols-white/play.svg" onclick="now_playing.playButtonPress();" alt="Play or Pause" class="play-button button symbol" draggable="false" />
+					<img src="€/symbols-white/next-track.svg" onclick="now_playing.transport('next');" class="button symbol" alt="Next Track" draggable="false" />
+					
+				</div>
 				
-			</div>
-			
-			<div class="slider-wrap white">
-				<img class="symbol" src="common/symbols-white/volume-mute.svg" onclick="sound.mute(true);">
-				<div class="master-volume-slider white" id="now-playing-volume-slider"></div>
-				<img class="symbol" onclick="sound.unmute(true);" src="common/symbols-white/volume.svg">
-			</div>
-			
-			<div id="now-playing-function-row">
-				<img id="love-button" src="€/symbols-white/heart.svg" onclick="now_playing.toggleLove();" class="button symbol function-item-love love-button" alt="Love or Unlove Track" />
+				<div class="slider-wrap white">
+					<img class="symbol" src="common/symbols-white/volume-mute.svg" onclick="sound.mute(true);">
+					<div class="master-volume-slider white" id="now-playing-volume-slider"></div>
+					<img class="symbol" onclick="sound.unmute(true);" src="common/symbols-white/volume.svg">
+				</div>
+				
+				<div id="now-playing-function-row">
+					<img id="love-button" src="€/symbols-white/heart.svg" onclick="now_playing.toggleLove();" class="button symbol function-item-love love-button" alt="Love or Unlove Track" draggable="false" />
+				</div>
 			</div>
 		</div>
 	</div>

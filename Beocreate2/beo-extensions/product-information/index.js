@@ -28,6 +28,10 @@ module.exports = function(beoBus, globals) {
 	var download = globals.download;
 	var debug = globals.debug;
 	
+	var soundPresetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var productIdentityDirectory = dataDirectory+"/beo-product-identities"; // Product identities directory.
+	
+	
 	var hifiberryOS = (globals.systemConfiguration.cardType && globals.systemConfiguration.cardType.indexOf("Beocreate") == -1) ? true : false;
 	var genericProductImage = "";
 	if (!hifiberryOS) {
@@ -77,6 +81,8 @@ module.exports = function(beoBus, globals) {
 			if (fs.existsSync("/etc/hifiberry.version")) {
 				hifiberryVersion = fs.readFileSync("/etc/hifiberry.version", "utf8");
 			}
+			
+			updateProductIdentities();
 			
 			piSystem.getSerial(function(serial) {
 				if (serial != null) {
@@ -269,79 +275,99 @@ module.exports = function(beoBus, globals) {
 	function getProductInformation() {
 		return {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: settings.productImage, systemID: systemID};
 	}
-	
-	function checkSettings(theSettings) {
-		
-		validatedSettings = {};
-		compatibilityIssues = {};
-		
-		if (theSettings.modelName != undefined) {
-			validatedSettings.modelName = theSettings.modelName;
-			compatibilityIssues.modelName = 0;
-		}
-		
-		if (theSettings.modelID != undefined) {
-			validatedSettings.modelID = theSettings.modelID;
-			compatibilityIssues.modelID = 0;
-		}
-		
-		if (theSettings.designer != undefined) {
-			validatedSettings.designer = theSettings.designer;
-			compatibilityIssues.designer = 0;
-		}
-		
-		if (theSettings.manufacturer != undefined) {
-			validatedSettings.manufacturer = theSettings.manufacturer;
-			compatibilityIssues.manufacturer = 0;
-		}
-		
-		if (theSettings.productImage != undefined) {
-			validatedSettings.productImage = getProductImage(theSettings.productImage)[0];
-			compatibilityIssues.productImage = 0;
-		} else {
-			validatedSettings.productImage = false;
-			compatibilityIssues.productImage = 0;
-		}
-		
-		if (theSettings.produced != undefined) {
-			if (!isNaN(theSettings.produced)) {
-				validatedSettings.produced = theSettings.produced;
-				compatibilityIssues.produced = 0;
-			} else if (Array.isArray(theSettings.produced)) {
-				if (!isNaN(theSettings.produced[0]) && !isNaN(theSettings.produced[1])) {
-					validatedSettings.produced = theSettings.produced;
-					compatibilityIssues.produced = 0;
-				} else {
-					compatibilityIssues.produced = 1;
-				}
-			} else {
-				compatibilityIssues.produced = 1;
-			}
-		}
-		
-		
-		return {compatibilityIssues: compatibilityIssues, validatedSettings: validatedSettings, previewProcessor: "product_information.generateSettingsPreview"};
-	}
-	
-	function applySoundPreset(theSettings) {
-		validatedSettings = checkSettings(theSettings).validatedSettings;
-		if (validatedSettings.modelID) {
-			setProductModel(validatedSettings.modelID);
-		}
-	}
+
 	
 	
 	function setProductModel(modelID) {
 		if (productIdentities[modelID]) {
 			settings.modelID = modelID;
 			settings.modelName = productIdentities[modelID].modelName;
-			settings.productImage = productIdentities[modelID].productImage;
-			currentProductImage = getProductImage(settings.productImage, true)[1];
+			settings.productImage = productIdentities[modelID].productImage[0];
+			currentProductImage = productIdentities[modelID].productImage[1];
 			if (debug) console.log("Product model name is now '"+settings.modelName+"'.");
 			beoBus.emit("settings", {header: "saveSettings", content: {extension: "product-information", settings: settings}});
 			beoBus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 			startOrUpdateBonjour("model");
 			beoBus.emit("ui", {target: "product-information", header: "showProductModel", content: {modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage}});
+		}
+	}
+	
+	
+	function updateProductIdentities() {
+		// Combines product identities from beo-product-identities and beo-sound-presets directories.
+		if (fs.existsSync(soundPresetDirectory)) {
+			presetFiles = fs.readdirSync(soundPresetDirectory);
+			for (var i = 0; i < presetFiles.length; i++) {
+				try {
+					preset = JSON.parse(fs.readFileSync(soundPresetDirectory+"/"+presetFiles[i], "utf8"));
+					if (preset["product-information"]) {
+						checkAndAddProductIdentity(preset["product-information"]);
+					} else {
+						if (debug == 2) console.log("No product identity data in sound preset '"+presetFiles[i]+"'.");
+					}
+				} catch (error) {
+					if (debug) console.error("Invalid JSON data for sound preset '"+identityFiles[i]+"'.");
+				}
+			}
+		}
+		if (fs.existsSync(productIdentityDirectory)) {
+			identityFiles = fs.readdirSync(productIdentityDirectory);
+			for (var i = 0; i < identityFiles.length; i++) {
+				try {
+					checkAndAddProductIdentity(JSON.parse(fs.readFileSync(productIdentityDirectory+"/"+identityFiles[i], "utf8")));
+				} catch (error) {
+					if (debug) console.error("Invalid JSON data for product identity '"+identityFiles[i]+"'.");
+				}
+			}
+		}
+		//beoBus.emit('product-information', {header: "identitiesReady"});
+	}
+	
+	
+	function checkAndAddProductIdentity(data) {
+		
+		if (data.modelID != undefined) {
+			identity = {previewProcessor: "product_information.generateSettingsPreview"};
+			
+			identity.modelID = data.modelID; // Model ID is required.
+		
+			if (data.modelName != undefined) {
+				identity.modelName = data.modelName;
+			}
+			
+			if (data.designer != undefined) {
+				identity.designer = data.designer;
+			}
+			
+			if (data.manufacturer != undefined) {
+				identity.manufacturer = data.manufacturer;
+			}
+			
+			if (data.productImage != undefined) {
+				identity.productImage = getProductImage(data.productImage);
+			} else {
+				identity.productImage = getProductImage(false);
+			}
+			
+			if (data.produced != undefined) {
+				if (!isNaN(data.produced)) {
+					identity.produced = data.produced;
+				} else if (Array.isArray(data.produced)) {
+					if (!isNaN(data.produced[0]) && !isNaN(data.produced[1])) {
+						identity.produced = data.produced;
+					}
+				}
+			}
+			
+			productIdentities[identity.modelID] = identity;
+		}
+	}
+	
+	function getProductIdentity(identity) {
+		if (productIdentities[identity]) {
+			return productIdentities[identity];
+		} else {
+			return null;
 		}
 	}
 	
@@ -422,11 +448,11 @@ module.exports = function(beoBus, globals) {
 	
 	
 	return {
-		checkSettings: checkSettings,
 		getProductInformation: getProductInformation,
-		applySoundPreset: applySoundPreset,
+		setProductIdentity: setProductModel,
 		getProductImage: getProductImage,
 		getProductInformation: getProductInformation,
+		getProductIdentity: getProductIdentity,
 		version: version
 	};
 };

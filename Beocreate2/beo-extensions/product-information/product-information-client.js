@@ -101,7 +101,7 @@ $(document).on("product-information", function(event, data) {
 			identityItemOptions = {
 				classes: ["product-identity-item"],
 				label: productIdentities[identity].modelName,
-				icon: productIdentities[identity].productImage,
+				icon: productIdentities[identity].productImage[1],
 				data: {"data-model-id": identity},
 				onclick: "product_information.setProductModel('"+identity+"');",
 				checkmark: true,
@@ -171,16 +171,17 @@ function setProductModel(theModelID) {
 	send({target: "product-information", header: "setProductModel", content: {modelID: theModelID}});
 }
 
-function generateSettingsPreview(settings, presetName) {
+function generateSettingsPreview(identity, presetName) {
+	console.log(identity);
 	infoString = "";
-	if (settings.validatedSettings.designer) {
-		infoString = translatedString("Designed by", "designedBy", "product-information") + " " + settings.validatedSettings.designer;
+	if (identity.designer) {
+		infoString = translatedString("Designed by", "designedBy", "product-information") + " " + identity.designer;
 	}
-	if (settings.validatedSettings.produced) {
-		if (!Array.isArray(settings.validatedSettings.produced)) {
-			produced = settings.validatedSettings.produced;
+	if (identity.produced) {
+		if (!Array.isArray(identity.produced)) {
+			produced = identity.produced;
 		} else {
-			produced = settings.validatedSettings.produced[0] + "–" + settings.validatedSettings.produced[1];
+			produced = identity.produced[0] + "–" + identity.produced[1];
 		}
 		if (infoString != "") {
 			infoString += ", " + translatedString("Manufactured", "manufactured", "product-information").toLowerCase() + " " + produced;
@@ -190,18 +191,18 @@ function generateSettingsPreview(settings, presetName) {
 	}
 	$(".sound-preset-information p.product").text(infoString);
 	
-	if (settings.validatedSettings.manufacturer) {
-		if (settings.validatedSettings.modelName && settings.validatedSettings.modelName != presetName) {
-			$(".sound-preset-information h2").text(settings.validatedSettings.manufacturer+" "+settings.validatedSettings.modelName).removeClass("hidden-2");
+	if (identity.manufacturer) {
+		if (identity.modelName && identity.modelName != presetName) {
+			$(".sound-preset-information h2").text(identity.manufacturer+" "+identity.modelName).removeClass("hidden-2");
 		} else {
-			$(".sound-preset-information h2").text(settings.validatedSettings.manufacturer).removeClass("hidden-2");
+			$(".sound-preset-information h2").text(identity.manufacturer).removeClass("hidden-2");
 		}
 	} else {
 		$(".sound-preset-information h2").text("").addClass("hidden-2");
 	}
 	previewString = "";
-	if (settings.validatedSettings.manufacturer) previewString += settings.validatedSettings.manufacturer+" ";
-	if (settings.validatedSettings.modelName) previewString += settings.validatedSettings.modelName;
+	if (identity.manufacturer) previewString += identity.manufacturer+" ";
+	if (identity.modelName) previewString += identity.modelName;
 	
 	return [translatedString("Icon & Model Name", "iconAndModelName", "product-information"), "<p>"+previewString+"</p>"];
 }

@@ -3,15 +3,8 @@
 		"presetName": "Beovox 5000",
 		"presetVersion": 1,
 		"readOnly": true,
+		"productIdentity": "beovox-panel-5000",
 		"fallbackDSP": "beocreate-universal"
-	},
-	"product-information": {
-		"modelID": "beovox-5000",
-		"productImage": "beovox-5000",
-		"modelName": "Beovox 5000",
-		"designer": "Gideon Lindinger-Lowy",
-		"produced": [1988, 1992],
-		"manufacturer": "Bang & Olufsen"
 	},
 	"equaliser": {
 		"a": [

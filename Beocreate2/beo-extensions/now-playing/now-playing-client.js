@@ -19,6 +19,7 @@ $(document).on("general", function(event, data) {
 	
 });
 
+var loveAnimTimeout;
 $(document).on("now-playing", function(event, data) {
 
 	
@@ -68,11 +69,15 @@ $(document).on("now-playing", function(event, data) {
 			}
 			
 			if (data.content.metadata.loved) {
-				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-colour/heart-red.svg");
-				$("#love-button").addClass("loved");
+				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart-filled.svg");
+				$("#love-button").addClass("beat-anim");
+				/*loveAnimTimeout = setTimeout(function() {
+					$("#love-button").removeClass("beat-anim");
+				}, 1000);*/
 			} else {
 				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart.svg");
-				$("#love-button").removeClass("loved");
+				$("#love-button").removeClass("beat-anim");
+				//clearTimeout(loveAnimTimeout);
 			}
 			if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
 		} else {
@@ -144,6 +149,7 @@ function enableSourceStart(startableSources) {
 
 function showNowPlaying() {
 	$("#now-playing").removeClass("hidden");
+	resizeArtwork();
 	//send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
 	setTimeout(function() {
 		$(".player-bar").addClass("shifted");
@@ -263,6 +269,30 @@ function loadSmallSampleArtwork() {
 	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
 }
 
+window.onresize = function() {
+	resizeArtwork();
+};
+
+var windowAspectRatio = 1;
+var artworkAspectRatio = 1; // wide > 1 < tall
+function resizeArtwork() {
+	containerAspectRatio = $("#artwork-wrap-inner").innerWidth() / $("#artwork-wrap-inner").innerHeight();
+	
+	if (containerAspectRatio >= artworkAspectRatio) { // Container is wider
+		$("#main-artwork").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
+		$("#artwork-wrap-inner").css("flex-direction", "column");
+	} else {
+		$("#main-artwork").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
+		$("#artwork-wrap-inner").css("flex-direction", "row");
+	}
+	
+	//$("#main-artwork").css("max-width", container[0]+"px").css("max-height", container[1]+"px")
+}
+
+$("#main-artwork").on('load', function() {
+	artworkAspectRatio = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	resizeArtwork();
+});
 
 
 // MANAGE AND SWITCH TOP TEXT AND BANG & OLUFSEN LOGO
@@ -423,6 +453,7 @@ $(document).on("ui", function(event, data) {
 	
 	if (data.header == "windowResized") {
 		evaluateTextScrolling();
+		//resizeArtwork();
 	}
 	
 });

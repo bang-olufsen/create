@@ -9,7 +9,7 @@ willInstallFallbackDSP = false;
 $(document).on("sound-preset", function(event, data) {
 	if (data.header == "presets") {
 		
-		if (data.content.compactPresetList) {
+		if (data.content.compactPresetList && !_.isEqual(soundPresets, data.content.compactPresetList)) {
 			soundPresets = data.content.compactPresetList;
 			
 			// List presets in the UI, separating Bang & Olufsen and other presets.
@@ -80,6 +80,28 @@ $(document).on("sound-preset", function(event, data) {
 			
 			$(".sound-preset-contents").empty();
 			$(".sound-preset-install-fallback-dsp").addClass("hidden");
+			
+			if (data.content.productIdentity && data.content.productIdentity.previewProcessor) {
+				if (functionExists(data.content.productIdentity.previewProcessor)) {
+					presetPreview = executeFunction(data.content.productIdentity.previewProcessor, [data.content.productIdentity, preset.presetName]);
+					menuOptions = {
+						label: presetPreview[0],
+						onclick: 'sound_preset.toggleSetting(\'product-information\');',
+						icon: $("#product-information").attr("data-asset-path")+"/symbols-black/"+$("#product-information").attr("data-icon"),
+						toggle: true,
+						twoRows: true,
+						customMarkup: presetPreview[1],
+						classes: ["sound-preset-toggle", "product-information"]
+					};
+					if (presetPreview[2] && presetPreview[2] != "") {
+						//$(".sound-preset-contents").append('<p class="warning">'+presetPreview[2]+'</p>');
+						menuOptions.customMarkup += '<p class="warning">'+presetPreview[2]+'</p>';
+					}
+					$(".sound-preset-contents").append(createMenuItem(menuOptions));
+				
+				
+				}
+			}
 			
 			for (soundAdjustment in preset.content) {
 				if (preset.content[soundAdjustment].status == 0) {

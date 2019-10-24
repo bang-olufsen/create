@@ -3,15 +3,8 @@
 		"presetName": "Beovox CX 50",
 		"presetVersion": 1,
 		"readOnly": true,
+		"productIdentity": "beovox-cx50",
 		"fallbackDSP": "beocreate-universal"
-	},
-	"product-information": {
-		"modelID": "beovox-cx50",
-		"productImage": "beovox-cx50",
-		"modelName": "Beovox CX 50",
-		"designer": "Jacob Jensen",
-		"produced": [1984, 2003],
-		"manufacturer": "Bang & Olufsen"
 	},
 	"equaliser": {
 		"a": [

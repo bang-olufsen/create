@@ -3,15 +3,8 @@
 		"presetName": "Beovox CX 100",
 		"presetVersion": 1,
 		"readOnly": true,
+		"productIdentity": "beovox-cx100",
 		"fallbackDSP": "beocreate-universal"
-	},
-	"product-information": {
-		"modelID": "beovox-cx100",
-		"productImage": "beovox-cx100",
-		"modelName": "Beovox CX 100",
-		"designer": "Jacob Jensen",
-		"produced": [1984, 2003],
-		"manufacturer": "Bang & Olufsen"
 	},
 	"equaliser": {
 		"a": [

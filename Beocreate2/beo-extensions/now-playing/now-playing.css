@@ -4,7 +4,7 @@
 
 #now-playing {
 	top: 0;
-	bottom: 50px;
+	bottom: 0px;
 	right: 0;
 	left: 0;
 	z-index: 5;
@@ -13,6 +13,16 @@
 	-webkit-user-select: none;
 	/*background-color: transparent;*/
 	opacity: 0;
+}
+
+#now-playing-content {
+	display: flex;
+	flex-direction: column;
+	position: absolute;
+	top: 56px;
+	bottom: 0;
+	left: 0;
+	right: 0;
 }
 
 #now-playing.visible {
@@ -62,7 +72,8 @@
 	flex-direction: column;
 	justify-content: space-around;
 	align-items: center;
-	margin-bottom: -50px;
+	-webkit-user-drag: none;
+	user-drag: none;
 }
 
 #now-playing.visible #now-playing-control-area {
@@ -75,6 +86,7 @@
 }
 
 #now-playing-control-area-wrap {
+	background-color: #222;
 	box-sizing: border-box;
 	max-width: 400px;
 	width: 100%;
@@ -142,9 +154,10 @@
 	margin-right: 10px;
 }
 
-.love-button.loved {
+.beat-anim {
 	animation: beat 0.8s ease-in-out 0s;
 	/*filter: drop-shadow(0 0px 2px red);*/
+	transition: transform 0.5s ease;
 }
 
 @keyframes beat {
@@ -157,6 +170,11 @@
 
 /* @group Top Text & Logo */
 
+#now-playing-text-area-wrap {
+	width: 100%;
+	background-color: #222;
+}
+
 #top-text {
 	text-align: center;
 	position: relative;
@@ -165,8 +183,7 @@
 	z-index: 2;
 	-webkit-mask-image: -webkit-linear-gradient(left, rgba(0, 0, 0, 0) 0%, white 20px, white calc(100% - 20px), rgba(0, 0, 0, 0) 100%);
 	height: 44px;
-	margin-top: 1em;
-	margin-bottom: 1em;
+	margin: 1em auto;
 	max-width: 400px;
 	width: calc(100% - 20px);
 	padding-left: 20px;
@@ -279,36 +296,15 @@
 }
 
 #artwork-wrap-inner {
-	display: block;
-	/*display: flex;*/
+	/*display: block;*/
+	display: flex;
 	position: relative;
 	max-height: 100%;
 	height: 100%;
-	align-items: flex-start;
 	width: 100%;
+	align-items: center;
 }
 
-#artwork-wrap-inner:after {
-	content: attr(data-album);
-	position: absolute;
-	color: white;
-	font-weight: 500;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	right: 0;
-	height: 80px;
-	/*background-color: rgba(34, 34, 34, 0.9);*/
-	padding: 20px;
-	text-align: center;
-	left: 0;
-	top: 50%;
-	box-sizing: border-box;
-	margin-top: -40px;
-	transition: opacity 0.5s ease;
-	opacity: 0;
-	pointer-events: none;
-}
 
 #artwork-wrap-inner.show-name:after {
 	opacity: 1;
@@ -334,8 +330,6 @@
 	margin-left: auto;
 	flex-basis: 30px;
 	transition: filter 0.5s ease;
-	/*opacity: 0;*/
-	/*filter: blur(0) brightness(1);*/
 }
 
 #main-artwork {
@@ -343,6 +337,7 @@
 	flex-basis: 1000px;
 	flex-grow: 1;
 	/*filter: drop-shadow(0 10px 50px rgba(0, 0, 0, 0.2));*/
+	/*border-radius: 3px;*/
 }
 
 #artwork-shadow {
@@ -371,12 +366,101 @@
 	/*filter: drop-shadow(0 10px 50px rgba(0, 0, 0, 0.5));*/
 }
 
-.artwork-img.placeholder {
+.artwork-img { /*.placeholder*/
 	background-color: var(--ultra-light-grey);
 }
 
-.dark .artwork-img.placeholder {
+.dark .artwork-img { /*.placeholder*/
 	background-color: var(--ultra-light-grey-dark);
 }
 
 /* @end */
+
+/* Landscape Layout */
+
+@media (min-aspect-ratio: 4/3) {
+	
+	#now-playing-content {
+		display: flex;
+		flex-direction: row;
+		top: 0;
+	}
+	
+	#now-playing header {
+		justify-content: flex-start;
+		padding-left: 60px;
+	}
+	
+	#now-playing-artwork-area {
+		width: 50vw;
+	}
+	
+	#now-playing-control-area {
+		flex-grow: 1;
+		max-width: 50vw;
+		margin-left: auto;
+		padding-top: 0;
+		padding-bottom: 0;
+	}
+	
+	#now-playing-control-area:after {
+		content: "";
+		position: absolute;
+		background-color: #222;
+		height: 50%;
+		width: 100%;
+		bottom: 0;
+		left: -100%;
+		right: 0;
+		box-shadow: 0px -1px 0px var(--menu-line-dark);
+	}
+	
+	#now-playing-text-area-wrap {
+		color: black;
+		background-color: white;
+		height: 50%;
+		display: flex;
+		align-items: flex-end;
+		flex-shrink: 0;
+		padding-bottom: 2vh;
+		box-sizing: border-box;
+	}
+	
+	.dark #now-playing-text-area-wrap {
+		color: inherit;
+		background-color: #333;
+		border-bottom: 1px solid var(--menu-line-dark);
+	}
+	
+	#now-playing-control-area-wrap {
+		height: 50%;
+		padding-top: 5vh;
+	}
+	
+	
+	#now-playing-artwork-wrap {
+		margin-bottom: 0;
+		margin-top: 0;
+		padding: 56px 0 56px 10%;
+	}
+	
+	#artwork-wrap-inner {
+		
+	}
+	
+	.artwork-img {
+		flex-grow: 0;
+	}
+	
+	/*#now-playing-landscape-artwork-background {
+		position: absolute;
+		background-color: #222;
+		height: 50%;
+		width: 100%;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		box-shadow: 0px -1px 0px var(--menu-line-dark);
+	}*/
+	
+}

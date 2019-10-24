@@ -27,6 +27,7 @@ module.exports = function(beoBus, globals) {
 	
 	var version = require("./package.json").version;
 	
+	var orderedCountries = {};
 	
 	beoBus.on('general', function(event) {
 		// See documentation on how to use BeoBus.
@@ -44,12 +45,28 @@ module.exports = function(beoBus, globals) {
 					}
 				}
 			}
+			
+			// Get country names and sort them.
+			countryNames = countryList.getCodeList();
+			countryArray = [];
+			for (code in countryNames) {
+				countryArray.push([code, countryNames[code]]);
+			}
+			countryArray.sort(function(a, b)
+			{
+				var x = a[1].toLowerCase(),
+					y = b[1].toLowerCase();
+				return x < y ? -1 : x > y ? 1 : 0;
+			});
+			for (var i = 0; i < countryArray.length; i++) {
+				orderedCountries[countryArray[i][0]] = countryArray[i][1];
+			}
+			
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "choose-country") {
-				countryNames = countryList.getCodeList();
-				beoBus.emit("ui", {target: "choose-country", header: "showList", content: {countries: countryNames}});
+				beoBus.emit("ui", {target: "choose-country", header: "showList", content: {countries: orderedCountries}});
 				getAndShowCurrentCountry();
 			}
 			

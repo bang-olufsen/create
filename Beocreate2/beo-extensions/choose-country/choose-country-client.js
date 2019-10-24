@@ -15,9 +15,9 @@ $(document).on("choose-country", function(event, data) {
 			firstLetter = data.content.countries[property].charAt(0);
 			allowCreatingHeader = true;
 			switch (firstLetter) {
-				case "Å":
+				/*case "Å":
 					allowCreatingHeader = false;
-					break;
+					break;*/
 				case "E":
 					if (currentHeader == "S") allowCreatingHeader = false;
 					break;

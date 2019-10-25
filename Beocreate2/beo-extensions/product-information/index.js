@@ -306,7 +306,7 @@ module.exports = function(beoBus, globals) {
 						if (debug == 2) console.log("No product identity data in sound preset '"+presetFiles[i]+"'.");
 					}
 				} catch (error) {
-					if (debug) console.error("Invalid JSON data for sound preset '"+identityFiles[i]+"'.");
+					console.error("Invalid JSON data for sound preset '"+presetFiles[i]+"':", error);
 				}
 			}
 		}
@@ -316,7 +316,7 @@ module.exports = function(beoBus, globals) {
 				try {
 					checkAndAddProductIdentity(JSON.parse(fs.readFileSync(productIdentityDirectory+"/"+identityFiles[i], "utf8")));
 				} catch (error) {
-					if (debug) console.error("Invalid JSON data for product identity '"+identityFiles[i]+"'.");
+					console.error("Invalid JSON data for product identity '"+identityFiles[i]+"':", error);
 				}
 			}
 		}

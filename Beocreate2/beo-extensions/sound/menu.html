@@ -6,18 +6,24 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
-			<h2>Basics</h2>
-			<div class="beo-dynamic-menu basic"></div>
-			<h2>Adjustments</h2>
-			<div class="beo-dynamic-menu adjustments"></div>
-			<h2 class="advanced-adjustment">Advanced</h2>
-			<div class="beo-dynamic-menu advanced"></div>
-			<hr><!-- Convenient to use that class just to hide the separator -->
-			<div class="menu-item toggle" id="advanced-sound-adjustments-toggle" onclick="sound.toggleAdvancedSoundAdjustments();">
-				<div class="menu-label">Show Advanced Settings</div>
-				<div class="menu-toggle"></div>
+			<div class="no-sound-adjustments hidden">
+				<h2 class="card-type">DAC+ ADC</h2>
+				<p>No sound adjustments are available with this sound card.</p>
 			</div>
-			<!--<p>Show additional sound adjustment features.</p>-->
+			<div class="has-sound-adjustments">
+				<h2 class="basics-title">Basics</h2>
+				<div class="beo-dynamic-menu basic"></div>
+				<h2 class="adjustments-title">Adjustments</h2>
+				<div class="beo-dynamic-menu adjustments"></div>
+				<h2 class="advanced-adjustment advanced-title">Advanced</h2>
+				<div class="beo-dynamic-menu advanced"></div>
+				<hr id="advanced-sound-adjustments-separator">
+				<div class="menu-item toggle" id="advanced-sound-adjustments-toggle" onclick="sound.toggleAdvancedSoundAdjustments();">
+					<div class="menu-label">Show Advanced Settings</div>
+					<div class="menu-toggle"></div>
+				</div>
+				<!--<p>Show additional sound adjustment features.</p>-->
+			</div>
 		</div>
 		
 	</div>

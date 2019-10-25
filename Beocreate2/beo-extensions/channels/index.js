@@ -36,25 +36,29 @@ module.exports = function(beoBus, globals) {
 	    "role": "mono",
 		"level": 100,
 		"delay": 0,
-		"enabled": true
+		"enabled": true,
+		"invert": false
 	  },
 	  "b": {
 	    "role": "mono",
 		"level": 100,
 		"delay": 0,
-		"enabled": true
+		"enabled": true,
+		"invert": false
 	  },
 	  "c": {
 	    "role": "mono",
 		"level": 100,
 		"delay": 0,
-		"enabled": true
+		"enabled": true,
+		"invert": false
 	  },
 	  "d": {
 	    "role": "mono",
 		"level": 100,
 		"delay": 0,
-		"enabled": true
+		"enabled": true,
+		"invert": false
 	  },
 	  "balance": 0
 	};
@@ -64,22 +68,26 @@ module.exports = function(beoBus, globals) {
 	  "a": {
 	    "role": false,
 		"level": false,
-		"delay": false
+		"delay": false,
+		"invert": false
 	  },
 	  "b": {
 	    "role": false,
 		"level": false,
-		"delay": false
+		"delay": false,
+		"invert": false
 	  },
 	  "c": {
 	    "role": false,
 		"level": false,
-		"delay": false
+		"delay": false,
+		"invert": false
 	  },
 	  "d": {
 	    "role": false,
 		"level": false,
-		"delay": false
+		"delay": false,
+		"invert": false
 	  },
 	  "balance": false
 	};
@@ -118,27 +126,6 @@ module.exports = function(beoBus, globals) {
 			
 		}
 		
-		
-		if (event.header == "settingsFromPreset") {
-			if (event.content.settings) {
-				for (var c = 0; c < 4; c++) {
-					channel = "abcd".charAt(c);
-					if (event.content.settings[channel] != undefined) {
-						settings[channel] = event.content.settings[channel];
-					} else {
-						settings[channel] = JSON.parse(JSON.stringify(defaultSettings[channel]));
-					}
-				}
-				
-				for (var c = 0; c < 4; c++) {
-					channel = "abcd".charAt(c);
-					applyChannelRoleFromSettings(channel);
-					applyChannelLevelFromSettings(channel);
-				}
-				simpleChannelRoleFromSettings();
-			}
-		}
-		
 		if (event.header == "setBalance") {
 			
 			if (event.content.balance != undefined) {
@@ -147,6 +134,41 @@ module.exports = function(beoBus, globals) {
 				beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
 			}
 			
+		}
+		
+		if (event.header == "setLevelProto") {
+			if (event.content.channel) {
+				for (var c = 0; c < event.content.channel.length; c++) {
+					if (event.content.level) {
+						settings[event.content.channel.charAt(c)].enabled = true;
+						settings[event.content.channel.charAt(c)].level = event.content.level;
+						beoBus.emit("ui", {target: "channels", header: "setLevelProto", content: {level: event.content.level}});
+					} else {
+						// Mute channel:
+						settings[event.content.channel.charAt(c)].enabled = false;
+					}
+					applyChannelLevelFromSettings(event.content.channel.charAt(c));
+					
+					beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+				}
+			}
+		}
+		
+		if (event.header == "setInvertProto") {
+			if (event.content.channel) {
+				for (var c = 0; c < event.content.channel.length; c++) {
+					if (event.content.invert) {
+						settings[event.content.channel.charAt(c)].invert = true;
+						beoBus.emit("ui", {target: "channels", header: "setInvertProto", content: {invert: event.content.invert}});
+					} else {
+						// Mute channel:
+						settings[event.content.channel.charAt(c)].invert = false;
+					}
+					applyChannelInvertFromSettings(event.content.channel.charAt(c));
+					
+					beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+				}
+			}
 		}
 		
 		if (event.header == "selectChannelSimple") {
@@ -248,9 +270,16 @@ module.exports = function(beoBus, globals) {
 						canControlChannels[channel].delay = false;
 					}
 					
+					if (metadata["invert"+channel.toUpperCase()+"Register"] && metadata["invert"+channel.toUpperCase()+"Register"].value[0] != undefined) {
+						canControlChannels[channel].invert = true;
+					} else {
+						canControlChannels[channel].invert = false;
+					}
+					
 					applyChannelRoleFromSettings(channel);
 					applyChannelLevelFromSettings(channel);
 					applyChannelDelayFromSettings(channel);
+					applyChannelInvertFromSettings(channel);
 				}
 				simpleChannelRoleFromSettings();
 				
@@ -266,6 +295,8 @@ module.exports = function(beoBus, globals) {
 					channel = "abcd".charAt(c);
 					canControlChannels[channel].role = false;
 					canControlChannels[channel].level = false;
+					canControlChannels[channel].delay = false;
+					canControlChannels[channel].invert = false;
 					canControlChannels.balance = false;
 				}
 			}
@@ -347,6 +378,20 @@ module.exports = function(beoBus, globals) {
 					}
 				}
 				
+				if (theSettings[channel].invert != undefined) {
+					if (canControlChannels[channel].invert != false) {
+						compatibilityIssues[channel].invert = 0;
+					} else {
+						compatibilityIssues[channel].invert = 1;
+					}
+					if (theSettings[channel].invert == true || theSettings[channel].invert == false) {
+						validatedSettings[channel].invert = theSettings[channel].invert;
+					} else {
+						validatedSettings[channel].invert = false;
+						compatibilityIssues[channel].invert = 2;
+					}
+				}
+				
 				if (theSettings[channel].level != undefined) {
 					if (canControlChannels[channel].level != false) {
 						if (theSettings[channel].enabled != undefined) {
@@ -423,6 +468,7 @@ module.exports = function(beoBus, globals) {
 			applyChannelRoleFromSettings(channel);
 			applyChannelLevelFromSettings(channel);
 			applyChannelDelayFromSettings(channel);
+			applyChannelInvertFromSettings(channel);
 		}
 		simpleChannelRoleFromSettings();
 		
@@ -443,6 +489,23 @@ module.exports = function(beoBus, globals) {
 					dspChannelIndex = channelIndex * multiplier;
 					beoDSP.writeDSP(channelSelectMetadata.value[0], dspChannelIndex, false);
 				}
+			
+		}
+		
+	}
+	
+	
+	function applyChannelInvertFromSettings(channel) {
+		
+		if (canControlChannels[channel].invert != false) {
+				
+			invertRegister = metadata["invert"+channel.toUpperCase()+"Register"];
+			
+			if (settings[channel].invert == true) { 
+				beoDSP.writeDSP(invertRegister.value[0], 1, false);
+			} else {
+				beoDSP.writeDSP(invertRegister.value[0], 0, false);
+			}
 			
 		}
 		

@@ -465,7 +465,7 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	function logSourceStatus() {
-		if (debug == 2) {
+		if (debug >= 2) {
 			message = "Current source: "+currentSource+"\n";
 			for (source in allSources) {
 				message += "["+source+"] active: "+allSources[source].active;
@@ -524,7 +524,7 @@ module.exports = function(beoBus, globals) {
 			beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
 		} else {
 			if (allSourcesRegistered) {
-				console.log("All sources registered.");
+				if (debug) console.log("All sources registered.");
 				beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
 				audioControlGet("status", function(result) {
 					audioControlGet("metadata");

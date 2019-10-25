@@ -268,6 +268,8 @@ function prepareMenus() {
 	if ($("#now-playing.menu-screen")) {
 		nowPlaying = $("beo-now-playing").replaceWith($("#now-playing.menu-screen").detach());
 	}
+	
+	$(document).trigger("ui", {header: "menusReady"});
 }
 
 var configuredTabs = [];

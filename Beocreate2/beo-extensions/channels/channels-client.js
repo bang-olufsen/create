@@ -115,14 +115,16 @@ function showSimpleChannelSelection(channelSelection) {
 	}
 }
 
-
-function closeDaisyChainSetup() {
-	hidePopupView("daisy-chain-assist-popup");
+function setLevelProto(channels, level) {
+	send({target: "channels", header: "setLevelProto", content: {channel: channels, level: level}});
 }
 
-function prepareSlaveAmplifier() {
-	
+function setInvertProto(channels, invert) {
+	send({target: "channels", header: "setInvertProto", content: {channel: channels, invert: invert}});
 }
+
+
+
 
 function generateSettingsPreview(settings) {
 	// Possible settings: role, delay, level, enabled.
@@ -207,8 +209,8 @@ function generateSettingsPreview(settings) {
 return {
 	generateSettingsPreview: generateSettingsPreview,
 	selectChannelSimple: selectChannelSimple,
-	prepareSlaveAmplifier: prepareSlaveAmplifier,
-	closeDaisyChainSetup: closeDaisyChainSetup
+	setLevelProto: setLevelProto,
+	setInvertProto: setInvertProto
 }
 
 })();

@@ -240,29 +240,56 @@ function toggleShowAlbumName(hide) {
 	}
 }
 
+var artworkChangeTimeout;
+var previousSrc = "";
+
 function loadArtwork(url, port) {
-	if (url) {
-		if (url.indexOf("http") == 0) {
-			// Remote url, use as is.
-			imageURL = url;
-		} else {
-			if (port) {
-				imageURL = window.location.protocol+"//"+window.location.hostname+":"+port+"/"+url;
-			} else {
+	if (!url || url.indexOf("file:///") == -1) { // Don't try loading file URLs
+		if (url) {
+			if (url.indexOf("http") == 0) {
+				// Remote url, use as is.
 				imageURL = url;
+			} else {
+				if (port) {
+					imageURL = window.location.protocol+"//"+window.location.hostname+":"+port+"/"+url;
+				} else {
+					imageURL = url;
+				}
+			}
+			src = imageURL;
+		} else {
+			// Load appropriately branded placeholder artwork.
+			if ($("body").hasClass("hifiberry-os")) {
+				src = $("#now-playing").attr("data-asset-path")+"/placeholder-hifiberry.png";
+			} else {
+				src = $("#now-playing").attr("data-asset-path")+"/placeholder.png";
 			}
 		}
-		$(".artwork-bg").css("background-image", "url(" + imageURL + ")");
-		$(".artwork-img").attr("src", imageURL).removeClass("placeholder");
-	} else {
-		// Load appropriately branded placeholder artwork.
-		$(".artwork-bg").css("background-image", "none");
-		if ($("body").hasClass("hifiberry-os")) {
-			$(".artwork-img").attr("src", $("#now-playing").attr("data-asset-path")+"/placeholder-hifiberry.png").addClass("placeholder");
-		} else {
-			$(".artwork-img").attr("src", $("#now-playing").attr("data-asset-path")+"/placeholder.png").addClass("placeholder");
+		if (src != previousSrc) {
+			$("#main-artwork").removeClass("visible");
+			clearTimeout(artworkChangeTimeout);
+			previousSrc = src;
+			artworkChangeTimeout = setTimeout(function() {
+				$(".artwork-img").attr("src", src);
+				if (!url) {
+					$(".artwork-img").addClass("placeholder");
+					$(".artwork-bg").css("background-image", "none");
+				} else {
+					$(".artwork-img").removeClass("placeholder");
+					$(".artwork-bg").css("background-image", "url(" + src + ")");
+				}
+			}, 250);
 		}
+	} else {
+		// In case of a file URL, wait for one second for the actual artwork. Otherwise load default artwork.
+		artworkChangeTimeout = setTimeout(function() {
+			loadArtwork();
+		}, 1000);
 	}
+}
+
+function artworkLoaded() {
+	$("#main-artwork").addClass("visible");
 }
 
 function loadSmallSampleArtwork() {
@@ -467,6 +494,7 @@ return {
 	transport: transport,
 	enableSourceStart: enableSourceStart,
 	loadArtwork: loadArtwork,
+	artworkLoaded: artworkLoaded,
 	loadSmallSampleArtwork: loadSmallSampleArtwork,
 	toggleLove: toggleLove,
 	functionRow: functionRow

@@ -105,7 +105,7 @@ module.exports = function(beoBus, globals) {
 						if (metadata["toneControlLeftRegisters"].value[0].split("/")[1] == metadata["toneControlRightRegisters"].value[0].split("/")[1]) {
 							canDoToneControl.toneControls = parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[1])/5; // Save how many filters are in this bank.
 							
-							applyToneTouchFromSettings();
+							applyToneTouchFromSettings(true);
 						}
 					} else {
 						canDoToneControl.toneControls = 0;
@@ -134,7 +134,7 @@ module.exports = function(beoBus, globals) {
 	
 	var toneTouchLogTimeout = null;
 	
-	function applyToneTouchFromSettings() {
+	function applyToneTouchFromSettings(log) {
 		if (canDoToneControl.toneControls >= 2) {
 			
 			// Calculate gains.
@@ -153,7 +153,7 @@ module.exports = function(beoBus, globals) {
 			beoDSP.safeloadWrite(parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[0])+5, [bassCoeffs[5], bassCoeffs[4], bassCoeffs[3], bassCoeffs[2]*-1, bassCoeffs[1]*-1], true);
 			beoDSP.safeloadWrite(parseInt(metadata["toneControlRightRegisters"].value[0].split("/")[0])+5, [bassCoeffs[5], bassCoeffs[4], bassCoeffs[3], bassCoeffs[2]*-1, bassCoeffs[1]*-1], true);
 			
-			if (debug) {
+			if (debug == 2 || log) {
 				clearTimeout(toneTouchLogTimeout);
 				toneTouchLogTimeout = setTimeout(function() {
 					console.log("ToneTouch: treble is at "+Math.round(trebleGain*10)/10+" dB, bass is at "+Math.round(bassGain*10)/10+" dB.");

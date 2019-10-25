@@ -69,6 +69,7 @@ console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen
 cmdArgs = process.argv.slice(2);
 if (cmdArgs.indexOf("v") != -1) debugMode = 1;
 if (cmdArgs.indexOf("vv") != -1) debugMode = 2;
+if (cmdArgs.indexOf("vvv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 
 
@@ -257,7 +258,7 @@ expressServer.get("/", function (req, res) {
 // REST API endpoint to talk to extensions.
 expressServer.use(express.json());
 expressServer.post("/:extension/:header", function (req, res) {
-	if (debugMode == 2) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
+	if (debugMode == 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
 	beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
 	res.status(200);
 	res.send("OK");

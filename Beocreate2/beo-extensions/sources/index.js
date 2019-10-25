@@ -255,20 +255,23 @@ module.exports = function(beoBus, globals) {
 						allSources[extension].playerState = overview.players[i].state;
 						
 						if (overview.players[i].state != "stopped") {
-							if (allSources[extension].active == false) sourceActivated(extension);
+							if (allSources[extension].playerState == "playing" || !allSources[extension].active) {
+								sourceActivated(extension);
+							}
 						} else {
 							// If this source is no longer active, deactivate it.
 							if (allSources[extension].active == true) sourceDeactivated(extension);
 						}
 						
 						beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
-					}
-					if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
-						// This is not the current AudioControl source but because it is paused, check again after 20 seconds to see if it has changed.
-						clearTimeout(sourceCheckTimeout);
-						sourceCheckTimeout = setTimeout(function() {
-							audioControlGet("status");
-						}, 20000);
+						
+						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
+							// This is not the current AudioControl source but because it is paused, check again after 20 seconds to see if it has changed.
+							clearTimeout(sourceCheckTimeout);
+							sourceCheckTimeout = setTimeout(function() {
+								audioControlGet("status");
+							}, 20000);
+						}
 					}
 				}
 			//}
@@ -288,7 +291,9 @@ module.exports = function(beoBus, globals) {
 				allSources[extension].playerState = metadata.playerState;
 
 				if (metadata.playerState != "stopped") {
-					if (allSources[extension].active == false) sourceActivated(extension);
+					if (allSources[extension].playerState == "playing" || !allSources[extension].active) {
+						sourceActivated(extension);
+					}
 				} else {
 					if (allSources[extension].active == true) sourceDeactivated(extension);
 				}
@@ -317,7 +322,9 @@ module.exports = function(beoBus, globals) {
 			if (extension != currentAudioControlSource) {
 				// If the active source indicated in AudioControl metadata changes, there won't be status updates for the previous source. Read it manually.
 				currentAudioControlSource = extension;
-				audioControlGet("status");
+				setTimeout(function() {
+					audioControlGet("status");
+				}, 2000);
 			}
 		}
 	}
@@ -346,33 +353,43 @@ module.exports = function(beoBus, globals) {
 	
 	
 	function sourceActivated(extension, playerState) {
-		if (allSources[extension] && allSources[extension].enabled && !allSources[extension].active) {
+		if (allSources[extension] && allSources[extension].enabled) {
+			if (allSources[extension].active == true)  {
+				// Source reactivates, recalculate activation indexes.
+				reactivatedSourceActivationIndex = allSources[extension].activationIndex;
+				allSources[extension].activationIndex = 0;
+				activationIndex--;
+				
+				for (source in allSources) {
+					if (allSources[source].activationIndex > reactivatedSourceActivationIndex) {
+						allSources[source].activationIndex--;
+					}
+				}
+			}
 			activationIndex++;
 			allSources[extension].active = true;
 			allSources[extension].activationIndex = activationIndex;
 			
 			// Stop currently active sources, if the source demands it.
 			if (allSources[extension].stopOthers) {
-				audioControlStopped = false;
+				if (allSources[currentSource] && allSources[currentSource].usesHifiberryControl && !allSources[extension].usesHifiberryControl) {
+					// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
+					audioControl("pause");
+				}
 				for (source in allSources) {
 					if (source != extension && 
 						allSources[source].active) {
-						if (allSources[source].usesHifiberryControl && 
-							!audioControlStopped && 
-							!allSources[extension].usesHifiberryControl) {
-							// Only issue AudioControl pause command once, and only if the new source is not controlled by it (AudioControl will by itself take care of stopping the other source in other cases).
-							audioControl("pause");
-							audioControlStopped = true;
-						} else {
+						if (!allSources[source].usesHifiberryControl) {
+							// Stop all other non-AudioControl sources.
 							beoBus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
 						}
 					}
 				}
 			}
-			
-			if (debug) console.log("Source '"+extension+"' has activated (index "+activationIndex+").");
 		
 			determineCurrentSource();
+			if (debug) console.log("Source '"+extension+"' has activated (index "+activationIndex+").");
+			logSourceStatus();
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
@@ -383,7 +400,6 @@ module.exports = function(beoBus, globals) {
 	
 	function sourceDeactivated(extension, playerState) {
 		if (allSources[extension] && allSources[extension].active) {
-			if (debug) console.log("Source '"+extension+"' has deactivated.");
 			deactivatedSourceActivationIndex = allSources[extension].activationIndex;
 			allSources[extension].activationIndex = 0;
 			allSources[extension].active = false;
@@ -396,6 +412,8 @@ module.exports = function(beoBus, globals) {
 			}
 			
 			determineCurrentSource();
+			if (debug) console.log("Source '"+extension+"' has deactivated.");
+			logSourceStatus();
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
@@ -444,6 +462,20 @@ module.exports = function(beoBus, globals) {
 		
 		beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
 		beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource}});
+	}
+	
+	function logSourceStatus() {
+		if (debug == 2) {
+			message = "Current source: "+currentSource+"\n";
+			for (source in allSources) {
+				message += "["+source+"] active: "+allSources[source].active;
+				if (allSources[source].active) message += " ("+allSources[source].activationIndex+". to activate)";
+				message += ", state: "+allSources[source].playerState;
+				if (allSources[source].metadata.title && allSources[source].metadata.artist) message += ", track: "+allSources[source].metadata.title+" - "+allSources[source].metadata.artist;
+				message += "\n";
+			}
+			console.log(message);
+		}
 	}
 	
 	

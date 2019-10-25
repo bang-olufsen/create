@@ -3046,11 +3046,11 @@ input[type=file]#file-input {
 	position: absolute;
 	z-index: -1;
 	opacity: 0;
+	width: 0;
 }
 
 #file-input-label {
 	display: block;
-	height: 20vh;
 	display: flex;
 	justify-content: center;
 	align-items: center;

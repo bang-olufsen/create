@@ -79,6 +79,7 @@ if (fs.existsSync(dataDirectory+"/system.json")) {
 	try {
 		systemConfiguration = Object.assign(systemConfiguration, JSON.parse(fs.readFileSync(dataDirectory+"/system.json")));
 	} catch (error) {
+		console.error("Error loading system.json for system settings:", error);
 		var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
 	}
 }
@@ -207,14 +208,17 @@ function getAllSettings() {
 		if (settingsFiles.length != 0) {
 			for (var s = 0; s < settingsFiles.length; s++) {
 				if (settingsFiles[s].indexOf(".json") != -1 && settingsFiles[s] != "system.json") { // Check that this is a JSON file.
-					
-					settings = JSON.parse( // Read settings file.
-						fs.readFileSync(dataDirectory+"/"+settingsFiles[s])
-					);
-					
-					// Return the parsed JSON.
-					beoBus.emit(settingsFiles[s].split(".json")[0], {header: "settings", content: {settings: settings}});
-					if (debugMode == 2) console.log("Settings loaded for '"+settingsFiles[s].split(".json")[0]+"'.");
+					try {
+						settings = JSON.parse( // Read settings file.
+							fs.readFileSync(dataDirectory+"/"+settingsFiles[s])
+						);
+						
+						// Return the parsed JSON.
+						beoBus.emit(settingsFiles[s].split(".json")[0], {header: "settings", content: {settings: settings}});
+						if (debugMode == 2) console.log("Settings loaded for '"+settingsFiles[s].split(".json")[0]+"'.");
+					} catch (error) {
+						console.error("Error loading settings for '"+settingsFiles[s].split(".json")[0]+"':", error);
+					}
 				}
 			}
 		}

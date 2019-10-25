@@ -119,8 +119,7 @@ module.exports = function(beoBus, globals) {
 			
 			case "settings":
 				if (event.content.settings) {
-					settings = event.content.settings;
-					if (!settings.advancedSoundAdjustmentsEnabled) settings.advancedSoundAdjustmentsEnabled = false;
+					settings = Object.assign(settings, event.content.settings);
 				}
 				break;
 			case "volume":
@@ -298,51 +297,7 @@ module.exports = function(beoBus, globals) {
 		
 	}	
 	
-	/*
-	function setVolume(options, fromMuteFunction, callback) {
-		if (!fromMuteFunction) {
-			previousVolume = systemVolume.percentage;
-			//adjustingVolume = true;
-		}
-		
-		// Use amixer to control the DSPVolume mixer provided by SigmaTCPServer
-		
-		// Volume can be set either as a percentage (0-100 %), absolute value (0-255) or in steps (two steps up or down from current absolute value).
-		volumeCommand = null;
-		
-		if (options.percentage != undefined) volumeCommand = options.percentage+"%";
-		if (options.absolute != undefined) volumeCommand = options.absolute;
-		if (options.step) {
-			if (options.step == "up") volumeCommand = "2+";
-			if (options.step == "down") volumeCommand = "2-";
-			if (options.step == "+1") volumeCommand = "1+";
-			if (options.step == "-1") volumeCommand = "1-";
-			if (options.step == "+1%") volumeCommand = "1%+";
-			if (options.step == "-1%") volumeCommand = "1%-";
-			//adjustingVolume = false;
-		}
-		
-		if (volumeCommand != null) {
-			exec("amixer set "+alsaMixer+" "+volumeCommand, function(error, stdout, stderr) {
-				if (error) {
-					//callback(null, error);
-				} else {
-					percentage = parseFloat(stdout.match(/\[(.*?)\]/)[0].slice(1, -2));
-					absolute = parseFloat(stdout.match(/\:(.*?)\[/)[0].slice(2, -2));
-					//console.log(volume);
-					systemVolume.absolute = absolute;
-					systemVolume.percentage = percentage;
-					beoBus.emit("sound", {header: "systemVolume", content: {volume: systemVolume.percentage}});
-					beoBus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: systemVolume}});
-					if (callback) callback(systemVolume);
-				}
-			});
-		}
-		
-	}*/
 	
-
-
 	function checkIfAudioControlAvailable(callback) {
 		// Try getting and setting volume via AudioControl:
 		audioControlAvailable = false;
@@ -445,20 +400,18 @@ module.exports = function(beoBus, globals) {
 		// Determines which ALSA mixer control is suitable to use.
 		alsaMixer = null;
 		
-		for (var i = 0; i < allMixers.length; i++) {
-			if (alsaMixer == null) {
-				switch (allMixers[i]) {
-					case "DSPVolume":
-						if (alsaDSPVolumeControlAvailable) alsaMixer = "DSPVolume";
-						break;
-					case "Master":
-						alsaMixer = "Softvol";
-						break;
-					case "Digital":
-						alsaMixer = "Digital";
-						break;
-					case "Softvol":
-						break;
+		if (settings.mixer) {
+			if (!alsaMixer && allMixers.indexOf(settings.mixer) != -1) alsaMixer = settings.mixer;
+		} else {
+			for (var i = 0; i < allMixers.length; i++) {
+				if (alsaMixer == null) {
+					switch (allMixers[i]) {
+						case "DSPVolume":
+							if (alsaDSPVolumeControlAvailable) alsaMixer = "DSPVolume";
+							break;
+						case "Softvol":
+							break;
+					}
 				}
 			}
 		}

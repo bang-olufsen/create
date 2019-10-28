@@ -59,7 +59,7 @@ In all cases, the system searches `/etc/beocreate/beo-product-images/` for a mat
 
 If a matching image is not found in the image directory, a default image will be used. If the image is defined as a URL, the system will attempt to download the image from the internet.
 
-Product image guidelines can be found in [Beocreate 2 Design Guidelines](Design Guidelines.md).
+Product image guidelines can be found in [Beocreate 2 Design Guidelines](DesignGuidelines.md).
 
 ### Designer
 

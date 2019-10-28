@@ -54,13 +54,13 @@ Design and develop extensions.
 
 Create sound presets and DSP programs.
 
-- [Sound Presets](Documentation/Sound Presets.md)
+- [Sound Presets](Documentation/SoundPresets.md)
 
 ### Design
 
 Guidelines and best practices for user interfaces and graphic design within Beocreate 2 ecosystem.
 
-- [Beocreate 2 Design Guidelines](Documentation/Design Guidelines.md)
+- [Beocreate 2 Design Guidelines](Documentation/DesignGuidelines.md)
 
 
 ## Legacy Code

@@ -274,7 +274,7 @@ Possible values are: *true* or *false*.
 
 ## Product Identities
 
-The function and composition of product identities are covered [here](Product Identities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
+The function and composition of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
 
 	"product-information": {
 		"modelID": "beovox-cx50",

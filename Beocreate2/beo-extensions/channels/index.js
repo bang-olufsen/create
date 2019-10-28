@@ -288,7 +288,7 @@ module.exports = function(beoBus, globals) {
 				} else {
 					canControlChannels.balance = false;
 				}
-				applyBalanceFromSettings();
+				applyBalanceFromSettings(true);
 			} else {
 				metadata = {};
 				for (var c = 0; c < 4; c++) {
@@ -357,13 +357,19 @@ module.exports = function(beoBus, globals) {
 						channelIndex = canControlChannels[channel].role.indexOf(theSettings[channel].role);
 						if (channelIndex != -1) {
 							compatibilityIssues[channel].role = 0;
+							validatedSettings[channel].role = theSettings[channel].role;
 						} else {
-							compatibilityIssues[channel].role = 2;
+							if (canControlChannels[channel].role.indexOf("mono") != -1) {
+								compatibilityIssues[channel].role = 2;
+								validatedSettings[channel].role = "mono";
+							} else {
+								compatibilityIssues[channel].role = 1;
+							}
 						}
 					} else {
 						compatibilityIssues[channel].role = 1;
 					}
-					switch (theSettings[channel].role) {
+					/*switch (theSettings[channel].role) {
 						case "mono":
 						case "mid":
 						case "left":
@@ -375,7 +381,7 @@ module.exports = function(beoBus, globals) {
 							validatedSettings[channel].role = "mono";
 							compatibilityIssues[channel].role = 2;
 							break;
-					}
+					}*/
 				}
 				
 				if (theSettings[channel].invert != undefined) {
@@ -566,21 +572,21 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	function applyBalanceFromSettings() {
+	function applyBalanceFromSettings(log) {
 		
 		if (!isNaN(settings.balance) && canControlChannels.balance) {
 			
 			if (settings.balance > 0) {
 				// Attenuate left channel when balance is towards right.
 				balanceValue = 1+(settings.balance/20);
-				if (debug) console.log("Balance: right "+settings.balance+" ("+balanceValue+").");
+				if (debug >= 2 || log) console.log("Balance: right "+settings.balance+" ("+balanceValue+").");
 			} else if (settings.balance < 0) {
 				// Attenuate right channel when balance is towards left.
 				balanceValue = 1+(settings.balance/20);
-				if (debug) console.log("Balance: left "+settings.balance+" ("+balanceValue+").");
+				if (debug >= 2 || log) console.log("Balance: left "+settings.balance+" ("+balanceValue+").");
 			} else { // Centre, both channels at 1.
 				balanceValue = 1;
-				if (debug) console.log("Balance: centre (1).");
+				if (debug >= 2 || log) console.log("Balance: centre (1).");
 			}
 			beoDSP.writeDSP(metadata.balanceRegister.value[0], balanceValue, true, true);
 		}

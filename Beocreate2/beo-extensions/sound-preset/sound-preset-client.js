@@ -3,6 +3,7 @@ var sound_preset = (function() {
 soundPresets = {};
 excludedSettings = [];
 settingsCount = 0;
+currentSoundPreset = null;
 selectedSoundPreset = null;
 willInstallFallbackDSP = false;
 
@@ -37,13 +38,21 @@ $(document).on("sound-preset", function(event, data) {
 			}
 		}
 		
-		if (data.content.selectedSoundPreset) {
-			selectedSoundPreset = data.content.selectedSoundPreset;
+		if (data.content.currentSoundPreset) {
+			currentSoundPreset = data.content.currentSoundPreset;
 		} else {
-			selectedSoundPreset = null;
+			currentSoundPreset = null;
 		}
 		
-		showSelectedPreset();
+		if (data.content.action) {
+			switch (data.content.action) {
+				case "presetRemoved":
+					notify({title: "Preset removed", icon: "common/symbols-black/checkmark-round.svg"});
+					break;
+			}
+		}
+		
+		showCurrentPreset();
 		
 	}
 	
@@ -81,26 +90,8 @@ $(document).on("sound-preset", function(event, data) {
 			$(".sound-preset-contents").empty();
 			$(".sound-preset-install-fallback-dsp").addClass("hidden");
 			
-			if (data.content.productIdentity && data.content.productIdentity.previewProcessor) {
-				if (functionExists(data.content.productIdentity.previewProcessor)) {
-					presetPreview = executeFunction(data.content.productIdentity.previewProcessor, [data.content.productIdentity, preset.presetName]);
-					menuOptions = {
-						label: presetPreview[0],
-						onclick: 'sound_preset.toggleSetting(\'product-information\');',
-						icon: $("#product-information").attr("data-asset-path")+"/symbols-black/"+$("#product-information").attr("data-icon"),
-						toggle: true,
-						twoRows: true,
-						customMarkup: presetPreview[1],
-						classes: ["sound-preset-toggle", "product-information"]
-					};
-					if (presetPreview[2] && presetPreview[2] != "") {
-						//$(".sound-preset-contents").append('<p class="warning">'+presetPreview[2]+'</p>');
-						menuOptions.customMarkup += '<p class="warning">'+presetPreview[2]+'</p>';
-					}
-					$(".sound-preset-contents").append(createMenuItem(menuOptions));
-				
-				
-				}
+			if (product_information && product_information.clearPresetPreview) {
+				product_information.clearPresetPreview();
 			}
 			
 			for (soundAdjustment in preset.content) {
@@ -156,6 +147,23 @@ $(document).on("sound-preset", function(event, data) {
 		showSelectedPreset();
 	}
 	
+	if (data.header == "presetImport") {
+		switch (data.content.message) {
+			case "invalidJSON":
+				notify({title: "Faulty preset data", message: "There was a problem with reading JSON data from the sound preset file. Make sure the data is formatted correctly and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				break;
+			case "noPresetName":
+				notify({title: "Incomplete preset", message: "Sound preset did not contain a preset name. Please refer to documentation on sound presets.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				break;
+			case "existingPresetReadOnly":
+				notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is read-only. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				break;
+			case "askToReplace":
+				ask("replace-sound-preset-prompt", [data.content.existingPresetName], null, "sound_preset.replaceExistingPreset(false);");
+				break;
+		}
+	}
+	
 });
 
 function toggleSetting(setting) {
@@ -189,28 +197,58 @@ function selectPreset(presetID) {
 	//showPopupView("sound-preset-preview-popup");
 }
 
-function showSelectedPreset() {
+function showCurrentPreset() {
 	$(".sound-preset-item.checked").removeClass("checked");
-	if (selectedSoundPreset) {
-		$('.sound-preset-item[data-preset-id="'+selectedSoundPreset+'"]').addClass("checked");
+	if (currentSoundPreset) {
+		$('.sound-preset-item[data-preset-id="'+currentSoundPreset+'"]').addClass("checked");
 	}
 }
 
 function closePreview() {
 	hidePopupView("sound-preset-preview-popup");
+	selectedSoundPreset = null;
 }
 
 function applyPreset() {
 	send({target: "sound-preset", header: "applySoundPreset", content: {presetID: selectedSoundPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
 }
 
+function optionsForSelectedPreset() {
+	if (selectedSoundPreset) {
+		if (soundPresets[selectedSoundPreset].readOnly) {
+			ask("sound-preset-options-readonly-prompt");
+		} else {
+			ask("sound-preset-options-prompt");
+		}
+	}
+}
+
+function deletePreset(confirmed) {
+	if (selectedSoundPreset) {
+		if (!confirmed) {
+			ask("delete-sound-preset-prompt", [soundPresets[selectedSoundPreset].presetName]);
+		} else {
+			send({target: "sound-preset", header: "deleteSoundPreset", content: {presetID: selectedSoundPreset}});
+			closePreview();
+			ask();
+		}
+	}
+}
+
+function replaceExistingPreset(replace) {
+	ask();
+	send({target: "sound-preset", header: "replaceExistingPreset", content: {replace: replace}});
+}
+
 return {
 	applyPreset: applyPreset,
 	closePreview: closePreview,
 	selectPreset: selectPreset,
+	optionsForSelectedPreset: optionsForSelectedPreset,
 	toggleSetting: toggleSetting,
 	toggleInstallFallbackDSP: toggleInstallFallbackDSP,
-	
+	deletePreset: deletePreset,
+	replaceExistingPreset: replaceExistingPreset
 }
 
 })();

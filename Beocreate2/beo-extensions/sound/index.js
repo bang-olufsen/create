@@ -105,8 +105,8 @@ module.exports = function(beoBus, globals) {
 					}
 				} 
 			}
-			determineALSAMixer();
-			determineVolumeControl();
+			//determineALSAMixer();
+			//determineVolumeControl();
 		}
 		
 	});
@@ -322,7 +322,7 @@ module.exports = function(beoBus, globals) {
 			body: {"percent": volume}
 		}, function(err, res, body) {
 			if (err) {
-				if (debug) console.log("Could not set volume: " + err);
+				if (debug) console.error("Could not set volume: " + err);
 				callback(null);
 			} else {
 				if (res.statusCode == 200) {
@@ -351,7 +351,7 @@ module.exports = function(beoBus, globals) {
 				json: true
 			}, function(err, res, body) {
 				if (err) {
-					if (debug) console.log("Could not retrieve volume: " + err);
+					if (debug) console.error("Could not retrieve volume: " + err);
 					callback(null);
 				} else {
 					if (res.statusCode == 200) {
@@ -389,7 +389,7 @@ module.exports = function(beoBus, globals) {
 					mixer = mixers[i].slice(1, -1);
 					allMixers.push(mixer);
 				}
-				
+				if (debug >= 2) console.log("Available ALSA mixer controls: "+ allMixers.join(", ") + ".");
 				determineALSAMixer();
 				if (callback) callback();
 			}
@@ -401,13 +401,21 @@ module.exports = function(beoBus, globals) {
 		alsaMixer = null;
 		
 		if (settings.mixer) {
-			if (!alsaMixer && allMixers.indexOf(settings.mixer) != -1) alsaMixer = settings.mixer;
+			if (!alsaMixer && allMixers.indexOf(settings.mixer) != -1) {
+				if (debug >= 2) console.log("The ALSA mixer specified in settings ('"+settings.mixer+"') is available.");
+				alsaMixer = settings.mixer;
+			} else {
+				if (debug >= 2) console.log("The ALSA mixer specified in settings ('"+settings.mixer+"') is not available.");
 		} else {
+			if (debug) console.log("ALSA mixer was not specified in settings.");
 			for (var i = 0; i < allMixers.length; i++) {
 				if (alsaMixer == null) {
 					switch (allMixers[i]) {
 						case "DSPVolume":
-							if (alsaDSPVolumeControlAvailable) alsaMixer = "DSPVolume";
+							if (alsaDSPVolumeControlAvailable) {
+								alsaMixer = "DSPVolume";
+								if (debug >= 2) console.log("ALSA DSP volume control is available.");
+							}
 							break;
 						case "Softvol":
 							break;
@@ -415,7 +423,10 @@ module.exports = function(beoBus, globals) {
 				}
 			}
 		}
-		if (!alsaMixer && allMixers.indexOf("Softvol") != -1) alsaMixer = "Softvol";
+		if (!alsaMixer) {
+			if (debug >= 2) console.log("Falling back to software volume control.");
+			if (allMixers.indexOf("Softvol") != -1) alsaMixer = "Softvol";
+		}
 		if (callback) callback(alsaMixer);
 	}
 

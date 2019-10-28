@@ -312,6 +312,10 @@ strong {
 	flex-shrink: 0;
 }
 
+.mac.full-screen #menu-button-wrap {
+	left: 8px;
+}
+
 .windows #menu-button-wrap {
 	left: 0;
 	height: 100%;

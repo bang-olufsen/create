@@ -43,6 +43,11 @@ $( document ).ready(function() {
 	$("body").css("opacity", "1");
 	
 	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "common/apple-touch-icon-hifiberry.png");
+	
+	// File selected to upload.
+	$("input[type=file]#file-input").on('change',function(){
+	    uploadFile(null, null, this.files[0]);
+	});
 });
 
 darkAppearance = false;
@@ -1193,9 +1198,14 @@ function commaAndList(list, andWord, translationID, extensionID) {
 // ASK
 
 var askCallbacks = null;
-function ask(menuID, dynamicContent, callbacks) {
+function ask(menuID, dynamicContent, callbacks, cancelAction) {
 	if (menuID) {
 		if (callbacks) askCallbacks = callbacks;
+		if (cancelAction) {
+			$("#ask-back-plate").attr("onclick", cancelAction);
+		} else {
+			$("#ask-back-plate").attr("onclick", "ask();");
+		}
 		$("#ask-menu-content").html($("#"+menuID).html());
 		if (dynamicContent) {
 			for (var i = 0; i < dynamicContent.length; i++) {
@@ -1404,14 +1414,51 @@ function prepareTextInput() {
 // UPLOAD FILES
 
 var uploadToExtension = null;
-function uploadFile(options, extension) {
-	if (options && options.title && extension) {
+var uploadOptions = null;
+var uploadNotifyTimeout;
+function uploadFile(options, extension, file) {
+	if (file && file.name && uploadToExtension) {
+		console.log(file);
+		uploadNotifyTimeout = setTimeout(function() {
+			// In most cases uploads are so fast there's no point showing a status.
+			notify({title: "Uploading file...", icon: "attention", timeout: false}, "uploadFile");
+		}, 500);
+		fetch(window.location.protocol+"//"+productAddress+"/"+uploadToExtension+"/upload", {
+			body: file,
+			method: "POST",
+			credentials: "include",
+			headers: {
+				"Content-Type": "application/octet-stream",
+				"Content-Disposition": "attachment",
+				"fileName": file.name
+			}
+		}).then(
+			function(response) {
+				uploadFile();
+				if (response.status !== 202) {
+					console.log("Extension can't receive files.");
+					notify({title: "File upload unsuccesful", message: "This extension is not set up to receive files.", buttonTitle: "Dismiss", buttonAction: "close", timeout: false}, "uploadFile");
+				} else {
+					console.log("File upload succeeded.");
+				}
+		    }
+		).catch(function(err) {
+			console.log('Fetch error when uploading file:', err);
+		});
+		document.getElementById("file-input").value = "";
+	} else if (options && options.title && extension) {
 		uploadToExtension = extension;
+		uploadOptions = options;
 		$("#upload h2").text(options.title);
 		if (options.message) {
 			$("#upload p").text(options.message).removeClass("hidden");
 		} else {
 			$("#upload p").addClass("hidden");
+		}
+		if (options.types) { // Specify file type.
+			$("#file-input").attr("accept", options.types.join(","));
+		} else {
+			$("#file-input").attr("accept", "");
 		}
 		$("#upload, #upload-back-plate").addClass("block");
 		setTimeout(function() {
@@ -1422,6 +1469,8 @@ function uploadFile(options, extension) {
 		setTimeout(function() {
 			$("#upload, #upload-back-plate").removeClass("block");
 		}, 500);
+		clearTimeout(uploadNotifyTimeout);
+		notify(false, "uploadFile");
 	}
 }
 

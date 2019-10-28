@@ -148,7 +148,7 @@ module.exports = function(beoBus, globals) {
 	2. Returns validated settings. If everything checks out, it's a copy of the input. Any incompatibilities will be stripped out or adapted (use this to migrate old settings in case of an upgrade). 
 	*/
 	
-	function checkSettings(theSettings) {
+	function checkSettings(theSettings, samplingRate) {
 		validatedSettings = {};
 		compatibilityIssues = {};
 		
@@ -167,7 +167,14 @@ module.exports = function(beoBus, globals) {
 						filter.b1 != undefined &&
 						filter.b2 != undefined) {
 						// We have coefficients. Expects A0 to always be 1.
-						compatibility = 0;
+						if (filter.samplingRate) {
+							compatibility = 0;
+						} else if (samplingRate) {
+							filter.samplingRate = samplingRate;
+							compatibility = 0;
+						} else {
+							compatibility = 2;
+						}
 					} else if (filter.type != undefined) {
 						switch (filter.type) {
 							case "peak":
@@ -222,7 +229,7 @@ module.exports = function(beoBus, globals) {
 						validatedSettings[channel].push(filter);
 					} else if (compatibility == 2) {
 						// Unsupported filters can be left out.
-						validatedSettings[channel].push(false);
+						//validatedSettings[channel].push(false);
 					}
 					
 					compatibilityIssues[channel].push(compatibility);
@@ -236,8 +243,8 @@ module.exports = function(beoBus, globals) {
 		return {compatibilityIssues: compatibilityIssues, validatedSettings: validatedSettings, previewProcessor: "equaliser.generateSettingsPreview"};
 	}
 	
-	function applySoundPreset(theSettings) {
-		settings = Object.assign(settings, checkSettings(theSettings).validatedSettings);
+	function applySoundPreset(theSettings, samplingRate) {
+		settings = Object.assign(settings, checkSettings(theSettings, samplingRate).validatedSettings);
 		for (var c = 0; c < 4; c++) {
 			channel = "abcd".charAt(c);
 			applyAllFiltersFromSettings(channel, true);
@@ -285,8 +292,12 @@ module.exports = function(beoBus, globals) {
 						filter.b1 != undefined &&
 						filter.b2 != undefined) {
 						// We have coefficients. Expects A0 to always be 1.
-						if (debug == 2) console.log("Applying a filter from coefficients for channel "+channel.toUpperCase()+"...");
-						coeffs = [1, filter.a1, filter.a2, filter.b0, filter.b1, filter.b2];
+						if (filter.samplingRate && filter.samplingRate == Fs) {
+							if (debug == 2) console.log("Applying a filter from coefficients for channel "+channel.toUpperCase()+"...");
+							coeffs = [1, filter.a1, filter.a2, filter.b0, filter.b1, filter.b2];
+						} else {
+							if (debug == 2) console.log("Indicated sampling rate of the filter coefficients doesn't match that of the DSP program.");
+						}
 					} else if (filter.type != undefined) {
 						// Parametric filter. Generate coefficients based on filter type.
 						

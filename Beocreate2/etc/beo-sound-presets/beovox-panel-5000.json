@@ -68,19 +68,23 @@
 	"channels": {
 		"a": {
 			"level": 100,
-			"enabled": true
+			"enabled": true,
+			"invert": false
 		},
 		"b": {
 			"level": 100,
-			"enabled": true
+			"enabled": true,
+			"invert": false
 		},
 		"c": {
 			"level": 100,
-			"enabled": true
+			"enabled": true,
+			"invert": false
 		},
 		"d": {
 			"level": 100,
-			"enabled": true
+			"enabled": true,
+			"invert": false
 		}
 	}
 }

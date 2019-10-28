@@ -9,9 +9,11 @@ $(document).on("mpd", function(event, data) {
 		if (data.content.mpdEnabled) {
 			mpdEnabled = true;
 			$("#mpd-enabled-toggle").addClass("on");
+			$("#mpd-link").attr("href", "http://"+window.location.host+":9000").removeClass("hidden");
 		} else {
 			mpdEnabled = false;
 			$("#mpd-enabled-toggle").removeClass("on");
+			$("#mpd-link").addClass("hidden");
 		}
 		notify(false, "mpd");
 	}

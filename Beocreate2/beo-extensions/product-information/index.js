@@ -48,6 +48,7 @@ module.exports = function(beoBus, globals) {
 	var systemName = {ui: null, static: null};
 	var systemVersion = null;
 	var hifiberryVersion = null;
+	var systemNameSent = false;
 	
 	var defaultSettings = {
 		"modelID": "beocreate-4ca-mk1", 
@@ -96,14 +97,18 @@ module.exports = function(beoBus, globals) {
 					
 					if (!err) systemName = response;
 					if (systemName.ui) {
-						
+						if (!systemNameSent) {
+							beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+							systemNameSent = true;
+						}
 						beoBus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 						startOrUpdateBonjour();
 					} else {
-						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name that contains the system ID ("Beocreate-a1b2c3d4").
+						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name.
 						if (!systemID) systemID = "new";
 						if (!hifiberryOS) {
-							newName = "Beocreate-"+systemID.replace(/^0+/, '');
+							//newName = "Beocreate-"+systemID.replace(/^0+/, '');
+							newName = "Beocreate";
 						} else {
 							newName = "HiFiBerry";
 						}
@@ -114,6 +119,10 @@ module.exports = function(beoBus, globals) {
 							if (success == true) { 
 								systemName = response;
 								if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");
+								if (!systemNameSent) {
+									beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+									systemNameSent = true;
+								}
 								beoBus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 								startOrUpdateBonjour();
 							} else {
@@ -174,7 +183,10 @@ module.exports = function(beoBus, globals) {
 		}
 		
 		if (event.header == "getSystemName") {
-			beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+			if (systemName.ui) {
+				beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+				systemNameSent = true;
+			}
 		}
 		
 		if (event.header == "setProductModel") {
@@ -314,7 +326,7 @@ module.exports = function(beoBus, globals) {
 			identityFiles = fs.readdirSync(productIdentityDirectory);
 			for (var i = 0; i < identityFiles.length; i++) {
 				try {
-					checkAndAddProductIdentity(JSON.parse(fs.readFileSync(productIdentityDirectory+"/"+identityFiles[i], "utf8")));
+					checkAndAddProductIdentity(JSON.parse(fs.readFileSync(productIdentityDirectory+"/"+identityFiles[i], "utf8")), true, identityFiles[i]);
 				} catch (error) {
 					console.error("Invalid JSON data for product identity '"+identityFiles[i]+"':", error);
 				}
@@ -324,7 +336,7 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	function checkAndAddProductIdentity(data) {
+	function checkAndAddProductIdentity(data, internal, fileReference) {
 		
 		if (data.modelID != undefined) {
 			identity = {previewProcessor: "product_information.generateSettingsPreview"};
@@ -349,6 +361,10 @@ module.exports = function(beoBus, globals) {
 				identity.productImage = getProductImage(false);
 			}
 			
+			identity.internal = (internal) ? true : false;
+			
+			identity.fileReference = (fileReference) ? fileReference : null;
+			
 			if (data.produced != undefined) {
 				if (!isNaN(data.produced)) {
 					identity.produced = data.produced;
@@ -360,6 +376,20 @@ module.exports = function(beoBus, globals) {
 			}
 			
 			productIdentities[identity.modelID] = identity;
+		}
+	}
+	
+	function deleteProductIdentity(identity, internal) {
+		if (productIdentities[identity]) {
+			if (!productIdentities[identity].internal || internal) {
+				// Only delete "internal" presets with an override.
+				if (internal && productIdentities[identity].fileReference) {
+					// Delete the identity file if it is referenced.
+					if (fs.existsSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference)) fs.unlinkSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference);
+				}
+				if (debug) console.log("Removing product identity '"+identity+"'.");
+				delete productIdentities[identity];
+			}
 		}
 	}
 	
@@ -405,7 +435,7 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	downloadQueue = [];
-	function downloadProductImage(queue, downloaded, failed) {
+	function downloadProductImage(queue, callback, downloaded, failed) {
 		if (hasInternet) {
 			fromURL = null;
 			if (queue != false && queue != null) {
@@ -428,13 +458,13 @@ module.exports = function(beoBus, globals) {
 				downloadQueue = [];
 				if (callback) callback(downloaded, failed);
 			} else {
-				console.error("No extensions to download.");
+				console.error("No images to download.");
 				if (callback) callback(false);
 			}
 			
 			if (fromURL) {
-				download(downloadQueue[i], imageDirectory, null, function(success, err) {
-					downloadProductImage(queue, downloaded, failed);
+				download(fromURL, imageDirectory, null, function(success, err) {
+					downloadProductImage(queue, callback, downloaded, failed);
 				});
 			}
 		} else {
@@ -450,9 +480,10 @@ module.exports = function(beoBus, globals) {
 	return {
 		getProductInformation: getProductInformation,
 		setProductIdentity: setProductModel,
-		getProductImage: getProductImage,
-		getProductInformation: getProductInformation,
 		getProductIdentity: getProductIdentity,
+		getProductImage: getProductImage,
+		addProductIdentity: checkAndAddProductIdentity,
+		deleteProductIdentity: deleteProductIdentity,
 		version: version
 	};
 };

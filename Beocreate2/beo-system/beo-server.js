@@ -262,10 +262,35 @@ expressServer.get("/", function (req, res) {
 // REST API endpoint to talk to extensions.
 expressServer.use(express.json());
 expressServer.post("/:extension/:header", function (req, res) {
-	if (debugMode == 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
-	beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
-	res.status(200);
-	res.send("OK");
+	if (req.params.header == "upload") {
+		if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
+		if (debugMode) console.log("File upload for '"+req.params.extension+"':", req.header("fileName"));
+		if (extensions[req.params.extension] && extensions[req.params.extension].processUpload) { // Check that the extension can receive this file, then save it to the upload directory and call the extension to process it.
+			fileStream = fs.createWriteStream(dataDirectory+"/beo-uploads/"+req.header("fileName"));
+			fileStream.on("finish", function() {
+				try {
+					extensions[req.params.extension].processUpload(dataDirectory+"/beo-uploads/"+req.header("fileName"));
+				} catch (error) {
+					console.error("Error processing file upload:", error);
+				}
+			});
+			req.pipe(fileStream);
+			req.on("end", function() {
+				res.status(202);
+				res.send("OK");
+				
+			});
+		} else {
+			console.error("'"+req.params.extension+"' cannot process uploaded files.");
+			res.status(501);
+			res.send("cannotReceive");
+		}
+	} else {
+		if (debugMode >= 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
+		beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
+		res.status(200);
+		res.send("OK");
+	}
 });
 
 // START WEBSOCKET

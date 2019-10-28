@@ -172,7 +172,7 @@ function setProductModel(theModelID) {
 }
 
 function generateSettingsPreview(identity, presetName) {
-	console.log(identity);
+	if (!identity) identity = {};
 	infoString = "";
 	if (identity.designer) {
 		infoString = translatedString("Designed by", "designedBy", "product-information") + " " + identity.designer;
@@ -205,6 +205,11 @@ function generateSettingsPreview(identity, presetName) {
 	if (identity.modelName) previewString += identity.modelName;
 	
 	return [translatedString("Icon & Model Name", "iconAndModelName", "product-information"), "<p>"+previewString+"</p>"];
+}
+
+function clearPresetPreview() {
+	$(".sound-preset-information p.product").text("");
+	$(".sound-preset-information h2").text("").addClass("hidden-2");
 }
 
 
@@ -242,6 +247,7 @@ return {
 	modelID: function() {return modelID},
 	productImage: function() {return productImage},
 	generateSettingsPreview: generateSettingsPreview,
+	clearPresetPreview: clearPresetPreview,
 	startCustomisation: startCustomisation,
 	finishCustomisation: finishCustomisation,
 	changeProductName: changeProductName,

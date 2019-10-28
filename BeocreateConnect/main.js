@@ -151,7 +151,7 @@ Menu.setApplicationMenu(menu);
 			win.webContents.send('colourSchemeIsDark', systemPreferences.isDarkMode());
 		}
 		win.webContents.send('styleForWindows', process.platform !== 'darwin');
-		startDiscovery();
+		startDiscovery(true);
 		setTimeout(function() {
 			win.show();	
 		}, 100);
@@ -191,6 +191,14 @@ Menu.setApplicationMenu(menu);
     win.on('blur', () => {
     	win.webContents.send('windowEvent', "resignActive");
     });
+	
+	win.on("enter-full-screen", () => {
+		win.webContents.send('windowEvent', "fullScreen");
+	});
+	
+	win.on("leave-full-screen", () => {
+		win.webContents.send('windowEvent', "windowed");
+	});
 	
 	win.webContents.on('new-window', function(event, url){
 	  event.preventDefault();
@@ -235,36 +243,38 @@ if (process.platform == "darwin") {
 // FIND BEOCREATE SYSTEMS
 var browser = null;
 var browserLegacy = null; // for "BeoCreate 1" systems
-  
-function startDiscovery() { // Start or restart discovery.
-	
-  	if (!browser) {
-	  	browser = new dnssd.Browser(dnssd.tcp('beocreate'), {maintain: true});
-	  	browserLegacy = new dnssd.Browser(dnssd.tcp('beolink-open'), {maintain: true});
-  		
-  		browser.on('serviceUp', service => discoveryEvent("up", service, false));
-  		browser.on('serviceDown', service => discoveryEvent("down", service, false));
-  		browser.on('serviceChanged', service => discoveryEvent("changed", service, false));
-  		browser.on('error', error => console.log("dnssd error: "+error));
-  		
-  		browserLegacy.on('serviceUp', service => discoveryEvent("up", service, true));
-  		browserLegacy.on('serviceDown', service => discoveryEvent("down", service, true));
-  		browserLegacy.on('serviceChanged', service => discoveryEvent("changed", service, true));
-  		
-  	} else {
-  		browser.stop();
-  		browserLegacy.stop();
-  	}
-  	
-	browser.start();
-	browserLegacy.start();
-  
+var startedOnce = false;
+function startDiscovery(once) { // Start or restart discovery.
+	if (!once || !startedOnce) {
+	  	if (!browser) {
+		  	browser = new dnssd.Browser(dnssd.tcp('beocreate'), {maintain: true});
+		  	browserLegacy = new dnssd.Browser(dnssd.tcp('beolink-open'), {maintain: true});
+	  		
+	  		browser.on('serviceUp', service => discoveryEvent("up", service, false));
+	  		browser.on('serviceDown', service => discoveryEvent("down", service, false));
+	  		browser.on('serviceChanged', service => discoveryEvent("changed", service, false));
+	  		browser.on('error', error => console.log("dnssd error: "+error));
+	  		
+	  		browserLegacy.on('serviceUp', service => discoveryEvent("up", service, true));
+	  		browserLegacy.on('serviceDown', service => discoveryEvent("down", service, true));
+	  		browserLegacy.on('serviceChanged', service => discoveryEvent("changed", service, true));
+	  		
+	  	} else {
+	  		stopDiscovery();
+	  	}
+	  	
+		browser.start();
+		browserLegacy.start();
+		startedOnce = true;
+  }
 }
 
 function stopDiscovery() {
 	if (browser) {
 		browser.stop();
 		browserLegacy.stop();
+		products = {};
+		win.webContents.send('discoveredProducts', products);
 	}
 }
 

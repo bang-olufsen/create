@@ -15,7 +15,7 @@
 				<div id="artwork-wrap-inner">
 					<!--<div id="artwork-wrap-inner-2">-->
 						<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">
-						<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" onload="now_playing.artworkLoaded();" alt="Album Artwork" class="artwork-img placeholder visible" id="main-artwork" />
+						<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" onload="try {now_playing.artworkLoaded()} catch(error) {};" alt="Album Artwork" class="artwork-img placeholder visible" id="main-artwork" />
 					<!--</div>-->
 				</div>
 				<img class="square-helper" src="common/square-helper.png">

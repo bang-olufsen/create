@@ -27,7 +27,8 @@ $(document).on("spotifyd", function(event, data) {
 	}
 	
 	if (data.header == "logInError") {
-		ask("spotifyd-login-error-prompt");
+		//ask("spotifyd-login-error-prompt");
+		notify({title: "Error logging in", message: "The user name or password may be incorrect, or the account is not a Spotify Premium account.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 	}
 });
 

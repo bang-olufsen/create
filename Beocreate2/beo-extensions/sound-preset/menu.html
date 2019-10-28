@@ -46,7 +46,7 @@
 				<img class="menu-icon" src="€/symbols-black/upload.svg">
 				<div class="menu-label">Import Preset...</div>
 			</div>-->
-			<div class="button pill grey" onclick="uploadFile({title: 'Import Sound Preset'}, 'sound-preset');">Import Preset…</div>
+			<div class="button pill grey" onclick="uploadFile({title: 'Import Sound Preset', uploadMessage: 'Importing sound preset...'}, 'sound-preset');">Import Preset…</div>
 			<div class="button-row centre setup-hide hidden">
 				<div class="button pill black">Save…</div>
 				<div class="button pill">Import…</div>
@@ -58,7 +58,7 @@
 			<header class="popup">
 				<div class="button symbol left" onclick="sound_preset.closePreview();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
 				<h1>Sound Preset</h1>
-				<div class="button symbol right setup-hide" onclick="sound_preset.shareSelectedPreset();" style="-webkit-mask-image: url(common/symbols-black/share.svg); mask-image: url(common/symbols-black/share.svg);"></div>
+				<div class="button symbol right setup-hide" onclick="sound_preset.optionsForSelectedPreset();" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
 			</header>
 			
 			<div class="scroll-area">
@@ -106,6 +106,38 @@
 			</footer>
 		</div>
 	
+	<div class="ask-menu" id="replace-sound-preset-prompt">
+		<h2>Replace Existing Preset?</h2>
+		<p>'<span class="ask-dynamic-0">Preset Name</span>' has the same file name as the imported preset. Would you like to replace it?</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="sound_preset.replaceExistingPreset(true);">Replace</div>
+			<div class="button pill black cancel default" onclick="sound_preset.replaceExistingPreset(false);">Don't Replace</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="sound-preset-options-prompt">
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="sound_preset.deletePreset();">Remove Preset...</div>
+			<div class="button pill grey" onclick="sound_preset.exportPreset();">Export Preset</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="sound-preset-options-readonly-prompt">
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="sound_preset.exportPreset();">Export Preset</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="delete-sound-preset-prompt">
+		<h2>Remove <span class="ask-dynamic-0">Preset Name</span>?</h2>
+		<p>This cannot be undone.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="sound_preset.deletePreset(true);">Remove Preset</div>
+			<div class="button pill black cancel default" onclick="ask();">Don't Remove</div>
+		</div>
+	</div>
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/sound-preset-client.js"></script>

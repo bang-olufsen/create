@@ -4,7 +4,8 @@
 		"presetVersion": 1,
 		"readOnly": true,
 		"productIdentity": "beovox-cx50",
-		"fallbackDSP": "beocreate-universal"
+		"fallbackDSP": "beocreate-universal",
+		"samplingRate": 48000
 	},
 	"equaliser": {
 		"a": [

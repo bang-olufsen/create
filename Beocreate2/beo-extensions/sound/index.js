@@ -139,15 +139,15 @@ module.exports = function(beoBus, globals) {
 			case "mute":
 				fade = false;
 				if (event.content.fade) fade = true;
-				mute(true, fade);
+				//mute(true, fade);
 				break;
 			case "unmute":
 				fade = (event.content.fade) ? true : false;
-				mute(false, fade);
+				//mute(false, fade);
 				break;
 			case "toggleMute":
 				fade = (event.content.fade) ? true : false;
-				mute(undefined, fade);
+				//mute(undefined, fade);
 				break;
 			case "getVolume":
 				getVolume(function(volume) {

@@ -38,6 +38,7 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
+	var restartAfter = false;
 	var setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
 	// Setup is in the flow by default and two times, because it shows both introduction and finish screens.
 	
@@ -55,10 +56,10 @@ module.exports = function(beoBus, globals) {
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beoBus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, reset: true}});
+					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, reset: true, restartAfter: restartAfter}});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
-					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension}});
+					beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, restartAfter: restartAfter}});
 				}
 			}
 			
@@ -77,6 +78,9 @@ module.exports = function(beoBus, globals) {
 						setup = false;
 						beoBus.emit("setup", {header: "finishingSetup"});
 						beoBus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
+						if (restartAfter) {
+							beoBus.emit("general", {header: "requestReboot", content: {extension: "setup"}});
+						}
 					}
 					break;
 				}
@@ -164,6 +168,22 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
+	function restartWhenComplete(extension, restart) {
+		// Allows an extension to request system reboot when the setup is complete.
+		restartAfterTemp = false;
+		for (var i = 0; i < setupFlow.length; i++) {
+			if (setupFlow[i].extension == extension) {
+				setupFlow[i].restart = restart;
+				break;
+			}
+			if (setupFlow[i].restart) restartAfterTemp = true;
+		}
+		if (restartAfter != restartAfterTemp) {
+			restartAfter = restartAfterTemp;
+			beoBus.emit("ui", {target: "setup", header: "restartAfter", content: {restartAfter: restartAfter}});
+		}
+	}
+	
 	function leaveSetupFlow(extension) {
 		// If an extension decides it doesn't need setup anymore, it can leave the setup flow even during setup if it hasn't been shown yet.
 		leaves = false;
@@ -209,6 +229,7 @@ module.exports = function(beoBus, globals) {
 		joinSetupFlow: joinSetupFlow,
 		leaveSetupFlow: leaveSetupFlow,
 		allowAdvancing: allowAdvancing,
+		restartWhenComplete: restartWhenComplete,
 		setupFlow: setupFlow,
 		version: version
 	};

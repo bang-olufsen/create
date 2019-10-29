@@ -1,6 +1,7 @@
 var setup = (function() {
 
 setupFlow = [];
+restartAfter = false;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -41,6 +42,8 @@ $(document).on("setup", function(event, data) {
 					showExtension("product-information");
 					delete menuState.setup.submenu;
 					$(".back-button.master").removeClass("visible");
+					$("section.top-level .menu-screen").removeClass("block");
+					$("section.top-level .menu-screen:first-child").addClass("block");
 					$("#setup-finish").removeClass("block").addClass("hidden-right");
 					$("#setup").removeClass("hidden-left").addClass("block");
 					$("body").removeClass("setup").css("opacity", "1");
@@ -80,9 +83,25 @@ $(document).on("setup", function(event, data) {
 		}
 	}
 	
+	if (data.header == "restartAfter") {
+		if (data.content.restartAfter) {
+			restartAfter = true;
+			$("#setup-finish .will-restart").removeClass("hidden");
+			$("#setup-finish .no-restart").addClass("hidden");
+		} else {
+			restartAfter = false;
+			$("#setup-finish .will-restart").addClass("hidden");
+			$("#setup-finish .no-restart").removeClass("hidden");
+		}
+	}
+	
 	if (data.header == "assistantButton") {
 		if (data.content.lastStep) {
-			$("#assistant-button").text("Finish Setup");
+			if (!restartAfter) {
+				$("#assistant-button").text("Finish Setup");
+			} else {
+				$("#assistant-button").text("Finish & Restart");
+			}
 		} else {
 			$("#assistant-button").text("Next Step");
 		}

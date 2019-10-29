@@ -83,6 +83,7 @@ if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 if (fs.existsSync(dataDirectory+"/system.json")) {
 	try {
 		systemConfiguration = Object.assign(systemConfiguration, JSON.parse(fs.readFileSync(dataDirectory+"/system.json")));
+		console.log("System settings loaded.");
 	} catch (error) {
 		console.error("Error loading system.json for system settings:", error);
 		systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
@@ -93,6 +94,7 @@ if (fs.existsSync(dataDirectory+"/system.json")) {
 if (fs.existsSync(dataDirectory+"/ui.json")) {
 	try {
 		uiSettings = Object.assign(uiSettings, JSON.parse(fs.readFileSync(dataDirectory+"/ui.json")));
+		console.log("User interface settings loaded.");
 	} catch (error) {
 		console.error("Error loading system.json for system settings:", error);
 		var uiSettings = JSON.parse(JSON.stringify(defaultUISettings));
@@ -117,6 +119,9 @@ beoBus.on("ui", function(event) {
 	} else {
 		if (event.header == "settings" && event.content.settings) {
 			uiSettings = event.content.settings;
+		}
+		if (event.header == "getUISettings") {
+			beoCom.send({header: "settings", target: "ui", content: {settings: uiSettings}});
 		}
 		if (event.header == "disclosure") {
 			if (event.content.element && event.content.isOn != undefined)

@@ -236,7 +236,9 @@ module.exports = function(beoBus, globals) {
 					if (metadata) {
 						if (!metadataFromDSP && !startup) {
 							// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
-							
+							if (extensions.setup && extensions.setup.restartWhenComplete) {
+								extensions.setup.restartWhenComplete("sound-preset", true);
+							}
 						}
 						metadataFromDSP = true;
 						amplifierMute(false);

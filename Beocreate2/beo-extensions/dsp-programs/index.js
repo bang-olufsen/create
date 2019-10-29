@@ -33,6 +33,7 @@ module.exports = function(beoBus, globals) {
 	var debug = globals.debug;
 	
 	var currentMetadata = {};
+	var metadataFromDSP = false;
 	var currentChecksum = null;
 	
 	var version = require("./package.json").version;
@@ -74,7 +75,7 @@ module.exports = function(beoBus, globals) {
 							beoBus.emit('dsp', {header: "metadata", content: {metadata: null}});
 						}
 						
-					});
+					}, true);
 				}
 			}); // Opens a link with the SigmaDSP daemon.
 		}
@@ -222,7 +223,7 @@ module.exports = function(beoBus, globals) {
 		}
 	});
 	
-	function getCurrentChecksumAndMetadata(callback) {
+	function getCurrentChecksumAndMetadata(callback, startup) {
 		if (callback) {
 			amplifierMute(true);
 			beoDSP.getChecksum(function(checksum) {
@@ -233,10 +234,16 @@ module.exports = function(beoBus, globals) {
 					metadata = (response != null) ? parseDSPMetadata(response) : null;
 					
 					if (metadata) {
+						if (!metadataFromDSP && !startup) {
+							// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
+							
+						}
+						metadataFromDSP = true;
 						amplifierMute(false);
 						callback(metadata, true);
 					} else {
 						// If no metadata was received from the DSP, check if any of the stored programs contains the same checksum and use that metadata.
+						metadataFromDSP = false;
 						programMatch = null;
 						for (program in dspPrograms) {
 							if (dspPrograms[program].checksum == currentChecksum) {

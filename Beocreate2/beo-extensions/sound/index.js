@@ -196,9 +196,9 @@ module.exports = function(beoBus, globals) {
 			case 0: // No volume control.
 				callback(null);
 			case 1: // Talk to AudioControl.
-				setVolumeViaAudioControl(volume, function(newVolume) {
+				/*setVolumeViaAudioControl(volume, function(newVolume) {
 					reportVolume(newVolume, callback, flag);
-				});
+				});*/
 				break;
 			case 2: // Talk to ALSA.
 				setVolumeViaALSA(volume, function(newVolume) {
@@ -342,6 +342,7 @@ module.exports = function(beoBus, globals) {
 					}
 				} else {
 					callback(null);
+					if (debug) console.error("Setting volume via AudioControl possibly failed. Status code was: "+res.statusCode);
 				}
 			}
 		});

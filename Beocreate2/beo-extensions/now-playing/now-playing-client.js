@@ -3,7 +3,7 @@ var now_playing = (function() {
 var systemVolume = null;
 var adjustingSystemVolume = false;
 var canStartSources = false;
-var currentSource = null;
+var focusedSource = null;
 var cacheIndex = 0;
 var playerState = "stopped";
 
@@ -106,21 +106,21 @@ $(document).on("sources", function(event, data) {
 		
 		if (data.content.sources != undefined) {
 			
-			if (data.content.currentSource != undefined) {
-				currentSource = data.content.currentSource;
-				if (data.content.sources[currentSource].transportControls) {
+			if (data.content.focusedSource != undefined) {
+				focusedSource = data.content.focusedSource;
+				if (data.content.sources[focusedSource].transportControls) {
 					$("#now-playing-transport").removeClass("disabled");
 				} else {
 					$("#now-playing-transport").addClass("disabled").removeClass("play-only");
 					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
 				}
-				if (data.content.sources[currentSource].canLove) {
+				if (data.content.sources[focusedSource].canLove) {
 					functionRow("love", true);
 				} else {
 					functionRow("love", false);
 				}
 			} else {
-				currentSource = null;
+				focusedSource = null;
 				$("#now-playing-transport").addClass("disabled");
 				functionRow("love", false);
 				toggleShowAlbumName(true);
@@ -134,7 +134,7 @@ $(document).on("sources", function(event, data) {
 
 function enableSourceStart(startableSources) {
 	if (startableSources != undefined) canStartSources = (startableSources != false) ? true : false;
-	if (!currentSource) {
+	if (!focusedSource) {
 		if (!canStartSources) {
 			$("#now-playing-transport").removeClass("play-only");
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
@@ -220,7 +220,7 @@ function toggleLove() {
 }
 
 function playButtonPress() {
-	if (currentSource) {
+	if (focusedSource) {
 		if (playerState == "playing") {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 		} else if (playerState == "paused" || playerState == "stopped") {
@@ -375,21 +375,21 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 			$(".now-playing-titles").addClass("logo").removeClass("one-row");
 			clearTimeout(sourceNameTimeout);
 			sourceNameTimeout = setTimeout(function() {
-				$("#player-bar-info-area .active-source").removeClass("icon-only");
+				$("#player-bar-info-area .focused-source").removeClass("icon-only");
 			}, 550);
 			evaluateTextScrolling(false);
 		} else if (newFirstRow != "" && newSecondRow == "") { // Second row is empty, hide it.
 			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
 			//$("#top-text .second-row").text(newSecondRow).attr("data-content", newSecondRow);
 			$(".now-playing-titles").addClass("one-row").removeClass("logo");
-			$("#player-bar-info-area .active-source").addClass("icon-only");
+			$("#player-bar-info-area .focused-source").addClass("icon-only");
 			clearTimeout(sourceNameTimeout);
 			evaluateTextScrolling();
 		} else { // Both rows have text, show them.
 			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
 			$(".now-playing-titles .second-row").text(newSecondRow).attr("data-content", newSecondRow);
 			$(".now-playing-titles").removeClass("logo one-row");
-			$("#player-bar-info-area .active-source").addClass("icon-only");
+			$("#player-bar-info-area .focused-source").addClass("icon-only");
 			clearTimeout(sourceNameTimeout);
 			evaluateTextScrolling();
 			clearTimeout(topTextNotifyTimeout);

@@ -26,13 +26,12 @@ module.exports = function(beoBus, globals) {
 	
 	
 	var allSources = {};
-	var activeSources = {};
 	var currentSource = null;
-	var lastSource = null;
+	var focusedSource = null;
 	
 	var startableSources = {}; // Different sources may hold multiple "sub-sources" (connected devices, physical media) that can be started.
 	
-	var activationIndex = 0; // Increment and assign to each source, so that it's known which one activated latest.
+	var focusIndex = 0; // Increment and assign to each source, so that it's known which one activated latest.
 	var defaultSettings = {
 			"port": 81 // HiFiBerry API port.
 		};
@@ -70,7 +69,7 @@ module.exports = function(beoBus, globals) {
 				}
 				break;
 			case "getSources":
-				beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource}});
+				beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				break;
 			case "startableSources":
 				if (event.content.sources && event.content.extension) {
@@ -254,23 +253,20 @@ module.exports = function(beoBus, globals) {
 					if (allSources[extension].playerState != overview.players[i].state) {
 						allSources[extension].playerState = overview.players[i].state;
 						
-						if (overview.players[i].state != "stopped") {
-							if (allSources[extension].playerState == "playing" || !allSources[extension].active) {
-								sourceActivated(extension);
-							}
+						if (overview.players[i].state == "playing") {
+							sourceActivated(extension);
 						} else {
-							// If this source is no longer active, deactivate it.
-							if (allSources[extension].active == true) sourceDeactivated(extension);
+							if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
 						}
 						
 						beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 						
 						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
-							// This is not the current AudioControl source but because it is paused, check again after 20 seconds to see if it has changed.
+							// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
 							clearTimeout(sourceCheckTimeout);
 							sourceCheckTimeout = setTimeout(function() {
 								audioControlGet("status");
-							}, 20000);
+							}, 15000);
 						}
 					}
 				}
@@ -290,12 +286,10 @@ module.exports = function(beoBus, globals) {
 				// Player state updated _for this source_.
 				allSources[extension].playerState = metadata.playerState;
 
-				if (metadata.playerState != "stopped") {
-					if (allSources[extension].playerState == "playing" || !allSources[extension].active) {
-						sourceActivated(extension);
-					}
+				if (metadata.playerState == "playing") {
+					sourceActivated(extension);
 				} else {
-					if (allSources[extension].active == true) sourceDeactivated(extension);
+					sourceDeactivated(extension);
 				}
 				
 				beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
@@ -354,21 +348,21 @@ module.exports = function(beoBus, globals) {
 	
 	function sourceActivated(extension, playerState) {
 		if (allSources[extension] && allSources[extension].enabled) {
-			if (allSources[extension].active == true)  {
+			if (allSources[extension].focusIndex)  {
 				// Source reactivates, recalculate activation indexes.
-				reactivatedSourceActivationIndex = allSources[extension].activationIndex;
-				allSources[extension].activationIndex = 0;
-				activationIndex--;
+				reactivatedSourceFocusIndex = allSources[extension].focusIndex;
+				allSources[extension].focusIndex = 0;
+				focusIndex--;
 				
 				for (source in allSources) {
-					if (allSources[source].activationIndex > reactivatedSourceActivationIndex) {
-						allSources[source].activationIndex--;
+					if (allSources[source].focusIndex > reactivatedSourceFocusIndex) {
+						allSources[source].focusIndex--;
 					}
 				}
 			}
-			activationIndex++;
+			focusIndex++;
 			allSources[extension].active = true;
-			allSources[extension].activationIndex = activationIndex;
+			allSources[extension].focusIndex = focusIndex;
 			
 			// Stop currently active sources, if the source demands it.
 			if (allSources[extension].stopOthers) {
@@ -386,10 +380,8 @@ module.exports = function(beoBus, globals) {
 					}
 				}
 			}
-		
 			determineCurrentSource();
-			if (debug) console.log("Source '"+extension+"' has activated (index "+activationIndex+").");
-			logSourceStatus();
+			if (debug) console.log("Source '"+extension+"' has activated (index "+focusIndex+").");
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
@@ -400,20 +392,21 @@ module.exports = function(beoBus, globals) {
 	
 	function sourceDeactivated(extension, playerState) {
 		if (allSources[extension] && allSources[extension].active) {
-			deactivatedSourceActivationIndex = allSources[extension].activationIndex;
-			allSources[extension].activationIndex = 0;
 			allSources[extension].active = false;
-			activationIndex--;
-			
-			for (source in allSources) {
-				if (allSources[source].activationIndex > deactivatedSourceActivationIndex) {
-					allSources[source].activationIndex--;
+			if (!allSources[extension].transportControls && Object.keys(allSources[extension].metadata).length == 0) {
+				// Remove the focus index from the source if it has no metadata and transport controls.
+				deactivatedSourceFocusIndex = allSources[extension].focusIndex;
+				allSources[extension].focusIndex = 0;
+				focusIndex--;
+				
+				for (source in allSources) {
+					if (allSources[source].focusIndex > deactivatedSourceFocusIndex) {
+						allSources[source].focusIndex--;
+					}
 				}
 			}
-			
 			determineCurrentSource();
 			if (debug) console.log("Source '"+extension+"' has deactivated.");
-			logSourceStatus();
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
@@ -425,56 +418,46 @@ module.exports = function(beoBus, globals) {
 	function determineCurrentSource() {
 		activeSourceCount = 0;
 		latestSource = null;
-		lastSource = null;
-		highestActivationIndex = 0;
-		playingSource = null;
+		highestFocusIndex = 0;
+		focusedSource = null;
+		newSource = null;
 		for (source in allSources) {
-			if (allSources[source].active) {
-				activeSourceCount++;
-				if (allSources[source].activationIndex > highestActivationIndex) {
-					highestActivationIndex = allSources[source].activationIndex;
-					latestSource = source;
+			if (allSources[source].focusIndex > highestFocusIndex) {
+				highestFocusIndex = allSources[source].focusIndex;
+				focusedSource = source;
+				if (allSources[source].active) {
+					newSource = source;
+					activeSourceCount++;
 				}
-			}
-			if (allSources[source].playerState == "playing") {
-				playingSource = source;
 			}
 		}
 		if (activeSourceCount == 0) {
 			if (currentSource != null) {
-				lastSource = currentSource;
 				currentSource = null;
 				beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "red"}}});
-				
 			}
 		} else {
-			newSource = null;
-			if (playingSource && playingSource != currentSource) {
-				newSource = playingSource;
-			} else if (latestSource != currentSource) {
-				newSource = latestSource;
-			}
-			if (newSource) {
+			if (newSource != currentSource) {
 				currentSource = newSource;
 				beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "green", speed: "fast"}, then: {action: "fadeOut", after: 10}}});
 			}
 		}
 		
-		beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
-		beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource}});
+		beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		logSourceStatus();
 	}
 	
 	function logSourceStatus() {
 		if (debug >= 2) {
-			message = "Current source: "+currentSource+"\n";
+			message = "Sources: [play: "+currentSource+"] [focus: "+focusedSource+"]\n";
 			for (source in allSources) {
 				message += "["+source+"] active: "+allSources[source].active;
-				if (allSources[source].active) message += " ("+allSources[source].activationIndex+". to activate)";
+				if (allSources[source].active) message += " ("+allSources[source].focusIndex+". to activate)";
 				message += ", state: "+allSources[source].playerState;
 				if (allSources[source].metadata.title && allSources[source].metadata.artist) message += ", track: "+allSources[source].metadata.title+" - "+allSources[source].metadata.artist;
 				message += "\n";
 			}
-			console.log(message);
 		}
 	}
 	
@@ -525,7 +508,7 @@ module.exports = function(beoBus, globals) {
 		} else {
 			if (allSourcesRegistered) {
 				if (debug) console.log("All sources registered.");
-				beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
+				beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				audioControlGet("status", function(result) {
 					audioControlGet("metadata");
 				});

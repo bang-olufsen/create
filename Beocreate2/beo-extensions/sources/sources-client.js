@@ -3,6 +3,7 @@ var sources = (function() {
 startableSources = {};
 allSources = {};
 currentSource = null;
+focusedSource = null;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -26,6 +27,11 @@ $(document).on("sources", function(event, data) {
 			} else {
 				currentSource = null;
 			}
+			if (data.content.focusedSource != undefined) {
+				focusedSource = data.content.focusedSource;
+			} else {
+				focusedSource = null;
+			}
 			showActiveSources();
 			updateDisabledSources();
 		}
@@ -45,6 +51,7 @@ $(document).on("sources", function(event, data) {
 
 function showActiveSources() {
 	$(".source-menu-item").addClass("hide-icon-right");
+	// Current, playing source.
 	if (currentSource != null) {
 		if (extensions[currentSource].icon && extensions[currentSource].assetPath) {
 			$(".active-source-icon").each(function() {
@@ -61,6 +68,24 @@ function showActiveSources() {
 		}, 50);
 	} else {
 		$(".active-source").removeClass("visible");
+	}
+	
+	// Which source is focused.
+	if (focusedSource != null) {
+		if (extensions[focusedSource].icon && extensions[focusedSource].assetPath) {
+			$(".focused-source-icon").each(function() {
+				$(this).css("-webkit-mask-image", "url("+extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon+")").css("mask-image", "url("+extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon+")");
+			});
+			$(".focused-source-icon").removeClass("hidden");
+		} else {
+			$(".focused-source-icon").addClass("hidden");
+		}
+		$(".focused-source-name").text(extensions[focusedSource].title);
+		setTimeout(function() {
+			$(".focused-source").addClass("visible");
+		}, 50);
+	} else {
+		$(".focused-source").removeClass("visible");
 	}
 }
 

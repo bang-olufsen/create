@@ -27,7 +27,7 @@ module.exports = function(beoBus, globals) {
 	
 	var allSources = {};
 	var currentSource = null;
-	var lastSource = null;
+	var focusedSource = null;
 	
 	var playerState = "stopped";
 	
@@ -59,33 +59,33 @@ module.exports = function(beoBus, globals) {
 			if (event.content.sources) {
 				allSources = event.content.sources;
 			}
-			if (event.content.currentSource) {
-				if (event.content.currentSource == currentSource) {
-					if (playerState != allSources[currentSource].playerState) {
-						playerState = allSources[currentSource].playerState;
+			if (event.content.focusedSource) {
+				if (event.content.focusedSource == focusedSource) {
+					if (playerState != allSources[focusedSource].playerState) {
+						playerState = allSources[focusedSource].playerState;
 						send({target: "now-playing", header: "playerState", content: {state: playerState}});
 					}
 				} else {
-					sendMetadata(event.content.currentSource, true);
+					sendMetadata(event.content.focusedSource, true);
 				}
-				currentSource = event.content.currentSource;
+				focusedSource = event.content.focusedSource;
 			} else {
-				currentSource = null;
+				focusedSource = null;
 				playerState = "stopped";
 				send({target: "now-playing", header: "playerState", content: {state: playerState}});
 				sendMetadata();
 			}
-			if (event.content.lastSource) {
-				lastSource = event.content.lastSource;
+			if (event.content.currentSource) {
+				currentSource = event.content.currentSource;
 			} else {
-				lastSource = null;
+				currentSource = null;
 			}
 		}
 		
 		if (event.header == "playerStateChanged") {
 			if (event.content.extension && event.content.state) {
 				allSources[event.content.extension].playerState = event.content.state;
-				if (event.content.extension == currentSource) {
+				if (event.content.extension == focusedSource) {
 					if (playerState != event.content.state) {
 						playerState = event.content.state;
 						send({target: "now-playing", header: "playerState", content: {state: playerState}});
@@ -97,7 +97,7 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "metadataChanged") {
 			if (event.content.extension && event.content.metadata) {
 				allSources[event.content.extension].metadata = event.content.metadata;
-				if (event.content.extension == currentSource) sendMetadata(event.content.extension, true);
+				if (event.content.extension == focusedSource) sendMetadata(event.content.extension, true);
 			}
 		}
 
@@ -145,14 +145,14 @@ module.exports = function(beoBus, globals) {
 		}
 		
 		if (event.header == "playerState") {
-			if (currentSource && event.content.extension == currentSource) {
-				if (event.content.state != playerState || previousPlayedSource != currentSource) {
+			if (focusedSource && event.content.extension == focusedSource) {
+				if (event.content.state != playerState || previousPlayedSource != focusedSource) {
 					switch (event.content.state) {
 						case "stopped":
 						case "paused":
 						case "playing":
 							playerState = event.content.state;
-							previousPlayedSource = currentSource;
+							previousPlayedSource = focusedSource;
 							send({target: "now-playing", header: "playerState", content: {state: event.content.state}});
 							break;
 					}
@@ -162,9 +162,9 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "showingNowPlaying") {
 			send({target: "now-playing", header: "playerState", content: {state: playerState}});
-			if (currentSource) {
+			if (focusedSource) {
 				if (event.content.cacheIndex != metadataCacheIndex) {
-					sendMetadata(currentSource);
+					sendMetadata(focusedSource);
 				}
 			} else {
 				sendMetadata();

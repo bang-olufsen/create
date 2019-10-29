@@ -195,6 +195,7 @@ module.exports = function(beoBus, globals) {
 		switch (volumeControl) {
 			case 0: // No volume control.
 				callback(null);
+				break;
 			case 1: // Talk to AudioControl.
 				/*setVolumeViaAudioControl(volume, function(newVolume) {
 					reportVolume(newVolume, callback, flag);
@@ -216,6 +217,7 @@ module.exports = function(beoBus, globals) {
 		switch (volumeControl) {
 			case 0: // No volume control.
 				if (callback) callback(null);
+				break;
 			case 1: // Talk to AudioControl.
 				getVolumeViaAudioControl(function(newVolume) {
 					reportVolume(newVolume, callback, flag);

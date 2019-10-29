@@ -50,11 +50,12 @@ Design and develop extensions.
 
 - Getting Started with Extensions
 
-### Sound
+### Sound & Customisation
 
-Create sound presets and DSP programs.
+Create sound presets, DSP programs and product identities to customise the sound system.
 
 - [Sound Presets](Documentation/SoundPresets.md)
+- [Product Identities](Documentation/ProductIdentities.md)
 
 ### Design
 

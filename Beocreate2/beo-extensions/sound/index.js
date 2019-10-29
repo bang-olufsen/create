@@ -406,6 +406,7 @@ module.exports = function(beoBus, globals) {
 				alsaMixer = settings.mixer;
 			} else {
 				if (debug >= 2) console.log("The ALSA mixer specified in settings ('"+settings.mixer+"') is not available.");
+			}
 		} else {
 			if (debug) console.log("ALSA mixer was not specified in settings.");
 			for (var i = 0; i < allMixers.length; i++) {

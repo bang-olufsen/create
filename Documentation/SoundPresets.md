@@ -27,11 +27,7 @@ In essence, sound presets are JSON files. The following is an example of a valid
 			"a": [{"type": "highPass", "frequency": 1000}],
 			"b": [{"type": "peak", "frequency": 1000, "Q": 0.7, "gain": 2}],
 			"c": [{"type": "highShelf", "frequency": 1000, "Q": 0.5}],
-			"d": [{"b0": 0.933897197830, 
-					"b1": -1.247919091952, 
-					"b2": 0.678131896299, 
-					"a1": -1.366776677313, 
-					"a2": 0.731535942794}]
+			"d": [{"b0": 0.933897197830, "b1": -1.247919091952, "b2": 0.678131896299, "a1": -1.366776677313, "a2": 0.731535942794}]
 		},
 		"channels": {
 			"a": {
@@ -82,27 +78,39 @@ Next, we will cover the different sections and possible settings of a preset in 
 
 This is the only ***required section***. It stores basic information about the sound preset, listed below.
 
+#### Preset Name
+
 	"presetName": "Beovox CX 50"
 
 **Required.** The name of the preset shown in the user interface.
+
+#### Product Identity
 
 	"productIdentity": "beovox-cx50"
 
 The identifier of a "product identity", that may contain information such as model name, manufacturer, designer, manufacturing years and a product image. Several product identities are included in Beocreate 2. Define this property to use a standalone product identity or an identity from another sound preset.
 
-For more information on product identities, refer to [this document](Product Identities.md).
+For more information on product identities, refer to [this document](ProductIdentities.md).
+
+#### Fallback DSP Program
 
 	"fallbackDSP": "beocreate-universal"
 
 If the current DSP program doesn't support all of the settings in the preset, install the DSP program with this file name, if it is available on the system. For all default sound presets, this is "beocreate-universal". Other presets can use it as well if suitable.
 
+#### Sampling Rate
+
 	"samplingRate": 48000
 
 *Required in some cases*. If the sound preset contains filters defined as coefficients directly (explained later), the sampling rate has to be defined so that it can be matched with the DSP program. If not defined, those filters will be ignored. *Alternatively* the sampling rate can be defined with each filter.
 
+#### Read-only
+
 	"readOnly": false
 
 Read-only sound presets can't be deleted or replaced from the user interface.
+
+#### Preset Version
 
 	"presetVersion": 1
 
@@ -211,7 +219,7 @@ The following settings are supported for each channel:
 - Role
 - Level
 - Delay
-- Invert signal
+- Invert polarity
 
 #### Mute/Unmute
 
@@ -261,7 +269,7 @@ The maximum delay times are defined by the DSP program. For Beocreate Universal,
 
 It is recommended to only delay the channels that require it.
 
-#### Invert Channel
+#### Invert Polarity
 
 For some crossover configurations (2nd-order), it may be necessary to invert the *polarity* of a channel.
 
@@ -274,7 +282,7 @@ Possible values are: *true* or *false*.
 
 ## Product Identities
 
-The function and composition of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
+The function and structure of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
 
 	"product-information": {
 		"modelID": "beovox-cx50",

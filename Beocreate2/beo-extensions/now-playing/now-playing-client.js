@@ -90,6 +90,7 @@ $(document).on("now-playing", function(event, data) {
 	}
 	
 	if (data.header == "playerState") {
+		clearTimeout(playButtonSymbolTimeout);
 		playerState = data.content.state;
 		if (data.content.state == "playing") {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
@@ -219,13 +220,23 @@ function toggleLove() {
 	send({target: "now-playing", header: "toggleLove"});
 }
 
+var playButtonSymbolTimeout;
 function playButtonPress() {
 	if (focusedSource) {
+		// Change the symbol immediately to improve responsiveness. But change it to the real symbol after two seconds if nothing has happened.
 		if (playerState == "playing") {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
-		} else if (playerState == "paused" || playerState == "stopped") {
+		} else {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
 		}
+		clearTimeout(playButtonSymbolTimeout);
+		playButtonSymbolTimeout = setTimeout(function() {
+			if (playerState == "playing") {
+				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+			} else {
+				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
+			}
+		}, 2000);
 		transport("playPause");
 	} else if (canStartSources) {
 		if (sources && sources.showStartableSources) sources.showStartableSources();

@@ -504,7 +504,7 @@ module.exports = function(beoBus, globals) {
 		
 		
 		if (!sourceAdded) { 
-			beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, lastSource: lastSource}});
+			beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 		} else {
 			if (allSourcesRegistered) {
 				if (debug) console.log("All sources registered.");

@@ -124,10 +124,12 @@ module.exports = function(beoBus, globals) {
 				break;
 			case "volume":
 				if (event.content.percent != undefined) {
+					if (debug >= 2) console.log("Volume received from AudioControl: "+event.content.percent+" %.");
 					reportVolume(event.content.percent);
 				}
 				break;
 			case "setVolume":
+				if (debug >= 2) console.log("Volume change event from UI: "+event.content+" %.");
 				setVolume(event.content);
 				break;
 			case "setVolumeAudioControl":
@@ -328,6 +330,7 @@ module.exports = function(beoBus, globals) {
 				if (res.statusCode == 200) {
 					try {
 						if (body.percent != undefined) {
+							if (debug >= 2) console.log("Volume set via AudioControl: "+body.percent+" %.");
 							callback(body.percent);
 						} else {
 							callback(null);
@@ -444,6 +447,7 @@ module.exports = function(beoBus, globals) {
 				if (callback) callback(null, error);
 			} else {
 				newVolume = parseFloat(stdout.match(/\[(.*?)\]/)[0].slice(1, -2));
+				if (debug >= 2) console.log("Volume set via ALSA: "+newVolume+" %.");
 				if (callback) callback(newVolume);
 			}
 		});

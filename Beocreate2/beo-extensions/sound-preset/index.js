@@ -112,9 +112,13 @@ module.exports = function(beoBus, globals) {
 		}
 		
 		if (event.header == "applySoundPreset") {
-			
-			if (event.content.presetID && fullPresetList[presetID] != undefined) {
-				samplingRate = (fullPresetList["sound-preset"].samplingRate) ? fullPresetList["sound-preset"].samplingRate : null;
+			presetID = event.content.presetID;
+			if (presetID && fullPresetList[presetID] != undefined) {
+				if (fullPresetList[presetID]["sound-preset"].samplingRate) {
+					samplingRate = fullPresetList[presetID]["sound-preset"].samplingRate;
+				} else {
+					samplingRate = null;
+				}
 				for (soundAdjustment in fullPresetList[presetID]) {
 					if (!event.content.excludedSettings || event.content.excludedSettings.indexOf(soundAdjustment) == -1) {
 						switch (soundAdjustment) {

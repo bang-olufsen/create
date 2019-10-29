@@ -201,8 +201,8 @@ module.exports = function(beoBus, globals) {
 						identityStatus = (identity) ? 0 : 1;
 						checkedPresetContent["product-information"] = {status: identityStatus, report: identity};
 					}
-					if (fullPresetList["sound-preset"].samplingRate) {
-						samplingRate = fullPresetList["sound-preset"].samplingRate;
+					if (fullPresetList[presetID]["sound-preset"].samplingRate) {
+						samplingRate = fullPresetList[presetID]["sound-preset"].samplingRate;
 					} else {
 						samplingRate = null;
 					}

@@ -48,7 +48,7 @@ module.exports = function(beoBus, globals) {
 	var previousVolume = 0; // Previous volume level. Used to compare if volume has changed.
 	
 	// Determine which method to use for volume control.
-	var volumeControl = false; // 0 = no volume control, 1 = AudioControl, 2 = ALSA, 3 = direct DSP control.
+	var volumeControl = false; // 0 = no volume control, 1 = ALSA, 2 = direct DSP control.
 	var audioControlAvailable = false;
 	var directDSPVolumeControlAvailable = false;
 	var alsaDSPVolumeControlAvailable = false;
@@ -69,6 +69,7 @@ module.exports = function(beoBus, globals) {
 			checkIfAudioControlAvailable(function() {
 				getALSAMixers(function() {
 					determineVolumeControl();
+					getVolume();
 				});
 			});
 		}
@@ -176,15 +177,13 @@ module.exports = function(beoBus, globals) {
 	function determineVolumeControl() {
 		// Based on what is currently known about the system, which volume control method should be used?
 		volumeControl = false;
-		if (directDSPVolumeControlAvailable) volumeControl = 3; // Direct DSP control.
-		if (audioControlAvailable) volumeControl = 1; // AudioControl.
-		if (alsaMixer) volumeControl = 2; // ALSA control.
+		if (directDSPVolumeControlAvailable) volumeControl = 2; // Direct DSP control.
+		if (alsaMixer) volumeControl = 1; // ALSA control.
 		
 		if (debug) {
 			if (volumeControl == 0) console.log("System has no volume control.");
-			if (volumeControl == 1) console.log("Volume control is via AudioControl.");
-			if (volumeControl == 2) console.log("Volume control is via ALSA ('"+alsaMixer+"').");
-			if (volumeControl == 3) console.log("Volume control is via direct DSP control.");
+			if (volumeControl == 1) console.log("Volume control is via ALSA ('"+alsaMixer+"').");
+			if (volumeControl == 2) console.log("Volume control is via direct DSP control.");
 		}
 	}
 	
@@ -196,12 +195,7 @@ module.exports = function(beoBus, globals) {
 			case 0: // No volume control.
 				callback(null);
 				break;
-			case 1: // Talk to AudioControl.
-				/*setVolumeViaAudioControl(volume, function(newVolume) {
-					reportVolume(newVolume, callback, flag);
-				});*/
-				break;
-			case 2: // Talk to ALSA.
+			case 1: // Talk to ALSA.
 				setVolumeViaALSA(volume, function(newVolume) {
 					reportVolume(newVolume, callback, flag);
 				});
@@ -218,17 +212,12 @@ module.exports = function(beoBus, globals) {
 			case 0: // No volume control.
 				if (callback) callback(null);
 				break;
-			case 1: // Talk to AudioControl.
-				getVolumeViaAudioControl(function(newVolume) {
-					reportVolume(newVolume, callback, flag);
-				});
-				break;
-			case 2: // Talk to ALSA.
+			case 1: // Talk to ALSA.
 				getVolumeViaALSA(function(newVolume) {
 					reportVolume(newVolume, callback, flag);
 				});
 				break;
-			case 3: // Talk to the DSP directly.
+			case 2: // Talk to the DSP directly.
 				break;
 		}
 	}
@@ -308,47 +297,14 @@ module.exports = function(beoBus, globals) {
 		getVolumeViaAudioControl(function(volume) {
 			if (volume != null) {
 				// Got a value. Write it back to AudioControl.
-				setVolumeViaAudioControl(volume, function(newVolume) {
-					if (newVolume != null) audioControlAvailable = true;
-					if (callback) callback();
-				});
+				audioControlAvailable = true;
+				if (callback) callback();
 			} else {
 				if (callback) callback();
 			}
 		});
 	}
 
-	function setVolumeViaAudioControl(volume, callback) {
-		/*if (!isNaN(volume)) volume = volume.toString();
-		request.post({
-			json: true,
-			url: "http://127.0.1.1:"+sourcesSettings.port+"/api/volume",
-			body: {"percent": volume}
-		}, function(err, res, body) {
-			if (err) {
-				if (debug) console.error("Could not set volume: " + err);
-				callback(null);
-			} else {
-				if (res.statusCode == 200) {
-					try {
-						if (body.percent != undefined) {
-							if (debug >= 2) console.log("Volume set via AudioControl: "+body.percent+" %.");
-							callback(body.percent);
-						} else {
-							callback(null);
-							if (debug) console.error("Volume value not returned.");
-						}
-					} catch (error) {
-						callback(null);
-						if (debug) console.error("Volume control not set up properly.");
-					}
-				} else {
-					callback(null);
-					if (debug) console.error("Setting volume via AudioControl possibly failed. Status code was: "+res.statusCode);
-				}
-			}
-		});*/
-	}
 	
 	function getVolumeViaAudioControl(callback) {
 		if (callback) {

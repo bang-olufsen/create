@@ -124,7 +124,7 @@ module.exports = function(beoBus, globals) {
 			clearTimeout(airPlayVolumeSendTimeout);
 			airPlayVolumeSendTimeout = setTimeout(function() {
 				airPlayVolume = convertAirPlayVolume(event.content.volume, 1);
-				//sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
+				sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
 			}, 500);
 		}
 		

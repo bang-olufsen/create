@@ -214,53 +214,57 @@ module.exports = function(beoBus, globals) {
 		
 	function configureShairportSync(section, option, value, relaunch) {
 		readShairportSyncConfiguration();
-		if (!configuration[section]) {
-			configuration[section] = {};
-		}
-		if (value != undefined || value != null) {
-			if (debug) console.log("Configuring shairport-sync (setting "+option+" in "+section+")...");
-			configuration[section][option] = value;
-		} else {
-			if (debug) console.log("Configuring shairport-sync (removing "+option+" from "+section+")...");
-			delete configuration[section][option];
-		}
-		writeShairportSyncConfiguration();
-		if (relaunch && shairportSyncEnabled) {
-			exec("systemctl restart shairport-sync.service", function(error, stdout, stderr) {
-				if (error) {
-					if (debug) console.error("Relaunching shairport-sync failed: "+error);
-				} else {
-					if (debug) console.error("Shairport-sync was relaunched.");
-				}
-			});
+		if (Object.keys(configuration).length != 0) {
+			if (!configuration[section]) {
+				configuration[section] = {};
+			}
+			if (value != undefined || value != null) {
+				if (debug) console.log("Configuring shairport-sync (setting "+option+" in "+section+")...");
+				configuration[section][option] = value;
+			} else {
+				if (debug) console.log("Configuring shairport-sync (removing "+option+" from "+section+")...");
+				delete configuration[section][option];
+			}
+			writeShairportSyncConfiguration();
+			if (relaunch && shairportSyncEnabled) {
+				exec("systemctl restart shairport-sync.service", function(error, stdout, stderr) {
+					if (error) {
+						if (debug) console.error("Relaunching shairport-sync failed: "+error);
+					} else {
+						if (debug) console.error("Shairport-sync was relaunched.");
+					}
+				});
+			}
 		}
 	}
 	
 	shairportSyncConfigModified = 0;
 	function readShairportSyncConfiguration() {
-		modified = fs.statSync("/etc/shairport-sync.conf").mtimeMs;
-		if (modified != shairportSyncConfigModified) {
-			// Reads shairport-sync configuration into a JavaScript object for easy access.
-			shairportSyncConfig = fs.readFileSync("/etc/shairport-sync.conf", "utf8").split('\n');
-			section = null;
-			for (var i = 0; i < shairportSyncConfig.length; i++) {
-				// Find settings sections.
-				if ((shairportSyncConfig[i].indexOf(" =") != -1 && shairportSyncConfig[i+1].trim() == "{") || (shairportSyncConfig[i].indexOf(" =") != -1 && shairportSyncConfig[i].indexOf("{") != -1)) {
-					section = shairportSyncConfig[i].split("=")[0].trim();
-					configuration[section] = {};
-				} else {
-					line = shairportSyncConfig[i].trim();
-					if (line == "}") section = null;
-					if (section != null && line != "{") {
-						lineItems = line.split("=");
-						if (lineItems.length == 2) {
-							value = lineItems[1].trim().slice(0, -1);
-							if (value.charAt(0) == '"' && value.charAt(value.length-1) == '"') {
-								value = value.slice(1, -1);
-							} else {
-								value = parseFloat(value);
+		if (fs.existsSync("/etc/shairport-sync.conf")) {
+			modified = fs.statSync("/etc/shairport-sync.conf").mtimeMs;
+			if (modified != shairportSyncConfigModified) {
+				// Reads shairport-sync configuration into a JavaScript object for easy access.
+				shairportSyncConfig = fs.readFileSync("/etc/shairport-sync.conf", "utf8").split('\n');
+				section = null;
+				for (var i = 0; i < shairportSyncConfig.length; i++) {
+					// Find settings sections.
+					if ((shairportSyncConfig[i].indexOf(" =") != -1 && shairportSyncConfig[i+1].trim() == "{") || (shairportSyncConfig[i].indexOf(" =") != -1 && shairportSyncConfig[i].indexOf("{") != -1)) {
+						section = shairportSyncConfig[i].split("=")[0].trim();
+						configuration[section] = {};
+					} else {
+						line = shairportSyncConfig[i].trim();
+						if (line == "}") section = null;
+						if (section != null && line != "{") {
+							lineItems = line.split("=");
+							if (lineItems.length == 2) {
+								value = lineItems[1].trim().slice(0, -1);
+								if (value.charAt(0) == '"' && value.charAt(value.length-1) == '"') {
+									value = value.slice(1, -1);
+								} else {
+									value = parseFloat(value);
+								}
+								configuration[section][lineItems[0].trim()] = value;
 							}
-							configuration[section][lineItems[0].trim()] = value;
 						}
 					}
 				}
@@ -270,21 +274,23 @@ module.exports = function(beoBus, globals) {
 	
 	function writeShairportSyncConfiguration() {
 		// Saves current shairport-sync configuration back into the file.
-		shairportSyncConfig = [];
-		for (section in configuration) {
-			shairportSyncConfig.push(section+" =\n{");
-			for (option in configuration[section]) {
-				if (isNaN(configuration[section][option])) {
-					value = '"'+configuration[section][option]+'"';
-				} else {
-					value = configuration[section][option];
+		if (fs.existsSync("/etc/shairport-sync.conf")) {
+			shairportSyncConfig = [];
+			for (section in configuration) {
+				shairportSyncConfig.push(section+" =\n{");
+				for (option in configuration[section]) {
+					if (isNaN(configuration[section][option])) {
+						value = '"'+configuration[section][option]+'"';
+					} else {
+						value = configuration[section][option];
+					}
+					shairportSyncConfig.push('\t'+option+' = '+value+';');
 				}
-				shairportSyncConfig.push('\t'+option+' = '+value+';');
+				shairportSyncConfig.push("}");
 			}
-			shairportSyncConfig.push("}");
+			fs.writeFileSync("/etc/shairport-sync.conf", shairportSyncConfig.join("\n"));
+			shairportSyncConfigModified = fs.statSync("/etc/shairport-sync.conf").mtimeMs;
 		}
-		fs.writeFileSync("/etc/shairport-sync.conf", shairportSyncConfig.join("\n"));
-		shairportSyncConfigModified = fs.statSync("/etc/shairport-sync.conf").mtimeMs;
 	}
 	
 	

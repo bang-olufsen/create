@@ -135,68 +135,74 @@ module.exports = function(beoBus, globals) {
 	
 	function configureBluetooth(options, relaunch, callback) {
 		readBluetoothConfiguration();
-		if (typeof options == "object" && !Array.isArray(options)) {
-			options = [options];
-		}
-		for (var i = 0; i < options.length; i++) {
-			if (options[i].section && options[i].option) {
-				if (!configuration[options[i].section]) configuration[options[i].section] = {};
-				if (options[i].value) {
-					if (debug) console.log("Configuring Bluetooth (setting "+options[i].option+" in "+options[i].section+")...")
-					configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
-				} else {
-					if (configuration[options[i].section][options[i].option]) {
-						if (options[i].remove) {
-							if (debug) console.log("Configuring Bluetooth (removing "+options[i].option+" in "+options[i].section+")...")
-							delete configuration[options[i].section][options[i].option];
-						} else {
-							if (debug) console.log("Configuring Bluetooth (commenting out "+options[i].option+" in "+options[i].section+")...")
-							configuration[options[i].section][options[i].option].comment = true;
+		if (Object.keys(configuration).length != 0) {
+			if (typeof options == "object" && !Array.isArray(options)) {
+				options = [options];
+			}
+			for (var i = 0; i < options.length; i++) {
+				if (options[i].section && options[i].option) {
+					if (!configuration[options[i].section]) configuration[options[i].section] = {};
+					if (options[i].value) {
+						if (debug) console.log("Configuring Bluetooth (setting "+options[i].option+" in "+options[i].section+")...")
+						configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
+					} else {
+						if (configuration[options[i].section][options[i].option]) {
+							if (options[i].remove) {
+								if (debug) console.log("Configuring Bluetooth (removing "+options[i].option+" in "+options[i].section+")...")
+								delete configuration[options[i].section][options[i].option];
+							} else {
+								if (debug) console.log("Configuring Bluetooth (commenting out "+options[i].option+" in "+options[i].section+")...")
+								configuration[options[i].section][options[i].option].comment = true;
+							}
 						}
 					}
 				}
 			}
-		}
-		writeBluetoothConfiguration();
-		if (relaunch && bluetoothEnabled) {
-			exec("systemctl restart bluetooth.service bluealsa.service bluealsa-aplay.service", function(error, stdout, stderr) {
-				if (error) {
-					if (debug) console.error("Relaunching Bluetooth failed: "+error);
-					if (callback) callback(false, error);
-				} else {
-					if (debug) console.error("Bluetooth was relaunched.");
-					if (callback) callback(true);
-				}
-			});
+			writeBluetoothConfiguration();
+			if (relaunch && bluetoothEnabled) {
+				exec("systemctl restart bluetooth.service bluealsa.service bluealsa-aplay.service", function(error, stdout, stderr) {
+					if (error) {
+						if (debug) console.error("Relaunching Bluetooth failed: "+error);
+						if (callback) callback(false, error);
+					} else {
+						if (debug) console.error("Bluetooth was relaunched.");
+						if (callback) callback(true);
+					}
+				});
+			} else {
+				if (callback) callback(true);
+			}
 		} else {
-			if (callback) callback(true);
+			if (callback) callback(false);
 		}
 	}
 	
 	bluetoothConfigModified = 0;
 	function readBluetoothConfiguration() {
-		modified = fs.statSync("/etc/bluetooth/main.conf").mtimeMs;
-		if (modified != bluetoothConfigModified) {
-			// Reads configuration into a JavaScript object for easy access.
-			bluetoothConfig = fs.readFileSync("/etc/bluetooth/main.conf", "utf8").split('\n');
-			section = null;
-			for (var i = 0; i < bluetoothConfig.length; i++) {
-				// Find settings sections.
-				if (bluetoothConfig[i].indexOf("[") != -1 && bluetoothConfig[i].indexOf("]") != -1) {
-					section = bluetoothConfig[i].trim().slice(1, -1);
-					configuration[section] = {};
-				} else {
-					if (section != null) {
-						line = bluetoothConfig[i].trim();
-						comment = (line.charAt(0) == "#") ? true : false;
-						if (comment) {
-							lineItems = line.slice(1).split("=");
-						} else {
-							lineItems = line.split("=");
-						}
-						if (lineItems.length == 2) {
-							value = lineItems[1].trim();
-							configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+		if (fs.existsSync("/etc/bluetooth-main.conf")) {
+			modified = fs.statSync("/etc/bluetooth/main.conf").mtimeMs;
+			if (modified != bluetoothConfigModified) {
+				// Reads configuration into a JavaScript object for easy access.
+				bluetoothConfig = fs.readFileSync("/etc/bluetooth/main.conf", "utf8").split('\n');
+				section = null;
+				for (var i = 0; i < bluetoothConfig.length; i++) {
+					// Find settings sections.
+					if (bluetoothConfig[i].indexOf("[") != -1 && bluetoothConfig[i].indexOf("]") != -1) {
+						section = bluetoothConfig[i].trim().slice(1, -1);
+						configuration[section] = {};
+					} else {
+						if (section != null) {
+							line = bluetoothConfig[i].trim();
+							comment = (line.charAt(0) == "#") ? true : false;
+							if (comment) {
+								lineItems = line.slice(1).split("=");
+							} else {
+								lineItems = line.split("=");
+							}
+							if (lineItems.length == 2) {
+								value = lineItems[1].trim();
+								configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+							}
 						}
 					}
 				}
@@ -206,20 +212,22 @@ module.exports = function(beoBus, globals) {
 	
 	function writeBluetoothConfiguration() {
 		// Saves current configuration back into the file.
-		bluetoothConfig = [];
-		for (section in configuration) {
-			bluetoothConfig.push("["+section+"]");
-			for (option in configuration[section]) {
-				if (configuration[section][option].comment) {
-					line = "#"+option+" = "+configuration[section][option].value;
-				} else {
-					line = option+" = "+configuration[section][option].value;
+		if (fs.existsSync("/etc/bluetooth-main.conf")) {
+			bluetoothConfig = [];
+			for (section in configuration) {
+				bluetoothConfig.push("["+section+"]");
+				for (option in configuration[section]) {
+					if (configuration[section][option].comment) {
+						line = "#"+option+" = "+configuration[section][option].value;
+					} else {
+						line = option+" = "+configuration[section][option].value;
+					}
+					bluetoothConfig.push(line);
 				}
-				bluetoothConfig.push(line);
 			}
+			fs.writeFileSync("/etc/bluetooth/main.conf", bluetoothConfig.join("\n"));
+			bluetoothConfigModified = fs.statSync("/etc/bluetooth/main.conf").mtimeMs;
 		}
-		fs.writeFileSync("/etc/bluetooth/main.conf", bluetoothConfig.join("\n"));
-		bluetoothConfigModified = fs.statSync("/etc/bluetooth/main.conf").mtimeMs;
 	}
 	
 	return {

@@ -60,6 +60,11 @@ module.exports = function(beoBus, globals) {
 			} else {
 				settings.loggedInAs = false;
 			}
+			if (sources && Object.keys(configuration).length == 0) {
+				sources.setSourceOptions("spotifyd", {
+					enabled: false
+				});
+			}
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -175,68 +180,74 @@ module.exports = function(beoBus, globals) {
 	
 	function configureSpotifyd(options, relaunch, callback) {
 		readSpotifydConfiguration();
-		if (typeof options == "object" && !Array.isArray(options)) {
-			options = [options];
-		}
-		for (var i = 0; i < options.length; i++) {
-			if (options[i].section && options[i].option) {
-				if (!configuration[options[i].section]) configuration[options[i].section] = {};
-				if (options[i].value) {
-					if (debug) console.log("Configuring spotifyd (setting "+options[i].option+" in "+options[i].section+")...")
-					configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
-				} else {
-					if (configuration[options[i].section][options[i].option]) {
-						if (options[i].remove) {
-							if (debug) console.log("Configuring spotifyd (removing "+options[i].option+" in "+options[i].section+")...")
-							delete configuration[options[i].section][options[i].option];
-						} else {
-							if (debug) console.log("Configuring spotifyd (commenting out "+options[i].option+" in "+options[i].section+")...")
-							configuration[options[i].section][options[i].option].comment = true;
+		if (Object.keys(configuration).length != 0) {
+			if (typeof options == "object" && !Array.isArray(options)) {
+				options = [options];
+			}
+			for (var i = 0; i < options.length; i++) {
+				if (options[i].section && options[i].option) {
+					if (!configuration[options[i].section]) configuration[options[i].section] = {};
+					if (options[i].value) {
+						if (debug) console.log("Configuring spotifyd (setting "+options[i].option+" in "+options[i].section+")...")
+						configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
+					} else {
+						if (configuration[options[i].section][options[i].option]) {
+							if (options[i].remove) {
+								if (debug) console.log("Configuring spotifyd (removing "+options[i].option+" in "+options[i].section+")...")
+								delete configuration[options[i].section][options[i].option];
+							} else {
+								if (debug) console.log("Configuring spotifyd (commenting out "+options[i].option+" in "+options[i].section+")...")
+								configuration[options[i].section][options[i].option].comment = true;
+							}
 						}
 					}
 				}
 			}
-		}
-		writeSpotifydConfiguration();
-		if (relaunch && settings.spotifydEnabled) {
-			exec("systemctl restart spotify.service", function(error, stdout, stderr) {
-				if (error) {
-					if (debug) console.error("Relaunching spotifyd failed: "+error);
-					if (callback) callback(false, error);
-				} else {
-					if (debug) console.error("Spotifyd was relaunched.");
-					if (callback) callback(true);
-				}
-			});
+			writeSpotifydConfiguration();
+			if (relaunch && settings.spotifydEnabled) {
+				exec("systemctl restart spotify.service", function(error, stdout, stderr) {
+					if (error) {
+						if (debug) console.error("Relaunching spotifyd failed: "+error);
+						if (callback) callback(false, error);
+					} else {
+						if (debug) console.error("Spotifyd was relaunched.");
+						if (callback) callback(true);
+					}
+				});
+			} else {
+				if (callback) callback(true);
+			}
 		} else {
-			if (callback) callback(true);
+			if (callback) callback(false);
 		}
 	}
 	
 	spotifydConfigModified = 0;
 	function readSpotifydConfiguration() {
-		modified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
-		if (modified != spotifydConfigModified) {
-			// Reads configuration into a JavaScript object for easy access.
-			spotifydConfig = fs.readFileSync("/etc/spotifyd.conf", "utf8").split('\n');
-			section = null;
-			for (var i = 0; i < spotifydConfig.length; i++) {
-				// Find settings sections.
-				if (spotifydConfig[i].indexOf("[") != -1 && spotifydConfig[i].indexOf("]") != -1) {
-					section = spotifydConfig[i].trim().slice(1, -1);
-					configuration[section] = {};
-				} else {
-					if (section != null) {
-						line = spotifydConfig[i].trim();
-						comment = (line.charAt(0) == "#") ? true : false;
-						if (comment) {
-							lineItems = line.slice(1).split("=");
-						} else {
-							lineItems = line.split("=");
-						}
-						if (lineItems.length == 2) {
-							value = lineItems[1].trim();
-							configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+		if (fs.existsSync("/etc/spotifyd.conf")) {
+			modified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
+			if (modified != spotifydConfigModified) {
+				// Reads configuration into a JavaScript object for easy access.
+				spotifydConfig = fs.readFileSync("/etc/spotifyd.conf", "utf8").split('\n');
+				section = null;
+				for (var i = 0; i < spotifydConfig.length; i++) {
+					// Find settings sections.
+					if (spotifydConfig[i].indexOf("[") != -1 && spotifydConfig[i].indexOf("]") != -1) {
+						section = spotifydConfig[i].trim().slice(1, -1);
+						configuration[section] = {};
+					} else {
+						if (section != null) {
+							line = spotifydConfig[i].trim();
+							comment = (line.charAt(0) == "#") ? true : false;
+							if (comment) {
+								lineItems = line.slice(1).split("=");
+							} else {
+								lineItems = line.split("=");
+							}
+							if (lineItems.length == 2) {
+								value = lineItems[1].trim();
+								configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+							}
 						}
 					}
 				}
@@ -246,20 +257,22 @@ module.exports = function(beoBus, globals) {
 	
 	function writeSpotifydConfiguration() {
 		// Saves current configuration back into the file.
-		spotifydConfig = [];
-		for (section in configuration) {
-			spotifydConfig.push("["+section+"]");
-			for (option in configuration[section]) {
-				if (configuration[section][option].comment) {
-					line = "#"+option+" = "+configuration[section][option].value;
-				} else {
-					line = option+" = "+configuration[section][option].value;
+		if (fs.existsSync("/etc/spotifyd.conf")) {
+			spotifydConfig = [];
+			for (section in configuration) {
+				spotifydConfig.push("["+section+"]");
+				for (option in configuration[section]) {
+					if (configuration[section][option].comment) {
+						line = "#"+option+" = "+configuration[section][option].value;
+					} else {
+						line = option+" = "+configuration[section][option].value;
+					}
+					spotifydConfig.push(line);
 				}
-				spotifydConfig.push(line);
 			}
+			fs.writeFileSync("/etc/spotifyd.conf", spotifydConfig.join("\n"));
+			spotifydConfigModified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
 		}
-		fs.writeFileSync("/etc/spotifyd.conf", spotifydConfig.join("\n"));
-		spotifydConfigModified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
 	}
 	
 	return {

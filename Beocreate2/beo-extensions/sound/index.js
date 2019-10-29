@@ -319,7 +319,7 @@ module.exports = function(beoBus, globals) {
 	}
 
 	function setVolumeViaAudioControl(volume, callback) {
-		if (!isNaN(volume)) volume = volume.toString();
+		/*if (!isNaN(volume)) volume = volume.toString();
 		request.post({
 			json: true,
 			url: "http://127.0.1.1:"+sourcesSettings.port+"/api/volume",
@@ -347,7 +347,7 @@ module.exports = function(beoBus, globals) {
 					if (debug) console.error("Setting volume via AudioControl possibly failed. Status code was: "+res.statusCode);
 				}
 			}
-		});
+		});*/
 	}
 	
 	function getVolumeViaAudioControl(callback) {

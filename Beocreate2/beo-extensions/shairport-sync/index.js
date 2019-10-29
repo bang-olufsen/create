@@ -40,6 +40,11 @@ module.exports = function(beoBus, globals) {
 	var airPlayMetadataStream = null;
 	var airPlayMetadataPath = "/tmp/shairport-sync-metadata";
 	
+	var defaultSettings = {
+		"syncVolume": false
+	};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
 	beoBus.on('general', function(event) {
 		
 		if (event.header == "startup") {
@@ -121,11 +126,13 @@ module.exports = function(beoBus, globals) {
 	beoBus.on('sound', function(event) {
 		
 		if (event.header == "systemVolume" && !isNaN(event.content.volume)) {
-			clearTimeout(airPlayVolumeSendTimeout);
-			airPlayVolumeSendTimeout = setTimeout(function() {
-				airPlayVolume = convertAirPlayVolume(event.content.volume, 1);
-				sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
-			}, 500);
+			if (settings.syncVolume) {
+				clearTimeout(airPlayVolumeSendTimeout);
+				airPlayVolumeSendTimeout = setTimeout(function() {
+					airPlayVolume = convertAirPlayVolume(event.content.volume, 1);
+					sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
+				}, 500);
+			}
 		}
 		
 		

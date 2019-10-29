@@ -162,7 +162,7 @@ beoBus.on("settings", function(event) {
 				);
 				// Return the parsed JSON.
 				beoBus.emit(event.content.extension, {header: "settings", content: {settings: settings}});
-				if (debugMode == 2) console.log("Settings loaded for '"+event.content.extension+"'.");
+				if (debugMode >= 2) console.log("Settings loaded for '"+event.content.extension+"'.");
 			} else {
 				// If the settings file doesn't exist, return null.
 				beoBus.emit(event.content.extension, {header: "settings", content: {settings: null}});
@@ -181,7 +181,7 @@ beoBus.on("settings", function(event) {
 function saveSettings(extension, settings, immediately) {
 	if (immediately) { // Save immediately.
 		fs.writeFileSync(dataDirectory+"/"+extension+".json", JSON.stringify(settings));
-		if (debugMode == 2) console.log("Settings saved for '"+extension+"' (immediately).");
+		if (debugMode >= 2) console.log("Settings saved for '"+extension+"' (immediately).");
 	} else { // Add to the queue.
 		settingsToBeSaved[extension] = settings;
 		clearTimeout(settingsSaveTimeout);
@@ -195,7 +195,7 @@ function savePendingSettings() {
 	for (var extension in settingsToBeSaved) {
 	    if (settingsToBeSaved.hasOwnProperty(extension)) {
 	        fs.writeFileSync(dataDirectory+"/"+extension+".json", JSON.stringify(settingsToBeSaved[extension]));
-			if (debugMode == 2) console.log("Settings saved for '"+extension+"'.");
+			if (debugMode >= 2) console.log("Settings saved for '"+extension+"'.");
 	    }
 	}
 	settingsToBeSaved = {}; // Clear settings from the queue.
@@ -207,7 +207,7 @@ function getAllSettings() {
 		//console.log(sources);
 		if (settingsFiles.length != 0) {
 			for (var s = 0; s < settingsFiles.length; s++) {
-				if (settingsFiles[s].indexOf(".json") != -1 && settingsFiles[s] != "system.json") { // Check that this is a JSON file.
+				if (settingsFiles[s].substr(-5, 5) == ".json" && settingsFiles[s] != "system.json") { // Check that this is a JSON file.
 					try {
 						settings = JSON.parse( // Read settings file.
 							fs.readFileSync(dataDirectory+"/"+settingsFiles[s])
@@ -215,7 +215,7 @@ function getAllSettings() {
 						
 						// Return the parsed JSON.
 						beoBus.emit(settingsFiles[s].split(".json")[0], {header: "settings", content: {settings: settings}});
-						if (debugMode == 2) console.log("Settings loaded for '"+settingsFiles[s].split(".json")[0]+"'.");
+						console.log("Settings loaded for '"+settingsFiles[s].split(".json")[0]+"'.");
 					} catch (error) {
 						console.error("Error loading settings for '"+settingsFiles[s].split(".json")[0]+"':", error);
 					}

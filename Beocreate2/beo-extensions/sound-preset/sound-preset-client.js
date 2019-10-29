@@ -143,8 +143,8 @@ $(document).on("sound-preset", function(event, data) {
 		notify({title: soundPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
 		hidePopupView("sound-preset-preview-popup");
 		
-		selectedSoundPreset = data.content.presetID;
-		showSelectedPreset();
+		currentSoundPreset = data.content.presetID;
+		showCurrentPreset();
 	}
 	
 	if (data.header == "presetImport") {

@@ -48,6 +48,11 @@ var defaultSystemConfiguration = {
 };
 var systemConfiguration = JSON.parse(JSON.stringify(defaultSystemConfiguration));
 
+var defaultUISettings = {
+	disclosure: {}
+};
+var uiSettings = JSON.parse(JSON.stringify(defaultUISettings));
+
 var systemStatus = "normal"; 
 /* Possible status codes: 
 	'normal': standard operation
@@ -80,7 +85,17 @@ if (fs.existsSync(dataDirectory+"/system.json")) {
 		systemConfiguration = Object.assign(systemConfiguration, JSON.parse(fs.readFileSync(dataDirectory+"/system.json")));
 	} catch (error) {
 		console.error("Error loading system.json for system settings:", error);
-		var systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
+		systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
+	}
+}
+
+// Load UI settings.
+if (fs.existsSync(dataDirectory+"/ui.json")) {
+	try {
+		uiSettings = Object.assign(uiSettings, JSON.parse(fs.readFileSync(dataDirectory+"/ui.json")));
+	} catch (error) {
+		console.error("Error loading system.json for system settings:", error);
+		var uiSettings = JSON.parse(JSON.stringify(defaultUISettings));
 	}
 }
 
@@ -91,9 +106,6 @@ if (fs.existsSync(dataDirectory+"/system.json")) {
 var beoBus = new EventEmitter();
 //beoBus.setMaxListeners(0); // An unknown, potentially large number of listeners can be listening to the same events, so let's not limit that. This is not available with eventemitter3.
 
-var uiSettings = {
-	disclosure: {}
-};
 
 beoBus.on("ui", function(event) {
 	// Send a 'ui' event to transmit data to the user interface on the client.
@@ -105,9 +117,6 @@ beoBus.on("ui", function(event) {
 	} else {
 		if (event.header == "settings" && event.content.settings) {
 			uiSettings = event.content.settings;
-		}
-		if (event.header == "getUISettings") {
-			beoCom.send({header: "settings", target: "ui", content: {settings: uiSettings}});
 		}
 		if (event.header == "disclosure") {
 			if (event.content.element && event.content.isOn != undefined)
@@ -203,22 +212,18 @@ function savePendingSettings() {
 
 function getAllSettings() {
 	if (fs.existsSync(dataDirectory)) {
-		settingsFiles = fs.readdirSync(dataDirectory);
-		//console.log(sources);
-		if (settingsFiles.length != 0) {
-			for (var s = 0; s < settingsFiles.length; s++) {
-				if (settingsFiles[s].substr(-5, 5) == ".json" && settingsFiles[s] != "system.json") { // Check that this is a JSON file.
-					try {
-						settings = JSON.parse( // Read settings file.
-							fs.readFileSync(dataDirectory+"/"+settingsFiles[s])
-						);
-						
-						// Return the parsed JSON.
-						beoBus.emit(settingsFiles[s].split(".json")[0], {header: "settings", content: {settings: settings}});
-						console.log("Settings loaded for '"+settingsFiles[s].split(".json")[0]+"'.");
-					} catch (error) {
-						console.error("Error loading settings for '"+settingsFiles[s].split(".json")[0]+"':", error);
-					}
+		for (extension in extensions) {
+			if (fs.existsSync(dataDirectory+"/"+extension+".json")) { // Check if settings exist for this extension.
+				try {
+					settings = JSON.parse( // Read settings file.
+						fs.readFileSync(dataDirectory+"/"+extension+".json")
+					);
+					
+					// Return the parsed JSON.
+					beoBus.emit(extension, {header: "settings", content: {settings: settings}});
+					console.log("Settings loaded for '"+extension+"'.");
+				} catch (error) {
+					console.error("Error loading settings for '"+extension+"':", error);
 				}
 			}
 		}

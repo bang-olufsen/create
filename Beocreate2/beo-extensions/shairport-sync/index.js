@@ -140,6 +140,12 @@ module.exports = function(beoBus, globals) {
 	
 	beoBus.on('shairport-sync', function(event) {
 		
+		if (event.header == "settings") {
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+		}
+		
 		if (event.header == "setPassword") {
 			// If password field is set, change password. Otherwise remove it.
 			if (event.content.password != false) {

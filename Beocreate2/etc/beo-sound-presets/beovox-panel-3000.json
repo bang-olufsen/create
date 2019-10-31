@@ -59,21 +59,25 @@
 		"a": {
 			"level": 100,
 			"enabled": true,
+			"delay": 0,
 			"invert": false
 		},
 		"b": {
 			"level": 100,
 			"enabled": true,
+			"delay": 0,
 			"invert": false
 		},
 		"c": {
 			"level": 100,
 			"enabled": true,
+			"delay": 0,
 			"invert": false
 		},
 		"d": {
 			"level": 100,
 			"enabled": true,
+			"delay": 0,
 			"invert": false
 		}
 	}

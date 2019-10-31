@@ -597,13 +597,22 @@ module.exports = function(beoBus, globals) {
 		
 		if (settings[channel] && !isNaN(settings[channel].delay)) {
 			
+			// Delay is input as milliseconds. Convert to samples based on sampling rate.
+			
 			if (canControlChannels[channel].delay != 0) {
-				delayRegister = metadata["delay"+channel.toUpperCase()+"Register"].value[0];
-				if (settings[channel].delay <= canControlChannels[channel].delay) {
-					beoDSP.writeDSP(delayRegister, settings[channel].delay, true, true);
+				if (Fs != null) {
+					delayRegister = metadata["delay"+channel.toUpperCase()+"Register"].value[0];
+					
+					delaySamples = Math.round(settings[channel].delay / 1000 * Fs);
+					if (delaySamples <= canControlChannels[channel].delay) {
+						beoDSP.writeDSP(delayRegister, delaySamples, true, true);
+					} else {
+						beoDSP.writeDSP(delayRegister, canControlChannels[channel].delay, true, true);
+						if (debug) console.log("Set delay for channel "+channel.toUpperCase()+" ("+settings[channel].delay+" ms / "+delaySamples+" samples) exceeds the indicated maximum ("+canControlChannels[channel].delay+" samples). Maximum delay applied.");
+					}
 				} else {
-					beoDSP.writeDSP(delayRegister, canControlChannels[channel].delay, true, true);
-					if (debug) console.log("Set delay for channel "+channel.toUpperCase()+" ("+settings[channel].delay+" samples) exceeds the indicated maximum ("+canControlChannels[channel].delay+" samples). Maximum delay applied.");
+					beoDSP.writeDSP(delayRegister, 0, true, true);
+					// No delay, if sampling rate is not known.
 				}
 			}
 		}

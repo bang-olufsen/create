@@ -561,10 +561,24 @@ module.exports = function(beoBus, globals) {
 		if (settings[channel] && !isNaN(settings[channel].level)) {
 			
 			if (canControlChannels[channel].level) {
+				if (settings[channel].enabled != undefined && settings[channel].enabled != true) {
+					// Mute
+					levelValue = 0;
+				} else if (settings[channel].level == 0 || settings[channel].level == 100) {
+					// No attenuation.
+					levelValue = 1;
+				} else if (settings[channel].level < 0) {
+					// Level as attenuation in dB.
+					levelValue = beoDSP.convertVolume("dB", "amplification", settings[channel].level);
+				} else if (settings[channel].level > 0 && settings[channel].level < 100) {
+					// Level as percentage 1-100.
+					levelValue = settings[channel].level/100; // DSP gain value range 0-1.
+				} else {
+					// No idea what this is.
+					levelValue = 1;
+				}
 				channelLevelRegister = metadata["levels"+channel.toUpperCase()+"Register"].value[0];
-				levelValue = settings[channel].level/100; // DSP gain value range 0-1.
 				
-				if (settings[channel].enabled != true) levelValue = 0; // Mute?
 				beoDSP.writeDSP(channelLevelRegister, levelValue, true, true);
 			}
 		}

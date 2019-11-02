@@ -69,6 +69,16 @@ Guidelines and best practices for user interfaces and graphic design within Beoc
 - [Beocreate 2 Design Guidelines](Documentation/DesignGuidelines.md)
 
 
+## Known Issues
+
+Some issues in the current release that aren't acknowledged in the user interface:
+
+- Bonjour advertisement (for Beocreate Connect) is unreliable and may fail when there is no network connection or the IP address changes.
+- Reboot/shutdown command is sometimes not carried out.
+- "Mute Unknown Programs" option under Sound » DSP Programs currently has no effect. Exercise caution when installing DSP programs.
+- Software update function is not yet in the user interface.
+
+
 ## Legacy Code
 
 The original code for the project (SigmaTCPDaemon, SigmaClientTool Beocreate Server and the bang-olufsen.com-based setup tool) has been archived under the [beocreate1](https://github.com/bang-olufsen/create/tree/beocreate1) branch.

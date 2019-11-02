@@ -8,19 +8,19 @@
 
 ***Beocreate Connect*** is a new companion application (for Mac + Windows) that automatically and instantly discovers all Beocreate 2 sound systems on the network, without typing a single IP address.
 
-Beocreate 2 is a part of [HiFiBerryOS](https://github.com/hifiberry/hifiberry-os). On systems that do not use *Beocreate 4-Channel Amplifier*, the user interface carries HiFiBerry branding.
+Beocreate 2 is bundled with [HiFiBerryOS](https://github.com/hifiberry/hifiberry-os) as its official user interface. On systems that use other HiFiBerry sound cards, the user interface carries HiFiBerry branding.
 
 ## Main Features
 
 - A flexible front-end for Beocreate 4-Channel Amplifier and other HiFiBerry sound cards.
-- Upcycle vintage Bang & Olufsen speakers or build your own, custom sound system
-- Beautifully crafted, responsive (also supports dark mode), browser-based user interface that works within the local network
-- New suite of sound adjustments (work in progress)
-- Volume and playback controls for active sources (feat. [HiFiBerry AudioControl](https://github.com/hifiberry/audiocontrol2))
-- Better overview and control of sources
-- Smarter management of network connections
-- Extension architecture for easy expandability and future-proofing
-- Based on Node.js
+- Upcycle vintage Bang & Olufsen speakers or build your own, custom sound system.
+- Beautifully crafted, responsive, browser-based user interface that works within the local network. Dark mode is supported.
+- Customise the sound with ToneTouch. More sound adjustment features coming later.
+- Volume and playback controls for active sources (feat. [HiFiBerry AudioControl](https://github.com/hifiberry/audiocontrol2)).
+- Better overview and control of sources.
+- Smarter management of network connections.
+- Extension architecture for easy expandability and future-proofing.
+- Based on Node.js.
 
 ## Getting Started
 
@@ -44,9 +44,11 @@ Beocreate Connect is based on Electron, and you can run it using the following i
 
 ## Documentation
 
+We're working to expand the documentation for Beocreate 2 to make it easier to tap into its customisation capabilities.
+
 ### Extensions
 
-Design and develop extensions. *Coming soon.*
+Design and develop extensions to expand the functionality of the system.
 
 - Introduction to Extensions
 - Implementing Server-side Code
@@ -57,7 +59,7 @@ Design and develop extensions. *Coming soon.*
 Create sound presets, DSP programs and product identities to customise the sound system.
 
 - [Sound Presets](Documentation/SoundPresets.md)
-- DSP Programs. *Coming soon.*
+- DSP Programs.
 - [Product Identities](Documentation/ProductIdentities.md)
 
 ### Design

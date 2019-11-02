@@ -26,9 +26,9 @@ Beocreate 2 is a part of [HiFiBerryOS](https://github.com/hifiberry/hifiberry-os
 
 ### Beocreate 2
 
-As Beocreate 2 is part of HiFiBerryOS, the recommended way is to download the latest image of HiFiBerryOS for your Raspberry Pi generation and write it to a microSD card. [Link to download page here]
+As Beocreate 2 is part of HiFiBerryOS, the recommended way is to download the latest image of HiFiBerryOS for your Raspberry Pi generation and write it to a microSD card. [Get HiFiBerryOS](https://www.hifiberry.com/hifiberryos/)
 
-Alternatively, you can use the Buildroot system to build HiFiBerryOS yourself. [Link to instructions here]
+Alternatively, you can use the Buildroot system to build HiFiBerryOS yourself. [Building HiFiBerryOS](https://github.com/hifiberry/hifiberry-os/blob/master/doc/building.md)
 
 Once installed, you can follow instructions in Beocreate Connect set up the sound system.
 
@@ -46,15 +46,18 @@ Beocreate Connect is based on Electron, and you can run it using the following i
 
 ### Extensions
 
-Design and develop extensions.
+Design and develop extensions. *Coming soon.*
 
-- Getting Started with Extensions
+- Introduction to Extensions
+- Implementing Server-side Code
+- Implementing User Interface
 
 ### Sound & Customisation
 
 Create sound presets, DSP programs and product identities to customise the sound system.
 
 - [Sound Presets](Documentation/SoundPresets.md)
+- DSP Programs. *Coming soon.*
 - [Product Identities](Documentation/ProductIdentities.md)
 
 ### Design
@@ -66,6 +69,6 @@ Guidelines and best practices for user interfaces and graphic design within Beoc
 
 ## Legacy Code
 
-The original code for the project (SigmaTCPDaemon, SigmaClientTool Beocreate Server and the bang-olufsen.com-based setup tool) have been archived under the *beocreate1* branch.
+The original code for the project (SigmaTCPDaemon, SigmaClientTool Beocreate Server and the bang-olufsen.com-based setup tool) has been archived under the [beocreate1](https://github.com/bang-olufsen/create/tree/beocreate1) branch.
 
 The old DSP programs are in the *Speakers* directory, but please note that these aren't fully compatible with Beocreate 2. Beocreate 2 comes built in with the sound presets for these models.

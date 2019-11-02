@@ -274,7 +274,11 @@ function stopDiscovery() {
 		browser.stop();
 		browserLegacy.stop();
 		products = {};
-		win.webContents.send('discoveredProducts', products);
+		try {
+			win.webContents.send('discoveredProducts', products);
+		} catch (error) {
+			
+		}
 	}
 }
 

@@ -9,7 +9,7 @@ Sound presets are collections of sound adjustment settings that can be applied a
 In Beocreate 2, sound presets (previously called *sound profiles*) are now separated from DSP programs:
 
 1. A DSP program determines the sound processing flow and which sound adjustment features are available.
-2. A sound preset contains the actual settings that are dynamically applied to the DSP program (equaliser and crossover parameters, levels, ...).
+2. A sound preset contains the actual settings that are dynamically applied to the DSP program (equaliser and crossover parameters, levels, delays, ...).
 
 
 ## Data Format: JSON
@@ -74,7 +74,7 @@ Preset name should be embedded in the *sound-preset* section of the file as *pre
 Next, we will cover the different sections and possible settings of a preset in detail. Required settings in each section are indicated as such, others are optional.
 
 
-### sound-preset
+## sound-preset
 
 This is the only ***required section***. It stores basic information about the sound preset, listed below.
 
@@ -102,7 +102,9 @@ If the current DSP program doesn't support all of the settings in the preset, in
 
 	"samplingRate": 48000
 
-*Required in some cases*. If the sound preset contains filters defined as coefficients directly (explained later), the sampling rate has to be defined so that it can be matched with the DSP program. If not defined, those filters will be ignored. *Alternatively* the sampling rate can be defined with each filter.
+*Required in some cases*. The value is in Hz.
+
+If the sound preset contains filters defined as coefficients directly (explained later), the sampling rate has to be defined so that it can be matched with the DSP program. If not defined, those filters will be ignored. The sampling rate can also be defined with each filter, but this is an easier way.
 
 #### Read-only
 
@@ -117,7 +119,7 @@ Read-only sound presets can't be deleted or replaced from the user interface.
 Integer version number of the preset. For future use.
 
 
-### equaliser
+## equaliser
 
 Settings for the parametric equaliser in the DSP program, intended for correcting the loudspeaker's magnitude response. This section is further subdivided into up to four channels as follows:
 
@@ -132,7 +134,7 @@ Settings for the parametric equaliser in the DSP program, intended for correctin
 
 Channels A-D correspond to the speaker terminals on Beocreate 4-Channel Amplifier from **left to right**, when the terminals are facing you.
 
-Within each channel the individual filters and their parameters can be defined. The amount of filters is limited by the DSP program. For example, Beocreate Universal supports up to 16 filters per channel.
+Within each channel the individual filters and their parameters can be defined. The amount of filters is limited by the DSP program. For example, Beocreate Universal supports up to 16 filters per channel. If the number of filters supported is less than is defined, the overflowing filters are ignored.
 
 Leaving channels blank like above will bypass all of the filters on the channels. If a channel is not included, its settings will not be altered when the preset is applied. This is not recommended, as it might cause an undesired mix of settings – it is always better to bypass the filters on a channel.
 
@@ -196,7 +198,7 @@ The **required** parameters are the coefficients: *b0, b1, b2, a1, a2*. The syst
 The coefficients have to be calculated against the *sampling rate* of the DSP program (48 kHz for Beocreate Universal). The sampling rate these filters are intended for need to be defined in the *sound-preset* section (see earlier) **or** with each filter, next to the coefficients (such as here). If neither is defined, the filter will be bypassed.
 
 
-### channels
+## channels
 
 Contains other sound settings related to each loudspeaker channel. This section is further subdivided into up to four channels as follows:
 
@@ -263,15 +265,17 @@ For time-aligning loudspeaker drivers, delays can be specified for each channel.
 
 	"delay": 3
 	
-Delays are defined as *milliseconds*. If you define a value that exceeds the maximum delay time, the system will apply the maximum delay. Non-integer values are supported.
+Delays are defined in *milliseconds*. You can use non-integer values for more precision.
 
-The maximum delay times are defined by the DSP program. For Beocreate Universal, this is about **41.6 milliseconds** (2000 samples at the 48 kHz sampling rate).
+Internally, the system converts the specified milliseconds to number of *samples* based on the current sampling rate, rounding the amount of samples to the nearest integer.
+
+The maximum delay times are defined by the DSP program. For Beocreate Universal, this is about **41.6 milliseconds** (2000 samples at the 48 kHz sampling rate). If you define a value that exceeds the maximum delay time, the system will apply the maximum delay.
 
 It is recommended to only delay the channels that require it.
 
 #### Invert Polarity
 
-For some crossover configurations (2nd-order), it may be necessary to invert the *polarity* of a channel.
+For some crossover configurations (such as 2nd-order), it may be necessary to invert the *polarity* of a channel to avoid cancellation of sound at the crossover frequency.
 
 	"invert": false
 	
@@ -282,7 +286,7 @@ Possible values are: *true* or *false*.
 
 ## Product Identities
 
-The function and structure of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
+The purpose and structure of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
 
 	"product-information": {
 		"modelID": "beovox-cx50",

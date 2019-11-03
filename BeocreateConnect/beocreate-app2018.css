@@ -750,12 +750,15 @@ h1.large {
 
 h2 {
 	font-weight: 500;
-	font-size: 1.5em;
+	font-size: 0.9em;
 	position: relative;
 	margin-bottom: 1.5em;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	opacity: 0.5;
 }
 
-h2:after {
+h2.big:after {
 	content: "";
 	display: block;
 	width: 15px;

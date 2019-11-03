@@ -41,6 +41,9 @@ Beocreate Connect is based on Electron, and you can run it using the following i
 3. In your terminal application, navigate to the *BeocreateConnect* folder and run `npm install` to download and install Electron and other dependencies.
 4. Once installed, type `npm start` to start Beocreate Connect.
 
+## Help
+
+- [Find Your Product](Help/FindYourProduct.md)
 
 ## Documentation
 
@@ -73,10 +76,10 @@ Guidelines and best practices for user interfaces and graphic design within Beoc
 
 Some issues in the current release that aren't acknowledged in the user interface:
 
-- Bonjour advertisement (for Beocreate Connect) is unreliable and may fail when there is no network connection or the IP address changes.
+- Bonjour advertisement (for Beocreate Connect) is unreliable and may fail when there is no network connection or the IP address changes. In the meantime, typing the system name or IP address to the web browser to access the user interface works.
 - Reboot/shutdown command is sometimes not carried out.
 - "Mute Unknown Programs" option under Sound » DSP Programs currently has no effect. Exercise caution when installing DSP programs.
-- Software update function is not yet in the user interface.
+- Software update function is not yet in the user interface. Refer to the update guide on HiFiBerryOS page for upgrade instructions.
 
 
 ## Legacy Code

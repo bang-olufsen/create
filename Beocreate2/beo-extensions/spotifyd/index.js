@@ -228,6 +228,7 @@ module.exports = function(beoBus, globals) {
 			modified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
 			if (modified != spotifydConfigModified) {
 				// Reads configuration into a JavaScript object for easy access.
+				spotifydConfigModified = modified;
 				spotifydConfig = fs.readFileSync("/etc/spotifyd.conf", "utf8").split('\n');
 				section = null;
 				for (var i = 0; i < spotifydConfig.length; i++) {

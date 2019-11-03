@@ -10,6 +10,13 @@ var debug = false;
 
 const template = [
   {
+    label: 'File',
+    submenu: [
+      { label: 'Look for Products Again',
+      click () { startDiscovery() }}
+    ]
+  },
+  {
     label: 'Edit',
     submenu: [
       { role: 'undo' },
@@ -26,19 +33,22 @@ const template = [
   {
     label: 'View',
     submenu: [
-	  { label: 'Reload Product View',
-	  click () { win.webContents.send('reloadProductView') }},
-	  { label: 'Look for Products Again',
-	  click () { startDiscovery() }},
-      { role: 'reload' },
-      { role: 'forcereload' },
-      { role: 'toggledevtools' },
-      { type: 'separator' },
       { role: 'resetzoom' },
       { role: 'zoomin' },
       { role: 'zoomout' },
       { type: 'separator' },
       { role: 'togglefullscreen' }
+    ]
+  },
+  {
+	label: 'Develop',
+    submenu: [
+      { label: 'Reload Product View',
+      click () { win.webContents.send('reloadProductView') }},
+	  { type: 'separator' },
+      { role: 'reload' },
+      { role: 'forcereload' },
+      { role: 'toggledevtools' }
     ]
   },
   {
@@ -81,7 +91,7 @@ if (process.platform === 'darwin') {
   })
 
   // Edit menu
-  template[1].submenu.push(
+  template[2].submenu.push(
     { type: 'separator' },
     {
       label: 'Speech',
@@ -93,7 +103,7 @@ if (process.platform === 'darwin') {
   )
 
   // Window menu
-  template[3].submenu = [
+  template[5].submenu = [
     { role: 'close' },
     { role: 'minimize' },
     { role: 'zoom' },

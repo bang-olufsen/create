@@ -1,0 +1,27 @@
+{
+  "name": "@beocreate/tv-control",
+  "version": "0.5.0",
+  "description": "HDMI-CEC integration for Beocreate sound systems.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "hdmi-cec",
+    "hdmi",
+    "bang",
+    "olufsen",
+    "beocreate",
+    "sound",
+    "audio"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "dependencies": {
+    "@senzil/cec-monitor": "^2.1.0"
+  }
+}

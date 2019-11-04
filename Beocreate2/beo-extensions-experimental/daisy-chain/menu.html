@@ -1,0 +1,57 @@
+<div class="menu-screen" id="daisy-chain" data-icon="speaker-pair.svg" data-context="sound/advanced" data-menu-class="advanced-adjustment" data-menu-title="Pairing" data-built-in="1" data-enable-with="Beocreate 4-Channel Amplifier">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Pairing</h1>
+	</header>
+	
+	<div class="scroll-area">
+	
+		<div class="menu-content beo-dynamic-menu">
+			<div class="header-image-wrap daisy-chain-header-image-wrap">
+				<div class="header-image" style="background-image: url(€/daisy-chain-hero.png);"></div>
+			</div>
+			<!--<img src="€/daisy-chain-hero.png" class="fit">-->
+			<p>Connect two Beocreate 4-Channel Amplifiers together. <a href="#" onclick="ask('daisy-chain-how-prompt');">Why and how.</a></p>
+			
+			<!--<div class="button pill grey" onclick="ask('daisy-chain-how-prompt');">How It Works</div>-->
+			
+			
+			<h2>Pairing Mode</h2>
+			<script>
+				document.write(createMenuItem({label: "Off", checkmark: "left", checked: true, description: "Use only one amplifier."}));
+				
+				document.write(createMenuItem({label: "Basic Pair", checkmark: "left", description: "Two amplifiers, one Raspberry Pi. Sound adjustments are not automatically synchronised.", onclick: "ask('daisy-chain-basic-prompt');"}));
+				
+				document.write(createMenuItem({label: "Smart Pair", value: "Coming soon", disabled: true, checkmark: "left", description: "Two amplifiers, two Raspberry Pis. Sound adjustments will be synchronised automatically."}));
+			</script>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="daisy-chain-how-prompt">
+		<h2>How it works</h2>
+		
+		<p>Three-way or four-way speakers use more than two amplifier channels. Playing in stereo is not possible with such speakers using only one amplifier.</p>
+		<p>The pairing feature allows you to connect two amplifiers with an <strong>optical audio cable</strong> so that they work together, each powering one speaker. 
+		<p>When paired, one of the speakers is the master speaker that receives sound from your sources. The master speaker will then send sound to the slave speaker.</p>
+		
+		<div class="ask-buttons">
+			
+			<div class="button pill black default cancel" onclick="ask();">Dismiss</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="daisy-chain-basic-prompt">
+		<h2>Create Basic Pair</h2>
+		<p>Has a slave amplifier already been prepared with the current sound adjustments?</p>
+		<div class="ask-buttons">
+			<div class="button pill black default">No, Prepare Now</div>
+			<div class="button pill grey">Yes</div>
+			<div class="button pill grey cancel" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+</div>
+
+
+
+<script type="text/javascript" charset="utf-8" src="€/daisy-chain-client.js"></script>

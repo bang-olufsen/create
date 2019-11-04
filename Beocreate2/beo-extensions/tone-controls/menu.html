@@ -1,0 +1,38 @@
+<div class="menu-screen" id="tone-controls" data-icon="tonetouch.svg" data-menu-title="Tone" data-stylesheet="tone-controls.css" data-built-in="1" data-context="sound/adjustments" data-enable-with="Beocreate 4-Channel Amplifier">
+	<header>
+		<div class="back-button master"></div>
+		<h1>ToneTouch</h1>
+	</header>
+	
+	<!--<div class="tabs">
+		<div class="selected" data-select-tab="tone-touch">ToneTouch</div>
+		<div data-select-tab="tone-control-options">More</div>
+	</div>-->
+	
+	<div class="tab visible" id="tone-touch-tab" data-tab-id="tone-touch">
+		<div id="tone-touch-area" style="background-image: url(€/tone-touch-circles.svg);">
+			<div class="tone-touch-field upper left" id="tone-touch-field-1">Warm</div>
+			<div class="tone-touch-field upper right" id="tone-touch-field-2">Excited</div>
+			<div class="tone-touch-field lower left" id="tone-touch-field-3">Relaxed</div>
+			<div class="tone-touch-field lower right" id="tone-touch-field-4">Bright</div>
+		</div>
+		<div id="tone-touch-dot" class="drag-handle">
+			<span>Off</span>
+			<div id="tone-touch-scale-area"></div>
+		</div>
+	</div>
+	
+	<div class="scroll-area tab" data-tab-id="tone-control-options">
+		<div class="menu-content">
+			<h2 data-translation="adaptiveLoudness">Adaptive Loudness</h2>
+			<div class="slider-wrap">
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/loudness-flat.svg); mask-image: url(€/symbols-black/loudness-flat.svg);"></div>
+				<div class="loudness-slider show-value"></div>
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/loudness-max.svg); mask-image: url(€/symbols-black/loudness-max.svg);"></div>
+			</div>
+			<p>Enhances bass and treble at low listening levels to compensate for sensitivity of the human ear.</p>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/tone-controls-client.js"></script>

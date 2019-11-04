@@ -1,0 +1,37 @@
+/* @override 
+	http://beocreate-core.local/extensions/sources/sources.css
+	http://hifiberry.local:81/extensions/sources/sources.css */
+	
+.active-source,
+.focused-source {
+	display: flex;
+	align-items: center;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}
+
+.active-source.visible,
+.focused-source.visible {
+	opacity: 0.5;
+}
+
+.active-source-name,
+.focused-source-name {
+	padding-top: var(--font-spacing-compensation);
+	margin-left: 10px;
+	font-weight: 500;
+	letter-spacing: var(--uppercase-spacing);
+	text-transform: uppercase;
+	font-size: 0.7em;
+	transition: opacity 0.5s ease;
+}
+
+.active-source.icon-only .active-source-name,
+.focused-source.icon-only .focused-source-name {
+	display: none;
+}
+
+.active-source.icon-only,
+.focused-source.icon-only {
+	padding-right: 20px;
+}

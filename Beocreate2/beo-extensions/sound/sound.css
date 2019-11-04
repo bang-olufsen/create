@@ -1,0 +1,18 @@
+/* @override 
+	http://beocreate-core.local/extensions/sound/sound.css */
+	
+section:not(.advanced-sound-adjustments) .advanced-adjustment:not(.menu-item) {
+	display: none !important;
+}
+
+section:not(.advanced-sound-adjustments) .advanced-adjustment.menu-item {
+	/*display: none !important;*/
+	/*transform: scaleY(0);*/
+	opacity: 0;
+	margin-bottom: -45px;
+	pointer-events: none;
+}
+
+section.advanced-sound-adjustments .simple-adjustment {
+	display: none !important;
+}

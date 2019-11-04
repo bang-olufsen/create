@@ -1,0 +1,38 @@
+{
+	"sound-preset": {
+		"presetName": "Basic Amplifier",
+		"presetVersion": 1,
+		"readOnly": true,
+		"productIdentity": "beocreate-4ca-mk1",
+		"description": "A basic preset with four full-range channels. Suitable for use as a normal, standalone amplifier.",
+		"fallbackDSP": "beocreate-universal"
+	},
+	"equaliser": {
+		"a": [],
+		"b": [],
+		"c": [],
+		"d": [] 
+	},
+	"channels": {
+		"a": {
+			"level": 100,
+			"enabled": true,
+			"role": "mono"
+		},
+		"b": {
+			"level": 100,
+			"enabled": true,
+			"role": "mono"
+		},
+		"c": {
+			"level": 100,
+			"enabled": true,
+			"role": "mono"
+		},
+		"d": {
+			"level": 100,
+			"enabled": true,
+			"role": "mono"
+		}
+	}
+}

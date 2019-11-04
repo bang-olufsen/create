@@ -1,40 +1,89 @@
 ![CreateLogo](https://image.ibb.co/nfT01G/create_logo_two.png)
 
-# What it is
-The repository contains the software that is intended to run on a Raspberry Pi connected to the HifiBerry/BeoCreate 4-channel amplifier for upcycling vintage speakers. It currently consists of two different modules allowing communication and programming of the ADAU1451 DSP from the Raspberry Pi.
+***Create*** *is an explorative movement within Bang & Olufsen. Our mission is to inspire and be inspired by the global creative community.*
 
-## SigmaTcpDaemon
-This is a program written in C++11 that runs a TCP server which enables connecting from Sigma Studio running on any PC on the same network and program or adjust DSP parameters. The server implements the communication protocol specified by Analog Devices which can be found [here](https://wiki.analog.com/resources/tools-software/sigmastudio/usingsigmastudio/tcpipchannels) and communicates with the DSP chip using the SPI interface of the Raspberry Pi.
+# Beocreate 2
 
-## SigmaClientTool
-This is a simple command-line tool intended primarily for debugging and writing the DSP EEPROM. It is depending on a running SigmaTcpDaemon instance which it will connect to and allow to read/write registers and also write to the EEPROM.
+***Beocreate 2*** is the software suite for *Beocreate 4-Channel Amplifier*. It replaces the old setup tool and system software shipped with the *ReCreate* project in 2018. It has been redesigned from the ground up to be more flexible, more reliable and future-proof. 
 
-### Building SigmaTcpDaemon or SigmaClientTool
-Clone this repository and build with CMake. For SigmaTcpDaemon:
-```
-git clone https://github.com/bang-olufsen/create.git
-cd create/SigmaTcpDaemon
-mkdir build && cd build
-cmake ..
-make
-```
+***Beocreate Connect*** is a new companion application (for Mac + Windows) that automatically and instantly discovers all Beocreate 2 sound systems on the network, without typing a single IP address.
 
-## BeoCreate Installer
-BeoCreate Installer (_beocreate-installer_) is a shell script that sets up a clean Raspbian Lite installation with all of the necessary software to upcycle a vintage Bang & Olufsen loudspeaker. Complete disk images with the installer already run are available from HiFiBerry.
+Beocreate 2 is bundled with [HiFiBerryOS](https://github.com/hifiberry/hifiberry-os) as its official user interface. On systems that use other HiFiBerry sound cards, the user interface carries HiFiBerry branding.
 
-### Using the installer
-1. Copy **beocreate-installer** into _/home/pi/_ on the target system (just the file, no need to clone the repository – it is done automatically during the installation).
-2. Set file permissions:
-```
-chmod 755 beocreate-installer
-```
-3. Run the installer as root to install the base system.
-```
-sudo ./beocreate-installer base
-```
-4. After the system reboots, it is ready to be set up through [BeoCreate Setup Tool](http://www.bang-olufsen.com/recreate/setup/).
-5. Installing sources is handled by the setup tool. To install sources manually, use:
-```
-sudo ./beocreate-installer install-source [source-name]
-```
-Supported sources are currently **shairport-sync** and **spotifyd**. Bluetooth audio is automatically installed as a part of the base installation.
+## Main Features
+
+- A flexible front-end for Beocreate 4-Channel Amplifier and other HiFiBerry sound cards.
+- Upcycle vintage Bang & Olufsen speakers or build your own, custom sound system.
+- Beautifully crafted, responsive, browser-based user interface that works within the local network. Dark mode is supported.
+- Customise the sound with ToneTouch. More sound adjustment features coming later.
+- Volume and playback controls for active sources (feat. [HiFiBerry AudioControl](https://github.com/hifiberry/audiocontrol2)).
+- Better overview and control of sources.
+- Smarter management of network connections.
+- Extension architecture for easy expandability and future-proofing.
+- Based on Node.js.
+
+## Getting Started
+
+### Beocreate 2
+
+As Beocreate 2 is part of HiFiBerryOS, the recommended way is to download the latest image of HiFiBerryOS for your Raspberry Pi generation and write it to a microSD card. [Get HiFiBerryOS](https://www.hifiberry.com/hifiberryos/)
+
+Alternatively, you can use the Buildroot system to build HiFiBerryOS yourself. [Building HiFiBerryOS](https://github.com/hifiberry/hifiberry-os/blob/master/doc/building.md)
+
+Once installed, you can follow instructions in Beocreate Connect set up the sound system.
+
+### Beocreate Connect
+
+Beocreate Connect is based on Electron, and you can run it using the following instructions:
+
+1. [Install Node.js](https://nodejs.org/en/) on your Mac or Windows computer.
+2. Clone or download the *bang-olufsen/create* repository.
+3. In your terminal application, navigate to the *BeocreateConnect* folder and run `npm install` to download and install Electron and other dependencies.
+4. Once installed, type `npm start` to start Beocreate Connect.
+
+## Help
+
+- [Find Your Product](Help/FindYourProduct.md)
+
+## Documentation
+
+We're working to expand the documentation for Beocreate 2 to make it easier to tap into its customisation capabilities.
+
+### Extensions
+
+Design and develop extensions to expand the functionality of the system.
+
+- Introduction to Extensions
+- Implementing Server-side Code
+- Implementing User Interface
+
+### Sound & Customisation
+
+Create sound presets, DSP programs and product identities to customise the sound system.
+
+- [Sound Presets](Documentation/SoundPresets.md)
+- DSP Programs.
+- [Product Identities](Documentation/ProductIdentities.md)
+
+### Design
+
+Guidelines and best practices for user interfaces and graphic design within Beocreate 2 ecosystem.
+
+- [Beocreate 2 Design Guidelines](Documentation/DesignGuidelines.md)
+
+
+## Known Issues
+
+Some issues in the current release that aren't acknowledged in the user interface:
+
+- Bonjour advertisement (for Beocreate Connect) is unreliable and may fail when there is no network connection or the IP address changes. In the meantime, typing the system name or IP address to the web browser to access the user interface works.
+- Reboot/shutdown command is sometimes not carried out.
+- "Mute Unknown Programs" option under Sound » DSP Programs currently has no effect. Exercise caution when installing DSP programs.
+- Software update function is not yet in the user interface. Refer to the update guide on HiFiBerryOS page for upgrade instructions.
+
+
+## Legacy Code
+
+The original code for the project (SigmaTCPDaemon, SigmaClientTool Beocreate Server and the bang-olufsen.com-based setup tool) has been archived under the [beocreate1](https://github.com/bang-olufsen/create/tree/beocreate1) branch.
+
+The old DSP programs are in the *Speakers* directory, but please note that these aren't fully compatible with Beocreate 2. Beocreate 2 comes built in with the sound presets for these models.

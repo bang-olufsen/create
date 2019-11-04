@@ -1,0 +1,33 @@
+{
+  "name": "@beocreate/shairport-sync",
+  "version": "0.5.0",
+  "description": "Control for AirPlay sources in BeoCreate systems",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bang-olufsen/create.git"
+  },
+  "keywords": [
+    "beocreate",
+    "airplay",
+    "shairport-sync",
+    "dacp"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bang-olufsen/create/issues"
+  },
+  "homepage": "https://github.com/bang-olufsen/create#readme",
+  "dependencies": {
+    "dnssd": "^0.4.1",
+    "request": "^2.88.0"
+  },
+  "beocreate": {
+  	"install": "./install-shairport-sync.sh",
+  	"uninstall": "./uninstall-shairport-sync.sh"
+  }
+}

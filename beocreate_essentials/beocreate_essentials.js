@@ -16,10 +16,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 var beocreate_essentials = module.exports = {
-	sources: require("./sources"),
 	communication: require("./communication"),
-	wifi_setup: require("./wifi_setup"),
+	networking: require("./networking"),
 	pi_system_tools: require("./pi_system_tools"),
-	dsp: require("./dsp"),
-	led: require("./led");
+	dsp: require("./dsp")
 };

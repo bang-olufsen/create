@@ -19,8 +19,9 @@ SOFTWARE.*/
 
 // Handles socket communication between the sound system and the client.
 
-var mdns = require('mdns');
-//var dnssd = require('dnssd'); // Replacing mdns.
+//var mdns = require('mdns');
+var dnssd = require('dnssd'); // Replacing mdns, to avoid Avahi errors and to be consistent with the desktop app.
+//var bonjour = require('bonjour')();
 var fs = require('fs');
 var server = require('websocket').server;
 var http = require('http');
@@ -28,94 +29,79 @@ var https = require('https');
 var eventEmitter = require('events').EventEmitter;
 var util = require('util');
 
+module.exports = BeoCom;
 
-module.exports = Communicator;
+var acceptedProtocols = [];
+var acceptConnections = true;
+var announceService;
+var connections = [];
+var connectionLinks = [];
+var socket;
+var wsPort = 0;
+var connectionID = 0;
 
-function Communicator() {
-	if (! (this instanceof Communicator)) return new Communicator();
-	this.acceptConnections = true;
-	this.announceService;
-	this.connections = [];
-	this.connectionLinks = [];
-	this.socket;
-	this.connectionID = 0;
-	
+function BeoCom() {
+	if (!(this instanceof BeoCom)) return new BeoCom();
 	eventEmitter.call(this);
 }
 
-util.inherits(Communicator, eventEmitter);
+util.inherits(BeoCom, eventEmitter);
 
-Communicator.prototype.start = function start(options) {
-	
-	var self = this;
-	
+BeoCom.prototype.startSocket = function(options, callback) {
+	self = this;
 	
 	if (!options) options = {};
+	
 	if (options.port) {
 		wsPort = options.port;
 	} else {
 		wsPort = 1337; // Default port.
 	}
-	if (!options.ssl) {
-		// If SSL is not specified, run a normal HTTP server.
-		this.socket = new server({
-			httpServer: http.createServer().listen(wsPort)
-		});
-		//return true;
+	
+	if (options.acceptedProtocols) {
+		acceptedProtocols = options.acceptedProtocols;
 	} else {
-		// If SSL is set to true, run a HTTPS server.
-		this.socket = new server({
-			httpServer: https.createServer({
-				key:fs.readFileSync(options.sslKey), 
-				cert:fs.readFileSync(options.sslCert)
-			}).listen(wsPort)
+		acceptedProtocols = [];
+	}
+	
+	if (options.server) {
+		// Use an existing server instance.
+		socket = new server({
+			httpServer: options.server
 		});
-		//return true;
+	} else {
+		if (!options.ssl) {
+			// If SSL is not specified, run a normal HTTP server.
+			socket = new server({
+				httpServer: http.createServer().listen(wsPort)
+			});
+			//return true;
+		} else {
+			// If SSL is set to true, run a HTTPS server.
+			socket = new server({
+				httpServer: https.createServer({
+					key:fs.readFileSync(options.sslKey), 
+					cert:fs.readFileSync(options.sslCert)
+				}).listen(wsPort)
+			});
+			//return true;
+		}
 	}
 	
-	// ANNOUNCE BONJOUR SERVICE
-	// This enables clients that have Bonjour discovery to find the product without requiring the user to know and type in the hostname.
-	if (options.name) {
-		if (options.serviceType) {
-			serviceType = options.serviceType;
-		} else {
-			serviceType = 'beolink-open';
-		}
-		if (options.advertisePort) {
-			advertisePort = options.advertisePort;
-		} else {
-			advertisePort = wsPort;
-		}
-		if (options.txtRecord) {
-			//this.announceService = new dnssd.Advertisement(dnssd.tcp(serviceType), advertisePort, { name: options.name, txt : options.txtRecord });
-			this.announceService = mdns.createAdvertisement(mdns.tcp(serviceType), advertisePort, { name: options.name, txtRecord : options.txtRecord });
-		} else {
-			this.announceService = mdns.createAdvertisement(mdns.tcp(serviceType), advertisePort, { name: options.name });
-		}
-		this.announceService.start();
-	}
-	
-	this.socket.on('request', function(request) {
+	socket.on('request', function(request) {
 		
 		
 		if (request.requestedProtocols) {
-			switch (request.requestedProtocols[0]) {
-				// We'll assume only one type of protocol is requested.
-				case "beo-remote":
-				case "beocreate-remote":
-				case "beo-computer":
-				case "beo-source":
-					protocol = request.requestedProtocols[0];
-					break;
-				default:
-					protocol = null;
-					break;
+			if (acceptedProtocols.indexOf(request.requestedProtocols[0]) != -1) {
+				protocol = request.requestedProtocols[0];
+			} else {
+				protocol = null;
 			}
 		} else {
 			protocol = null;
 		}
 		
-		if (protocol != null && self.acceptConnections) {
+		if (protocol != null && acceptConnections) {
 			var connection = request.accept(protocol, request.origin);
 			newConnection = addClient(connection, protocol);
 			
@@ -138,49 +124,150 @@ Communicator.prototype.start = function start(options) {
 		}
 	});
 	
-	function addClient(connection, protocol) {
-		self.connectionID++;
-		newConnection = {ID: self.connectionID, protocol: protocol}
-		self.connections.push(newConnection);
-		self.connectionLinks.push(connection);
-		return newConnection;
-	}
 	
-	function removeClient(connection) {
-		for (var i = 0; i < self.connectionLinks.length; i++) {
-			if (self.connectionLinks[i].connected == false) {
-				rmIndex = i;
-				break;
-			}
+	if (callback) callback(true);
+}
+
+var bonjourRestartTimeout = null;
+var bonjourStarted = false;
+BeoCom.prototype.startBonjour = function(options, callback) {
+	// ANNOUNCE BONJOUR SERVICE
+	// This enables clients that have Bonjour discovery to find the product without requiring the user to know and type in the hostname.
+	if (options.name) {
+		if (options.serviceType) {
+			serviceType = options.serviceType;
+		} else {
+			serviceType = 'beocreate';
 		}
-		rmID = self.connections[rmIndex].ID;
-		self.connectionLinks.splice(rmIndex, 1);
-		self.connections.splice(rmIndex, 1);
-		return rmID;
-	}
-	
-	function findID(connection) {
-		for (var i = 0; i < self.connections.length; i++) {
-			if (self.connectionLinks[i] == connection) {
-				theID = self.connections[i].ID;
-				break;
-			}
+		if (options.advertisePort) {
+			advertisePort = options.advertisePort;
+		} else {
+			advertisePort = wsPort;
 		}
-		return theID;
+		if (options.txtRecord) {
+			announceService = new dnssd.Advertisement(dnssd.tcp(serviceType), advertisePort, { name: options.name, txt: options.txtRecord });
+			//announceService = bonjour.publish({name: options.name, port: advertisePort, type: serviceType, txt: options.txtRecord}); // bonjour
+			//announceService = new mdns.Advertisement(mdns.tcp(serviceType), advertisePort, { name: options.name, txtRecord: options.txtRecord });
+		} else {
+			//announceService = new dnssd.Advertisement(dnssd.tcp(serviceType), advertisePort, { name: options.name});
+			//announceService = new mdns.Advertisement(mdns.tcp(serviceType), advertisePort, { name: options.name });
+		}
+		announceService.start();
+		bonjourStarted = true;
+		
+		announceService.on("up", function(error) {
+			bonjourStarted = true;
+		});
+		
+		announceService.on("error", function(error) {
+			console.log(error);
+		});
+		
+		announceService.on("stopped", function(event) {
+			console.log("dnssd: Advertisement stopped.");
+			bonjourStarted = false;
+			/*clearTimeout(bonjourRestartTimeout);
+			if (bonjourStarted) {
+				bonjourRestartTimeout = setTimeout(function() {
+					announceService.start();
+				}, 20000);
+			}*/
+		});
+		
+		announceService.on("instanceRenamed", function(event) {
+			console.log(event);
+		});
+		announceService.on("hostRenamed", function(event) {
+			console.log(event);
+		});
+		if (callback) callback(true);
 	}
-	
 }
 
-Communicator.prototype.disconnectAll = function disconnectAll() {
-	this.socket.closeAllConnections();
+BeoCom.prototype.isBonjourStarted = function() {
+	return bonjourStarted;
 }
 
-Communicator.prototype.stop = function stop() {
-	//server.shutDown();
-	this.announceService.stop();
+function addClient(connection, protocol) {
+	connectionID++;
+	newConnection = {ID: connectionID, protocol: protocol}
+	connections.push(newConnection);
+	connectionLinks.push(connection);
+	return newConnection;
 }
 
-Communicator.prototype.send = function send(jsonObject, restrictBroadcast) {
+function removeClient(connection) {
+	for (var i = 0; i < connectionLinks.length; i++) {
+		if (connectionLinks[i].connected == false) {
+			rmIndex = i;
+			break;
+		}
+	}
+	rmID = connections[rmIndex].ID;
+	connectionLinks.splice(rmIndex, 1);
+	connections.splice(rmIndex, 1);
+	return rmID;
+}
+
+function findID(connection) {
+	for (var i = 0; i < connections.length; i++) {
+		if (connectionLinks[i] == connection) {
+			theID = connections[i].ID;
+			break;
+		}
+	}
+	return theID;
+}
+
+
+BeoCom.prototype.updateTxtRecord = function(txtRecord) {
+	if (announceService) {
+		announceService.updateTXT(txtRecord);
+	}
+}
+
+BeoCom.prototype.disconnectAll = function() {
+	socket.closeAllConnections();
+}
+
+BeoCom.prototype.stopSocket = function(callback) {
+	if (socket) {
+		socket.shutDown();
+	}
+	if (callback) callback(true);
+	/*bonjour.unpublishAll(function(result) {
+		if (callback) callback(result);
+	}); */
+}
+
+BeoCom.prototype.stopBonjour = function(callback) {
+	if (announceService) {
+		bonjourStarted = false;
+		announceService.stop(false, function() { // dnssd
+			if (callback) callback(true);
+		});
+		//announceService.stop();
+		//if (callback) callback(true);
+	} else {
+		bonjourStarted = false;
+		if (callback) callback(true);
+	}
+}
+
+BeoCom.prototype.restartBonjour = function(callback) {
+	if (bonjourStarted) {
+		this.stopBonjour(function(result) {
+			announceService.start();
+			if (callback) callback(result);
+		});
+	} else {
+		announceService.start();
+		bonjourStarted = true;
+		if (callback) callback(result);
+	}
+}
+
+BeoCom.prototype.send = function(jsonObject, restrictBroadcast) {
 	jsonString = JSON.stringify(jsonObject);
 	if (restrictBroadcast) {
 		switch (restrictBroadcast) {
@@ -188,24 +275,24 @@ Communicator.prototype.send = function send(jsonObject, restrictBroadcast) {
 			case "beocreate-remote":
 			case "beo-computer":
 			case "beo-source":
-				for (var i = 0; i < this.connections.length; i++) {
-					if (this.connections[i].protocol == restrictBroadcast) {
-						this.connectionLinks[i].sendUTF(jsonString);
+				for (var i = 0; i < connections.length; i++) {
+					if (connections[i].protocol == restrictBroadcast) {
+						connectionLinks[i].sendUTF(jsonString);
 					}
 				}
 				break;
 			default:
-				for (var i = 0; i < this.connections.length; i++) {
-					if (this.connections[i].ID == restrictBroadcast) {
-						this.connectionLinks[i].sendUTF(jsonString);
+				for (var i = 0; i < connections.length; i++) {
+					if (connections[i].ID == restrictBroadcast) {
+						connectionLinks[i].sendUTF(jsonString);
 					}
 				}
 				break;
 		}
 	}
 	else { // Send to all clients
-		for (var i = 0; i < this.connections.length; i++) {
-			this.connectionLinks[i].sendUTF(jsonString);
+		for (var i = 0; i < connections.length; i++) {
+			connectionLinks[i].sendUTF(jsonString);
 		}
 	}
 }

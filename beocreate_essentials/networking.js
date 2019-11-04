@@ -1,0 +1,550 @@
+/*Copyright 2018 Bang & Olufsen A/S
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
+// Wi-Fi/Ethernet Setup
+
+// A collection of relevant network setup functions for BeoCreate sound systems.
+
+
+var fs = require('fs');
+var os = require('os');
+var exec = require('child_process').exec;
+var iwlist = require('wireless-tools/iwlist');
+var iwconfig = require('wireless-tools/iwconfig');
+var ifconfig = require('wireless-tools/ifconfig');
+//var udhcpd = require('wireless-tools/udhcpd');
+//var hostapd = require('wireless-tools/hostapd');
+
+var networking = module.exports = {
+	getWifiStatus: getWifiStatus,
+	getEthernetStatus: getEthernetStatus,
+	getCountry: getCountry,
+	setCountry: setCountry,
+	listSavedNetworks: listSavedNetworks,
+	listAvailableNetworks: listAvailableNetworks,
+	removeNetwork: removeNetwork,
+	addNetwork: addNetwork,
+	setupNetwork: setupNetwork,
+	getSetupNetworkStatus: getSetupNetworkStatus,
+	checkForInternet: checkForInternet
+}
+
+var wifiConfiguration = {networks: []};
+var wifiConfigModified = 0;
+var setupNetworkName = "";
+var setupNetworkActive = false;
+
+var wifiConfigPath = null;
+if (fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf")) {
+	var wifiConfigPath = "/etc/wpa_supplicant/wpa_supplicant.conf";
+} else if (fs.existsSync("/etc/wpa_supplicant.conf")) {
+	var wifiConfigPath = "/etc/wpa_supplicant.conf";
+}
+
+
+
+// GET NETWORK STATUS
+// Does the system have Wi-Fi, is it connected and if so, where? Same for ethernet.
+function getWifiStatus(callback) {
+	if (callback) {
+		iwconfig.status('wlan0', function(err, status) {
+			if (err) {
+				// The system has no Wi-Fi capabilities.
+				callback(null, err);
+			} else {
+				wifiStatus = {up: true, connected: false};
+				if (status.ssid && !status.unassociated) {
+					wifiStatus.ssid = decodeURIComponent(escape(status.ssid.decodeEscapeSequence()));
+					if (status.mode != "master") wifiStatus.connected = true;
+					wifiStatus.quality = status.quality;
+				}
+				wlan0 = os.networkInterfaces().wlan0;
+				if (wlan0) {
+					for (var i = 0; i < wlan0.length; i++) {
+						if (wlan0[i].family == "IPv4") {
+							wifiStatus.mac = wlan0[i].mac;
+							wifiStatus.ipv4 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
+						}
+						if (wlan0[i].family == "IPv6") {
+							wifiStatus.ipv6 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
+						}
+					}
+				}
+				callback(wifiStatus, false);
+			}
+		});
+	}
+}
+
+function getEthernetStatus(callback) {
+	if (callback) {
+		ifconfig.status('eth0', function(err, status) {
+			if (err) {
+				// No ethernet.
+				callback(null, err);
+			} else {
+				ethernetStatus = {up: false, connected: false};
+				if (status.up) ethernetStatus.up = true;
+				if (status.running) {
+					ethernetStatus.connected = true;
+					eth0 = os.networkInterfaces().eth0;
+					for (var i = 0; i < eth0.length; i++) {
+						if (eth0[i].family == "IPv4") {
+							ethernetStatus.mac = eth0[i].mac;
+							ethernetStatus.ipv4 = {address: eth0[i].address, subnetmask: eth0[i].netmask};
+						}
+						if (eth0[i].family == "IPv6") {
+							ethernetStatus.ipv6 = {address: eth0[i].address, subnetmask: eth0[i].netmask};
+						}
+					}
+				}
+				callback(ethernetStatus, false);
+			}
+		});
+	}
+}
+
+
+// GET/SET WI-FI COUNTRY
+// Wi-Fi may not connect to a network without specifying the correct channels that vary by country.
+function getCountry() {
+	readWifiConfiguration();
+	if (wifiConfiguration.country) {
+		return wifiConfiguration.country;
+	} else {
+		return null;
+	}
+}
+
+function setCountry(countryCode) {
+	if (countryCode) {
+		readWifiConfiguration();
+		wifiConfiguration.country = countryCode.toUpperCase();
+		saveWifiConfiguration();
+		return countryCode.toUpperCase();
+	} else {
+		return false;
+	}
+}
+
+
+// LIST WI-FI NETWORKS
+
+function listSavedNetworks() {
+	readWifiConfiguration();
+	networks = [];
+	wifiConfiguration.networks.forEach(function(network) {
+		if (!network.setupNetwork) {
+			if (network["key_mgmt"] && network["key_mgmt"] == "NONE") {
+				security = false;
+			} else {
+				security = true;
+			}
+			networks.push({ssid: network.ssid, security: security});
+		}
+	});
+	return networks;
+}
+
+networkScanRound = 0;
+
+function listAvailableNetworks(callback) {
+	if (callback) {
+		performWifiScan(function(err, networks) {
+			if (err) {
+				// Unsuccesful, return error.
+				if (networkScanRound < 10) {
+					setTimeout(function() {
+						//console.log("Looking for networks ("+networkScanRound+")...");
+						listAvailableNetworks(callback);
+						networkScanRound++;
+					}, 1000);
+				} else {
+					networkScanRound = 0;
+					callback([], err);
+				}
+			} else if (networks) {
+				// Succesful scan.
+				if (networks.length > 0) {
+					savedNetworks = listSavedNetworks();
+					savedSSIDs = [];
+					for (var i = 0; i < savedNetworks.length; i++) {
+						savedSSIDs.push(savedNetworks[i].ssid);
+					}
+					availableNetworks = [];
+					listedSSIDs = [];
+					// Go through networks to remove duplicates and also indicate those that already seem to be configured.
+					
+					for (var i = 0; i < networks.length; i++) {
+						if (networks[i].ssid != undefined) {
+							networks[i].ssid = decodeURIComponent(escape(networks[i].ssid.decodeEscapeSequence()));
+							if (listedSSIDs.indexOf(networks[i].ssid) == -1) {
+								listedSSIDs.push(networks[i].ssid);
+								if (savedSSIDs.indexOf(networks[i].ssid) == -1) {
+									networks[i].added = false;
+								} else {
+									networks[i].added = true;
+								}
+								if (networks[i].security == "open") {
+									networks[i].security = false;
+								}
+								availableNetworks.push(networks[i]);
+							}
+						}
+					}
+					callback(availableNetworks, false);
+				} else {
+					callback([], false);
+				}
+			}
+		});
+	}
+}
+
+function performWifiScan(callback) {
+	iwlist.scan({
+			iface: "wlan0",
+			show_hidden: true
+		}, function(err, networks) {
+			if (err) {
+				// Unsuccesful, return error.
+				callback(err, []);
+			} else if (networks) {
+				// Succesful scan.
+				callback(false, networks);
+			}
+	});
+}
+
+
+// ADD OR REMOVE NETWORKS
+
+function addNetwork(options, update) {
+	if (!options.ssid) return false;
+	readWifiConfiguration();
+	
+	networkIndex = -1;
+	for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+		if (wifiConfiguration.networks[i].ssid == options.ssid) {
+			networkIndex = i;
+		}
+	}
+	
+	if (networkIndex == -1 || update) { // If the network doesn't exist, add it, otherwise update it (if the update flag has been set).
+		if (networkIndex == -1) {
+			updated = false;
+			networkIndex = wifiConfiguration.networks.push({}) - 1;
+		} else {
+			updated = true;
+		}
+		
+		wifiConfiguration.networks[networkIndex].ssid = options.ssid;
+		
+		if (options.password) {
+			if (options.username) {
+				// RADIUS network configuration here.
+			} else {
+				wifiConfiguration.networks[networkIndex].psk = options.password;
+			}
+			delete wifiConfiguration.networks[networkIndex].key_mgmt;
+		} else {
+			wifiConfiguration.networks[networkIndex].key_mgmt = "NONE";
+			delete wifiConfiguration.networks[networkIndex].psk;
+		}
+		
+		if (setupNetworkActive) wifiConfiguration.networks[networkIndex].disabled = 1;
+		
+		// Add in other options.
+		for (option in options) {
+			switch (option) {
+				case "password":
+				case "username":
+				case "ssid":
+					break;
+				default:
+					wifiConfiguration.networks[networkIndex][option] = options[option];
+					break;
+			}
+		}
+		
+		saveWifiConfiguration(!setupNetworkActive);
+		if (updated) {
+			return 3;
+		} else {
+			return true;
+		}
+	} else {
+		return 2; // This network exists and was not touched.
+	}
+}
+
+function removeNetwork(ssid) {
+	if (!ssid) return false;
+	readWifiConfiguration();
+	
+	networkIndex = -1;
+	for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+		if (wifiConfiguration.networks[i].ssid == ssid) {
+			networkIndex = i;
+		}
+	}
+	
+	if (networkIndex != -1) {
+		wifiConfiguration.networks.splice(networkIndex, 1);
+		saveWifiConfiguration(!setupNetworkActive);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+// MANAGE SETUP NETWORK
+
+function setupNetwork(withName) {
+	readWifiConfiguration();
+	if (withName) { // Start setup network.
+		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+			wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
+		}
+		addNetwork({ssid: withName, key_mgmt: "NONE", proto: "RSN", pairwise: "CCMP", group: "CCMP", mode: 2, frequency: 2432, disabled: 0, setupNetwork: true}, true);
+		setupNetworkName = withName;
+		setupNetworkActive = true;
+		
+		/*var options = {
+			interface: 'wlan0',
+			start: '192.168.1.100',
+			end: '192.168.1.200',
+			option: {
+				router: '192.168.1.1',
+				subnet: '255.255.255.0'
+		  }
+		};
+		 
+		udhcpd.enable(options, function(err) {
+		  // the dhcp server was started
+		  if (err) console.log(err);
+			//console.log("Started DHCP server.");
+		});*/
+	} else { // Stop setup network.
+		/*udhcpd.disable('wlan0', function(err) {
+		  // the dhcp server was stopped
+			//console.log("Stopped DHCP server.");
+		});*/
+		networkIndex = -1;
+		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+			if (wifiConfiguration.networks[i].setupNetwork) {
+				networkIndex = i;
+			} else {
+				wifiConfiguration.networks[i].disabled = 0;
+				// Enable all other networks.
+			}
+		}
+		wifiConfiguration.networks.splice(networkIndex, 1);
+		setupNetworkActive = false;
+	}
+	saveWifiConfiguration(true);
+}
+
+function getSetupNetworkStatus() {
+	return setupNetworkActive;
+}
+
+function channelToFrequency(channel) {
+	if (channel > 11) channel = 11; // Channels usable in all regions.
+	return 2412 + (channel - 1) * 5; 
+}
+
+
+// CONFIGURATION R/W
+// Enables the script to manipulate wpa_supplicant configuration as a JavaScript object.
+function readWifiConfiguration() {
+	modified = fs.statSync(wifiConfigPath).mtimeMs;
+	if (modified != wifiConfigModified) { // Check if the config file has been modified since it was last accessed. Only read and parse if that's the case.
+		wifiConfigModified = modified;
+		wifiConfiguration = {networks: []};
+		rawConfig = fs.readFileSync(wifiConfigPath, "utf8"); // Load raw config file
+		configLines = rawConfig.split("\n"); // Remove whitespace and split into lines.
+		currentNetworkEntry = -1;
+		for (var i = 0; i < configLines.length; i++) {
+			lineContents = configLines[i].trim().split("=");
+			switch (lineContents[0]) {
+				case "ctrl_interface":
+					wifiConfiguration.ctrl_interface = lineContents.join("=");
+					break;
+				case "update_config":
+					wifiConfiguration.update_config = lineContents[1];
+					break;
+				case "country":
+					wifiConfiguration.country = lineContents[1];
+					break;
+				case "ap_scan":
+					wifiConfiguration.ap_scan = lineContents[1];
+					break;
+				case "network":
+					// Make a new network entry and increment current network entry index
+					wifiConfiguration.networks.push({});
+					currentNetworkEntry++;
+					break;
+				case "ssid":
+					wifiConfiguration.networks[currentNetworkEntry].ssid = stringForJS(lineContents[1]);
+					if (wifiConfiguration.networks[currentNetworkEntry].ssid.indexOf("Beocreate") != -1) {
+						wifiConfiguration.networks[currentNetworkEntry].setupNetwork = true;
+						setupNetworkActive = true;
+					}
+					break;
+				case "disabled":
+					if (wifiConfiguration.networks[currentNetworkEntry].setupNetwork) {
+						if (lineContents[1] == 1) setupNetworkActive = false;
+					}
+					wifiConfiguration.networks[currentNetworkEntry].disabled = lineContents[1];
+					break;
+				case "mode":
+					wifiConfiguration.networks[currentNetworkEntry].setupNetwork = true;
+					wifiConfiguration.networks[currentNetworkEntry][lineContents[0]] = lineContents[1];
+					break;
+				case "psk":
+					wifiConfiguration.networks[currentNetworkEntry].psk = stringForJS(lineContents[1]);
+					break;
+				default:
+					if (lineContents[0].length > 1) {
+						wifiConfiguration.networks[currentNetworkEntry][lineContents[0]] = lineContents[1];
+					}
+					break;
+			}
+		}
+		// Filter out empty network entries:
+		if (wifiConfiguration.networks) {
+			wifiConfiguration.networks = wifiConfiguration.networks.filter(value => Object.keys(value).length !== 0);
+		}
+	} else {
+		// console.log("Config has not been modified.");
+	}
+	return wifiConfiguration;
+}
+readWifiConfiguration();
+
+function saveWifiConfiguration(reconfigure) {
+	config = [];
+	if (wifiConfiguration.ctrl_interface) config.push(wifiConfiguration.ctrl_interface);
+	if (wifiConfiguration.update_config) config.push("update_config="+wifiConfiguration.update_config);
+	if (wifiConfiguration.country) config.push("country="+wifiConfiguration.country);
+	if (wifiConfiguration.ap_scan) config.push("ap_scan="+wifiConfiguration.ap_scan);
+	config.push("\n");
+	
+	for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+		networkItem = "network={";
+		for (property in wifiConfiguration.networks[i]) {
+			switch (property) {
+				case "ssid":
+					networkItem += "\n\tssid="+stringForConfig(wifiConfiguration.networks[i].ssid);
+					break;
+				case "psk":
+					networkItem += "\n\tpsk="+stringForConfig(wifiConfiguration.networks[i].psk, 64);
+					break;
+				case "disabled":
+					if (wifiConfiguration.networks[i].disabled == 1) {
+						networkItem += "\n\tdisabled=1";
+					}
+					break;
+				case "setupNetwork":
+					// Do nothing, this parameter is internal.
+					break;
+				default:
+					networkItem += "\n\t"+property+"="+wifiConfiguration.networks[i][property];
+					break;
+			}
+		}
+		networkItem += "\n}\n";
+		config.push(networkItem);
+	}
+	//return config.join("\n");
+	fs.writeFileSync(wifiConfigPath, config.join("\n"));
+	wifiConfigModified = fs.statSync(wifiConfigPath).mtimeMs; // Update the new modification time.
+	if (reconfigure) {
+		exec('wpa_cli -i wlan0 reconfigure', function(error, stdout, stderr){
+		    if (error !== null) {
+		        //callback(false);
+		    } else {
+				//callback(true);
+			}
+		});
+	}
+}
+
+
+function checkForInternet(callback) {
+	exec('ping -c 1 1.1.1.1', function(error, stdout, stderr){
+	    if (error !== null) {
+	        callback(false);
+	    } else {
+			callback(true);
+		}
+	});
+}
+
+// CONFIGURATION R/W SUPPORT
+// Sometimes data is hex-encoded in the configuration. These functions will decode and encode the data as needed.
+
+function stringForConfig(text, exceptionLength) {
+	// Encodes a string to hex if needed.
+	// Check if removing non-ASCII characters changes the string. If so, provide the hex version.
+	comparison = text.replace(/[^\x00-\x7F]/g, "");
+	if (comparison == text) {
+		if (exceptionLength == text.length) {
+			return text; // If a PSK is stored as a 64 characters long hash, don't add quotes around it.
+		} else {
+			return "\""+text+"\"";
+		}
+	} else {
+		return toHex(unescape(encodeURIComponent(text)));
+	}
+}
+
+function stringForJS(raw) {
+	// Decodes a hex string if needed.
+	if (raw.charAt(0) == "\"") { // Non-hex strings can be identified by double quotes that surround them.
+		return raw.slice(1,-1);
+	} else {
+		try {
+			return decodeURIComponent(escape(fromHex(raw)));
+		} catch (error) {
+			return raw;
+		}
+		
+	}
+}
+
+function fromHex(hex) { // https://jsfiddle.net/Guffa/uT2q5/
+    var str = '';
+    for (var i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
+}
+
+function toHex(str) { // https://stackoverflow.com/questions/21647928/javascript-unicode-string-to-hex
+    var result = '';
+    for (var i=0; i<str.length; i++) {
+      result += str.charCodeAt(i).toString(16);
+    }
+    return result;
+}
+
+// Used to decode non-ASCII characters in SSIDs found with network scan.
+String.prototype.decodeEscapeSequence = function() {
+	return this.replace(/\\x([0-9A-Fa-f]{2})/g, function() {
+		return String.fromCharCode(parseInt(arguments[1], 16));
+	});
+};

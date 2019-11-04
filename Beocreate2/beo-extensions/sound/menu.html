@@ -1,0 +1,32 @@
+<div class="menu-screen large-title" id="sound" data-icon="sound-signature.svg" data-menu-title="Sound" data-stylesheet="sound.css" data-built-in="1">
+	<header>
+		<div class="back-button master setup"></div>
+		<h1 data-translation="headerTitle">Sound</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="no-sound-adjustments hidden">
+				<h2 class="card-type">DAC+ ADC</h2>
+				<p>No sound adjustments are available with this sound card.</p>
+			</div>
+			<div class="has-sound-adjustments">
+				<h2 class="basics-title">Basics</h2>
+				<div class="beo-dynamic-menu basic"></div>
+				<h2 class="adjustments-title">Adjustments</h2>
+				<div class="beo-dynamic-menu adjustments"></div>
+				<h2 class="advanced-adjustment advanced-title">Advanced</h2>
+				<div class="beo-dynamic-menu advanced"></div>
+				<hr id="advanced-sound-adjustments-separator">
+				<div class="menu-item toggle" id="advanced-sound-adjustments-toggle" onclick="sound.toggleAdvancedSoundAdjustments();">
+					<div class="menu-label">Show Advanced Settings</div>
+					<div class="menu-toggle"></div>
+				</div>
+				<!--<p>Show additional sound adjustment features.</p>-->
+			</div>
+		</div>
+		
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/sound-client.js"></script>

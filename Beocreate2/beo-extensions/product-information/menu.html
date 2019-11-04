@@ -1,0 +1,125 @@
+<div class="menu-screen full-width" id="product-information" data-icon="create.svg" data-icon-hifiberry="hifiberry.svg" data-menu-title="About" data-menu-title-class="system-name" data-extension-name="Product Information" data-stylesheet="product-information.css" data-built-in="1">
+	
+	<header>
+		<div class="back-button master setup"></div>
+	</header>
+	
+	<!--<div id="product-overview-image-wrap-sidebar" class="product-overview-image-wrap as-sidebar">
+		<div class="product-overview-image" style="background-image: url(product.png);"></div>
+	</div>-->
+	
+	<div class="scroll-area">
+		
+			
+		<div id="product-overview" class="full-height">
+			<div id="product-overview-image-wrap-inline" class="product-overview-image-wrap">
+				<div class="product-overview-image product-image-bg"></div>
+			</div>
+			<div id="product-identity-area">
+				<h2 class="model-name">Beocreate 2</h2>
+				<h1 class="system-name">Sound System</h1>
+				<div class="button-row centre">
+					<div data-translation="changeNameButton" class="button pill black compact setup-only" onclick="product_information.changeProductName();">Change Name…</div>
+					<!--<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="product_information.startCustomisation();">Change…</div>-->
+					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="ask('product-appearance-prompt');">Change…</div>
+				</div>
+			</div>
+			<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">System</h2>
+		</div>
+			
+	
+		<div id="about-product" class="full-height setup-hide">
+			<div id="about-top" class="as-sidebar">
+				<!--<img class="create-logo" src="€/create.svg"/>-->
+				<div class="create-logo" style="-webkit-mask-image: url(€/create.svg); mask-image: url(€/create.svg);"></div>
+				<img class="hifiberry-logo" src="€/hifiberry-logo.svg"/>
+			</div>
+			<div class="menu-content-wrap no-full-width" id="about-menu-content-wrap">
+				<div class="menu-content no-full-width">
+					
+					
+					<div class="about-texts">
+						<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
+						<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>
+						
+						<p class="about-line-0 card-type">DAC+ DSP</p>
+						
+						<p class="about-line-1" id="copy-beocreate">&copy; 2017–2019 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry</p>
+						<p class="about-line-1" id="copy-hifiberry-os">&copy; 2017–2019 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen</p>
+						
+						<p class="about-line-2 system-info-cycle" onclick="product_information.cycleSystemInformation();"></p>
+						
+					</div>
+					<hr>
+					<div class="beo-dynamic-menu"></div>
+					<div class="menu-item icon" onclick="ask('product-shutdown-prompt');">
+						<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/power.svg); mask-image: url(€/symbols-black/power.svg);"></div>
+						<div class="menu-label">Power…</div>
+					</div>
+					
+					
+					
+					<!-- EXIST TO CREATE -->
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="product-appearance-prompt">
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="ask();product_information.changeProductName();">Change Product Name…</div>
+			<div class="button pill grey" onclick="ask();product_information.startCustomisation();">Change Icon…</div>
+			<div class="button pill black cancel" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="product-name-restart-prompt">
+		<h2>Restart Needed</h2>
+		<p>The product needs to restart for the name change to take effect.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill black default" onclick="product_information.restartProduct();">Restart Now</div>
+			<div class="button pill grey cancel" onclick="ask();">Restart Later</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="product-shutdown-prompt">
+		<h2>Raspberry Pi Power</h2>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="product_information.shutdownProduct();">Shut Down</div>
+			<div class="button pill grey" onclick="product_information.restartProduct();">Restart</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="popup-content hidden" id="customise-product-popup">
+		<header class="popup">
+			
+			<h1>Change Icon &amp; Model</h1>
+			<div class="button symbol right" onclick="product_information.finishCustomisation();" style="-webkit-mask-image: url(common/symbols-black/done.svg); mask-image: url(common/symbols-black/done.svg);"></div>
+		</header>
+		
+		<div class="scroll-area">
+			<div class="menu-content">
+				<!--<h2>Name</h2>
+				<div class="menu-item" onclick="product_information.changeProductName();">
+					<div class="menu-label system-name">N/A</div>
+					<div class="menu-value button">Change…</div>
+				</div>
+				<hr>-->
+				
+				<!--<h2>Icon &amp; Model Name</h2>-->
+				
+				
+				<div class="collection product-identity-collection margin-bottom margin-top">
+					
+					
+				</div>
+				<p class="hifiberry-hide">These settings do not change sound. For sound adjustments, go to the <a href="#" onclick="product_information.jumpToSoundAdjustments();">Sound section</a>.</p>
+				
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/product-information-client.js"></script>

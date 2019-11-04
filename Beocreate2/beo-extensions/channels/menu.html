@@ -1,0 +1,108 @@
+<div class="menu-screen" id="channels" data-icon="channels.svg" data-menu-title="Channels" data-stylesheet="channels.css" data-built-in="1" data-context="sound/adjustments" data-enable-with="Beocreate 4-Channel Amplifier">
+	<header>
+		<div class="back-button master"></div>
+		<h1 data-translation="headerTitle">Channels</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="simpl-adjustment">
+				
+				
+				<div id="simple-channel-select">
+					<h2>Speaker Role</h2>
+					<div class="segmented-control disabled" id="simple-channel-select-control">
+						<div onclick="channels.selectChannelSimple('left');" class="left">Left</div>
+						<div onclick="channels.selectChannelSimple('mono');" class="mono">Mono</div>
+						<div onclick="channels.selectChannelSimple('right');" class="right">Right</div>
+					</div>
+					<div id="simple-stereo-control" class="hidden disabled">
+						<div class="stereo-toggle-wrap">
+							<div>
+								<div class="button pill outline" id="stereo-toggle" onclick="channels.selectChannelSimple('stereo');">Stereo</div>
+							</div>
+						</div>
+						<!--<p>Two amplifiers have been set up as a master &amp; slave pair.</p>-->
+						<!--<p>Connect two speakers to the same amplifier and use them as a stereo pair. <a href="https://bang-olufsen.com" target="_blank">Learn more</a>.</p>-->
+					</div>
+				</div>
+				
+				<div id="simple-balance-control">
+					<h2>Balance</h2>
+					
+					<div class="slider-wrap">
+						<div class="end-text">L</div>
+						<div class="master-balance-slider show-value range-from-centre black" id="balance-slider-simple"></div>
+						<div class="end-text">R</div>
+					</div>
+				</div>
+				
+				<!--<h2 class="disclosure" data-disclosure="#amplifier-setup-select">Amplifiers</h2>
+				<div id="amplifier-setup-select" class="hidden">
+					<script>
+						document.write(createMenuItem({label: "One Amplifier", checkmark: "left", checked: true}));
+						document.write(createMenuItem({label: "Master & Slave", checkmark: "left", value: "Set Up…", valueAsButton: true, onclick: "showPopupView('daisy-chain-assist-popup', null, channels.finishDaisyChainSetup);"}));
+					</script>
+					<p>To connect two Beocreate 4-Channel Amplifiers together, select Master &amp; Slave.</p>
+				</div>-->
+			</div>
+			
+		</div>
+		
+	</div>
+	
+	<div class="popup-content hidden" id="daisy-chain-assist-popup">
+		<header class="popup">
+			<div class="button symbol left" onclick="channels.closeDaisyChainSetup();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Master &amp; Slave Setup</h1>
+			
+		</header>
+		
+		<div class="scroll-area">
+			<div class="popup-header-image-wrap daisy-chain-header-image-wrap">
+					<div class="popup-header-image" style="background-image: url(€/daisy-chain-hero.png);"></div>
+				</div>
+			
+			<div class="menu-content">
+				
+				<p>Connect two Beocreate 4-Channel Amplifiers together with an optical audio cable to play in stereo with three-way or four-way speakers.</p>
+				<hr class="margin-bottom">
+				<!--<ol>
+					<li>Select "Prepare Slave Amplifier" to set up this amplifier as the slave amplifier.</li>
+					<li>When done, the product will automatically shut down. Disconnect power and remove the Raspberry Pi.</li>
+					<li>Attach the Raspberry Pi to the new master amplifier.</li>
+					<li>Connect an optical cable from the output of the master to the input of the slave.</li>
+					<li>Connect both amplifiers to power. The new master amplifier will be automatically set up, which may take a up to a minute.</li>
+				</ol>
+				
+				<h2>Notes</h2>
+				<ul>
+					<li>A slave amplifier connected to the Raspberry Pi will be automatically reverted to a master at startup.</li>
+				</ul>-->
+				
+				<p>To begin, select "Prepare Slave Amplifier" to set up <strong>this amplifier</strong> as the slave amplifier.</p>
+				
+				<h2 class="disclosure" data-disclosure=".advanced-daisy-chain-options">Advanced Options</h2>
+				<div class="advanced-daisy-chain-options hidden">
+					<div class="menu-item toggle" class="daisy-chain-already-prepared" onclick="$(this).toggleClass('on');">
+						<div class="menu-label">Slave Already Prepared</div>
+						<div class="menu-toggle"></div>
+					</div>
+					<p>Only turn on the master &amp; slave function, without setting up this amplifier as the slave.</p>
+					
+					<div class="menu-item toggle" class="daisy-chain-retain-roles" onclick="$(this).toggleClass('on');">
+						<div class="menu-label">Preserve Channel Roles</div>
+						<div class="menu-toggle"></div>
+					</div>
+					<p>Preserve the current custom channel roles in the slave amplifier. Otherwise the amplifier will be set as mono.</p>
+				</div>
+			</div>
+		</div>
+		
+		<footer>
+			<div onclick="channels.prepareSlaveAmplifier();" class="button pill black prepare-slave-board-button">Prepare Slave Amplifier</div>
+		</footer>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/channels-client.js"></script>

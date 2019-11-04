@@ -1,0 +1,56 @@
+<div class="menu-screen full-width hidden" id="now-playing" data-icon="now-playing.svg" data-hidden="1" data-menu-title="Now Playing" data-stylesheet="now-playing.css" data-built-in="1">
+	
+	<header class="always-top">
+		<div class="button symbol left" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-down.svg); mask-image: url(common/symbols-black/chevron-thin-down.svg);" onclick="now_playing.hideNowPlaying();"></div>
+		<div class="focused-source">
+			<div class="symbol focused-source-icon hidden" style="-webkit-mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg); mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg);"></div><span class="focused-source-name"></span>
+		</div>
+	</header>
+	<div id="now-playing-content">
+		<div id="now-playing-artwork-area">
+			<div id="now-playing-artwork-wrap">
+				<!--<div class="artwork-bg" style="background-image: url(€/placeholder.svg);"></div>-->
+				<div id="now-playing-landscape-artwork-background"></div>
+				<img class="square-helper" src="common/square-helper.png">
+				<div id="artwork-wrap-inner">
+					<!--<div id="artwork-wrap-inner-2">-->
+						<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">
+						<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" onload="try {now_playing.artworkLoaded()} catch(error) {};" alt="Album Artwork" class="artwork-img placeholder visible" id="main-artwork" />
+					<!--</div>-->
+				</div>
+				<img class="square-helper" src="common/square-helper.png">
+			</div>
+		</div>
+		
+		<div id="now-playing-control-area">
+			
+			<div id="now-playing-text-area-wrap">
+				<div id="top-text" class="now-playing-titles logo">
+					<div class="h1-wrap"><h1 class="now-playing-title first-row"></h1></div>
+					<div class="h2-wrap"><h2 class="now-playing-artist second-row"></h2></div>
+					<!--<img id="top-text-beo-logo" src="common/bangolufsen-w.svg">-->
+				</div>
+			</div>
+			<div id="now-playing-control-area-wrap">
+				<div id="now-playing-transport" class="disabled">
+					<img src="€/symbols-white/previous-track.svg" onclick="now_playing.transport('previous');" class="button symbol" alt="Previous Track" draggable="false" />
+					<img src="€/symbols-white/play.svg" onclick="now_playing.playButtonPress();" alt="Play or Pause" class="play-button button symbol" draggable="false" />
+					<img src="€/symbols-white/next-track.svg" onclick="now_playing.transport('next');" class="button symbol" alt="Next Track" draggable="false" />
+					
+				</div>
+				
+				<div class="slider-wrap white">
+					<img class="symbol" src="common/symbols-white/volume-mute.svg">
+					<div class="master-volume-slider white" id="now-playing-volume-slider"></div>
+					<img class="symbol" src="common/symbols-white/volume.svg">
+				</div>
+				
+				<div id="now-playing-function-row">
+					<img id="love-button" src="€/symbols-white/heart.svg" onclick="now_playing.toggleLove();" class="button symbol function-item-love love-button" alt="Love or Unlove Track" draggable="false" />
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/now-playing-client.js"></script>

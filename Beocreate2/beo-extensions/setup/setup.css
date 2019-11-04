@@ -1,0 +1,121 @@
+/* @override 
+	http://beocreate-core.local/extensions/setup/setup.css */
+
+#setup-ornaments {
+	/*background-color: var(--carnation);*/
+	position: absolute;
+	bottom: -55px;
+	height: 60vh;
+	left: 0;
+	right: 0;
+	display: none;
+}
+
+#setup .background .create-dot {
+	position: absolute;
+	margin-left: -50px;
+	width: 100px;
+	height: 100px;
+	margin-top: -50px;
+}
+
+.setup-ornament {
+	position: absolute;
+	mix-blend-mode: multiply;
+	bottom: 0;
+}
+
+#setup-ornament-1 {
+	background-color: var(--spindle);
+	width: 30%;
+	height: 60%;
+}
+
+#setup-ornament-2 {
+	background-color: var(--turquoise);
+	width: 65%;
+	height: 80%;
+	left: 25%;
+}
+
+#setup-ornament-3 {
+	background-color: var(--yellow);
+	width: 35%;
+	height: 50%;
+	right: 0;
+}
+
+#setup-ornament-4 {
+	width: 80%;
+	right: -5%;
+	opacity: 1;
+	bottom: -3%;
+}
+
+.setup-ornament-logo {
+	/*filter: invert(1);*/
+	width: 20%;
+	margin-left: 10%;
+	margin-top: 10%;
+	display: none;
+	min-width: 50px;
+}
+
+#setup .menu-content,
+#setup-finish .menu-content {
+	padding-top: 10%;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+.setupsetup-image {
+	width: 100%;
+	display: block;
+	margin-left: auto;
+	position: absolute;
+	bottom: -55px;
+	right: 0;
+	transition: opacity 0.5s ease;
+	opacity: 0;
+	left: 0;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: bottom right;
+	top: 0;
+}
+
+body:not(.dark) #setupsetup-light {
+	opacity: 1;
+}
+
+.dark #setupsetup-dark {
+	opacity: 1;
+}
+
+	
+
+@media only screen and (min-width: 621px) {
+	
+	#setup-ornaments {
+		left: auto;
+		right: 0;
+		width: 70%;
+		bottom: -75px;
+	}
+	
+	.setupsetup-image {
+		bottom: -75px;
+	}
+	
+	
+	#setup .menu-content,
+	#setup-finish .menu-content {
+		text-align: left;
+		width: 330px;
+		margin-left: 10%;
+		padding: 0;
+		margin-top: 10%;
+	}
+	
+}

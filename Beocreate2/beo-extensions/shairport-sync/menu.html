@@ -1,0 +1,37 @@
+<div class="menu-screen source" id="shairport-sync" data-icon="airplay.svg" data-menu-title="AirPlay 1">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>AirPlay 1</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="menu-item toggle" id="shairport-sync-enabled-toggle" onclick="shairport_sync.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<hr>
+			<div class="menu-item toggle" id="shairport-sync-password-toggle" onclick="shairport_sync.toggleUsePasswordForShairportSync();">
+				<div class="menu-label">Use Password</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<div id="shairport-sync-change-password" class="button pill grey disabled" onclick="shairport_sync.setShairportSyncPassword();">Change Password…</div>
+			<p class="margin-top">Stream music from iOS devices and Mac computers.</p>
+			<p>AirPlay support is powered by the <a href="https://github.com/mikebrady/shairport-sync/" target="_blank">shairport-sync</a> open-source project<span class="shairport-sync-version-container"> (version <span class="shairport-sync-version"></span>)</span>.</p>
+			
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="disable-shairport-sync-password-prompt">
+		<h2>Disable AirPlay Password</h2>
+		<p>Active AirPlay sources will be disconnected to restart shairport-sync.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill black default" onclick="shairport_sync.disableShairportSyncPassword();">Disable Password</div>
+			<div class="button pill grey cancel" onclick="ask();">Cancel</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/shairport-sync-client.js"></script>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Beocreate Connect</title>
+		<link rel="stylesheet" type="text/css" href="beocreate-app2018.css" />
+		
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+		<script src="scripts/jquery-1.10.2.min.js"></script>
+		<script>if (window.module) module = window.module;</script>
+		<script src="scripts/ui.js"></script>
+    </head>
+	<body class="mac no-dark-ui-animation windowed">
+		<div id="title-bar">
+			<div id="title-bar-drag"></div>
+			<div id="menu-button-wrap">
+				<div class="toolbar-button menu-button disabled" onclick="toggleMenu();" id="menu-button-neue"><div class="button-icon"></div></div>
+			</div>
+			<!--<div class="toolbar-button test" id="menu-button-neue"><div class="button-icon" id="show-all"></div></div>-->
+			<!--<div id="menu-button" class="menu-open hide" onclick="toggleMenu();">
+				<div class="moving-menu-icon">
+					<div class="menu-line-1"></div>
+					<div class="menu-line-2"></div>
+					<div class="menu-line-3"></div>
+					<div class="menu-close"></div>
+					<div class="menu-boxes"></div>
+					
+					<div class="menu-box menu-box-1"></div>
+					<div class="menu-box menu-box-2"></div>
+					<div class="menu-box menu-box-3"></div>
+					<div class="menu-box menu-box-4"></div>
+				</div>
+				<span>Home</span>
+			</div>-->
+			<img class="header-beo" src="images/create-black.svg">
+			<div id="window-title"></div>
+			
+			<div id="windows-controls">
+					  <!-- Window controls for Windows -->
+				      <div class="windows-button" id="min-button">
+				        <span>&#xE921;</span>
+				      </div>
+				      <div class="windows-button" id="max-button">
+				        <span>&#xE922;</span>
+				      </div>
+				      <div class="windows-button" id="restore-button">
+				        <span>&#xE923;</span>
+				      </div>
+				      <div class="windows-button" id="close-button">
+				        <span>&#xE8BB;</span>
+				      </div>
+			</div>
+		</div>
+		
+		<div id="title-bar-padding"></div>
+		
+		<div class="content-area">
+		
+		
+			<div id="main-menu"> 
+					
+					<!--<div class="colour-background">
+						<div class="element element-1"></div>
+						<div class="element element-2"></div>
+						<div class="element element-3"></div>
+					</div>-->
+					
+					
+					
+				<div class="scroll-area" id="main-menu-scroll-area">
+					
+					<div id="product-notification" class="hidden">
+						<h3>Product is restarting</h3>
+						<p>Please wait...</p>
+					</div>
+					
+					<div class="above-fold">
+						<div class="menu-group first-menu-visit">
+							<!--<h1 class="large">Beocreate Connect</h1>-->
+							<p><strong>Beocreate Connect</strong> helps you set up and control upcycled Bang &amp; Olufsen speakers and other Beocreate sound systems.</p>
+						</div>
+						
+						<!--<div class="menu-group second-menu-visit white">
+							<h1 class="large">BeoCreate</h1>
+						</div>-->
+						
+						
+						<div class="menu-group">
+						<h2>Products</h2>
+							
+							<div class="collection found-products">
+								<div class="collection-item set-up" onclick="setUpNew();">
+									<img class="square-helper" src="images/square-helper.png"> 
+									<div class="collection-item-content">
+										
+										<div class="collection-item-text free-form">
+											
+											<div class="collection-label">Set Up New</div>
+										</div>
+									</div>
+								</div>
+								
+								<div class="collection-item no-products">
+									<img class="square-helper" src="images/square-helper.png"> 
+									<div class="collection-item-content">
+										
+										<div class="collection-item-text free-form">
+											
+											<div class="collection-label">Products found on the network will appear here</div>
+										</div>
+									</div>
+								</div>
+								
+								
+								
+								<div class="collection-item spacer first"></div>
+								<div class="collection-item spacer"></div>
+								<div class="collection-item spacer"></div>
+							</div>
+								
+						</div>
+						<div class="scroll-invitation">Help &amp; More</div>
+					</div>
+					
+					<div class="menu-content">
+						<div id="support">
+								<!--<h2>Help &amp; Other Resources</h2>-->
+								<ul class="links">
+									
+									<li><a href="https://github.com/bang-olufsen/create/blob/master/Help/FindYourProduct.md" target="_blank">Help finding the product</a></li>
+									<li><a href="https://www.hifiberry.com/beocreate" target="_blank">Upcycle vintage Bang &amp; Olufsen loudspeakers</a></li>
+									<li><a href="https://www.hifiberry.com/beocreate/beocreate-doc/beocreate-hardware-documentation/" target="_blank">Beocreate 4-Channel Amplifier documentation</a></li>
+									<li><a href="https://support.hifiberry.com/hc/en-us/community/topics/200402012-Software" target="_blank">HiFiBerry support forums</a></li>
+									<li><a href="https://github.com/bang-olufsen/create" target="_blank">Source code</a></li>
+									<li><a href="https://bang-olufsen.com" target="_blank">Bang &amp; Olufsen website</a></li>
+								</ul>
+						</div>
+					</div>
+					<!--
+					<div class="menu-group" id="robots">
+						<img class="robot" src="images/beorobot1.svg">
+					</div>-->
+					
+				</div>
+			</div>
+			
+			
+			<div class="app-section" id="set-up-new">
+				
+				
+				<div class="menu-screen" id="set-up-new-start">
+					
+					<div class="setup-choice disabled" onclick="startAssistant('createCard');">
+						<div class="number">01</div>
+						<h1>Prepare Card</h1>
+						<p>Install the necessary software onto a MicroSD card.</p>
+						<div class="tag">Coming soon</div>
+					</div>
+					<div class="vertical-separator"></div>
+					<div class="setup-choice" onclick="startAssistant('findAndSetUp');">
+						<div class="number">02</div>
+						<h1>Find &amp; Set Up</h1>
+						<p>Turn on and configure the product for the first time.</p>
+					</div>
+					<!--<div class="cards">
+						<div class="card" onclick="startAssistant('createCard');">
+							<div class="card-image" style="background-image: url(images/sd-card.jpg);"></div>
+							<div class="card-content">
+								<h2>Prepare a MicroSD Card</h2>
+								<p>Install the necessary software for the product.</p>
+							</div>
+							
+						</div>
+						
+						<div class="card" onclick="startAssistant('findAndSetUp');">
+							<div class="card-image" style="background-image: url(images/setup-card.jpg);"></div>
+							<div class="card-content">
+								<h2>First-Time Setup</h2>
+								<p>Turn on, find and set up the product.</p>
+							</div>
+							
+						</div>
+					</div>-->
+				</div>
+				
+				<div class="menu-screen" id="writing-card">
+					<div class="scroll-area progress">
+						<div class="burn-icon">
+							<img src="images/burn.svg">
+						</div>
+						<h1>Writing card...</h1>
+						<div class="progress-bar">
+							<div class="progress-fill" style="width: 27%;"></div>
+						</div>
+						<p>About 3 minutes remaining</p>
+					</div>
+				</div>
+				
+				<div class="menu-screen side-by-side" id="sd-to-product">
+					<div class="banner-image" style="background-image: url(images/mood-images/sd-mood.jpg);"></div>
+					<div class="scroll-area">
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Insert the card</h1>
+								<p>Carefully insert the prepared MicroSD card to the slot on the Raspberry Pi.</p>
+								<p>Don't close up your speaker just yet, until you've made sure everything is working.</p>	
+							</div>
+							
+						</div>
+					</div>
+				</div>
+				
+				<div class="menu-screen side-by-side" id="connect-power">
+					<div class="banner-image" style="background-image: url(images/mood-images/create-mood-5.jpg);"></div>
+					<div class="scroll-area">
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Power on your product</h1>
+								<p>Use a compatible, 12-24 V power adapter. Connect it either to the barrel jack or screw terminals, making sure polarity is correct.</p>
+								<p>A red light should be seen on the Raspberry Pi. If not, check connections and try again.</p>
+							</div>
+								
+						</div>
+					</div>
+				</div>
+				
+				<div class="menu-screen side-by-side" id="wait-for-discovery">
+					<div class="banner-image" style="background-image: url(images/mood-images/create-mood-5.jpg);"></div>
+					<div class="scroll-area">
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Find your product</h1>
+								<p id="wifi-instructions">Connect this computer to a Wi-Fi hotspot that looks like <strong>Beocreate_Setup_xxxxxxx</strong>. It may take a few minutes for the hotspot to appear. <a href="#" onclick="toggle('#ethernet-instructions','#wifi-instructions');">Set up with Ethernet instead.</a></p>
+								<p id="ethernet-instructions" class="hidden">Connect the product to your network with an Ethernet cable. Make sure this computer is on the same network. <a href="#" onclick="toggle('#wifi-instructions','#ethernet-instructions');">Set up wirelessly instead.</a></p>
+								<p>Once connected and the product appears below, select it to continue.</p>
+							</div>
+							
+						
+							<div class="menu-group">
+									
+									<div class="collection found-products">
+										
+										<div class="collection-item no-products">
+											<img class="square-helper" src="images/square-helper.png"> 
+											<div class="collection-item-content">
+												
+												<div class="collection-item-text free-form">
+													
+													<div class="collection-label">Found products will appear here</div>
+												</div>
+											</div>
+										</div>
+										
+										
+										<div class="collection-item spacer first"></div>
+										<div class="collection-item spacer"></div>
+										<div class="collection-item spacer"></div>
+									</div>
+										
+								</div>
+						
+						</div>
+					</div>
+				</div>
+				
+				
+			</div>
+			
+		
+			<iframe class="app-section" id="product-view"></iframe>
+		
+		
+		</div>
+		
+		<div id="assistant-bar">
+			<div class="button pill grey" id="assistant-previous" onclick="assistantFlow('previous');">
+				Previous Step
+			</div>
+			<div class="button pill black" id="assistant-next" onclick="assistantFlow('next');">
+				Next Step
+			</div>
+		</div>
+			
+	</body>
+</html>

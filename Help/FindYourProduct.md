@@ -1,6 +1,10 @@
 # Find Your Product
 
-If you're using Beocreate Connect, it should automatically discover Beocreate 2 sound systems on your network. Sometimes things don't work as expected and the product isn't found.
+If you're using Beocreate Connect, it should automatically discover Beocreate 2 sound systems on your network. Sometimes things don't work as expected and the product isn't found. The following steps can help you resolve this issue.
+
+## Look for Products Again
+
+Sometimes the products may not update to the grid in Beocreate Connect. In this case, select *Look for Products Again* from the File menu to perform a new search.
 
 ## Check Network Connection
 

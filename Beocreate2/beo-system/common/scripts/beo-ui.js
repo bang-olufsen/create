@@ -1331,11 +1331,13 @@ function startTextInput(type, title, prompt, options, callback) {
 	} else {
 		$("#text-input input[type=text]").attr("autocorrect", "off");
 	}
-	
+	$("#text-input input[type=password]").attr("placeholder", "");
+	$("#text-input input[type=text]").attr("placeholder", "");
 	if (options.placeholders.text) $("#text-input input[type=text]").attr("placeholder", options.placeholders.text);
 	if (options.placeholders.password) $("#text-input input[type=password]").attr("placeholder", options.placeholders.password);
 	
 	$("#text-input input[type=text], #text-input input[type=password]").val("");
+	if (options.text) $("#text-input input[type=text]").val(options.text);
 	
 	$("#text-prompt").text(prompt);
 	$("#text-input h1").text(title);

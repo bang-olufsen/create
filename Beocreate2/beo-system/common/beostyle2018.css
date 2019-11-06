@@ -639,12 +639,14 @@ nav.favourites div:active img {
 	font-weight: 500;
 	font-size: 0.9em;
 	margin-bottom: 0.2em;
+	height: 1em;
 }
 
 .player-bar h4 {
 	font-weight: 400;
 	font-size: 0.7em;
 	transition: opacity 0.5s ease;
+	height: 1em;
 	/*text-transform: uppercase;
 	letter-spacing: var(--uppercase-spacing);*/
 	color: gray;

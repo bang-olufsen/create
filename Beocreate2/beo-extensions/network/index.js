@@ -185,6 +185,25 @@ module.exports = function(beoBus, globals) {
 			}
 		}
 		
+		if (event.header == "applyIPSettings") {
+			if (event.content.forInterface && event.content.automatic != undefined) {
+				if (event.content.forInterface == "wifi" || event.content.forInterface == "ethernet") {
+					if (event.content.automatic) {
+						networkCore.configureIPAddress(null, event.content.forInterface, function(success, error) {
+							if (success) console.log("Interface '"+event.content.forInterface+"' configured for DHCP.");
+						});
+					} else if (event.content.settings.address &&
+								event.content.settings.subnetmask &&
+								event.content.settings.router &&
+								event.content.settings.dns) {
+						networkCore.configureIPAddress(event.content.settings, event.content.forInterface, function(success, error) {
+							if (success) console.log("Interface '"+event.content.forInterface+"' configured for static IP address.");
+						});
+					}
+				}
+			}
+		}
+		
 	});
 	
 	beoBus.on('setup', function(event) {

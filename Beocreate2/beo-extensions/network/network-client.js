@@ -6,6 +6,7 @@ var network = (function() {
 	connectedNetwork = null;
 	selectedNetworkTab = "wifi";
 	wifiScanning = false;
+	networkStatus = {wifi: {}, ethernet: {}};
 	
 	$(document).on("general", function(event, data) {
 		
@@ -138,10 +139,13 @@ var network = (function() {
 		}
 		
 		if (data.header == "wifiStatus") {
+			networkStatus.wifi = data.content.status;
+			
+			$(".wifi-ip").text("No address");
 			if (data.content.status.ipv4) {
 				if (data.content.status.ipv4.address) $(".wifi-ip").text(data.content.status.ipv4.address);
-				if (data.content.status.ipv4.subnetmask) $(".wifi-subnetmask").text(data.content.status.ipv4.subnetmask);
 			}
+			
 			
 			if (data.content.status.connected) {
 				$(".wifi-connected-ssid").text(data.content.status.ssid);
@@ -166,10 +170,13 @@ var network = (function() {
 		}
 		
 		if (data.header == "ethernetStatus") {
+			networkStatus.ethernet = data.content.status;
+			
+			$(".ethernet-ip").text("No address");
 			if (data.content.status.ipv4) {
 				if (data.content.status.ipv4.address) $(".ethernet-ip").text(data.content.status.ipv4.address);
-				if (data.content.status.ipv4.subnetmask) $(".ethernet-subnetmask").text(data.content.status.ipv4.subnetmask);
 			}
+			
 			
 			if (data.content.status.connected) {
 				if (data.content.testNoEthernet) {
@@ -202,19 +209,223 @@ var network = (function() {
 		}
 	});
 	
-	ipAddressSettings = false;
+	selectedInterface = false;
 	function showIPAddressSettings(forInterface) {
-		if (forInterface == "wifi") {
-			showPopupView("ip-address-wifi-popup");
-			ipAddressSettings = "wifi";
-		} else if (forInterface == "ethernet") {
-			ipAddressSettings = "ethernet";
-			showPopupView("ip-address-ethernet-popup");
+		if (forInterface) {
+			if (forInterface == "wifi") {
+				selectedInterface = "wifi";
+				$(".ip-address-popup header h1").text("Wireless IP Address");
+			} else if (forInterface == "ethernet") {
+				selectedInterface = "ethernet";
+				$(".ip-address-popup header h1").text("Ethernet IP Address");
+			}
+			// Load current settings into view.
+			ipSettingsChanged = false;
+			if (networkStatus[selectedInterface].ipSetup.auto) {
+				manualIPSettingsStore[selectedInterface].address = null;
+				manualIPSettingsStore[selectedInterface].router = null;
+				manualIPSettingsStore[selectedInterface].subnetmask = null;
+				manualIPSettingsStore[selectedInterface].dns = null;
+			} else {
+				manualIPSettingsStore[selectedInterface].address = networkStatus[selectedInterface].ipSetup.address;
+				manualIPSettingsStore[selectedInterface].router = networkStatus[selectedInterface].ipSetup.router;
+				manualIPSettingsStore[selectedInterface].subnetmask = networkStatus[selectedInterface].ipSetup.subnetmask;
+				manualIPSettingsStore[selectedInterface].dns = networkStatus[selectedInterface].ipSetup.dns;
+			}
+			setIPAddressMode();
+			showPopupView("ip-address-popup");
 		} else {
-			hidePopupView("ip-address-"+ipAddressSettings+"-popup");
-			ipAddressSettings = false;
+			hidePopupView("ip-address-popup");
+			selectedInterface = false;
 		}
 	}
+	
+	manualIPSettingsStore = {wifi: {
+		address: null,
+		subnetmask: null,
+		dns: null,
+		router: null
+	}, ethernet: {
+		address: null,
+		subnetmask: null,
+		dns: null,
+		router: null
+	}};
+	autoIPAddressSelected = true;
+	ipSettingsChanged = false;
+	
+	function setIPAddressMode(automatic) {
+		if (automatic == undefined) {
+			automatic = (networkStatus[selectedInterface].ipSetup.auto == true) ? true : false;
+			updateOnly = true;
+		} else {
+			updateOnly = false;
+		}
+		$(".ip-address-mode-selector div").removeClass("selected");
+		$(".ip-address-section").addClass("hidden");
+		if (automatic) {
+			$(".auto-ip-section").removeClass("hidden");
+			$(".ip-address-mode-selector .auto").addClass("selected");
+			
+			$(".ip-automatic").text("No address");
+			$(".subnetmask-automatic").text("–");
+			if (networkStatus[selectedInterface].ipv4) {
+				if (networkStatus[selectedInterface].ipv4.address) $(".ip-automatic").text(networkStatus[selectedInterface].ipv4.address);
+				if (networkStatus[selectedInterface].ipv4.subnetmask) $(".subnetmask-automatic").text(networkStatus[selectedInterface].ipv4.subnetmask);
+			}
+			if (networkStatus[selectedInterface].ipSetup.auto == true) {
+				$(".apply-ip-settings-button").addClass("disabled");
+			} else {
+				$(".apply-ip-settings-button").removeClass("disabled");
+			}
+			autoIPAddressSelected = true;
+		} else {
+			$(".manual-ip-section").removeClass("hidden");
+			$(".ip-address-mode-selector .manual").addClass("selected");
+			if (networkStatus[selectedInterface].ipSetup.auto != true && 
+				!ipSettingsChanged) {
+				$(".apply-ip-settings-button").addClass("disabled");
+			} else if (manualIPSettingsStore[selectedInterface].address &&
+						manualIPSettingsStore[selectedInterface].subnetmask &&
+						manualIPSettingsStore[selectedInterface].router &&
+						manualIPSettingsStore[selectedInterface].dns &&
+						ipSettingsChanged) {
+				$(".apply-ip-settings-button").removeClass("disabled");
+			} else {
+				$(".apply-ip-settings-button").addClass("disabled");
+			}
+			if (manualIPSettingsStore[selectedInterface].address) {
+				$(".ip-manual").removeClass("button").text(manualIPSettingsStore[selectedInterface].address);
+			} else {
+				$(".ip-manual").addClass("button").text("Set...");
+			}
+			if (manualIPSettingsStore[selectedInterface].subnetmask) {
+				$(".subnetmask-manual").removeClass("button").text(manualIPSettingsStore[selectedInterface].subnetmask);
+			} else {
+				$(".subnetmask-manual").addClass("button").text("Set...");
+			}
+			if (manualIPSettingsStore[selectedInterface].router) {
+				$(".router-manual").removeClass("button").text(manualIPSettingsStore[selectedInterface].router);
+			} else {
+				$(".router-manual").addClass("button").text("Set...");
+			}
+			if (manualIPSettingsStore[selectedInterface].dns) {
+				dns = manualIPSettingsStore[selectedInterface].dns;
+				if (typeof dns == "object") {
+					dns = dns.join(", ");
+				}
+				$(".dns-manual").removeClass("button").text(dns);
+			} else {
+				$(".dns-manual").addClass("button").text("Set...");
+			}
+			autoIPAddressSelected = false;
+		}
+	}
+	
+	function inputIPAddressSetting(setting) {
+		switch (setting) {
+			case "address":
+				title = "IP Address";
+				placeholder = "10.0...";
+				text = manualIPSettingsStore[selectedInterface].address;
+				message = "Enter IPv4 address for the product.";
+				break;
+			case "subnetmask":
+				title = "Subnet Mask";
+				placeholder = "255.255.255.0";
+				text = manualIPSettingsStore[selectedInterface].subnetmask;
+				message = "Enter subnet mask.";
+				break;
+			case "router":
+				title = "Router Address";
+				placeholder = "10.0...";
+				text = manualIPSettingsStore[selectedInterface].router;
+				message = "Enter IPv4 address of the router or gateway the product connects to.";
+				break;
+			case "dns":
+				title = "DNS Servers";
+				placeholder = "1.1.1.1, 9.9.9.9";
+				dns = manualIPSettingsStore[selectedInterface].dns;
+				if (typeof dns == "object" && dns != null) {
+					dns = dns.join(", ");
+				}
+				text = dns;
+				message = "Enter DNS server addresses. You can enter multiple servers separated by a comma.";
+				break;
+		}
+		startTextInput(1, title, message, {text: text, placeholders: {text: placeholder}}, function(input) {
+			// Validate and store input.
+			switch (setting) {
+				case "address":
+					if (isValidIP(input.text)) {
+						manualIPSettingsStore[selectedInterface].address = input.text;
+						ipSettingsChanged = true;
+						setIPAddressMode(false);
+					} else {
+						notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+					}
+					break;
+				case "subnetmask":
+					if (isValidIP(input.text)) {
+						manualIPSettingsStore[selectedInterface].subnetmask = input.text;
+						ipSettingsChanged = true;
+						setIPAddressMode(false);
+					} else {
+						notify({title: "Subnet mask is not valid", message: "Subnet mask must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+					}
+					break;
+				case "router":
+					if (isValidIP(input.text)) {
+						manualIPSettingsStore[selectedInterface].router = input.text;
+						ipSettingsChanged = true;
+						setIPAddressMode(false);
+					} else {
+						notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+					}
+					break;
+				case "dns":
+					dnsItems = input.text.split(",");
+					validDNS = true;
+					for (var i = 0; i < dnsItems.length; i++) {
+						dnsItems[i] = dnsItems[i].trim();
+						if (!isValidIP(dnsItems[i])) validDNS = false;
+					}
+					if (validDNS) {
+						manualIPSettingsStore[selectedInterface].dns = dnsItems;
+						ipSettingsChanged = true;
+						setIPAddressMode(false);
+					} else {
+						notify({title: "DNS server address is not valid", message: "The addresses must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+					}
+					break;
+			}
+		});
+	}
+	
+	function isValidIP(address) {
+		ipItems = address.split(".");
+		validIP = true;
+		if (ipItems.length == 4) {
+			// Length matches.
+			for (var i = 0; i < ipItems.length; i++) {
+				if (isNaN(ipItems[i])) validIP = false;
+			}
+		} else {
+			validIP = false;
+		}
+		return validIP;
+	}
+	
+	function applyIPSettings(confirmed) {
+		if (confirmed) {
+			ask();
+			send({target: "network", header: "applyIPSettings", content: {forInterface: selectedInterface, automatic: autoIPAddressSelected, settings: manualIPSettingsStore[selectedInterface]}});
+			showIPAddressSettings();
+		} else {
+			ask("apply-ip-settings-prompt");
+		}
+	}
+	
 	
 	selectedNetwork = null;
 	function showNetworkOptions(networkIndex, saved, connected) {
@@ -322,7 +533,10 @@ var network = (function() {
 		forgetNetwork: forgetNetwork,
 		showNetworkOptions: showNetworkOptions,
 		updatePassword: updatePassword,
-		showIPAddressSettings: showIPAddressSettings
+		showIPAddressSettings: showIPAddressSettings,
+		setIPAddressMode: setIPAddressMode,
+		inputIPAddressSetting: inputIPAddressSetting,
+		applyIPSettings: applyIPSettings
 	};
 
 })();

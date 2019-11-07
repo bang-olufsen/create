@@ -200,6 +200,23 @@ module.exports = function(beoBus, globals) {
 							if (success) console.log("Interface '"+event.content.forInterface+"' configured for static IP address.");
 						});
 					}
+					if (event.content.forInterface == "wifi") {
+						networkCore.getWifiStatus(function(status, error) {
+							if (!error) {
+								beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
+							} else {
+								beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
+							}
+						});
+					} else {
+						networkCore.getEthernetStatus(function(status, error) {
+							if (!error) {
+								beoBus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
+							} else {
+								beoBus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
+							}
+						});
+					}
 				}
 			}
 		}

@@ -327,25 +327,49 @@ var network = (function() {
 			case "address":
 				title = "IP Address";
 				placeholder = "10.0...";
-				text = manualIPSettingsStore[selectedInterface].address;
+				if (manualIPSettingsStore[selectedInterface].address) {
+					text = manualIPSettingsStore[selectedInterface].address;
+				} else if (manualIPSettingsStore[selectedInterface].router) {
+					textItems = manualIPSettingsStore[selectedInterface].router.split(".");
+					textItems.splice(3, 1);
+					text = textItems.join(".")+".";
+				} else {
+					text = null;
+				}
 				message = "Enter IPv4 address for the product.";
 				break;
 			case "subnetmask":
 				title = "Subnet Mask";
 				placeholder = "255.255.255.0";
-				text = manualIPSettingsStore[selectedInterface].subnetmask;
+				if (manualIPSettingsStore[selectedInterface].subnetmask) {
+					text = manualIPSettingsStore[selectedInterface].subnetmask;
+				} else {
+					text = "255.255.255.0";
+				}
 				message = "Enter subnet mask.";
 				break;
 			case "router":
 				title = "Router Address";
 				placeholder = "10.0...";
-				text = manualIPSettingsStore[selectedInterface].router;
+				if (manualIPSettingsStore[selectedInterface].router) {
+					text = manualIPSettingsStore[selectedInterface].router;
+				} else if (manualIPSettingsStore[selectedInterface].address) {
+					textItems = manualIPSettingsStore[selectedInterface].address.split(".");
+					textItems[3] = "1";
+					text = textItems.join(".");
+				} else {
+					text = null;
+				}
 				message = "Enter IPv4 address of the router or gateway the product connects to.";
 				break;
 			case "dns":
 				title = "DNS Servers";
-				placeholder = "1.1.1.1, 9.9.9.9";
-				dns = manualIPSettingsStore[selectedInterface].dns;
+				placeholder = "9.9.9.9, 1.1.1.1";
+				if (manualIPSettingsStore[selectedInterface].dns) {
+					dns = manualIPSettingsStore[selectedInterface].dns;
+				} else {
+					dns = "9.9.9.9, 1.1.1.1";
+				}
 				if (typeof dns == "object" && dns != null) {
 					dns = dns.join(", ");
 				}
@@ -359,6 +383,18 @@ var network = (function() {
 				case "address":
 					if (isValidIP(input.text)) {
 						manualIPSettingsStore[selectedInterface].address = input.text;
+						if (!manualIPSettingsStore[selectedInterface].router) {
+							textItems = input.text.split(".");
+							textItems[3] = "1";
+							router = textItems.join(".");
+							manualIPSettingsStore[selectedInterface].router = router;
+						}
+						if (!manualIPSettingsStore[selectedInterface].subnetmask) {
+							manualIPSettingsStore[selectedInterface].subnetmask = "255.255.255.0";
+						}
+						if (!manualIPSettingsStore[selectedInterface].dns) {
+							manualIPSettingsStore[selectedInterface].dns = ["9.9.9.9", "1.1.1.1"];
+						}
 						ipSettingsChanged = true;
 						setIPAddressMode(false);
 					} else {

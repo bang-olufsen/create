@@ -1,0 +1,28 @@
+<div class="menu-screen" id="last-fm" data-icon="last-fm.svg" data-menu-title="Last.fm" data-context="system-settings/services">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Last.fm</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>Track your music listening with <a href="https://last.fm" target="_blank">Last.fm</a> to get personalised charts and recommendations.</p>
+			<div id="lastfm-logged-out-section">
+				<div class="button pill grey" id="lastfm-log-in" onclick="lastFM.logIn();">Log In with Last.fm...</div>
+			</div>
+			<div id="lastfm-logged-in-section" class="hidden">
+				<div class="menu-item static">
+					<div class="menu-label">Logged in</div>
+					<div class="menu-value lastfm-username">Username</div>
+				</div>
+				<a class="button pill black" id="open-my-lastfm" target="_blank">Open My Last.fm Page</a>
+				<div class="button pill grey" onclick="lastFM.logOut();">Log Out</div>
+			</div>
+			<p class="margin-top">When logged in, the tracks you listen to will be automatically "scrobbled". Love or unlove tracks with the heart symbol right in the Now Playing view.</p>
+		</div>
+	</div>
+
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/last-fm-client.js"></script>

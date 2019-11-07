@@ -44,6 +44,8 @@ $(document).on("now-playing", function(event, data) {
 			if (data.content.metadata.album) {
 				$(".artwork-img").attr("alt", data.content.metadata.album);
 				$("#artwork-wrap-inner").attr("data-album", data.content.metadata.album);
+			} else {
+				
 			}
 			if (data.content.metadata.title != undefined) {
 				artistAlbum = false;

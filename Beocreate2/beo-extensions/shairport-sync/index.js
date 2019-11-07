@@ -21,7 +21,7 @@ var fs = require("fs");
 var exec = require('child_process').exec;
 
 var net = require("net");
-var dnssd = require("dnssd"); // for service discovery.
+var dnssd = require("dnssd2"); // for service discovery.
 var request = require('request'); // for sending HTTP requests to the DACP server
 
 module.exports = function(beoBus, globals) {

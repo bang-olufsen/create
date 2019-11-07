@@ -198,6 +198,7 @@ module.exports = function(beoBus, globals) {
 		switch (operation) {
 			case "playPause":
 			case "play":
+			case "pause":
 			case "stop":
 			case "next":
 			case "previous":
@@ -368,6 +369,7 @@ module.exports = function(beoBus, globals) {
 			if (allSources[extension].stopOthers) {
 				if (allSources[currentSource] && allSources[currentSource].usesHifiberryControl && !allSources[extension].usesHifiberryControl) {
 					// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
+					if (debug) console.log("Pausing sources under HiFiBerry control...");
 					audioControl("pause");
 				}
 				for (source in allSources) {
@@ -462,6 +464,11 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
+	function setMetadata(extension, metadata) {
+		
+	}
+	
+	
 	function setSourceOptions(extension, options) {
 
 		sourceAdded = false;
@@ -522,6 +529,7 @@ module.exports = function(beoBus, globals) {
 	return {
 		version: version,
 		setSourceOptions: setSourceOptions,
+		setMetadata: setMetadata,
 		sourceActivated: sourceActivated,
 		sourceDeactivated: sourceDeactivated,
 		allSources: allSources,

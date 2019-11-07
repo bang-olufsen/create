@@ -261,7 +261,8 @@ module.exports = function(beoBus, globals) {
 		if (fs.existsSync("/etc/spotifyd.conf")) {
 			spotifydConfig = [];
 			for (section in configuration) {
-				spotifydConfig.push("["+section+"]");
+				sectionStart = (spotifydConfig.length != 0) ? "\n["+section+"]" : "["+section+"]";
+				spotifydConfig.push(sectionStart);
 				for (option in configuration[section]) {
 					if (configuration[section][option].comment) {
 						line = "#"+option+" = "+configuration[section][option].value;

@@ -605,7 +605,8 @@ function writeDHCPSettings(forInterface) {
 		if (fs.existsSync(path)) {
 			config = [];
 			for (section in dhcpConfig[forInterface]) {
-				config.push("["+section+"]");
+				sectionStart = (config.length != 0) ? "\n["+section+"]" : "["+section+"]";
+				config.push(sectionStart);
 				for (option in dhcpConfig[forInterface][section]) {
 					if (typeof dhcpConfig[forInterface][section][option] == "object") {
 						// Iterate over the options of an array to add multiple lines of the same.

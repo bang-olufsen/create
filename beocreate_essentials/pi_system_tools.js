@@ -199,16 +199,16 @@ function expandFilesystem(callback) {
 	});
 }
 
-function power(operation) {
+function power(operation, callback) {
 	// Calling a power function will naturally exit the script.
 	if (operation == "reboot") {
-		exec("/bin/systemctl reboot", function(error, stdout, stderr) {
+		exec("/bin/reboot", function(error, stdout, stderr) {
 			//process.exit(0);
 		});
 		//process.exit(0);
 	}
 	if (operation == "shutdown") {
-		exec("/bin/systemctl poweroff", function(error, stdout, stderr) {
+		exec("/usr/sbin/shutdown now", function(error, stdout, stderr) {
 			//
 		});
 		//process.exit(0);

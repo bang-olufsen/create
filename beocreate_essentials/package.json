@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/bang-olufsen/create#readme",
   "dependencies": {
-    "dnssd": "^0.4.1",
+    "dnssd2": "^1.0.0",
     "websocket": "^1.0.28",
     "wireless-tools": "^0.19.0"
   }

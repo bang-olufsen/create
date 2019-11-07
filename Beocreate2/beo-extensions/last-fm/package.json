@@ -1,0 +1,27 @@
+{
+  "name": "@beocreate/last-fm",
+  "version": "0.5.0",
+  "description": "Last.FM configuration in Beocreate systems",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bang-olufsen/create.git"
+  },
+  "keywords": [
+    "beocreate",
+    "lastfm",
+	"audioscrobbler",
+	"audio",
+	"bang",
+	"olufsen"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bang-olufsen/create/issues"
+  },
+  "homepage": "https://github.com/bang-olufsen/create#readme"
+}

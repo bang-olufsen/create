@@ -1350,7 +1350,7 @@ function startTextInput(type, title, prompt, options, callback) {
 		$("#text-input input[type=text]").focus();
 	}
 	//}, 600);
-	
+	validateTextInput();
 
 }
 

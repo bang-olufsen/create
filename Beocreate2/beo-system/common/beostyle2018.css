@@ -3021,6 +3021,11 @@ input[type=password]:focus {
 	transition-duration: 0.2s;
 }
 
+input[type=text]::placeholder, 
+input[type=password]::placeholder {
+	color: #ddd;
+}
+
 .dark input[type=text]:focus, 
 .dark input[type=password]:focus {
 	border-color: #eee;

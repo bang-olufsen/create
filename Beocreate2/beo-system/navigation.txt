@@ -1,7 +1,7 @@
 product-information
 -
 sound
-network
 sources
--
+network
 system-settings
+-

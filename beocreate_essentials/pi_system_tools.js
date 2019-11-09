@@ -202,7 +202,7 @@ function expandFilesystem(callback) {
 function power(operation, callback) {
 	// Calling a power function will naturally exit the script.
 	if (operation == "reboot") {
-		exec("/bin/reboot", function(error, stdout, stderr) {
+		exec("/usr/sbin/reboot", function(error, stdout, stderr) {
 			//process.exit(0);
 		});
 		//process.exit(0);

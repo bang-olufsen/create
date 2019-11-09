@@ -3,6 +3,8 @@ var dsp_programs = (function() {
 var programs = {};
 var previewedDSPProgram = null;
 var muteUnknown = false;
+var dspConnected = false;
+var dspResponding = false;
 
 
 $(document).on("dsp-programs", function(event, data) {
@@ -64,9 +66,50 @@ $(document).on("dsp-programs", function(event, data) {
 	
 	if (data.header == "showCurrent") {
 		if (data.content.name) {
+			// Current program.
 			$("#dsp-programs .current-dsp-program-name").text(data.content.name);
 		} else {
 			$("#dsp-programs .current-dsp-program-name").text("Unknown Program");
+		}
+		if (data.content.dspConnected != undefined) {
+			dspConnected = data.content.dspConnected;
+		}
+		if (data.content.dspResponding != undefined) {
+			dspResponding = data.content.dspResponding;
+		}
+		if (dspConnected && dspResponding) {
+			$("#dsp-error-wrap").addClass("hidden");
+			$("#current-dsp-program-wrap").removeClass("hidden");
+		} else {
+			if (!dspConnected) {
+				$("#dsp-problem-description").text("unable to connect");
+			} else if (!dspResponding) {
+				$("#dsp-problem-description").text("not responding");
+			}
+			$("#dsp-error-wrap").removeClass("hidden");
+			$("#current-dsp-program-wrap").addClass("hidden");
+		}
+	}
+	
+	if (data.header == "status") {
+		
+		if (data.content.dspConnected != undefined) {
+			dspConnected = data.content.dspConnected;
+		}
+		if (data.content.dspResponding != undefined) {
+			dspResponding = data.content.dspResponding;
+		}
+		if (dspConnected && dspResponding) {
+			$("#dsp-error-wrap").addClass("hidden");
+			$("#current-dsp-program-wrap").removeClass("hidden");
+		} else {
+			if (!dspConnected) {
+				$("#dsp-problem-description").text("unable to connect");
+			} else if (!dspResponding) {
+				$("#dsp-problem-description").text("not responding");
+			}
+			$("#dsp-error-wrap").removeClass("hidden");
+			$("#current-dsp-program-wrap").addClass("hidden");
 		}
 	}
 	

@@ -28,10 +28,11 @@ $(document).on("tone-controls", function(event, data) {
 		
 		if (!data.content.canDoToneControl.toneControl) {
 			// No ToneTouch or loudness.
+			$("#tone-touch-dot").addClass("disabled");
 		} 
 		if (data.content.canDoToneControl.toneControl >= 2) {
 			// Enable ToneTouch.
-			
+			$("#tone-touch-dot").removeClass("disabled");
 		}
 		if (data.content.canDoToneControl.toneControl >= 4) {
 			// Enable loudness.

@@ -35,6 +35,8 @@ module.exports = function(beoBus, globals) {
 	var currentMetadata = {};
 	var metadataFromDSP = false;
 	var currentChecksum = null;
+	var dspConnected = false;
+	var dspResponding = false;
 	
 	var version = require("./package.json").version;
 	
@@ -58,6 +60,7 @@ module.exports = function(beoBus, globals) {
 			beoDSP.connectDSP(function(success) {  
 				if (success) {
 					beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "dsp-programs"}});
+					dspConnected = true;
 					beoBus.emit('dsp', {header: "connected", content: true});
 					
 					getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
@@ -92,6 +95,7 @@ module.exports = function(beoBus, globals) {
 				
 				name = getProgramName(currentMetadata);
 				beoBus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: {name: name}});
+				beoBus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
 				
 				programs = {};
 				active = 0;
@@ -226,8 +230,15 @@ module.exports = function(beoBus, globals) {
 	function getCurrentChecksumAndMetadata(callback, startup) {
 		if (callback) {
 			amplifierMute(true);
+			checksumTimeout = setTimeout(function() {
+				console.error("DSP request for checksum timed out.");
+				dspResponding = false;
+				beoBus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
+			}, 5000);
 			beoDSP.getChecksum(function(checksum) {
 				if (debug) console.log("DSP checksum is: "+checksum+".");
+				dspResponding = true;
+				clearTimeout(checksumTimeout);
 				currentChecksum = checksum;
 				beoDSP.getXML(function(response) {
 					// Reads the current program from the DSP.

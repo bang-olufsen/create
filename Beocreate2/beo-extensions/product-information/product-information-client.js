@@ -141,7 +141,7 @@ function cycleSystemInformation(updateOnly) {
 	
 	switch (currentSystemInfo) {
 		case 0: // HiFiBerryOS version ("release")
-			infoText = "Release "+hifiberryVersion;
+			infoText = "Software "+hifiberryVersion;
 			break;
 		case 1: // Beocreate version
 			infoText = "Beocreate "+systemVersion;

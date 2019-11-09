@@ -292,12 +292,9 @@ var connectTimeoutCycle = 0;
 
 function connectDSP(callback, socketAddress) {
 	if (!dspConnected) {
-		connectTimeoutCycle = 0;
 		if (!socketAddress) socketAddress = '127.0.1.1';
 		if (callback) connectCallback = callback;
-		dspClient.connect(8086, socketAddress, function() {
-			//if (callback) callback(true);
-		});
+		dspClient.connect(8086, socketAddress);
 	} else {
 		// Connection is already open.
 		if (callback) callback(true);
@@ -316,46 +313,29 @@ function isConnected() {
 }
 
 
-dspClient.on('error', function(error) {
-	console.error("Error connecting to DSP server:", error);
-	
-	dspClient.destroy();
-	if (connectTimeoutCycle < 10) {
-		// Retry 10 times, waiting 2 seconds after error.
-		connectTimeoutCycle++;
-		connectTimeout = setTimeout(function() {
-			connectDSP();
-		}, 2000);
-	} else {
-		console.error("Could not connect to the DSP server, tried again 10 times.");
-	}
-});
-
-dspClient.on('close', function(error) {
-	//console.log("Disconnected from the DSP server.");
-	dspConnected = false;
-});
-
-dspClient.on('end', function(error) {
-	//console.log("All data has been received.");
-});
-
-dspClient.on('connect', function(error) {
-	//console.log("Connected to the DSP server.");
-	clearTimeout(connectTimeout);
-	dspConnected = true;
-	if (connectCallback) connectCallback(true);
-	connectCallback = null;
-});
-
-
+dspClient.on('connect', onConnect);
+dspClient.on('error', onError);
 
 dataLength = null;
 currentDataLength = 0;
 bufferArray = [];
 
+function onConnect(error) {
+	console.log("Connected to the DSP server.");
+	clearTimeout(connectTimeout);
+	dspConnected = true;
+	if (connectCallback) connectCallback(true);
+	connectCallback = null;
+	connectTimeoutCycle = 0;
+	dspClient.on('close', onClose);
+	dspClient.on('data', onData);
+}
 
-dspClient.on('data', function(data) {
+function onClose(error) {
+	dspConnected = false;
+};
+
+function onData(data) {
 	if (checksumCallback && data[0] == hifiberryCommandChecksumResponseCode) {
 			checksumCallback(data.slice(14).toString('hex').toUpperCase());
 			checksumCallback = null;
@@ -399,10 +379,29 @@ dspClient.on('data', function(data) {
 	
 			}
 	}
+	
 	//}
 	//console.log(data.readInt8(0));
-});
+};
 
+function onError(error) {
+	console.error("Error connecting to DSP server (attempt "+(connectTimeoutCycle+1)+"):", error);
+	dspConnected = false;
+	//dspClient.removeListener('error', onError);
+	//dspClient.destroy();
+	if (connectTimeoutCycle < 10) {
+		// Retry 10 times, waiting 2 seconds after error.
+		connectTimeoutCycle++;
+		connectTimeout = setTimeout(function() {
+			connectDSP();
+		}, 2000);
+	} else {
+		console.error("Could not connect to the DSP server, tried "+(connectTimeoutCycle+1)+" times.");
+		if (connectCallback) connectCallback(false);
+		connectTimeoutCycle = 0;
+		connectCallback = null;
+	}
+}
 
 
 

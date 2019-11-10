@@ -134,7 +134,7 @@ var interfaceMode = 1; // 1 = normal, 2 = compact
 
 function prepareMenus() {
 	// Find every top level menu
-	console.log("Preparing menus");
+	console.log("Preparing menus...");
 	menuGroup = "";
 	$("nav.bar .nav-content").append('<div class="nav-spacer"></div>');
 		
@@ -275,6 +275,7 @@ function prepareMenus() {
 	}
 	
 	$(document).trigger("ui", {header: "menusReady"});
+	console.log("Menus ready.");
 }
 
 var configuredTabs = [];

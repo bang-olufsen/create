@@ -298,14 +298,16 @@ module.exports = function(beoBus, globals) {
 			
 			if (metadata.title != allSources[extension].metadata.title ||
 				metadata.artist != allSources[extension].metadata.artist ||
-				metadata.albumTitle != allSources[extension].metadata.album||
-				metadata.artUrl != allSources[extension].metadata.picture) {
+				metadata.albumTitle != allSources[extension].metadata.album ||
+				metadata.artUrl != allSources[extension].metadata.picture||
+				metadata.externalArtUrl != allSources[extension].metadata.externalPicture) {
 				// Metadata updated.
 				allSources[extension].metadata.title = metadata.title;
 				allSources[extension].metadata.artist = metadata.artist;
 				allSources[extension].metadata.album = metadata.albumTitle;
 				allSources[extension].metadata.loved = metadata.loved;
 				allSources[extension].metadata.picture = metadata.artUrl;
+				allSources[extension].metadata.externalPicture = metadata.externalArtUrl;
 				allSources[extension].metadata.picturePort = settings.port;
 				beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
 				// "Love track" support.

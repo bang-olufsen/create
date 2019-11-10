@@ -1552,7 +1552,7 @@ li {
 }
 
 ul li {
-	margin-left: -10px;
+	margin-left: -5px;
 	list-style: none;
 	position: relative;
 }
@@ -1560,11 +1560,11 @@ ul li {
 ul li:before {
 	content: "";
 	background-color: currentColor;
-	width: 19px;
+	width: 11px;
 	height: 2px;
 	position: absolute;
 	margin-top: 0.45em;
-	left: -29px;
+	left: -25px;
 }
 
 li:last-child {

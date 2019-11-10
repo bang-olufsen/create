@@ -8,17 +8,22 @@
 	</header>
 	<div id="now-playing-content">
 		<div id="now-playing-artwork-area">
-			<div id="now-playing-artwork-wrap">
-				<!--<div class="artwork-bg" style="background-image: url(€/placeholder.svg);"></div>-->
+			<div class="now-playing-artwork-wrap" id="now-playing-artwork-wrap-a">
+
 				<div id="now-playing-landscape-artwork-background"></div>
-				<img class="square-helper" src="common/square-helper.png">
-				<div id="artwork-wrap-inner">
-					<!--<div id="artwork-wrap-inner-2">-->
-						<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">
-						<img src="€/placeholder.png" onerror="now_playing.loadArtwork();" onclick="now_playing.toggleShowAlbumName();" onload="try {now_playing.artworkLoaded()} catch(error) {};" alt="Album Artwork" class="artwork-img placeholder visible" id="main-artwork" />
-					<!--</div>-->
+				<div class="artwork-wrap-inner" id="artwork-wrap-inner-a">
+					<!--<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">-->
+					<img src="€/placeholder.png" alt="Album Artwork" class="artwork-img artwork-img-a placeholder visible main-artwork" id="main-artwork-a" />
 				</div>
-				<img class="square-helper" src="common/square-helper.png">
+			</div>
+			
+			<div class="now-playing-artwork-wrap" id="now-playing-artwork-wrap-b">
+			
+				<div id="now-playing-landscape-artwork-background"></div>
+				<div class="artwork-wrap-inner" id="artwork-wrap-inner-b">
+					<!--<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">-->
+					<img src="€/placeholder.png" alt="Album Artwork" class="artwork-img artwork-img-b placeholder main-artwork visible" id="main-artwork-b" />
+				</div>
 			</div>
 		</div>
 		

@@ -1,0 +1,37 @@
+<div class="menu-screen" id="ui-settings" data-icon="eye.svg" data-menu-title="User Interface" data-built-in="1" data-context="system-settings/more">
+	
+	<header>
+		<div class="back-button master setup"></div>
+		<h1>User Interface</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="external-artwork-settings">
+				<h2>Download Album Cover</h2>
+				<p>Choose when to use album cover from the internet instead of one from the source.</p>
+				<div class="menu-item checkmark left icon checked" onclick="now_playing.setUseExternalArtwork('never');" id="external-artwork-never">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">If Source Has No Cover</div>
+					</div>
+				</div>
+				<div class="menu-item checkmark left icon" onclick="now_playing.setUseExternalArtwork('auto');" id="external-artwork-auto">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">If Higher Resolution</div>
+					</div>
+				</div>
+				<div class="menu-item checkmark left icon" onclick="now_playing.setUseExternalArtwork('always');" id="external-artwork-always">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Always</div>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+	</div>
+</div>
+
+<!--<script type="text/javascript" charset="utf-8" src="€/system-settings-client.js"></script>-->

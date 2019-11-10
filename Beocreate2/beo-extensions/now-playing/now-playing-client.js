@@ -7,12 +7,15 @@ var focusedSource = null;
 var cacheIndex = 0;
 var playerState = "stopped";
 
+var useExternalArtwork = null;
+
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			//if ($("#now-playing").hasClass("visible")) {
-				send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
+				send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
+				send({target: "now-playing", header: "useExternalArtwork"});
 			//}
 		}
 	}
@@ -21,7 +24,10 @@ $(document).on("general", function(event, data) {
 
 var loveAnimTimeout;
 $(document).on("now-playing", function(event, data) {
-
+	
+	if (data.header == "useExternalArtwork") {
+		if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
+	}
 	
 	if (data.header == "metadata") {
 		if (data.content.metadata != undefined && Object.keys(data.content.metadata).length > 0) {
@@ -68,6 +74,10 @@ $(document).on("now-playing", function(event, data) {
 				}
 			} else {
 				loadArtwork();
+			}
+			
+			if (data.content.metadata.externalPicture != undefined) {
+				determineShowingExternalArtwork(data.content.metadata.externalPicture);
 			}
 			
 			if (data.content.metadata.loved) {
@@ -246,8 +256,8 @@ function playButtonPress() {
 }
 
 function toggleShowAlbumName(hide) {
-	if (hide || $("#artwork-wrap-inner").hasClass("show-name")) {
-		$("#artwork-wrap-inner").removeClass("show-name")
+	if (hide || $(".artwork-wrap-inner").hasClass("show-name")) {
+		$(".artwork-wrap-inner").removeClass("show-name")
 	} else {
 		//$("#artwork-wrap-inner").addClass("show-name")
 	}
@@ -255,8 +265,12 @@ function toggleShowAlbumName(hide) {
 
 var artworkChangeTimeout;
 var previousSrc = "";
+var hasPicture = false;
+var currentArtworkView = "a";
+var hiddenArtworkView = "b";
 
-function loadArtwork(url, port) {
+function loadArtwork(url, port, external) {
+	console.log("Artwork load requested with URL: "+url+".");
 	if (!url || url.indexOf("file:///") == -1) { // Don't try loading file URLs
 		if (url) {
 			if (url.indexOf("http") == 0) {
@@ -270,6 +284,7 @@ function loadArtwork(url, port) {
 				}
 			}
 			src = imageURL;
+			if (!external) hasPicture = true;
 		} else {
 			// Load appropriately branded placeholder artwork.
 			if ($("body").hasClass("hifiberry-os")) {
@@ -277,33 +292,126 @@ function loadArtwork(url, port) {
 			} else {
 				src = $("#now-playing").attr("data-asset-path")+"/placeholder.png";
 			}
+			hasPicture = false;
 		}
 		if (src != previousSrc) {
-			$("#main-artwork").removeClass("visible");
+			//$("#now-playing-artwork-wrap-a").removeClass("visible");
 			clearTimeout(artworkChangeTimeout);
-			previousSrc = src;
-			artworkChangeTimeout = setTimeout(function() {
-				$(".artwork-img").attr("src", src);
-				if (!url) {
-					$(".artwork-img").addClass("placeholder");
-					$(".artwork-bg").css("background-image", "none");
+			if (!external) previousSrc = src;
+			//artworkChangeTimeout = setTimeout(function() {
+				$(".artwork-img-"+hiddenArtworkView).attr("src", src);
+				if (!external) {
+					console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+"...");
 				} else {
-					$(".artwork-img").removeClass("placeholder");
-					$(".artwork-bg").css("background-image", "url(" + src + ")");
+					console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
 				}
-			}, 250);
+				if (!url) {
+					$(".artwork-img-"+hiddenArtworkView).addClass("placeholder");
+					$(".artwork-bg-"+hiddenArtworkView).css("background-image", "none");
+				} else {
+					$(".artwork-img-"+hiddenArtworkView).removeClass("placeholder");
+					$(".artwork-bg"+hiddenArtworkView).css("background-image", "url(" + src + ")");
+				}
+			//}, 500);
 		}
 	} else {
 		// In case of a file URL, wait for one second for the actual artwork. Otherwise load default artwork.
+		hasPicture = false;
 		artworkChangeTimeout = setTimeout(function() {
 			loadArtwork();
 		}, 1000);
 	}
 }
 
-function artworkLoaded() {
-	$("#main-artwork").addClass("visible");
+var evaluateExternalArtwork = false;
+function determineShowingExternalArtwork(url) {
+	// If no picture, load external artwork (all modes).
+	// If current picture file is smaller than the picture view, load and check external artwork size. If larger, switch ("auto" mode).
+	// Load external artwork always ("always" mode).
+	
+	if (!hasPicture || useExternalArtwork == "always") {
+		loadArtwork(url);
+	} else {
+		if (useExternalArtwork == "auto") {
+			artworkWidth = (currentArtworkView == "a") ? artworkDimensionsA[0] : artworkDimensionsB[0];
+			if ($("#main-artwork-"+currentArtworkView).innerWidth() * window.devicePixelRatio > artworkWidth) {
+				// Image view is larger than the image.
+				loadArtwork(url, null, true);
+				evaluateExternalArtwork = hiddenArtworkView;
+			}
+		}
+	}
 }
+
+function switchArtwork(view, noAnimation) {
+	show = view;
+	hide = (show == "a") ? "b" : "a";
+	if (noAnimation) $(".now-playing-artwork-wrap").addClass("no-animation");
+	$("#now-playing-artwork-wrap-"+show).addClass("visible");
+	$("#now-playing-artwork-wrap-"+hide).removeClass("visible");
+	if (noAnimation) {
+		setTimeout(function() {
+			$(".now-playing-artwork-wrap").removeClass("no-animation");
+		}, 10);
+	}
+	currentArtworkView = show;
+	hiddenArtworkView = hide;
+}
+
+$("#main-artwork-a").on('load', function() {
+	shouldSwitch = true;
+	noAnimation = false;
+	artworkDimensionsA[0] = $(this).get(0).naturalWidth;
+	artworkDimensionsA[1] = $(this).get(0).naturalHeight;
+	artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	resizeArtwork();
+	if (evaluateExternalArtwork == "a") {
+		// If the downloaded image is equal size or smaller than the current one, don't switch them.
+		if (artworkDimensionsA[0] <= artworkDimensionsB[0]) {
+			shouldSwitch = false;
+			console.log("External artwork is not higher-resolution.");
+		} else {
+			noAnimation = true;
+			console.log("Switching to higher-resolution downloaded artwork in view A.");
+		}
+		evaluateExternalArtwork = false;
+	}
+	if (shouldSwitch) switchArtwork("a", noAnimation);
+});
+$("#main-artwork-b").on('load', function() {
+	shouldSwitch = true;
+	noAnimation = false;
+	artworkDimensionsB[0] = $(this).get(0).naturalWidth;
+	artworkDimensionsB[1] = $(this).get(0).naturalHeight;
+	artworkAspectRatioB = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	resizeArtwork();
+	if (evaluateExternalArtwork == "b") {
+		// If the downloaded image is equal size or smaller than the current one, don't switch them.
+		if (artworkDimensionsB[0] <= artworkDimensionsA[0]) {
+			shouldSwitch = false;
+			console.log("External artwork is not higher-resolution.");
+		} else {
+			noAnimation = true;
+			console.log("Switching to higher-resolution downloaded artwork in view B.");
+		}
+		evaluateExternalArtwork = false;
+	}
+	if (shouldSwitch) switchArtwork("b", noAnimation);
+});
+$("#main-artwork-a").on('error', function() {
+	if (evaluateExternalArtwork != "b") {
+		loadArtwork();
+	} else {
+		evaluateExternalArtwork = false;
+	}
+});
+$("#main-artwork-b").on('error', function() {
+	if (evaluateExternalArtwork != "a") {
+		loadArtwork();
+	} else {
+		evaluateExternalArtwork = false;
+	}
+});
 
 function loadSmallSampleArtwork() {
 	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
@@ -314,25 +422,49 @@ window.onresize = function() {
 };
 
 var windowAspectRatio = 1;
-var artworkAspectRatio = 1; // wide > 1 < tall
+var artworkAspectRatioA = 1; // wide > 1 < tall
+var artworkAspectRatioB = 1;
+var artworkDimensionsA = [0,0];
+var artworkDimensionsB = [0,0];
 function resizeArtwork() {
-	containerAspectRatio = $("#artwork-wrap-inner").innerWidth() / $("#artwork-wrap-inner").innerHeight();
+	containerAspectRatio = $(".artwork-wrap-inner").innerWidth() / $(".artwork-wrap-inner").innerHeight();
 	
-	if (containerAspectRatio >= artworkAspectRatio) { // Container is wider
-		$("#main-artwork").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
-		$("#artwork-wrap-inner").css("flex-direction", "column");
+	if (containerAspectRatio >= artworkAspectRatioA) { // Container is wider
+		$("#main-artwork-a").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
+		$("#artwork-wrap-inner-a").css("flex-direction", "column");
 	} else {
-		$("#main-artwork").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
-		$("#artwork-wrap-inner").css("flex-direction", "row");
+		$("#main-artwork-a").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
+		$("#artwork-wrap-inner-a").css("flex-direction", "row");
 	}
 	
-	//$("#main-artwork").css("max-width", container[0]+"px").css("max-height", container[1]+"px")
+	if (containerAspectRatio >= artworkAspectRatioB) { // Container is wider
+		$("#main-artwork-b").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
+		$("#artwork-wrap-inner-b").css("flex-direction", "column");
+	} else {
+		$("#main-artwork-b").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
+		$("#artwork-wrap-inner-b").css("flex-direction", "row");
+	}
+	
 }
 
-$("#main-artwork").on('load', function() {
-	artworkAspectRatio = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
-	resizeArtwork();
-});
+
+
+function setUseExternalArtwork(mode, updateOnly) {
+	switch (mode) {
+		case "never":
+		case "auto":
+		case "always":
+			if (updateOnly) {
+				$(".external-artwork-settings .menu-item").removeClass("checked");
+				$(".external-artwork-settings .menu-item#external-artwork-"+mode).addClass("checked");
+				useExternalArtwork = mode;
+			} else {
+				if (!updateOnly) send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
+			}
+			break;
+	}
+	
+}
 
 
 // MANAGE AND SWITCH TOP TEXT AND BANG & OLUFSEN LOGO
@@ -370,7 +502,10 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 	} else {
 		newSecondRow = secondRow;
 	}
-
+	
+	changed = false;
+	if (previousFirstRow != newFirstRow || previousSecondRow != newSecondRow) changed = true;
+	
 	if (!temp) {
 		previousFirstRow = newFirstRow;
 		previousSecondRow = newSecondRow;
@@ -378,7 +513,9 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 		//clearTimeout(tempTopTextTimeout);
 		tempTopTextTimeout = null;
 	}
-
+	
+	
+	
 
 	if (!tempTopTextTimeout) {
 
@@ -397,14 +534,14 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 			$(".now-playing-titles").addClass("one-row").removeClass("logo");
 			$("#player-bar-info-area .focused-source").addClass("icon-only");
 			clearTimeout(sourceNameTimeout);
-			evaluateTextScrolling();
+			if (changed) evaluateTextScrolling();
 		} else { // Both rows have text, show them.
 			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
 			$(".now-playing-titles .second-row").text(newSecondRow).attr("data-content", newSecondRow);
 			$(".now-playing-titles").removeClass("logo one-row");
 			$("#player-bar-info-area .focused-source").addClass("icon-only");
 			clearTimeout(sourceNameTimeout);
-			evaluateTextScrolling();
+			if (changed) evaluateTextScrolling();
 			clearTimeout(topTextNotifyTimeout);
 			/*topTextNotifyTimeout = setTimeout(function() {
 				tabBarNotify("now-playing", newFirstRow, newSecondRow);
@@ -507,10 +644,11 @@ return {
 	transport: transport,
 	enableSourceStart: enableSourceStart,
 	loadArtwork: loadArtwork,
-	artworkLoaded: artworkLoaded,
+	switchArtwork: switchArtwork,
 	loadSmallSampleArtwork: loadSmallSampleArtwork,
 	toggleLove: toggleLove,
-	functionRow: functionRow
+	functionRow: functionRow,
+	setUseExternalArtwork: setUseExternalArtwork
 }
 
 })();

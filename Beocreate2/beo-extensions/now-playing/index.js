@@ -25,6 +25,11 @@ module.exports = function(beoBus, globals) {
 	
 	var version = require("./package.json").version;
 	
+	var defaultSettings = {
+		useExternalArtwork: "auto"
+	};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
 	var allSources = {};
 	var currentSource = null;
 	var focusedSource = null;
@@ -48,6 +53,10 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "activatedExtension") {
 			if (event.content == "now-playing") {
 				
+			}
+			
+			if (event.content == "ui-settings") {
+				beoBus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
 			}
 		}
 	});
@@ -105,6 +114,21 @@ module.exports = function(beoBus, globals) {
 	
 	
 	beoBus.on("now-playing", function(event) {
+		
+		if (event.header == "settings") {
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+		}
+		
+		if (event.header == "useExternalArtwork") {
+			if (event.content && event.content.useExternalArtwork) {
+				settings.useExternalArtwork = event.content.useExternalArtwork;
+				beoBus.emit("settings", {header: "saveSettings", content: {extension: "now-playing", settings: settings}});
+			}
+			beoBus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
+		}
+		
 		if (event.header == "metadata") {
 			sendMetadata = {};
 			if (!metadataCache[event.content.extension]) {
@@ -160,7 +184,7 @@ module.exports = function(beoBus, globals) {
 			}
 		}
 		
-		if (event.header == "showingNowPlaying") {
+		if (event.header == "getData") {
 			send({target: "now-playing", header: "playerState", content: {state: playerState}});
 			if (focusedSource) {
 				if (event.content.cacheIndex != metadataCacheIndex) {

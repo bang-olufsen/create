@@ -158,7 +158,7 @@ function cycleSystemInformation(updateOnly) {
 
 function changeProductName(name) {
 	if (!name) { // Show text input
-		startTextInput(1, "Change Name", "This name is shown to your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, minLength: {text: 3}}, function(text) {
+		startTextInput(1, "Change Name", "This name is shown to your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(text) {
 			changeProductName(text);
 		});
 	} else {

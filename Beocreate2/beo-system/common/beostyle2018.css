@@ -3279,6 +3279,11 @@ img.beo-load {
   100% { transform: rotate(360deg); }
 }
 
+@keyframes pulse-opacity {
+  0%   { opacity: 0.7; }
+  100% { opacity: 0.2; }
+}
+
 /* @end */
 
 /* @end */

@@ -160,6 +160,11 @@
 	transition: transform 0.5s ease;
 }
 
+.love-in-progress {
+	pointer-events: none;
+	animation: pulse-opacity 1s linear alternate infinite;
+}
+
 @keyframes beat {
   0%   { transform: scale(1); }
   10% { transform: scale(1.2); }

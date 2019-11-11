@@ -66,20 +66,23 @@ $(document).on("now-playing", function(event, data) {
 				setNowPlayingTitles(data.content.metadata.title, artistAlbum);
 			}
 			
-			if (data.content.metadata.picture != undefined) {
-				if (data.content.metadata.picture != false && data.content.metadata.picture != true) {
-					loadArtwork(data.content.metadata.picture, data.content.metadata.picturePort);
-				} else if (data.content.metadata.picture != true) {
-					loadArtwork();
-				}
+			// Album covers.
+			port = data.content.metadata.picturePort;
+			if (data.content.metadata.picture) {
+				internalURL = data.content.metadata.picture;
 			} else {
-				loadArtwork();
+				internalURL = null;
 			}
 			
-			if (data.content.metadata.externalPicture != undefined) {
-				determineShowingExternalArtwork(data.content.metadata.externalPicture);
+			if (data.content.metadata.externalPicture) {
+				externalURL = data.content.metadata.externalPicture;
+			} else {
+				externalURL = null;
 			}
+			determineArtworkToShow(internalURL, externalURL, port);
 			
+			clearTimeout(loveAnimTimeout);
+			$("#love-button").removeClass("love-in-progress");
 			if (data.content.metadata.loved) {
 				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart-filled.svg");
 				$("#love-button").addClass("beat-anim");
@@ -228,8 +231,14 @@ function transport(action) {
 	}
 }
 
+
 function toggleLove() {
 	send({target: "now-playing", header: "toggleLove"});
+	$("#love-button").addClass("love-in-progress");
+	clearTimeout(loveAnimTimeout);
+	loveAnimTimeout = setTimeout(function() {
+		$("#love-button").removeClass("love-in-progress");
+	}, 3000);
 }
 
 var playButtonSymbolTimeout;
@@ -271,7 +280,7 @@ var hiddenArtworkView = "b";
 
 function loadArtwork(url, port, external) {
 	evaluateExternalArtwork = false;
-	console.log("Artwork load requested with URL: "+url+".");
+	//console.log("Artwork load requested with URL: "+url+".");
 	if (!url || url.indexOf("file:///") == -1) { // Don't try loading file URLs
 		if (url) {
 			if (url.indexOf("http") == 0) {
@@ -325,23 +334,52 @@ function loadArtwork(url, port, external) {
 }
 
 var evaluateExternalArtwork = false;
-function determineShowingExternalArtwork(url) {
+var currentInternalPicture = null;
+var currentExternalPicture = null;
+function determineArtworkToShow(internalURL, externalURL, port) {
+	
+	
+	if (internalURL != currentInternalPicture) { // Always load internal artwork first.
+		loadArtwork(internalURL, port);
+		currentInternalPicture = internalURL;
+	}
+	
 	// If no picture, load external artwork (all modes).
 	// If current picture file is smaller than the picture view, load and check external artwork size. If larger, switch ("auto" mode).
 	// Load external artwork always ("always" mode).
 	
-	if (!hasPicture || useExternalArtwork == "always") {
-		loadArtwork(url);
-	} else {
-		if (useExternalArtwork == "auto") {
-			artworkWidth = (currentArtworkView == "a") ? artworkDimensionsA[0] : artworkDimensionsB[0];
-			if ($("#main-artwork-"+currentArtworkView).innerWidth() * window.devicePixelRatio > artworkWidth) {
-				// Image view is larger than the image.
-				loadArtwork(url, null, true);
-				evaluateExternalArtwork = hiddenArtworkView;
+	switch (useExternalArtwork) {
+		case "never":
+			if (!internalURL && externalURL && currentExternalPicture != externalURL) {
+				loadArtwork(externalURL);
+				currentExternalPicture = externalURL;
 			}
-		}
+			break;
+		case "auto":
+			if (externalURL && currentExternalPicture != externalURL) {
+				if (!internalURL) {
+					loadArtwork(externalURL);
+					currentExternalPicture = externalURL;
+				} else {
+					artworkWidth = (currentArtworkView == "a") ? artworkDimensionsA[0] : artworkDimensionsB[0];
+					if ($("#main-artwork-"+currentArtworkView).innerWidth() * window.devicePixelRatio > artworkWidth) {
+						// Image view is larger than the image.
+						loadArtwork(externalURL, null, true);
+						evaluateExternalArtwork = hiddenArtworkView;
+						currentExternalPicture = externalURL;
+					}
+				}
+			}
+			break;
+		case "always":
+			if (externalURL && currentExternalPicture != externalURL) {
+				loadArtwork(externalURL);
+				currentExternalPicture = externalURL;
+			}
+			break;
+			
 	}
+	
 }
 
 function switchArtwork(view, noAnimation) {
@@ -355,6 +393,7 @@ function switchArtwork(view, noAnimation) {
 			$(".now-playing-artwork-wrap").removeClass("no-animation");
 		}, 10);
 	}
+	previousSrc = $(".artwork-img-"+show).attr("src");
 	currentArtworkView = show;
 	hiddenArtworkView = hide;
 }

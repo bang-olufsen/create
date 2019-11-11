@@ -82,7 +82,12 @@ function showCanControlChannels(canControl) {
 			
 		}
 	}
-	
+	if (product_information && product_information.cardType) {
+		console.log(product_information.cardType());
+		if (product_information.cardType() == "DAC+ DSP") {
+				$("#simple-channel-select, #simple-stereo-control").addClass("hidden");
+		}
+	}
 }
 
 function showCanDoSimpleStereoSetup(canDo) {

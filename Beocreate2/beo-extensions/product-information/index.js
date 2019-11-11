@@ -136,7 +136,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "product-information") {
-				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: globals.systemConfiguration}});
+				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage}});
 			}
 		}
 		
@@ -182,9 +182,9 @@ module.exports = function(beoBus, globals) {
 			}
 		}
 		
-		if (event.header == "getSystemName") {
+		if (event.header == "getBasicProductInformation") {
 			if (systemName.ui) {
-				beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+				beoBus.emit("ui", {target: "product-information", header: "basicProductInformation", content: {systemName: systemName.ui, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: globals.systemConfiguration}});
 				systemNameSent = true;
 			}
 		}

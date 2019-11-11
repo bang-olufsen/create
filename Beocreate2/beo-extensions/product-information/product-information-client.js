@@ -5,7 +5,8 @@ var systemName = "";
 var modelName = "";
 var modelID = "";
 var systemID = "";
-var productImage = ""
+var productImage = "";
+var cardType = "";
 var showFullSystemID = false;
 var systemVersion = 0;
 var systemVersionReadable = "";
@@ -16,7 +17,7 @@ var productIdentities = {};
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			send({target: "product-information", header: "getSystemName"});
+			send({target: "product-information", header: "getBasicProductInformation"});
 		}
 	}
 	
@@ -37,21 +38,12 @@ $(document).on("product-information", function(event, data) {
 		systemName = data.content.systemName;
 		modelName = data.content.modelName;
 		modelID = data.content.modelID;
-		systemVersion = data.content.systemVersion;
-		systemID = data.content.systemID;
 		productImage = data.content.productImage;
 		$(".product-image").attr("src", productImage);
 		$(".product-image-bg").css("background-image", "url("+productImage+")");
 		$(".system-name").text(systemName);
 		$(".model-name").text(modelName);
-		$(".system-version").text(systemVersion);
-		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
-			$(".card-type").text(data.content.systemConfiguration.cardType);
-		}
-		if (data.content.hifiberryVersion) {
-			hifiberryVersion = data.content.hifiberryVersion;
-		}
-		cycleSystemInformation(true);
+	
 		document.title = systemName;
 		sendToProductView({header: "systemName", content: {name: systemName}});
 	}
@@ -67,15 +59,25 @@ $(document).on("product-information", function(event, data) {
 		$(".product-image-bg").css("background-image", "url("+productImage+")");
 	}
 	
-	if (data.header == "showSystemName") {
+	if (data.header == "basicProductInformation") {
 		systemName = data.content.systemName;
 		$(".system-name").text(systemName);
+		systemVersion = data.content.systemVersion;
+		systemID = data.content.systemID;
 		sendToProductView({header: "systemName", content: {name: systemName}});
 		document.title = systemName;
 		if (data.content.systemVersion) {
 			systemVersion = data.content.systemVersion;
 			$(".system-version").text(systemVersion);
 		}
+		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
+			cardType = data.content.systemConfiguration.cardType;
+			$(".card-type").text(data.content.systemConfiguration.cardType);
+		}
+		if (data.content.hifiberryVersion) {
+			hifiberryVersion = data.content.hifiberryVersion;
+		}
+		cycleSystemInformation(true);
 		if (data.content.staticName) {
 			if (document.domain.indexOf(".local") != -1) {
 				if (document.domain != data.content.staticName.toLowerCase()+".local") {
@@ -246,6 +248,8 @@ return {
 	modelName: function() {return modelName},
 	modelID: function() {return modelID},
 	productImage: function() {return productImage},
+	cardType: function() {return cardType},
+	hifiberryVersion: function() {return hifiberryVersion},
 	generateSettingsPreview: generateSettingsPreview,
 	clearPresetPreview: clearPresetPreview,
 	startCustomisation: startCustomisation,

@@ -68,6 +68,7 @@ var debugMode = false;
 var daemonMode = false;
 var developerMode = false;
 var quietMode = false;
+var forceBeosounds = false;
 
 console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen");
 
@@ -80,6 +81,7 @@ if (cmdArgs.indexOf("vvv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 if (cmdArgs.indexOf("dev") != -1) developerMode = true;
 if (cmdArgs.indexOf("q") != -1) quietMode = true;
+if (cmdArgs.indexOf("beosounds") != -1) forceBeosounds = true;
 
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
 if (developerMode) console.log("Developer mode, user interface will not be cached.");
@@ -329,9 +331,12 @@ if (systemConfiguration.runAtStart) {
 console.log("System startup.");
 if (!quietMode) {
 	// Play startup sound:
-	setTimeout(function() {
-		playProductSound("startup");
-	}, 1000);
+	if (systemConfiguration.cardType == "Beocreate 4-Channel Amplifier" || forceBeosounds) {
+		
+		setTimeout(function() {
+			playProductSound("startup");
+		}, 1000);
+	}
 }
 
 

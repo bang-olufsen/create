@@ -329,6 +329,13 @@ function onConnect(error) {
 	connectTimeoutCycle = 0;
 	dspClient.on('close', onClose);
 	dspClient.on('data', onData);
+	if (reconnectAfterError) {
+		reconnectAfterError = false;
+		if (checksumCallback) {
+			console.log("Trying to get checksum again...");
+			getChecksum();
+		}
+	}
 }
 
 function onClose(error) {
@@ -384,8 +391,13 @@ function onData(data) {
 	//console.log(data.readInt8(0));
 };
 
+reconnectAfterError = false;
 function onError(error) {
-	console.error("Error connecting to DSP server (attempt "+(connectTimeoutCycle+1)+"):", error);
+	console.error("Error with DSP server connection (connection attempt "+(connectTimeoutCycle+1)+"):", error);
+	reconnectAfterError = true;
+	if (checksumCallback) {
+		console.log("Couldn't get checksum because of DSP connection error. Attempting again after re-establishing connection.");
+	}
 	dspConnected = false;
 	//dspClient.removeListener('error', onError);
 	//dspClient.destroy();
@@ -479,7 +491,7 @@ function flashEEPROM(filePath, callback) {
 
 var checksumCallback = null;
 function getChecksum(callback) {
-	checksumCallback = callback;
+	if (callback) checksumCallback = callback;
 	/*command = "dsptoolkit get-checksum";
 	child_process.exec(command, function(error, stdout, stderr) {
 		if (error) {
@@ -495,7 +507,6 @@ function getChecksum(callback) {
 			}
 		}
 	});*/
-	
 	checksumRequest = Buffer.from(createHifiberryRequest(hifiberryCommandChecksumCode));
 	dspClient.write(checksumRequest);
 }

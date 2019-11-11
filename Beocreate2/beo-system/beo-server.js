@@ -66,6 +66,8 @@ global.dataDirectory = "/etc/beocreate"; // Data directory for settings, sound p
 
 var debugMode = false;
 var daemonMode = false;
+var developerMode = false;
+var quietMode = false;
 
 console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen");
 
@@ -76,7 +78,11 @@ if (cmdArgs.indexOf("v") != -1) debugMode = 1;
 if (cmdArgs.indexOf("vv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("vvv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
+if (cmdArgs.indexOf("dev") != -1) developerMode = true;
+if (cmdArgs.indexOf("q") != -1) quietMode = true;
 
+if (debugMode) console.log("Debug logging level: "+debugMode+".");
+if (developerMode) console.log("Developer mode, user interface will not be cached.");
 
 // LOAD SYSTEM SETTINGS
 // Contains sound card type, port to use, possibly disabled extensions.
@@ -259,7 +265,8 @@ expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
 	if (beoUI != false) {
 		res.status(200);
-		if (debugMode) {
+		if (developerMode) {
+			console.log("Developer mode, reconstructing user interface...");
 			res.send(assembleBeoUI()); // No cache - use in development/debug
 	  	} else {
 	  		res.send(beoUI); // Cached version - use this in production
@@ -319,12 +326,12 @@ if (systemConfiguration.runAtStart) {
 	}
 }
 
-if (debugMode) {
-	// If we're in debug, don't play startup sound, just output to log.
-	console.log("System startup.");
-} else {
+console.log("System startup.");
+if (!quietMode) {
 	// Play startup sound:
-	playProductSound("startup");
+	setTimeout(function() {
+		playProductSound("startup");
+	}, 1000);
 }
 
 
@@ -647,7 +654,7 @@ var productSound = null;
 function playProductSound(sound) {
 	if (debugMode) console.log("Playing sound: "+sound+"...");
 	if (!productSound) productSound = new aplay();
-	soundPath = __dirname+"/sounds/";
+	soundPath = systemDirectory+"/sounds/";
 	soundFile = null;
 	switch (sound) {
 		case "startup":

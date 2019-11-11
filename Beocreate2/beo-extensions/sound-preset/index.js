@@ -159,6 +159,9 @@ module.exports = function(beoBus, globals) {
 						extensions["dsp-programs"].installDSPProgram(fullPresetList[presetID]["sound-preset"].fallbackDSP, function(result) {
 							if (result == true) {
 								beoBus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
+								if (debug) console.log("Installing fallback DSP program succeeded. Sound preset applied.");
+							} else {
+								if (debug) console.log("Installing fallback DSP program unsuccessful.");
 							}
 						});
 					}

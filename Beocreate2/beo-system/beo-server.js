@@ -758,16 +758,27 @@ function downloadJSON(url, callback) {
 //var extensionsRequestingShutdownTime = []; // This is found at the top.
 var shutdownTimeout = null;
 var powerCommand = null;
+var shutdownDone = false;
 
 //setTimeout(function() {
 process.once('SIGINT', function() {
-	if (debugMode) console.log("SIGINT received. Starting shutdown.");
-	startShutdown();
+	if (!shutdownDone) {
+		if (debugMode) console.log("\nSIGINT received. Starting shutdown.");
+		startShutdown();
+	} else {
+		console.log("Exiting Beocreate 2.");
+		process.exit(0);
+	}
 });
 
 process.once('SIGTERM', function() {
-	if (debugMode) console.log("SIGTERM received. Starting shutdown.");
-	startShutdown();
+	if (!shutdownDone) {
+		if (debugMode) console.log("\nSIGTERM received. Starting shutdown.");
+		startShutdown();
+	} else {
+		console.log("Exiting Beocreate 2.");
+		process.exit(0);
+	}
 });
 //}, 2000);
 
@@ -847,17 +858,16 @@ function completeShutdown() {
 		if (debugMode) console.log("Stopped WebSocket communication.");
 		beoServer.close(function() {
 			if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");
+			shutdownDone = true;
 		    if (powerCommand) {
-		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+".");
+		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+". Letting it exit the process.");
 		    	piSystem.power(powerCommand);
-		    } 
+		    } else {
+				console.log("Exiting Beocreate 2.");
+				process.exit(0);
+			}
 		   
-			/*setTimeout(function() {
-				log();
-			}, 100);*/
-			
-			console.log("Exiting Beocreate 2.");
-		    process.exit(0);
+		
 		});
 		
 	});

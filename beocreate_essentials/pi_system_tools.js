@@ -203,14 +203,12 @@ function power(operation, callback) {
 	// Calling a power function will naturally exit the script.
 	if (operation == "reboot") {
 		exec("/usr/sbin/reboot", function(error, stdout, stderr) {
-			//process.exit(0);
+			
 		});
-		//process.exit(0);
 	}
 	if (operation == "shutdown") {
 		exec("/usr/sbin/shutdown now", function(error, stdout, stderr) {
-			//
+			
 		});
-		//process.exit(0);
 	}
 }

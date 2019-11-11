@@ -106,8 +106,8 @@ module.exports = function(beoBus, globals) {
 				audioControlGet("metadata");
 				break;
 			case "transport":
-				if (currentSource && allSources[currentSource].transportControls) {
-					if (allSources[currentSource].usesHifiberryControl) {
+				if (focusedSource && allSources[focusedSource].transportControls) {
+					if (allSources[focusedSource].usesHifiberryControl) {
 						audioControl(event.content.action, function(success) {
 							if (!success) {
 								switch (event.content.action) {
@@ -116,7 +116,7 @@ module.exports = function(beoBus, globals) {
 									case "stop":
 									case "next":
 									case "previous":
-										beoBus.emit(currentSource, {header: "transport", content: {action: event.content.action}});
+										beoBus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
 										break;
 								}
 							}
@@ -128,26 +128,26 @@ module.exports = function(beoBus, globals) {
 							case "stop":
 							case "next":
 							case "previous":
-								beoBus.emit(currentSource, {header: "transport", content: {action: event.content.action}});
+								beoBus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
 								break;
 						}
 					}
 				}
 				break;
 			case "toggleLove":
-				if (currentSource && allSources[currentSource].canLove) {
-					if (!allSources[currentSource].metadata.loved) {
+				if (focusedSource && allSources[focusedSource].canLove) {
+					if (!allSources[focusedSource].metadata.loved) {
 						love = true;
 					} else {
 						love = false;
 					}
-					if (allSources[currentSource].usesHifiberryControl) {
+					if (allSources[focusedSource].usesHifiberryControl) {
 						action = (love) ? "love" : "unlove";
 						
 						audioControl(action, function(success) {
 							if (success) {
-								allSources[currentSource].metadata.loved = love;
-								beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[currentSource].metadata, extension: currentSource}});
+								allSources[focusedSource].metadata.loved = love;
+								beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
 							}
 						});
 					}

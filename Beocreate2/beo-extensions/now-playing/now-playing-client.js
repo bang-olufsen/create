@@ -270,6 +270,7 @@ var currentArtworkView = "a";
 var hiddenArtworkView = "b";
 
 function loadArtwork(url, port, external) {
+	evaluateExternalArtwork = false;
 	console.log("Artwork load requested with URL: "+url+".");
 	if (!url || url.indexOf("file:///") == -1) { // Don't try loading file URLs
 		if (url) {

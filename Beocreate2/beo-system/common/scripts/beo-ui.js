@@ -746,7 +746,9 @@ $(document).on("ui", function(event, data) {
 			uiSettings = data.content.settings;
 			if (uiSettings.disclosure) {
 				for (element in uiSettings.disclosure) {
-					disclosure(element, uiSettings.disclosure[element]);
+					if ($('.disclosure[data-disclosure="'+element+'"]').length > 0) {
+						disclosure(element, uiSettings.disclosure[element]);
+					}
 				}
 			}
 		}

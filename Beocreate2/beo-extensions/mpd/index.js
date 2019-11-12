@@ -82,7 +82,7 @@ module.exports = function(beoBus, globals) {
 	
 	
 	function getMPDStatus(callback) {
-		exec("systemctl is-active --quiet mpd.service mpd-mpris.service").on('exit', function(code) {
+		exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
 			if (code == 0) {
 				mpdEnabled = true;
 				callback(true);
@@ -95,7 +95,7 @@ module.exports = function(beoBus, globals) {
 	
 	function setMPDStatus(enabled, callback) {
 		if (enabled) {
-			exec("systemctl enable --now mpd.service mpd-mpris.service").on('exit', function(code) {
+			exec("systemctl enable --now mpd.service mpd-mpris.service ympd.service").on('exit', function(code) {
 				if (code == 0) {
 					mpdEnabled = true;
 					if (debug) console.log("MPD enabled.");
@@ -106,7 +106,7 @@ module.exports = function(beoBus, globals) {
 				}
 			});
 		} else {
-			exec("systemctl disable --now mpd.service mpd-mpris.service").on('exit', function(code) {
+			exec("systemctl disable --now mpd.service mpd-mpris.service ympd.service").on('exit', function(code) {
 				mpdEnabled = false;
 				if (code == 0) {
 					callback(false);

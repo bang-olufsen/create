@@ -20,9 +20,7 @@ SOFTWARE.*/
 var exec = require("child_process").exec;
 var fs = require("fs");
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
 	
@@ -32,7 +30,7 @@ module.exports = function(beoBus, globals) {
 	};
 	var configuration = {};
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
@@ -45,21 +43,21 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "activatedExtension") {
 			if (event.content == "ssh") {
 				settings.sshPasswordChanged = isPasswordChanged("root");
-				beoBus.emit("ui", {target: "ssh", header: "sshSettings", content: settings});
+				beo.bus.emit("ui", {target: "ssh", header: "sshSettings", content: settings});
 			}
 		}
 	});
 
 	
-	beoBus.on('ssh', function(event) {
+	beo.bus.on('ssh', function(event) {
 		
 
 		if (event.header == "sshEnabled") {
 			if (event.content.enabled != undefined) {
 				setSSHStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "ssh", header: "sshSettings", content: settings});
+					beo.bus.emit("ui", {target: "ssh", header: "sshSettings", content: settings});
 					if (error) {
-						beoBus.emit("ui", {target: "ssh", header: "errorTogglingSSH", content: {}});
+						beo.bus.emit("ui", {target: "ssh", header: "errorTogglingSSH", content: {}});
 					}
 				});
 			}
@@ -118,9 +116,7 @@ module.exports = function(beoBus, globals) {
 		return passwordChanged;
 	}
 	
-	return {
-		version: version
-	}
-	
-};
+module.exports = {
+	version: version
+}
 

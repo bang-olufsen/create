@@ -19,10 +19,7 @@ SOFTWARE.*/
 
 var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var module = {};
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var metadata = {};
 	var defaultSettings = {
@@ -38,14 +35,14 @@ module.exports = function(beoBus, globals) {
 	
 	var sources = null;
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
-			if (globals.extensions.sources &&
-				globals.extensions.sources.setSourceOptions &&
-				globals.extensions.sources.sourceActivated &&
-				globals.extensions.sources.sourceDeactivated) {
-				sources = globals.extensions.sources;
+			if (beo.extensions.sources &&
+				beo.extensions.sources.setSourceOptions &&
+				beo.extensions.sources.sourceActivated &&
+				beo.extensions.sources.sourceDeactivated) {
+				sources = beo.extensions.sources;
 			}	
 			if (sources) {
 				sources.setSourceOptions("toslink", {
@@ -60,7 +57,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "toslink") {
-				beoBus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink, canReadToslinkStatus: canReadToslinkStatus, toslinkStatus: toslinkSignal}});
+				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink, canReadToslinkStatus: canReadToslinkStatus, toslinkStatus: toslinkSignal}});
 			}
 		}
 		
@@ -71,7 +68,7 @@ module.exports = function(beoBus, globals) {
 		}
 	});
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -104,7 +101,7 @@ module.exports = function(beoBus, globals) {
 		}
 	});
 	
-	beoBus.on('toslink', function(event) {
+	beo.bus.on('toslink', function(event) {
 		
 		if (event.header == "settings") {
 			if (event.content.settings) {
@@ -116,8 +113,8 @@ module.exports = function(beoBus, globals) {
 			if (event.content.enabled != undefined) {
 				settings.toslinkEnabled = event.content.enabled;
 				applyToslinkEnabledFromSettings();
-				beoBus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
-				beoBus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
+				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
 				if (sources) {
 					sources.setSourceOptions("toslink", {
 						enabled: settings.toslinkEnabled
@@ -129,8 +126,8 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "toslinkStopsOtherSources") {
 			if (event.content.stopsOtherSources != undefined) {
 				settings.toslinkStopsOtherSources = event.content.stopsOtherSources;
-				beoBus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
-				beoBus.emit("settings", {header: "saveSettings", content: {element: "toslink", settings: settings}});
+				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {element: "toslink", settings: settings}});
 				if (sources) {
 					sources.setSourceOptions("toslink", {
 						stopOthers: settings.toslinkStopsOtherSources
@@ -171,7 +168,7 @@ module.exports = function(beoBus, globals) {
 							if (response.dec == 1) {
 								if (toslinkSignal == false) {
 									toslinkSignal = true;
-									beoBus.emit("ui", {target: "toslink", header: "toslinkStatus", content: {status: toslinkSignal}});
+									beo.bus.emit("ui", {target: "toslink", header: "toslinkStatus", content: {status: toslinkSignal}});
 									if (settings.toslinkEnabled) {
 										toslinkActive = true;
 										if (sources) sources.sourceActivated("toslink", "playing");
@@ -181,7 +178,7 @@ module.exports = function(beoBus, globals) {
 							} else if (response.dec == 0) {
 								if (toslinkSignal == true) {
 									toslinkSignal = false;
-									beoBus.emit("ui", {target: "toslink", header: "toslinkStatus", content: {status: toslinkSignal}});
+									beo.bus.emit("ui", {target: "toslink", header: "toslinkStatus", content: {status: toslinkSignal}});
 									if (toslinkActive) {
 										toslinkActive = false;
 										if (sources) sources.sourceDeactivated("toslink", "stopped");
@@ -196,6 +193,4 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return module;
-};
 

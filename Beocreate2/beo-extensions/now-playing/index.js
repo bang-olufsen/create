@@ -18,10 +18,8 @@ SOFTWARE.*/
 // BEOCREATE NOW PLAYING
 
 
-module.exports = function(beoBus, globals) {
-	var debug = globals.debug;
-	var send = globals.sendToUI;
-	var beoBus = beoBus;
+	var debug = beo.debug;
+	var send = beo.sendToUI;
 	
 	var version = require("./package.json").version;
 	
@@ -40,8 +38,8 @@ module.exports = function(beoBus, globals) {
 	
 	var sources = null;
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
@@ -56,12 +54,12 @@ module.exports = function(beoBus, globals) {
 			}
 			
 			if (event.content == "ui-settings") {
-				beoBus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
+				beo.bus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
 			}
 		}
 	});
 	
-	beoBus.on("sources", function(event) {
+	beo.bus.on("sources", function(event) {
 		
 		
 		if (event.header == "sourcesChanged") {
@@ -113,7 +111,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	
-	beoBus.on("now-playing", function(event) {
+	beo.bus.on("now-playing", function(event) {
 		
 		if (event.header == "settings") {
 			if (event.content.settings) {
@@ -124,9 +122,9 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "useExternalArtwork") {
 			if (event.content && event.content.useExternalArtwork) {
 				settings.useExternalArtwork = event.content.useExternalArtwork;
-				beoBus.emit("settings", {header: "saveSettings", content: {extension: "now-playing", settings: settings}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "now-playing", settings: settings}});
 			}
-			beoBus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
+			beo.bus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
 		}
 		
 		if (event.header == "metadata") {
@@ -198,27 +196,27 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "transport") {
 			if (event.content.action) {
-				beoBus.emit("sources", {header: "transport", content: {action: event.content.action}});
+				beo.bus.emit("sources", {header: "transport", content: {action: event.content.action}});
 			}
 		}
 		
 		if (event.header == "toggleLove") {
-			beoBus.emit("sources", {header: "toggleLove"});
+			beo.bus.emit("sources", {header: "toggleLove"});
 		}
 	});
 	
 	
-	beoBus.on("remote", function(event) {
+	beo.bus.on("remote", function(event) {
 		switch (event.content.command) {
 			
 			case "VOL UP":
-				beoBus.emit("sound", {header: "setVolume", content: "+2"});
+				beo.bus.emit("sound", {header: "setVolume", content: "+2"});
 				break;
 			case "VOL DOWN":
-				beoBus.emit("sound", {header: "setVolume", content: "-2"});
+				beo.bus.emit("sound", {header: "setVolume", content: "-2"});
 				break;
 			case "MUTE":
-				beoBus.emit("sound", {header: "toggleMute"});
+				beo.bus.emit("sound", {header: "toggleMute"});
 				break;
 		}
 	});
@@ -237,9 +235,8 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	return {
-		version: version
-	};
+module.exports = {
+	version: version
 };
 
 

@@ -19,10 +19,8 @@ SOFTWARE.*/
 
 var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
-	var extensions = globals.extensions;
+	var debug = beo.debug;
+	var extensions = beo.extensions;
 	
 	var version = require("./package.json").version;
 	
@@ -47,8 +45,8 @@ module.exports = function(beoBus, globals) {
 	// Store the amount of equaliser filter banks available in the DSP here.
 	
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
@@ -65,7 +63,7 @@ module.exports = function(beoBus, globals) {
 		}
 	});
 	
-	beoBus.on('equaliser', function(event) {
+	beo.bus.on('equaliser', function(event) {
 		
 		if (event.header == "settings") {
 			
@@ -85,19 +83,19 @@ module.exports = function(beoBus, globals) {
 						if (settings[event.content.channel.charAt(c)][event.content.index]) {
 							settings[event.content.channel.charAt(c)][event.content.index] = event.content.filter;
 							applyFilterFromSettings(event.content.channel.charAt(c), event.content.index);
-							beoBus.emit("ui", {target: "equaliser", header: "setFilterProto", content: {updated: event.content.index}});
+							beo.bus.emit("ui", {target: "equaliser", header: "setFilterProto", content: {updated: event.content.index}});
 						} else {
 							newFilterIndex = settings[event.content.channel.charAt(c)].push(event.content.filter) - 1;
 							applyFilterFromSettings(event.content.channel.charAt(c), newFilterIndex);
-							beoBus.emit("ui", {target: "equaliser", header: "setFilterProto", content: {added: newFilterIndex}});
+							beo.bus.emit("ui", {target: "equaliser", header: "setFilterProto", content: {added: newFilterIndex}});
 						}
-						beoBus.emit("settings", {header: "saveSettings", content: {extension: "equaliser", settings: settings}});
+						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "equaliser", settings: settings}});
 						
 					} else {
 						// Remove filter.
 						console.log("Removing filter ("+event.content.channel.charAt(c).toUpperCase()+" "+event.content.index+")...");
 						settings[event.content.channel.charAt(c)].splice(event.content.index, 1);
-						beoBus.emit("settings", {header: "saveSettings", content: {extension: "equaliser", settings: settings}});
+						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "equaliser", settings: settings}});
 						applyAllFiltersFromSettings(event.content.channel.charAt(c));
 					}
 				}
@@ -105,7 +103,7 @@ module.exports = function(beoBus, globals) {
 		}
 	});
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -133,7 +131,7 @@ module.exports = function(beoBus, globals) {
 				};
 			}
 			
-			beoBus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: settings}});
+			beo.bus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: settings}});
 		}
 	});
 	
@@ -249,7 +247,7 @@ module.exports = function(beoBus, globals) {
 			channel = "abcd".charAt(c);
 			applyAllFiltersFromSettings(channel, true);
 		}
-		beoBus.emit("settings", {header: "saveSettings", content: {extension: "equaliser", settings: settings}});
+		beo.bus.emit("settings", {header: "saveSettings", content: {extension: "equaliser", settings: settings}});
 	}
 	
 	
@@ -367,13 +365,11 @@ module.exports = function(beoBus, globals) {
 	}
 		
 	
-	return {
-		checkSettings: checkSettings,
-		applySoundPreset: applySoundPreset,
-		version: version
-	};
+module.exports = {
+	checkSettings: checkSettings,
+	applySoundPreset: applySoundPreset,
+	version: version
 };
-
 
 
 

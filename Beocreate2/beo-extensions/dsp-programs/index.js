@@ -28,9 +28,7 @@ if (Gpio) {
 	const mutePin = new Gpio(2, 'out');
 }
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var currentMetadata = {};
 	var metadataFromDSP = false;
@@ -51,7 +49,7 @@ module.exports = function(beoBus, globals) {
 	
 	if (!fs.existsSync(dspDirectory)) fs.mkdirSync(dspDirectory);
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
@@ -59,9 +57,9 @@ module.exports = function(beoBus, globals) {
 			
 			beoDSP.connectDSP(function(success) {  
 				if (success) {
-					beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "dsp-programs"}});
+					beo.bus.emit("general", {header: "requestShutdownTime", content: {extension: "dsp-programs"}});
 					dspConnected = true;
-					beoBus.emit('dsp', {header: "connected", content: true});
+					beo.bus.emit('dsp', {header: "connected", content: true});
 					
 					getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
 						currentMetadata = metadata;
@@ -72,10 +70,10 @@ module.exports = function(beoBus, globals) {
 							} else if (debug) {
 								console.log("Received metadata from DSP.");
 							}
-							beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+							beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
 						} else {
 							if (debug) console.log("No metadata found for current DSP program.");
-							beoBus.emit('dsp', {header: "metadata", content: {metadata: null}});
+							beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
 						}
 						
 					}, true);
@@ -85,7 +83,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "shutdown") {
 			beoDSP.disconnectDSP(function() {
-				beoBus.emit("general", {header: "shutdownComplete", content: {extension: "dsp-programs"}});
+				beo.bus.emit("general", {header: "shutdownComplete", content: {extension: "dsp-programs"}});
 				if (debug) console.log("Disconnected from DSP.");
 			});
 		}
@@ -94,8 +92,8 @@ module.exports = function(beoBus, globals) {
 			if (event.content == "dsp-programs") {
 				
 				name = getProgramName(currentMetadata);
-				beoBus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: {name: name}});
-				beoBus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: {name: name}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
 				
 				programs = {};
 				active = 0;
@@ -108,18 +106,18 @@ module.exports = function(beoBus, globals) {
 						programs[program].active = false;
 					}
 				}
-				beoBus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active}});
-				beoBus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
 			}
 		}
 	});
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 	});
 	
-	beoBus.on('dsp-programs', function(event) {
+	beo.bus.on('dsp-programs', function(event) {
 		
 		if (event.header == "getProgramPreview") {
 			
@@ -149,9 +147,9 @@ module.exports = function(beoBus, globals) {
 				}
 			}
 			if (metadata) {
-				beoBus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {id: id, metadata: metadata, name: name, version: version, current: current}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {id: id, metadata: metadata, name: name, version: version, current: current}});
 			} else {
-				beoBus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {metadata: false, current: current}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "programPreview", content: {metadata: false, current: current}});
 			}
 			
 		}
@@ -189,7 +187,7 @@ module.exports = function(beoBus, globals) {
 		}
 		
 		if (event.header == "loadMetadataProto") {
-			beoBus.emit("ui", {target: "dsp-programs", header: "loadingMetadata"});
+			beo.bus.emit("ui", {target: "dsp-programs", header: "loadingMetadata"});
 			getCurrentChecksumAndMetadata(function(metadata) {
 				currentMetadata = metadata;
 				
@@ -199,11 +197,11 @@ module.exports = function(beoBus, globals) {
 					} else if (debug) {
 						console.log("Received metadata from DSP.");
 					}
-					beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata}});
+					beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata}});
 				} else {
 					if (debug) console.log("No metadata found for current DSP program.");
 				}
-				beoBus.emit("ui", {target: "dsp-programs", header: "metadataLoaded"});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "metadataLoaded"});
 				
 			});
 		}
@@ -222,8 +220,8 @@ module.exports = function(beoBus, globals) {
 			} else {
 				settings.muteUnknownPrograms = false;
 			}
-			beoBus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
-			beoBus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
+			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
+			beo.bus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
 		}
 	});
 	
@@ -233,7 +231,7 @@ module.exports = function(beoBus, globals) {
 			checksumTimeout = setTimeout(function() {
 				console.error("DSP request for checksum timed out.");
 				dspResponding = false;
-				beoBus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
 			}, 5000);
 			beoDSP.getChecksum(function(checksum) {
 				if (debug) console.log("DSP checksum is: "+checksum+".");
@@ -355,7 +353,7 @@ module.exports = function(beoBus, globals) {
 	
 	function installDSPProgram(program, callback) {
 		// This function is exposed to the outside.
-		beoBus.emit("now-playing", {header: "transport", content: {action: "stop"}}); // Stop music playback if possible.
+		beo.bus.emit("now-playing", {header: "transport", content: {action: "stop"}}); // Stop music playback if possible.
 		installAndCheckDSPProgram(program, function(result) {
 			// The function will independently send status updates to UI.
 				getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
@@ -367,14 +365,14 @@ module.exports = function(beoBus, globals) {
 						} else if (debug) {
 							console.log("Received metadata from DSP.");
 						}
-						beoBus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+						beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
 					} else {
 						if (debug) console.log("No metadata found for current DSP program.");
-						beoBus.emit('dsp', {header: "metadata", content: {metadata: null}});
+						beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
 					}
 					
 					name = getProgramName(currentMetadata);
-					beoBus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: {name: name}});
+					beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: {name: name}});
 					
 					if (callback) {
 						if (result == true) {
@@ -393,35 +391,35 @@ module.exports = function(beoBus, globals) {
 	function installAndCheckDSPProgram(reference, callback) {
 		path = dspDirectory+"/"+dspPrograms[reference].filename;
 		if (dspPrograms[reference] && fs.existsSync(path)) {
-			beoBus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "flashing"}});
+			beo.bus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "flashing"}});
 			amplifierMute(true);
 			if (debug) console.log("Flashing DSP program '"+reference+"'...");
 			beoDSP.flashEEPROM(path, function(result, error) {
 				if (!error) {
 					if (result == true) {
 						// Flashing complete, run EEPROM check.
-						beoBus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "checking"}});
+						beo.bus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "checking"}});
 						if (debug) console.log("Program write complete, checking EEPROM...");
 						beoDSP.checkEEPROM(function(matches) {
 							if (matches) {
-								beoBus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "success"}});
+								beo.bus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "success"}});
 								if (debug) console.log("Memory contents match with installed program.");
 								callback(true);
 							} else {
 								if (debug) console.log("Memory contents did not match with installed program.");
-								beoBus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "fail"}});
+								beo.bus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "fail"}});
 								callback(false);
 							}
 						});
 					} else {
 						callback(500);
 						if (debug) console.log("Failed to write DSP program.");
-						beoBus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "fail"}});
+						beo.bus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "fail"}});
 					}
 				} else {
 					callback(500);
 					if (debug) console.log("DSPToolkit error.");
-					beoBus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "fail"}});
+					beo.bus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "fail"}});
 				}
 			});
 		} else {
@@ -470,10 +468,9 @@ module.exports = function(beoBus, globals) {
 	}
 
 	
-	return {
-		getCurrentProgramName: getCurrentProgramName,
-		installDSPProgram: installDSPProgram,
-		version: version
-	};
+module.exports = {
+	getCurrentProgramName: getCurrentProgramName,
+	installDSPProgram: installDSPProgram,
+	version: version
 };
 

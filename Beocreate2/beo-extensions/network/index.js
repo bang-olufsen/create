@@ -21,10 +21,8 @@ var child_process = require('child_process');
 var fs = require("fs");
 var networkCore = require('../../beocreate_essentials/networking');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
-	var extensions = globals.extensions;
+	var debug = beo.debug;
+	var extensions = beo.extensions;
 	
 	var version = require("./package.json").version;
 	
@@ -42,7 +40,7 @@ module.exports = function(beoBus, globals) {
 	var testNoEthernet = false; // Set to true to make Ethernet a "stealth" interface: even when connected, the system will consider it disconnected to allow testing automated hotspot functions.
 	
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		
 		if (event.header == "startup") {
@@ -68,13 +66,13 @@ module.exports = function(beoBus, globals) {
 					}
 				});
 				if (connectionMode == "hotspot") sawPreviousNetworks = true; // Set this so that when the user is viewing the UI it doesn't drop out unexpectedly.
-				beoBus.emit("ui", {target: "network", header: "networkHardware", content: {hardware: networkHardware}});
+				beo.bus.emit("ui", {target: "network", header: "networkHardware", content: {hardware: networkHardware}});
 			}
 		}
 	});
 	
 	
-	beoBus.on('network', function(event) {
+	beo.bus.on('network', function(event) {
 		
 		if (event.header == "settings") {
 			
@@ -87,20 +85,20 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "populateWifiUI") {
 			
 			networks = networkCore.listSavedNetworks();
-			if (networks.length > 0 && globals.setup) {
+			if (networks.length > 0 && beo.setup) {
 				if (extensions["setup"] && extensions["setup"].allowAdvancing) {
 					extensions["setup"].allowAdvancing("network");
 				}
 			}
-			beoBus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
+			beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 			
 			wifiScan();
 			
 			networkCore.getWifiStatus(function(status, error) {
 				if (!error) {
-					beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
+					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
 				} else {
-					beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
+					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
 				}
 			});
 			
@@ -111,9 +109,9 @@ module.exports = function(beoBus, globals) {
 			wifiScan();
 			networkCore.getWifiStatus(function(status, error) {
 				if (!error) {
-					beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
+					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
 				} else {
-					beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
+					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
 				}
 			});
 			
@@ -123,9 +121,9 @@ module.exports = function(beoBus, globals) {
 			
 			networkCore.getEthernetStatus(function(status, error) {
 				if (!error) {
-					beoBus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
+					beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
 				} else {
-					beoBus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
+					beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
 				}
 			});
 			
@@ -134,7 +132,7 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "getCountry") {
 			
 			
-			beoBus.emit("choose-country", {header: "currentCountry", content: {country: country}});
+			beo.bus.emit("choose-country", {header: "currentCountry", content: {country: country}});
 			
 		}
 		
@@ -144,23 +142,23 @@ module.exports = function(beoBus, globals) {
 				result = networkCore.addNetwork({ssid: event.content.ssid, password: event.content.password, username: event.content.username}, update);
 				if (result == 1 || result == 3) {
 					if (result == 1) {
-						beoBus.emit("ui", {target: "network", header: "networkAdded", content: {ssid: event.content.ssid}});
+						beo.bus.emit("ui", {target: "network", header: "networkAdded", content: {ssid: event.content.ssid}});
 						if (debug) console.log("Network '"+event.content.ssid+"' was added.");
 					} else if (result == 3) {
-						beoBus.emit("ui", {target: "network", header: "networkUpdated", content: {ssid: event.content.ssid}});
+						beo.bus.emit("ui", {target: "network", header: "networkUpdated", content: {ssid: event.content.ssid}});
 						if (debug) console.log("Network '"+event.content.ssid+"' was updated.");
 					}
 					networks = networkCore.listSavedNetworks();
-					if (networks.length > 0 && globals.setup) {
+					if (networks.length > 0 && beo.setup) {
 						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
 							extensions["setup"].allowAdvancing("network", true);
 						}
 					}
 					wifiScan();
-					beoBus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
+					beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 				} else {
 					if (debug) console.error("Network '"+event.content.ssid+"' already exists.");
-					beoBus.emit("ui", {target: "network", header: "networkExists", content: {ssid: event.content.ssid}});
+					beo.bus.emit("ui", {target: "network", header: "networkExists", content: {ssid: event.content.ssid}});
 				}
 			}		
 		}
@@ -169,16 +167,16 @@ module.exports = function(beoBus, globals) {
 			if (event.content.ssid) {
 				success = networkCore.removeNetwork(event.content.ssid);
 				if (success) {
-					beoBus.emit("ui", {target: "network", header: "networkRemoved", content: {ssid: event.content.ssid}});
+					beo.bus.emit("ui", {target: "network", header: "networkRemoved", content: {ssid: event.content.ssid}});
 					if (debug) console.log("Network '"+event.content.ssid+"' was removed.");
 					networks = networkCore.listSavedNetworks();
 					wifiScan();
-					if (networks.length == 0 && globals.setup) {
+					if (networks.length == 0 && beo.setup) {
 						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
 							extensions["setup"].allowAdvancing("network", false);
 						}
 					}
-					beoBus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
+					beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 				} else {
 					if (debug) console.error("Network '"+event.content.ssid+"' was not removed, because it was not found.");
 				}
@@ -203,17 +201,17 @@ module.exports = function(beoBus, globals) {
 					if (event.content.forInterface == "wifi") {
 						networkCore.getWifiStatus(function(status, error) {
 							if (!error) {
-								beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
+								beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
 							} else {
-								beoBus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
+								beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
 							}
 						});
 					} else {
 						networkCore.getEthernetStatus(function(status, error) {
 							if (!error) {
-								beoBus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
+								beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
 							} else {
-								beoBus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
+								beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
 							}
 						});
 					}
@@ -223,10 +221,10 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('setup', function(event) {
+	beo.bus.on('setup', function(event) {
 	
 		if (event.header == "advancing" && event.content.extension == "network") {
-			beoBus.emit("ui", {target: "network", header: "exitingHotspot"});
+			beo.bus.emit("ui", {target: "network", header: "exitingHotspot"});
 			setConnectionMode({mode: "initial"});
 		}
 				
@@ -236,13 +234,13 @@ module.exports = function(beoBus, globals) {
 	function wifiScan(callback) {
 		if (!wifiScanning) {
 			wifiScanning = true;
-			beoBus.emit("ui", {target: "network", header: "scanning"});
+			beo.bus.emit("ui", {target: "network", header: "scanning"});
 			networkCore.listAvailableNetworks(function(networks, error) {
 				wifiScanning = false;
 				if (!error) {
-					beoBus.emit("ui", {target: "network", header: "availableNetworks", content: {networks: networks}});
+					beo.bus.emit("ui", {target: "network", header: "availableNetworks", content: {networks: networks}});
 				} else {
-					beoBus.emit("ui", {target: "network", header: "availableNetworks", content: {networks: networks, error: error}});
+					beo.bus.emit("ui", {target: "network", header: "availableNetworks", content: {networks: networks, error: error}});
 				}
 				if (callback) callback(networks, error);
 			});
@@ -269,7 +267,7 @@ module.exports = function(beoBus, globals) {
 					connectionCheckMax = 10;
 					if (debug) console.log("Network: checking for local network...");
 					setupNetwork();
-					beoBus.emit("led", {header: "blink", content: {options: {interval: 0.5, colour: "white"}}});
+					beo.bus.emit("led", {header: "blink", content: {options: {interval: 0.5, colour: "white"}}});
 					interval = 3;
 					break;
 				case "connected":
@@ -285,8 +283,8 @@ module.exports = function(beoBus, globals) {
 					checkInternetConnection(function(status) {
 						if (debug && status == true) console.log("Network: internet connection is working.");
 					});
-					beoBus.emit("ui", {target: "network", header: "connected"});
-					beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "white", then: {action: "fadeTo", colour: "red", after: 2, speed: "slow"}}}});
+					beo.bus.emit("ui", {target: "network", header: "connected"});
+					beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "white", then: {action: "fadeTo", colour: "red", after: 2, speed: "slow"}}}});
 					interval = 60;
 					break;
 				case "disconnected":
@@ -301,7 +299,7 @@ module.exports = function(beoBus, globals) {
 						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["sound-preset", "product-information"]});
 					}
 					interval = 30;
-					beoBus.emit("led", {header: "blink", content: {options: {interval: 1, colour: "orange"}}});
+					beo.bus.emit("led", {header: "blink", content: {options: {interval: 1, colour: "orange"}}});
 					break;
 			}
 			connectionMode = options.mode;
@@ -366,7 +364,7 @@ module.exports = function(beoBus, globals) {
 									if (networks.length > 0) {
 										for (var i = 0; i < networks.length; i++) {
 											if (networks[i].added) {
-												if (!globals.setup) {
+												if (!beo.setup) {
 													sawPreviousNetworks = true; // Set this flag so that we don't constantly turn on and off the hotspot, if a network that has a familiar SSID doesn't actually work.
 													if (debug) console.log("Network: hotspot is on, but a previously added network was seen.");
 													setConnectionMode({mode: "initial"});
@@ -389,8 +387,8 @@ module.exports = function(beoBus, globals) {
 		if (start) {
 			hotspotName = "";
 			hotspotPrefix = "Beocreate";
-			if (globals.systemConfiguration.cardType) {
-				if (globals.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
+			if (beo.systemConfiguration.cardType) {
+				if (beo.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
 					hotspotPrefix = "Beocreate";
 				} else {
 					hotspotPrefix = "HiFiBerry";
@@ -473,14 +471,14 @@ module.exports = function(beoBus, globals) {
 				}
 				if (connection != hasLocalConnection) {
 					hasLocalConnection = connection;
-					beoBus.emit("network", {header: "localNetworkStatus", content: hasLocalConnection});
+					beo.bus.emit("network", {header: "localNetworkStatus", content: hasLocalConnection});
 					if (connection == false && hasInternetConnection) {
 						hasInternetConnection = false;
-						beoBus.emit("network", {header: "internetStatus", content: hasInternetConnection});
+						beo.bus.emit("network", {header: "internetStatus", content: hasInternetConnection});
 					}
 				}
 				if (newIP) {
-					beoBus.emit("network", {header: "newIPAddresses", content: {ipv4: cachedIPAddresses}});
+					beo.bus.emit("network", {header: "newIPAddresses", content: {ipv4: cachedIPAddresses}});
 				}
 				callback(connection);
 			});
@@ -493,7 +491,7 @@ module.exports = function(beoBus, globals) {
 			connection = (result) ? true : false;
 			if (connection != hasInternetConnection) {
 				hasInternetConnection = connection;
-				beoBus.emit("network", {header: "internetStatus", content: hasInternetConnection});
+				beo.bus.emit("network", {header: "internetStatus", content: hasInternetConnection});
 			}
 			callback(connection);
 		});
@@ -508,13 +506,12 @@ module.exports = function(beoBus, globals) {
 		return networkCore.setCountry(countryCode);
 	}
 	
-	return {
-		getCountry: getCountry,
-		setCountry: setCountry,
-		checkInternetConnection: checkInternetConnection,
-		checkLocalConnection: checkLocalConnection,
-		version: version
-	};
+module.exports = {
+	getCountry: getCountry,
+	setCountry: setCountry,
+	checkInternetConnection: checkInternetConnection,
+	checkLocalConnection: checkLocalConnection,
+	version: version
 };
 
 

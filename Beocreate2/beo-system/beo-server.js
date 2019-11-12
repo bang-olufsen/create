@@ -250,6 +250,21 @@ function getAllSettings() {
 var extensions = {}; // Import Node logic from extensions into this object.
 var extensionsList = {};
 var extensionsLoaded = false;
+global.beo = {
+	bus: beoBus,
+	systemDirectory: global.systemDirectory,
+	dataDirectory: global.dataDirectory,
+	systemConfiguration: systemConfiguration,
+	extensions: extensions,
+	extensionsList: extensionsList,
+	setup: false,
+	selectedExtension: selectedExtension, 
+	debug: debugMode,
+	daemon: daemonMode,
+	sendToUI: sendToUI,
+	download: download,
+	downloadJSON: downloadJSON
+};
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
 var selectedExtension = null;
@@ -559,18 +574,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 				try {
 					require.resolve(fullPath);
 					try {
-						extensions[extensionName] = require(fullPath)(beoBus, {
-							systemConfiguration: systemConfiguration,
-							extensions: extensions,
-							extensionsList: extensionsList,
-							setup: false,
-							selectedExtension: selectedExtension, 
-							debug: debugMode,
-							daemon: daemonMode,
-							sendToUI: sendToUI,
-							download: download,
-							downloadJSON: downloadJSON
-						});
+						extensions[extensionName] = require(fullPath);
 						extensionLoadedSuccesfully = true;
 					}
 					catch (error) {
@@ -760,7 +764,7 @@ var shutdownTimeout = null;
 var powerCommand = null;
 var shutdownDone = false;
 
-//setTimeout(function() {
+
 process.once('SIGINT', function() {
 	if (!shutdownDone) {
 		if (debugMode) console.log("\nSIGINT received. Starting shutdown.");
@@ -780,7 +784,6 @@ process.once('SIGTERM', function() {
 		process.exit(0);
 	}
 });
-//}, 2000);
 
 function rebootSystem(extension) {
 	if (extension) {
@@ -860,7 +863,7 @@ function completeShutdown() {
 			if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");
 			shutdownDone = true;
 		    if (powerCommand) {
-		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+". Letting it exit the process.");
+		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+". It will trigger process exit.");
 		    	piSystem.power(powerCommand);
 		    } else {
 				console.log("Exiting Beocreate 2.");
@@ -873,8 +876,3 @@ function completeShutdown() {
 	});
 	
 }
-
-/* process.on( 'exit', function() {
-	console.log("Forcing exit...");
-    process.kill( process.pid, 'SIGTERM' );
-} ); */

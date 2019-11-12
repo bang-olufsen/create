@@ -20,9 +20,7 @@ SOFTWARE.*/
 var exec = require("child_process").exec;
 var fs = require("fs");
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
 	
@@ -30,14 +28,14 @@ module.exports = function(beoBus, globals) {
 	
 	var squeezeliteEnabled = false;
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			if (globals.extensions.sources &&
-				globals.extensions.sources.setSourceOptions &&
-				globals.extensions.sources.sourceDeactivated) {
-				sources = globals.extensions.sources;
+			if (beo.extensions.sources &&
+				beo.extensions.sources.setSourceOptions &&
+				beo.extensions.sources.sourceDeactivated) {
+				sources = beo.extensions.sources;
 			}
 			
 			if (sources) {
@@ -56,12 +54,12 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "squeezelite") {
-				beoBus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: squeezeliteEnabled}});
+				beo.bus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: squeezeliteEnabled}});
 			}
 		}
 	});
 	
-	beoBus.on('product-information', function(event) {
+	beo.bus.on('product-information', function(event) {
 		
 		if (event.header == "systemNameChanged") {
 			// Listen to changes in system name and update the shairport-sync display name.
@@ -84,19 +82,19 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('squeezelite', function(event) {
+	beo.bus.on('squeezelite', function(event) {
 		
 		if (event.header == "squeezeliteEnabled") {
 			
 			if (event.content.enabled != undefined) {
 				setSqueezeliteStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: newStatus}});
+					beo.bus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("squeezelite", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("squeezelite");
 					}
 					if (error) {
-						beoBus.emit("ui", {target: "squeezelite", header: "errorTogglingsqueezelite", content: {}});
+						beo.bus.emit("ui", {target: "squeezelite", header: "errorTogglingsqueezelite", content: {}});
 					}
 				});
 			}
@@ -142,9 +140,7 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	}
-	
+module.exports = {
+	version: version
 };
 

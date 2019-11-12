@@ -18,9 +18,7 @@ SOFTWARE.*/
 // BEOCREATE SOURCES
 var request = require("request");
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
@@ -39,8 +37,8 @@ module.exports = function(beoBus, globals) {
 	
 	
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
@@ -58,7 +56,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	
-	beoBus.on("sources", function(event) {
+	beo.bus.on("sources", function(event) {
 		
 		
 		switch (event.header) {
@@ -69,7 +67,7 @@ module.exports = function(beoBus, globals) {
 				}
 				break;
 			case "getSources":
-				beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				break;
 			case "startableSources":
 				if (event.content.sources && event.content.extension) {
@@ -82,19 +80,19 @@ module.exports = function(beoBus, globals) {
 						startableSources[source] = event.content.sources[source];
 						startableSources[source].extension = event.content.extension;
 					}
-					beoBus.emit("ui", {target: "sources", header: "startableSources", content: startableSources});
+					beo.bus.emit("ui", {target: "sources", header: "startableSources", content: startableSources});
 				}
 				break;
 			case "startSource":
 				if (event.content.sourceID) {
 					if (startableSources[event.content.sourceID] && startableSources[event.content.sourceID].extension) {
-						beoBus.emit(startableSources[event.content.sourceID].extension, {header: "startSource", content: {sourceID: event.content.sourceID}});
+						beo.bus.emit(startableSources[event.content.sourceID].extension, {header: "startSource", content: {sourceID: event.content.sourceID}});
 					}
 				}
 				break;
 			case "setSourceVolume":
 				if (currentSource && event.content.percentage != undefined) {
-					beoBus.emit(currentSource, {header: "setVolume", content: {percentage: event.content.percentage}});
+					beo.bus.emit(currentSource, {header: "setVolume", content: {percentage: event.content.percentage}});
 				}
 				break;
 			case "metadata": // Metadata from AudioControl.
@@ -116,7 +114,7 @@ module.exports = function(beoBus, globals) {
 									case "stop":
 									case "next":
 									case "previous":
-										beoBus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
+										beo.bus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
 										break;
 								}
 							}
@@ -128,7 +126,7 @@ module.exports = function(beoBus, globals) {
 							case "stop":
 							case "next":
 							case "previous":
-								beoBus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
+								beo.bus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
 								break;
 						}
 					}
@@ -147,7 +145,7 @@ module.exports = function(beoBus, globals) {
 						audioControl(action, function(success) {
 							if (success) {
 								allSources[focusedSource].metadata.loved = love;
-								beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
+								beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
 							}
 						});
 					}
@@ -260,7 +258,7 @@ module.exports = function(beoBus, globals) {
 							if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
 						}
 						
-						beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+						beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 						
 						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
 							// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
@@ -293,7 +291,7 @@ module.exports = function(beoBus, globals) {
 					sourceDeactivated(extension);
 				}
 				
-				beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 			}
 			
 			if (metadata.title != allSources[extension].metadata.title ||
@@ -309,7 +307,7 @@ module.exports = function(beoBus, globals) {
 				allSources[extension].metadata.picture = metadata.artUrl;
 				allSources[extension].metadata.externalPicture = metadata.externalArtUrl;
 				allSources[extension].metadata.picturePort = settings.port;
-				beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
+				beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
 				// "Love track" support.
 				if (allSources[extension].canLove != metadata.loveSupported) {
 					setSourceOptions(extension, {canLove: metadata.loveSupported});
@@ -379,7 +377,7 @@ module.exports = function(beoBus, globals) {
 						allSources[source].active) {
 						if (!allSources[source].usesHifiberryControl) {
 							// Stop all other non-AudioControl sources.
-							beoBus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
+							beo.bus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
 						}
 					}
 				}
@@ -389,7 +387,7 @@ module.exports = function(beoBus, globals) {
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				beoBus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
+				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
 		}
 	}
@@ -414,7 +412,7 @@ module.exports = function(beoBus, globals) {
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				beoBus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
+				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
 		}
 	}
@@ -438,17 +436,17 @@ module.exports = function(beoBus, globals) {
 		if (activeSourceCount == 0) {
 			if (currentSource != null) {
 				currentSource = null;
-				beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "red"}}});
+				beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "red"}}});
 			}
 		} else {
 			if (newSource != currentSource) {
 				currentSource = newSource;
-				beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "green", speed: "fast"}, then: {action: "fadeOut", after: 10}}});
+				beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "green", speed: "fast"}, then: {action: "fadeOut", after: 10}}});
 			}
 		}
 		
-		beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
-		beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 		logSourceStatus();
 	}
 	
@@ -491,9 +489,9 @@ module.exports = function(beoBus, globals) {
 			};
 			if (debug) console.log("Registering source '"+extension+"'...");
 			
-			if (globals.extensionsList) {
-				for (listedExtension in globals.extensionsList) {
-					if (globals.extensionsList[listedExtension].isSource) {
+			if (beo.extensionsList) {
+				for (listedExtension in beo.extensionsList) {
+					if (beo.extensionsList[listedExtension].isSource) {
 						if (!allSources[listedExtension]) {
 							allSourcesRegistered = false;
 						}
@@ -513,11 +511,11 @@ module.exports = function(beoBus, globals) {
 		
 		
 		if (!sourceAdded) { 
-			beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+			beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 		} else {
 			if (allSourcesRegistered) {
 				if (debug) console.log("All sources registered.");
-				beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				audioControlGet("status", function(result) {
 					audioControlGet("metadata");
 				});
@@ -528,15 +526,14 @@ module.exports = function(beoBus, globals) {
 	
 	
 	
-	return {
-		version: version,
-		setSourceOptions: setSourceOptions,
-		setMetadata: setMetadata,
-		sourceActivated: sourceActivated,
-		sourceDeactivated: sourceDeactivated,
-		allSources: allSources,
-		settings: settings
-	};
+module.exports = {
+	version: version,
+	setSourceOptions: setSourceOptions,
+	setMetadata: setMetadata,
+	sourceActivated: sourceActivated,
+	sourceDeactivated: sourceDeactivated,
+	allSources: allSources,
+	settings: settings
 };
 
 

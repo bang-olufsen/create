@@ -21,14 +21,12 @@ var fs = require('fs');
 var path = require('path');
 var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var extensions = globals.extensions;
+	var extensions = beo.extensions;
 	var presetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory.
 	
 	var version = require("./package.json").version;
 	
-	var debug = false;
+	var debug = beo.debug;
 	var metadata = {};
 	
 	var fullPresetList = {};
@@ -42,11 +40,10 @@ module.exports = function(beoBus, globals) {
 	var productIdentitiesFetched = false;
 	
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			if (event.content.debug) debug = true;
 			
 			readLocalPresets();
 			
@@ -63,7 +60,7 @@ module.exports = function(beoBus, globals) {
 				
 				checkIdentities();
 				
-				beoBus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset}});
+				beo.bus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset}});
 				
 				
 			}
@@ -71,7 +68,7 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('sound-preset', function(event) {
+	beo.bus.on('sound-preset', function(event) {
 		
 		if (event.header == "settings") {
 			
@@ -83,7 +80,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "reloadPresets") {
 			readLocalPresets();
-			beoBus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset}});
+			beo.bus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset}});
 		}
 		
 		if (event.header == "selectSoundPreset") {
@@ -153,12 +150,12 @@ module.exports = function(beoBus, globals) {
 				}
 				settings.selectedSoundPreset = event.content.presetID;
 				
-				beoBus.emit("settings", {header: "saveSettings", content: {extension: "sound-preset", settings: settings}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "sound-preset", settings: settings}});
 				if (event.content.installFallback && fullPresetList[presetID]["sound-preset"].fallbackDSP) {
 					if (extensions["dsp-programs"] && extensions["dsp-programs"].installDSPProgram) {
 						extensions["dsp-programs"].installDSPProgram(fullPresetList[presetID]["sound-preset"].fallbackDSP, function(result) {
 							if (result == true) {
-								beoBus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
+								beo.bus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
 								if (debug) console.log("Installing fallback DSP program succeeded. Sound preset applied.");
 							} else {
 								if (debug) console.log("Installing fallback DSP program unsuccessful.");
@@ -166,7 +163,7 @@ module.exports = function(beoBus, globals) {
 						});
 					}
 				} else {
-					beoBus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
+					beo.bus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
 				}
 			}
 			
@@ -176,7 +173,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -260,7 +257,7 @@ module.exports = function(beoBus, globals) {
 					preset.bangOlufsenProduct = compactPresetList[presetID].bangOlufsenProduct;
 					
 					
-					beoBus.emit("ui", {target: "sound-preset", header: "presetPreview", content: {preset: preset, productIdentity: identity, currentDSPProgram: programName}});
+					beo.bus.emit("ui", {target: "sound-preset", header: "presetPreview", content: {preset: preset, productIdentity: identity, currentDSPProgram: programName}});
 					
 				}
 			}
@@ -277,7 +274,7 @@ module.exports = function(beoBus, globals) {
 				fullPresetList[preset.presetName] = preset.presetFull;
 			}
 		}
-		//beoBus.emit("product-information", {header: "addProductIdentities", content: {identities: productIdentities}});
+		//beo.bus.emit("product-information", {header: "addProductIdentities", content: {identities: productIdentities}});
 	}
 	
 	function checkIdentities(force) {
@@ -361,7 +358,7 @@ module.exports = function(beoBus, globals) {
 			delete fullPresetList[preset];
 			
 			if (fs.existsSync(presetDirectory+"/"+preset+".json")) fs.unlinkSync(presetDirectory+"/"+preset+".json");
-			beoBus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset, action: "presetRemoved"}});
+			beo.bus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset, action: "presetRemoved"}});
 		}
 	}
 	
@@ -380,19 +377,19 @@ module.exports = function(beoBus, globals) {
 				// Preset with this file name exists.
 				if (compactPresetList[name].readOnly) {
 					// The existing preset is read only and can't be replaced.
-					beoBus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "existingPresetReadOnly", existingPresetName: compactPresetList[name].presetName}});
+					beo.bus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "existingPresetReadOnly", existingPresetName: compactPresetList[name].presetName}});
 					fs.unlinkSync(path);
 					uploadedPresetPath = null;
 				} else {
 					// Ask to replace the existing preset.
-					beoBus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "askToReplace", existingPresetName: compactPresetList[name].presetName}});
+					beo.bus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "askToReplace", existingPresetName: compactPresetList[name].presetName}});
 				}
 			}
 		} else {
 			if (uploadedPreset.error) {
-				beoBus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "invalidJSON"}});
+				beo.bus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "invalidJSON"}});
 			} else {
-				beoBus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "noPresetName"}});
+				beo.bus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "noPresetName"}});
 			}
 			fs.unlinkSync(path);
 			uploadedPresetPath = null;
@@ -415,8 +412,8 @@ module.exports = function(beoBus, globals) {
 				}
 			}
 			checkIdentities();
-			beoBus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset}});
-			beoBus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "success", newPresetName: compactPresetList[name].presetName}});
+			beo.bus.emit("ui", {target: "sound-preset", header: "presets", content: {compactPresetList: compactPresetList, currentSoundPreset: settings.selectedSoundPreset}});
+			beo.bus.emit("ui", {target: "sound-preset", header: "presetImport", content: {message: "success", newPresetName: compactPresetList[name].presetName}});
 			selectSoundPreset(name);
 			uploadedPresetPath = null;
 			uploadedPreset = null;
@@ -424,9 +421,8 @@ module.exports = function(beoBus, globals) {
 	}
 
 	
-	return {
-		version: version,
-		processUpload: processUpload
-	};
+module.exports = {
+	version: version,
+	processUpload: processUpload
 };
 

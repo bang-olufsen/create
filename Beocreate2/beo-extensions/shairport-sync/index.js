@@ -24,9 +24,7 @@ var net = require("net");
 var dnssd = require("dnssd2"); // for service discovery.
 var request = require('request'); // for sending HTTP requests to the DACP server
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
@@ -45,14 +43,14 @@ module.exports = function(beoBus, globals) {
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			if (globals.extensions.sources &&
-				globals.extensions.sources.setSourceOptions &&
-				globals.extensions.sources.sourceDeactivated) {
-				sources = globals.extensions.sources;
+			if (beo.extensions.sources &&
+				beo.extensions.sources.setSourceOptions &&
+				beo.extensions.sources.sourceDeactivated) {
+				sources = beo.extensions.sources;
 			}
 			
 			if (sources) {
@@ -92,7 +90,7 @@ module.exports = function(beoBus, globals) {
 				streamClosedForShutdown = true;
 				airPlayMetadataStream.close();
 				exec('echo null > /tmp/shairport-sync-metadata'); // Super dirty hack to get the metadata stream to close.
-				beoBus.emit("general", {header: "shutdownComplete", content: {extension: "shairport-sync"}});
+				beo.bus.emit("general", {header: "shutdownComplete", content: {extension: "shairport-sync"}});
 			}
 		}
 		
@@ -102,14 +100,14 @@ module.exports = function(beoBus, globals) {
 				readShairportSyncConfiguration();
 				ssncPassword = (configuration.general.password) ? true : false;
 				
-				beoBus.emit("ui", {target: "shairport-sync", header: "configuration", content: {usesPassword: ssncPassword, version: ssncVersion, shairportSyncEnabled: shairportSyncEnabled}});
+				beo.bus.emit("ui", {target: "shairport-sync", header: "configuration", content: {usesPassword: ssncPassword, version: ssncVersion, shairportSyncEnabled: shairportSyncEnabled}});
 				
 			}
 		}
 	});
 	
 	
-	beoBus.on('product-information', function(event) {
+	beo.bus.on('product-information', function(event) {
 		
 		if (event.header == "systemNameChanged") {
 			// Listen to changes in system name and update the shairport-sync display name.
@@ -123,7 +121,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	airPlayVolumeSendTimeout = null;
-	beoBus.on('sound', function(event) {
+	beo.bus.on('sound', function(event) {
 		
 		if (event.header == "systemVolume" && !isNaN(event.content.volume)) {
 			if (settings.syncVolume) {
@@ -138,7 +136,7 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('shairport-sync', function(event) {
+	beo.bus.on('shairport-sync', function(event) {
 		
 		if (event.header == "settings") {
 			if (event.content.settings) {
@@ -150,10 +148,10 @@ module.exports = function(beoBus, globals) {
 			// If password field is set, change password. Otherwise remove it.
 			if (event.content.password != false) {
 				configureShairportSync("general", "password", event.content.password, true);
-				beoBus.emit("ui", {target: "shairport-sync", header: "usesPassword", content: {usesPassword: true}});
+				beo.bus.emit("ui", {target: "shairport-sync", header: "usesPassword", content: {usesPassword: true}});
 			} else {
 				configureShairportSync("general", "password", null, true);
-				beoBus.emit("ui", {target: "shairport-sync", header: "usesPassword", content: {usesPassword: false}});
+				beo.bus.emit("ui", {target: "shairport-sync", header: "usesPassword", content: {usesPassword: false}});
 			}
 			
 		}
@@ -162,13 +160,13 @@ module.exports = function(beoBus, globals) {
 			
 			if (event.content.enabled != undefined) {
 				setShairportSyncStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "shairport-sync", header: "configuration", content: {shairportSyncEnabled: newStatus}});
+					beo.bus.emit("ui", {target: "shairport-sync", header: "configuration", content: {shairportSyncEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("shairport-sync", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("shairport-sync");
 					}
 					if (error) {
-						beoBus.emit("ui", {target: "shairportSync", header: "errorTogglingShairportSync", content: {}});
+						beo.bus.emit("ui", {target: "shairportSync", header: "errorTogglingShairportSync", content: {}});
 					}
 				});
 			}
@@ -318,7 +316,7 @@ module.exports = function(beoBus, globals) {
 		/*airPlayMetadataStream.on('open', function() {
 			
 		});*/
-		beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "shairport-sync"}});
+		beo.bus.emit("general", {header: "requestShutdownTime", content: {extension: "shairport-sync"}});
 		
 		airPlayMetadataStream.on('close', function(error) {
 			if (!error) {
@@ -381,7 +379,7 @@ module.exports = function(beoBus, globals) {
 							combineDACPInformation("acre", decodedData);
 							break;
 						case "pvol":
-							//beoBus.emit("sound", {header: "updateVolume"});
+							//beo.bus.emit("sound", {header: "updateVolume"});
 							/*volumeValues = decodedData.split(",");
 							if (volumeValues[0] == -144) {
 								volumeIsMuted = true;
@@ -476,7 +474,7 @@ module.exports = function(beoBus, globals) {
 		for (source in controllableSources) {
 			if (!controllableSources[source].inLimbo) sources[source] = controllableSources[source];
 		}
-		//beoBus.emit("sources", {header: "startableSources", content: {extension: "shairport-sync", sources: sources}});
+		//beo.bus.emit("sources", {header: "startableSources", content: {extension: "shairport-sync", sources: sources}});
 	}
 	
 	// DACP SERVICE DISCOVERY
@@ -540,7 +538,6 @@ module.exports = function(beoBus, globals) {
 	}
 
 	
-	return {
-		version: version
-	};
+module.exports = {
+	version: version
 };

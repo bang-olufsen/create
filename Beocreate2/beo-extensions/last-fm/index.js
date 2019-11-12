@@ -20,9 +20,7 @@ SOFTWARE.*/
 var exec = require("child_process").exec;
 var fs = require("fs");
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
 	
@@ -31,7 +29,7 @@ module.exports = function(beoBus, globals) {
 	};
 	var configuration = {};
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
@@ -48,13 +46,13 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "last-fm") {
-				beoBus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
+				beo.bus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
 			}
 		}
 	});
 
 	
-	beoBus.on('last-fm', function(event) {
+	beo.bus.on('last-fm', function(event) {
 		
 
 		if (event.header == "logIn") {
@@ -65,15 +63,15 @@ module.exports = function(beoBus, globals) {
 				], true, function(success, error) {
 					if (success) {
 						settings.loggedInAs = event.content.username;
-						beoBus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
+						beo.bus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
 					} else {
-						beoBus.emit("ui", {target: "last-fm", header: "logInError"});
+						beo.bus.emit("ui", {target: "last-fm", header: "logInError"});
 						configureaudioControl([
 							{section: "lastfm", option: "username", remove: true},
 							{section: "lastfm", option: "password", remove: true}
 						], true);
 						settings.loggedInAs = false;
-						beoBus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
+						beo.bus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
 					}
 				});
 			}
@@ -85,7 +83,7 @@ module.exports = function(beoBus, globals) {
 				{section: "lastfm", option: "username", remove: true},
 				{section: "lastfm", option: "password", remove: true}
 			], true, function() {
-				beoBus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
+				beo.bus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
 			});
 		}
 	});
@@ -190,9 +188,7 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	}
-	
+module.exports = {
+	version: version
 };
 

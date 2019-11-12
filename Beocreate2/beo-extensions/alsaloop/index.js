@@ -19,9 +19,7 @@ SOFTWARE.*/
 
 var exec = require("child_process").exec;
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
 	
@@ -29,7 +27,7 @@ module.exports = function(beoBus, globals) {
 	
 	var loopEnabled = false;
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
@@ -54,24 +52,24 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "alsaloop") {
-				beoBus.emit("ui", {target: "alsaloop", header: "alsaloopSettings", content: {loopEnabled: loopEnabled}});
+				beo.bus.emit("ui", {target: "alsaloop", header: "alsaloopSettings", content: {loopEnabled: loopEnabled}});
 			}
 		}
 	});
 	
-	beoBus.on('alsaloop', function(event) {
+	beo.bus.on('alsaloop', function(event) {
 		
 		if (event.header == "loopEnabled") {
 			
 			if (event.content.enabled != undefined) {
 				setLoopStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "alsaloop", header: "alsaloopSettings", content: {loopEnabled: newStatus}});
+					beo.bus.emit("ui", {target: "alsaloop", header: "alsaloopSettings", content: {loopEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("alsaloop", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("alsaloop");
 					}
 					if (error) {
-						beoBus.emit("ui", {target: "alsaloop", header: "errorTogglingAlsaloop", content: {}});
+						beo.bus.emit("ui", {target: "alsaloop", header: "errorTogglingAlsaloop", content: {}});
 					}
 				});
 			}
@@ -117,9 +115,7 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	}
-	
+module.exports = {
+	version: version
 };
 

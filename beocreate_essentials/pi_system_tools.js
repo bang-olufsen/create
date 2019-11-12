@@ -33,21 +33,20 @@ var pi_system_tools = module.exports = {
 	power: power
 };
 
+
 function getHostname(callback) {
-	command = "/usr/bin/hostnamectl --pretty";
-	exec(command, function(error, stdout, stderr) {
+	exec("/usr/bin/hostnamectl --pretty", function(error, stdout, stderr) {
 		if (error) {
 			callback(null, error);
 		} else {
 			uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
-			command = "/usr/bin/hostnamectl --static";
-			exec(command, function(error, stdout, stderr) {
+			exec("/usr/bin/hostnamectl --static", function(error, stdout, stderr) {
 				if (error) {
 					callback(null, error);
 				} else {
 					staticName = stdout.slice(0,-1);
 					if (uiName == "") uiName = null;
-					callback({ui: uiName, static: staticName});
+					callback({static: staticName, ui: uiName});
 				}
 			});
 		}
@@ -55,58 +54,60 @@ function getHostname(callback) {
 }
 
 function setHostname(productName, callback) {
-	command = "/usr/bin/hostnamectl set-hostname --pretty \""+productName+"\"";
-	exec(command, function(error, stdout, stderr) {
-		if (error) {
-			callback(null, error);
-		} else {
-			n = productName.replace(/ /g, "-"); // Replace spaces with hyphens
-			n = n.replace(/\r?\n|\r/g, ""); // Remove newlines
-			n = n.replace(/\./g, "-"); // Replace periods with hyphens
-			n = n.replace(/_/g, "-"); // Replace underscores with hyphens
-			n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
-			n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
-			command = "/usr/bin/hostnamectl set-hostname --static "+n;
-			exec(command, function(error, stdout, stderr) {
-				if (error) {
-					callback(null, error);
-				} else {
-					command = "/usr/bin/hostnamectl --pretty";
-					exec(command, function(error, stdout, stderr) {
-						if (error) {
-							callback(null, error);
-						} else {
-							uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
-							if (fs.existsSync("/etc/systemname")) {
-								fs.writeFileSync("/etc/systemname", uiName);
-							}
-							command = "/usr/bin/hostnamectl --static";
-							exec(command, function(error, stdout, stderr) {
-								if (error) {
-									callback(null, error);
-								} else {
-									staticName = stdout.slice(0,-1);
-									if (uiName == "") uiName = null;
-									// Change name in /etc/hosts
-									hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
-									for (var i = 0; i < hostsFile.length; i++) {
-										if (hostsFile[i].indexOf("127.0.1.1") != -1) {
-											hostsFile[i] = "127.0.1.1       "+staticName;
-										}
-									}
-									hostsText = hostsFile.join("\n");
-									fs.writeFileSync("/etc/hosts", hostsText);
-									callback(true, {ui: uiName, static: staticName});
-									setTimeout(function() {
-										exec("systemctl restart avahi-daemon");
-									}, 500);
+	getHostname(function(names) { // First get current names so that they can be replaced in /etc/hosts
+		productName = productName.replace(/\r?\n|\r/g, ""); // Remove newlines
+		exec("/usr/bin/hostnamectl set-hostname --pretty \""+productName+"\"", function(error, stdout, stderr) {
+			if (error) {
+				callback(null, error);
+			} else {
+				n = productName.replace(/ /g, "-"); // Replace spaces with hyphens
+				n = n.replace(/\./g, "-"); // Replace periods with hyphens
+				n = n.replace(/_/g, "-"); // Replace underscores with hyphens
+				n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
+				n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+				
+				exec("/usr/bin/hostnamectl set-hostname --static "+n, function(error, stdout, stderr) {
+					if (error) {
+						callback(null, error);
+					} else {
+						exec("/usr/bin/hostnamectl --pretty", function(error, stdout, stderr) {
+							if (error) {
+								callback(null, error);
+							} else {
+								uiName = stdout.replace(/\r?\n|\r/g, ""); // Remove newlines
+								if (fs.existsSync("/etc/systemname")) {
+									fs.writeFileSync("/etc/systemname", uiName);
 								}
-							});
-						}
-					});
-				}
-			});
-		}
+								exec("/usr/bin/hostnamectl --static", function(error, stdout, stderr) {
+									if (error) {
+										callback(null, error);
+									} else {
+										staticName = stdout.slice(0,-1);
+										if (uiName == "") uiName = null;
+										// Change name in /etc/hosts
+										hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
+										for (var i = 0; i < hostsFile.length; i++) {
+											if (hostsFile[i].indexOf(names.static) != -1) {
+												hostsFile[i].replace(names.static, staticName);
+											}
+											if (hostsFile[i].indexOf("hifiberry") != -1) {
+												hostsFile[i].replace("hifiberry", staticName);
+											}
+										}
+										hostsText = hostsFile.join("\n");
+										fs.writeFileSync("/etc/hosts", hostsText);
+										callback({static: staticName, ui: uiName});
+										setTimeout(function() {
+											exec("systemctl restart avahi-daemon");
+										}, 500);
+									}
+								});
+							}
+						});
+					}
+				});
+			}
+		});
 	});
 }
 

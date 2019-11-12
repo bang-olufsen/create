@@ -403,6 +403,23 @@ function channelToFrequency(channel) {
 function configureIPAddress(options, forInterface, callback) {
 	// If no options, automatic everything.
 	config = readDHCPSettings(forInterface);
+	hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
+	staticName = null;
+	for (var i = 0; i < hostsFile.length; i++) {
+		if (hostsFile[i].indexOf("127.0.1.1") != -1) {
+			staticName = hostsFile[i].trim().split(/\s+/)[1];
+		}
+	}
+	hostsLineToChange = null;
+	if (dhcpConfig[forInterface].Network.Address) {
+		for (var i = 0; i < hostsFile.length; i++) {
+			if (hostsFile[i].indexOf(dhcpConfig[forInterface].Network.Address.split("/")[0]) != -1 &&
+				hostsFile[i].indexOf(staticName) != -1) {
+				hostsLineToChange = i;
+				break;
+			}
+		}
+	}
 	if (config) {
 		if (options &&
 			options.address &&
@@ -414,9 +431,23 @@ function configureIPAddress(options, forInterface, callback) {
 				DNS: options.dns,
 				Gateway: options.router
 			};
+			if (hostsLineToChange != null) {
+				hostsFile[hostsLineToChange] = options.address+"\t"+staticName;
+			} else {
+				// Add new line.
+				hostsFile.push(options.address+"\t"+staticName);
+			}
 		} else {
 			dhcpConfig[forInterface].Network = {DHCP: "yes"};
+			if (hostsLineToChange != null) {
+				// Remove the static IP address from file.
+				hostsFile.splice(hostsLineToChange, 1);
+			} 
 		}
+		
+		hostsText = hostsFile.join("\n");
+		fs.writeFileSync("/etc/hosts", hostsText);
+		
 		writeDHCPSettings(forInterface);
 		exec("systemctl restart systemd-networkd.service systemd-resolved.service", function(error, stdout, stderr) {
 			if (error) {

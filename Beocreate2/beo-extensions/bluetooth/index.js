@@ -96,7 +96,7 @@ module.exports = function(beoBus, globals) {
 	
 	
 	function getBluetoothStatus(callback) {
-		exec("systemctl is-active --quiet bluetooth.service bluealsa.service bluealsa-aplay.service").on('exit', function(code) {
+		exec("systemctl is-active --quiet bluealsa-aplay.service").on('exit', function(code) {
 			if (code == 0) {
 				bluetoothEnabled = true;
 				callback(true);

@@ -22,7 +22,8 @@ var path = require('path');
 var beoDSP = require('../../beocreate_essentials/dsp');
 
 	var extensions = beo.extensions;
-	var presetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var presetDirectory = beo.dataDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var systemPresetDirectory = beo.systemDirectory+"/beo-sound-presets";
 	
 	var version = require("./package.json").version;
 	
@@ -38,6 +39,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
 	var productIdentitiesFetched = false;
+	
+	if (!fs.existsSync(presetDirectory)) fs.mkdirSync(presetDirectory);
 	
 	
 	beo.bus.on('general', function(event) {
@@ -266,10 +269,20 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	}
 	
 	function readLocalPresets() {
+		// Read presets from system directory and then from user directory
+		presetFiles = fs.readdirSync(systemPresetDirectory);
+		for (var i = 0; i < presetFiles.length; i++) {
+			preset = readPresetFromFile(systemPresetDirectory+"/"+presetFiles[i], true);
+			if (preset.presetName && !compactPresetList[preset.presetName]) {
+				compactPresetList[preset.presetName] = preset.presetCompact;
+				fullPresetList[preset.presetName] = preset.presetFull;
+			}
+		}
+		
 		presetFiles = fs.readdirSync(presetDirectory);
 		for (var i = 0; i < presetFiles.length; i++) {
-			preset = readPresetFromFile(presetDirectory+"/"+presetFiles[i]);
-			if (preset.presetName) {
+			preset = readPresetFromFile(presetDirectory+"/"+presetFiles[i], false);
+			if (preset.presetName && !compactPresetList[preset.presetName]) {
 				compactPresetList[preset.presetName] = preset.presetCompact;
 				fullPresetList[preset.presetName] = preset.presetFull;
 			}
@@ -305,7 +318,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 	}
 	
-	function readPresetFromFile(presetPath) {
+	function readPresetFromFile(presetPath, systemPreset) {
 		presetFileName = path.basename(presetPath, path.extname(presetPath));
 		
 		try {
@@ -322,10 +335,9 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					// Preset information record contains a preset name.
 					presetName = preset['sound-preset'].presetName;
 				}
-				readOnly = (preset["sound-preset"].readOnly) ? true : false;
-			} else {
-				readOnly = false;
 			}
+			
+			readOnly = (systemPreset) ? true : false;
 			
 			if (presetName != null && preset["sound-preset"]) {
 				// If the preset has a name, it qualifies.

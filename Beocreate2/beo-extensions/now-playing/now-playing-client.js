@@ -16,7 +16,6 @@ $(document).on("general", function(event, data) {
 		if (data.content.status == "connected") {
 			//if ($("#now-playing").hasClass("visible")) {
 				send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
-				send({target: "now-playing", header: "useExternalArtwork"});
 			//}
 		}
 	}
@@ -282,7 +281,7 @@ var hiddenArtworkView = "b";
 function loadArtwork(url, port, external) {
 	evaluateExternalArtwork = false;
 	//console.log("Artwork load requested with URL: "+url+".");
-	if (!url || url.indexOf("file:///") == -1) { // Don't try loading file URLs
+	if (!url || url.indexOf("file:///") == -1) {
 		if (url) {
 			if (url.indexOf("http") == 0) {
 				// Remote url, use as is.
@@ -339,18 +338,19 @@ var currentInternalPicture = null;
 var currentExternalPicture = null;
 function determineArtworkToShow(internalURL, externalURL, port) {
 	
-	
 	if (internalURL != currentInternalPicture || (!internalURL && !externalURL)) { // Always load internal artwork first, or if neither image is available.
 		loadArtwork(internalURL, port);
+		if (internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
 		currentInternalPicture = internalURL;
 	}
 	
-	// If no picture, load external artwork (all modes).
+	// If external artwork is set to "never", don't do anything.
+	// If no picture, load external artwork ("missing" mode).
 	// If current picture file is smaller than the picture view, load and check external artwork size. If larger, switch ("auto" mode).
 	// Load external artwork always ("always" mode).
 	
 	switch (useExternalArtwork) {
-		case "never":
+		case "missing":
 			if (!internalURL && externalURL && currentExternalPicture != externalURL) {
 				loadArtwork(externalURL);
 				currentExternalPicture = externalURL;
@@ -383,20 +383,24 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 	
 }
 
-function switchArtwork(view, noAnimation) {
+function switchArtwork(view) {
 	show = view;
 	hide = (show == "a") ? "b" : "a";
 	if (noAnimation) $(".now-playing-artwork-wrap").addClass("no-animation");
-	$("#now-playing-artwork-wrap-"+show).addClass("visible");
-	$("#now-playing-artwork-wrap-"+hide).removeClass("visible");
-	if (noAnimation) {
-		setTimeout(function() {
-			$(".now-playing-artwork-wrap").removeClass("no-animation");
-		}, 10);
-	}
+	$("#now-playing-artwork-wrap-"+show).addClass("visible incoming");
+	$("#now-playing-artwork-wrap-"+hide).removeClass("visible").addClass("outgoing");
+	setTimeout(function() {
+		$(".now-playing-artwork-wrap").removeClass("incoming outgoing");
+	}, 500);
 	previousSrc = $(".artwork-img-"+show).attr("src");
 	currentArtworkView = show;
 	hiddenArtworkView = hide;
+}
+
+function testArtworkSwap() {
+	view = (currentArtworkView == "a") ? "b" : "a";
+	switchArtwork(view);
+	return view;
 }
 
 $("#main-artwork-a").on('load', function() {
@@ -493,6 +497,7 @@ function resizeArtwork() {
 function setUseExternalArtwork(mode, updateOnly) {
 	switch (mode) {
 		case "never":
+		case "missing":
 		case "auto":
 		case "always":
 			if (updateOnly) {
@@ -687,6 +692,7 @@ return {
 	loadArtwork: loadArtwork,
 	switchArtwork: switchArtwork,
 	loadSmallSampleArtwork: loadSmallSampleArtwork,
+	testArtworkSwap: testArtworkSwap,
 	toggleLove: toggleLove,
 	functionRow: functionRow,
 	setUseExternalArtwork: setUseExternalArtwork,

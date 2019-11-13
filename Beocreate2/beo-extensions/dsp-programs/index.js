@@ -40,7 +40,8 @@ if (Gpio) {
 	
 	var dspPrograms = {};
 	
-	var dspDirectory = dataDirectory+"/beo-dsp-programs"; // DSP program directory sits next to the system directory.
+	var dspDirectory = beo.dataDirectory+"/beo-dsp-programs"; // User DSP directory.
+	var systemDSPDirectory = beo.systemDirectory+"/beo-dsp-programs"; // System DSP directory.
 	
 	var defaultSettings = {
 		"muteUnknownPrograms": true
@@ -431,32 +432,43 @@ if (Gpio) {
 	
 	function readAllDSPPrograms() {
 		// Read all programs from the DSP program directory.
+		dspFiles = fs.readdirSync(systemDSPDirectory);
+		for (var i = 0; i < dspFiles.length; i++) {
+			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
+				filename = dspFiles[i].slice(0, -4);
+				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(name, checksum, meta) {
+					dspPrograms[filename] = {name: name, metadata: meta, checksum: checksum, filename: filename, readOnly: true};
+				});
+			}
+		}
+		
 		dspFiles = fs.readdirSync(dspDirectory);
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
-				readDSPProgramFromFile(dspFiles[i], function(filename, name, checksum, meta) {
-					dspPrograms[filename.slice(0, -4)] = {name: name, metadata: meta, checksum: checksum, filename: filename};
+				filename = dspFiles[i].slice(0, -4);
+				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(name, checksum, meta) {
+					dspPrograms[filename] = {name: name, metadata: meta, checksum: checksum, filename: filename};
 				});
 			}
 		}
 	}
 	
-	function readDSPProgramFromFile(filename, callback) {
+	function readDSPProgramFromFile(path, filename, callback) {
 		if (callback) {
-			stream = fs.createReadStream(dspDirectory+"/"+filename, { start: 1, end: 6000 });
+			stream = fs.createReadStream(path, { start: 1, end: 6000 });
 			
 			stream.on("data", function(chunk) {
 				snippet = chunk.toString();
 				metadata = parseDSPMetadata(snippet);
 				name = getProgramName(metadata, filename);
 				checksum = getChecksumFromMetadata(metadata);
-				callback(filename, name, checksum, metadata);
+				callback(name, checksum, metadata);
 			});
 		}
 	}
 	
 	function amplifierMute(mute) {
-		/*if (mute) {
+		if (mute) {
 			execSync("gpio mode 2 out");
 			execSync("gpio write 2 1");
 			if (debug) console.log("Muted amplifier through GPIO.");
@@ -464,7 +476,7 @@ if (Gpio) {
 			execSync("gpio write 2 0");
 			execSync("gpio mode 2 in");
 			if (debug) console.log("Unmuted amplifier through GPIO.");
-		}*/
+		}
 	}
 
 	

@@ -184,6 +184,7 @@ SOFTWARE.*/
 		
 		if (event.header == "getData") {
 			send({target: "now-playing", header: "playerState", content: {state: playerState}});
+			send("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
 			if (focusedSource) {
 				if (event.content.cacheIndex != metadataCacheIndex) {
 					sendMetadata(focusedSource);

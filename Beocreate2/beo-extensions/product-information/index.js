@@ -26,8 +26,10 @@ var fs = require("fs");
 	var download = beo.download;
 	var debug = beo.debug;
 	
-	var soundPresetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory.
-	var productIdentityDirectory = dataDirectory+"/beo-product-identities"; // Product identities directory.
+	var soundPresetDirectory = beo.dataDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var systemSoundPresetDirectory = beo.systemDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var productIdentityDirectory = beo.dataDirectory+"/beo-product-identities"; // Product identities directory.
+	var systemProductIdentityDirectory = beo.systemDirectory+"/beo-product-identities"; // Product identities directory.
 	
 	
 	var hifiberryOS = (beo.systemConfiguration.cardType && beo.systemConfiguration.cardType.indexOf("Beocreate") == -1) ? true : false;
@@ -68,8 +70,10 @@ var fs = require("fs");
 	
 	var productIdentities = {};
 	
-	var imageDirectory = dataDirectory+"/beo-product-images/";
+	var imageDirectory = beo.dataDirectory+"/beo-product-images/";
+	var systemImageDirectory = beo.systemDirectory+"/beo-product-images/";
 	if (!fs.existsSync(imageDirectory)) fs.mkdirSync(imageDirectory);
+	if (!fs.existsSync(productIdentityDirectory)) fs.mkdirSync(productIdentityDirectory);
 	
 	beo.bus.on('general', function(event) {
 		
@@ -304,7 +308,22 @@ var fs = require("fs");
 	
 	
 	function updateProductIdentities() {
-		// Combines product identities from beo-product-identities and beo-sound-presets directories.
+		// Combines product identities from beo-product-identities and beo-sound-presets directories, from system and user locations.
+		if (fs.existsSync(systemSoundPresetDirectory)) {
+			presetFiles = fs.readdirSync(systemSoundPresetDirectory);
+			for (var i = 0; i < presetFiles.length; i++) {
+				try {
+					preset = JSON.parse(fs.readFileSync(systemSoundPresetDirectory+"/"+presetFiles[i], "utf8"));
+					if (preset["product-information"]) {
+						checkAndAddProductIdentity(preset["product-information"]);
+					} else {
+						if (debug == 2) console.log("No product identity data in sound preset '"+presetFiles[i]+"'.");
+					}
+				} catch (error) {
+					console.error("Invalid JSON data for sound preset '"+presetFiles[i]+"':", error);
+				}
+			}
+		}
 		if (fs.existsSync(soundPresetDirectory)) {
 			presetFiles = fs.readdirSync(soundPresetDirectory);
 			for (var i = 0; i < presetFiles.length; i++) {
@@ -317,6 +336,18 @@ var fs = require("fs");
 					}
 				} catch (error) {
 					console.error("Invalid JSON data for sound preset '"+presetFiles[i]+"':", error);
+				}
+			}
+		}
+		
+		
+		if (fs.existsSync(systemProductIdentityDirectory)) {
+			identityFiles = fs.readdirSync(systemProductIdentityDirectory);
+			for (var i = 0; i < identityFiles.length; i++) {
+				try {
+					checkAndAddProductIdentity(JSON.parse(fs.readFileSync(systemProductIdentityDirectory+"/"+identityFiles[i], "utf8")), true);
+				} catch (error) {
+					console.error("Invalid JSON data for product identity '"+identityFiles[i]+"':", error);
 				}
 			}
 		}
@@ -383,7 +414,9 @@ var fs = require("fs");
 				// Only delete "internal" presets with an override.
 				if (internal && productIdentities[identity].fileReference) {
 					// Delete the identity file if it is referenced.
-					if (fs.existsSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference)) fs.unlinkSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference);
+					if (fs.existsSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference)) {
+						fs.unlinkSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference);
+					}
 				}
 				if (debug) console.log("Removing product identity '"+identity+"'.");
 				delete productIdentities[identity];
@@ -415,7 +448,10 @@ var fs = require("fs");
 			return ["/common/hifiberry-generic.png", "/common/hifiberry-generic.png"];
 		} else if (imageName) {
 			if (imageName.indexOf(".png") == -1) imageName += ".png";
-			if (fs.existsSync(imageDirectory+"/"+imageName)) {
+			if (fs.existsSync(systemImageDirectory+"/"+imageName)) {
+				image = imageName;
+				return ["/product-images/"+imageName, "/product-images/"+imageName];
+			} else if (fs.existsSync(imageDirectory+"/"+imageName)) {
 				image = imageName;
 				return ["/product-images/"+imageName, "/product-images/"+imageName];
 			} else {

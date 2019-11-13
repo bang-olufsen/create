@@ -42,6 +42,14 @@ beo.bus.on('general', function(event) {
 		if (event.content == "software-update") {
 			checkForUpdate();
 		}
+		
+		if (event.content == "system-settings") {
+			if (newVersion) {
+				beo.sendToUI({target: "software-update", header: "badge", content: {badge: 1}});
+			} else {
+				beo.sendToUI({target: "software-update", header: "badge"});
+			}
+		}
 	}
 });
 
@@ -91,8 +99,10 @@ function installUpdate() {
 	if (!updateInProgress) {
 		updateInProgress = true;
 		if (beo.developerMode) {
+			if (debug) console.log("Starting software update simulation.");
 			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate"]);
 		} else {
+			if (debug) console.log("Starting software update.");
 			updateProcess = spawn("/opt/hifiberry/bin/update");
 		}
 		//updateProcess = spawn("curl", ["https://www.hifiberry.com/images/updater-20191030-pi3.tar.gz", "-o", "updater.tar.gz", "--progress-bar"], {cwd: "/data"});
@@ -104,50 +114,59 @@ function installUpdate() {
 				case 0: // Download starting.
 					if (data.indexOf("downloading http") != -1) {
 						updatePhase = 1;
+						if (debug) console.log("Downloading update...");
 					}
 					break;
 				case 1:
 					if (data.indexOf("Could not download updater") != -1) {
 						updatePhase = 0;
 						beo.sendToUI({target: "software-update", header: "updateError", content: {reason: "downloadError"}});
+						console.error("Update download was unsuccessful.");
 					}
 					if (data.indexOf("unmounting") != -1) {
 						updatePhase = 2;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 50, phase: "extractingFirmware"}});
+						if (debug) console.log("Extracting firmware...");
 					}
 					break;
 				case 2:
 					if (data.indexOf("mounting") != -1) {
 						updatePhase = 3;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 70, phase: "resizing"}});
+						if (debug) console.log("Resizing file system...");
 					}
 					break;
 				case 3:
 					if (data.indexOf("extracting new kernel") != -1) {
 						updatePhase = 4;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 75, phase: "extractingKernel"}});
+						if (debug) console.log("Extracting new kernel...");
 					}
 					break;
 				case 4:
 					if (data.indexOf("migrating") != -1) {
 						updatePhase = 5;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 85, phase: "copyingFiles"}});
+						if (debug) console.log("Copying files from current installation to new installation...");
 					}
 					break;
 				case 5:
 					if (data.indexOf("switching root file system") != -1) {
 						updatePhase = 6;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 95, phase: "finalising"}});
+						if (debug) console.log("Switching root file system...");
 					}
 					if (data.indexOf("not switching to new version") != -1) {
 						updatePhase = 0;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 100, phase: "doneSimulation"}});
+						if (debug) console.log("Update simulation complete.");
 					}
 					break;
 				case 6:
 					if (data.indexOf("removing") != -1) {
 						updatePhase = 0;
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 100, phase: "done"}});
+						if (debug) console.log("Removing updater and restarting...");
 					}
 					break;
 			}
@@ -155,9 +174,9 @@ function installUpdate() {
 		
 		updateProcess.stderr.on('data', function (data) {
 			data = data.toString();
-			if (updatePhase == 1) {
+			if (updatePhase == 1) { // Updates from curl.
 				progressIndex = data.indexOf("%");
-				if (progressIndex != -1) {
+				if (progressIndex != -1) { 
 					percentage = parseFloat(data.substr(progressIndex-5, 5));
 					if (percentage - previousProgress >= 5) {
 						beo.sendToUI({target: "software-update", header: "updating", content: {progress: Math.round(percentage/2), phase: "download"}});
@@ -170,7 +189,7 @@ function installUpdate() {
 		
 		updateProcess.on('exit', function (code) {
 			updateInProgress = false;
-			console.log('Updater exited with code ' + code.toString());
+			console.log('Software updater process exited (code '+code.toString()+").");
 		});
 	}
 }

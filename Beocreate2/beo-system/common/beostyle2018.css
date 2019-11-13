@@ -3123,17 +3123,18 @@ input[type=file]#file-input {
 	text-align: center;
 }
 
-.hud-notification img {
+#hud-notification-icon {
 	width: 63px;
 	height: 63px;
 	margin: 25px;
+	background-color: currentColor;
 }
 
 .dark .hud-notification img {
-	filter: invert(1);
+	/*filter: invert(1);*/
 }
 
-img.beo-load {
+#hud-notification-icon.beo-load {
 	width: 150px;
 	height: 150px;
 	margin: -20px;
@@ -3151,6 +3152,25 @@ img.beo-load {
 	margin-top: 1em;
 	margin-bottom: 22px;
 	pointer-events: all;
+}
+
+#hud-progress {
+	width: 280px;
+	height: 2px;
+	background-color: var(--menu-line);
+	position: relative;
+	margin-bottom: 0.5em;
+}
+
+.dark #hud-progress {
+	background-color: var(--menu-line-dark);
+}
+
+#hud-progress-fill {
+	height: 100%;
+	width: 30%;
+	transition: width 0.3s ease;
+	background-color: currentColor;
 }
 
 /* @end */

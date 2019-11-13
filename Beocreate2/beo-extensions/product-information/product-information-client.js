@@ -76,6 +76,7 @@ $(document).on("product-information", function(event, data) {
 		}
 		if (data.content.hifiberryVersion) {
 			hifiberryVersion = data.content.hifiberryVersion;
+			$(".hifiberry-version").text(hifiberryVersion);
 		}
 		cycleSystemInformation(true);
 		if (data.content.staticName) {

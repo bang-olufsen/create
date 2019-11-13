@@ -61,8 +61,8 @@ var systemStatus = "normal";
 */
 var extensionsRequestingShutdownTime = [];
 
-global.systemDirectory = __dirname;
-global.dataDirectory = "/etc/beocreate"; // Data directory for settings, sound presets, product images, etc.
+systemDirectory = __dirname;
+dataDirectory = "/etc/beocreate"; // Data directory for settings, sound presets, product images, etc.
 
 var debugMode = false;
 var daemonMode = false;
@@ -252,8 +252,8 @@ var extensionsList = {};
 var extensionsLoaded = false;
 global.beo = {
 	bus: beoBus,
-	systemDirectory: global.systemDirectory,
-	dataDirectory: global.dataDirectory,
+	systemDirectory: systemDirectory+"/..",
+	dataDirectory: dataDirectory,
 	systemConfiguration: systemConfiguration,
 	extensions: extensions,
 	extensionsList: extensionsList,
@@ -263,7 +263,8 @@ global.beo = {
 	daemon: daemonMode,
 	sendToUI: sendToUI,
 	download: download,
-	downloadJSON: downloadJSON
+	downloadJSON: downloadJSON,
+	allowDownloadsFrom: allowDownloadsFrom
 };
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
@@ -274,9 +275,10 @@ var selectedExtension = null;
 var expressServer = express();
 var beoServer = http.createServer(expressServer).listen(systemConfiguration.port); // Create a HTTP server.
 
-etags = (debugMode) ? false : true; // Disable etags (caching) when running with debug.
-expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For product images.
-expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For product images.
+etags = (developerMode) ? false : true; // Disable etags (caching) when running with debug.
+expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.
+expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: etags})); // Prefer product images from system directory.
+expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For user product images.
 expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For extensions.
 expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
@@ -326,6 +328,10 @@ expressServer.post("/:extension/:header", function (req, res) {
 		res.send("OK");
 	}
 });
+
+function allowDownloadsFrom(directory, withURL) {
+	
+}
 
 // START WEBSOCKET
 beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});

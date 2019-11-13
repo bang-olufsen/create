@@ -1019,7 +1019,7 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		
 		if (!options.icon) {
 			icon = "common/symbols-black/notification.svg";
-			$(".hud-notification img").removeClass("beo-load").addClass("hidden");
+			$("#hud-notification-icon").removeClass("beo-load").addClass("hidden");
 			notificationIcon = "";
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
@@ -1029,17 +1029,24 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 				} else {
 					icon = "common/hifiberry-wait-animate.svg";
 				}
-				$(".hud-notification img").addClass("beo-load");
+				$("#hud-notification-icon").addClass("beo-load");
 		
-				$(".hud-notification img").removeClass("hidden");
-				$(".hud-notification img").attr("src", icon);
+				$("#hud-notification-icon").removeClass("hidden");
+				$("#hud-notification-icon").css("-webkit-mask-image", "url("+icon+")");
 				notificationIcon = "attention";
 			}
 		} else {
 			icon = options.icon;
-			$(".hud-notification img").removeClass("beo-load hidden");
-			$(".hud-notification img").attr("src", icon);
+			$("#hud-notification-icon").removeClass("beo-load hidden");
+			$("#hud-notification-icon").css("-webkit-mask-image", "url("+icon+")");
 			notificationIcon = icon;
+		}
+		
+		if (options.progress == undefined) {
+			$("#hud-progress").addClass("hidden");
+		} else {
+			$("#hud-progress").removeClass("hidden");
+			$("#hud-progress-fill").css("width", options.progress+"%");
 		}
 		
 		if (options.timeout == undefined) {

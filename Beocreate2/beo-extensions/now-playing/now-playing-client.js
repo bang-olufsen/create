@@ -47,6 +47,9 @@ $(document).on("now-playing", function(event, data) {
 			if (data.content.metadata.artist) {
 				$(".now-playing-artist").text(data.content.metadata.artist);
 			}*/
+			
+			if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
+			
 			if (data.content.metadata.album) {
 				$(".artwork-img").attr("alt", data.content.metadata.album);
 				$("#artwork-wrap-inner").attr("data-album", data.content.metadata.album);
@@ -340,7 +343,7 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 	
 	if (internalURL != currentInternalPicture || (!internalURL && !externalURL)) { // Always load internal artwork first, or if neither image is available.
 		loadArtwork(internalURL, port);
-		if (internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
+		if (internalURL != null && internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
 		currentInternalPicture = internalURL;
 	}
 	

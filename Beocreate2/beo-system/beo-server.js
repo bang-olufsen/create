@@ -260,6 +260,7 @@ global.beo = {
 	setup: false,
 	selectedExtension: selectedExtension, 
 	debug: debugMode,
+	developerMode: developerMode,
 	daemon: daemonMode,
 	sendToUI: sendToUI,
 	download: download,

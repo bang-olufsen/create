@@ -184,13 +184,12 @@ SOFTWARE.*/
 		
 		if (event.header == "getData") {
 			send({target: "now-playing", header: "playerState", content: {state: playerState}});
-			send("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
 			if (focusedSource) {
 				if (event.content.cacheIndex != metadataCacheIndex) {
-					sendMetadata(focusedSource);
+					sendMetadata(focusedSource, false, true);
 				}
 			} else {
-				sendMetadata();
+				sendMetadata(null, false, true);
 				//if (event.content.cacheIndex != metadataCacheIndex) sendMetadata(lastSource);
 			}
 		}
@@ -223,15 +222,15 @@ SOFTWARE.*/
 	});
 	
 	
-	function sendMetadata(forSource = null, increment) {
+	function sendMetadata(forSource = null, increment, sendSettings) {
 		if (increment) {
 			metadataCacheIndex++;
 			if (metadataCacheIndex > 1000) metadataCacheIndex = 1;
 		}
 		if (forSource && allSources[forSource] && allSources[forSource].metadata) {
-			send({target: "now-playing", header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex}});
+			send({target: "now-playing", header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
 		} else {
-			send({target: "now-playing", header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex}});
+			send({target: "now-playing", header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
 		}
 	}
 	

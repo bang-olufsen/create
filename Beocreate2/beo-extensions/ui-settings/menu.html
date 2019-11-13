@@ -7,10 +7,17 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
+			
 			<div class="external-artwork-settings">
 				<h2>Download Album Cover</h2>
 				<p>Choose when to use album cover from the internet instead of one from the source.</p>
-				<div class="menu-item checkmark left icon checked" onclick="now_playing.setUseExternalArtwork('never');" id="external-artwork-never">
+				<div class="menu-item checkmark left icon" onclick="now_playing.setUseExternalArtwork('never');" id="external-artwork-never">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Never</div>
+					</div>
+				</div>
+				<div class="menu-item checkmark left icon" onclick="now_playing.setUseExternalArtwork('missing');" id="external-artwork-missing">
 					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
 					<div class="menu-text-wrap">
 						<div class="menu-label">If Source Has No Cover</div>

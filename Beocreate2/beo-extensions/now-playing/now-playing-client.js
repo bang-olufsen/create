@@ -8,6 +8,7 @@ var cacheIndex = 0;
 var playerState = "stopped";
 
 var useExternalArtwork = null;
+var disableInternalArtwork = false;
 
 
 $(document).on("general", function(event, data) {
@@ -68,7 +69,7 @@ $(document).on("now-playing", function(event, data) {
 			
 			// Album covers.
 			port = data.content.metadata.picturePort;
-			if (data.content.metadata.picture) {
+			if (data.content.metadata.picture && !disableInternalArtwork) {
 				internalURL = data.content.metadata.picture;
 			} else {
 				internalURL = null;
@@ -339,7 +340,7 @@ var currentExternalPicture = null;
 function determineArtworkToShow(internalURL, externalURL, port) {
 	
 	
-	if (internalURL != currentInternalPicture) { // Always load internal artwork first.
+	if (internalURL != currentInternalPicture || (!internalURL && !externalURL)) { // Always load internal artwork first, or if neither image is available.
 		loadArtwork(internalURL, port);
 		currentInternalPicture = internalURL;
 	}
@@ -688,7 +689,8 @@ return {
 	loadSmallSampleArtwork: loadSmallSampleArtwork,
 	toggleLove: toggleLove,
 	functionRow: functionRow,
-	setUseExternalArtwork: setUseExternalArtwork
+	setUseExternalArtwork: setUseExternalArtwork,
+	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable}
 }
 
 })();

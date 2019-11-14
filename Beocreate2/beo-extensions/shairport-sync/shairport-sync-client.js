@@ -57,14 +57,12 @@ function toggleUsePasswordForShairportSync() {
 	}
 }
 
-function setShairportSyncPassword(text) {
-	if (!text) { // Show text input
-		startTextInput(2, "Set AirPlay Password", "Changing this setting will disconnect active AirPlay sources to restart shairport-sync.", {placeholders: {password: "Password"}, minLength: {text: 3}}, function(text) {
-			setShairportSyncPassword(text);
-		});
-	} else {
-		send({target: "shairport-sync", header: "setPassword", content: {password: text.password}});
-	}
+function setShairportSyncPassword() {
+	startTextInput(2, "Set AirPlay Password", "Changing this setting will disconnect active AirPlay sources to restart shairport-sync.", {placeholders: {password: "Password"}, minLength: {text: 3}}, function(input) {
+		if (input && input.password) {
+			send({target: "shairport-sync", header: "setPassword", content: {password: input.password}});
+		}
+	});
 }
 
 function disableShairportSyncPassword() {

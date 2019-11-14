@@ -379,61 +379,63 @@ var network = (function() {
 		}
 		startTextInput(1, title, message, {text: text, placeholders: {text: placeholder}}, function(input) {
 			// Validate and store input.
-			switch (setting) {
-				case "address":
-					if (isValidIP(input.text)) {
-						manualIPSettingsStore[selectedInterface].address = input.text;
-						if (!manualIPSettingsStore[selectedInterface].router) {
-							textItems = input.text.split(".");
-							textItems[3] = "1";
-							router = textItems.join(".");
-							manualIPSettingsStore[selectedInterface].router = router;
+			if (input) {
+				switch (setting) {
+					case "address":
+						if (isValidIP(input.text)) {
+							manualIPSettingsStore[selectedInterface].address = input.text;
+							if (!manualIPSettingsStore[selectedInterface].router) {
+								textItems = input.text.split(".");
+								textItems[3] = "1";
+								router = textItems.join(".");
+								manualIPSettingsStore[selectedInterface].router = router;
+							}
+							if (!manualIPSettingsStore[selectedInterface].subnetmask) {
+								manualIPSettingsStore[selectedInterface].subnetmask = "255.255.255.0";
+							}
+							if (!manualIPSettingsStore[selectedInterface].dns) {
+								manualIPSettingsStore[selectedInterface].dns = ["9.9.9.9", "1.1.1.1"];
+							}
+							ipSettingsChanged = true;
+							setIPAddressMode(false);
+						} else {
+							notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 						}
-						if (!manualIPSettingsStore[selectedInterface].subnetmask) {
-							manualIPSettingsStore[selectedInterface].subnetmask = "255.255.255.0";
+						break;
+					case "subnetmask":
+						if (isValidIP(input.text)) {
+							manualIPSettingsStore[selectedInterface].subnetmask = input.text;
+							ipSettingsChanged = true;
+							setIPAddressMode(false);
+						} else {
+							notify({title: "Subnet mask is not valid", message: "Subnet mask must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 						}
-						if (!manualIPSettingsStore[selectedInterface].dns) {
-							manualIPSettingsStore[selectedInterface].dns = ["9.9.9.9", "1.1.1.1"];
+						break;
+					case "router":
+						if (isValidIP(input.text)) {
+							manualIPSettingsStore[selectedInterface].router = input.text;
+							ipSettingsChanged = true;
+							setIPAddressMode(false);
+						} else {
+							notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 						}
-						ipSettingsChanged = true;
-						setIPAddressMode(false);
-					} else {
-						notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
-					}
-					break;
-				case "subnetmask":
-					if (isValidIP(input.text)) {
-						manualIPSettingsStore[selectedInterface].subnetmask = input.text;
-						ipSettingsChanged = true;
-						setIPAddressMode(false);
-					} else {
-						notify({title: "Subnet mask is not valid", message: "Subnet mask must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
-					}
-					break;
-				case "router":
-					if (isValidIP(input.text)) {
-						manualIPSettingsStore[selectedInterface].router = input.text;
-						ipSettingsChanged = true;
-						setIPAddressMode(false);
-					} else {
-						notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
-					}
-					break;
-				case "dns":
-					dnsItems = input.text.split(",");
-					validDNS = true;
-					for (var i = 0; i < dnsItems.length; i++) {
-						dnsItems[i] = dnsItems[i].trim();
-						if (!isValidIP(dnsItems[i])) validDNS = false;
-					}
-					if (validDNS) {
-						manualIPSettingsStore[selectedInterface].dns = dnsItems;
-						ipSettingsChanged = true;
-						setIPAddressMode(false);
-					} else {
-						notify({title: "DNS server address is not valid", message: "The addresses must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
-					}
-					break;
+						break;
+					case "dns":
+						dnsItems = input.text.split(",");
+						validDNS = true;
+						for (var i = 0; i < dnsItems.length; i++) {
+							dnsItems[i] = dnsItems[i].trim();
+							if (!isValidIP(dnsItems[i])) validDNS = false;
+						}
+						if (validDNS) {
+							manualIPSettingsStore[selectedInterface].dns = dnsItems;
+							ipSettingsChanged = true;
+							setIPAddressMode(false);
+						} else {
+							notify({title: "DNS server address is not valid", message: "The addresses must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+						}
+						break;
+				}
 			}
 		});
 	}
@@ -505,17 +507,17 @@ var network = (function() {
 	}
 	
 	
-	function addNetwork(input) {
-		if (!input || input == true) {
-			if (input == true) {
-				// Add an open network.
-				send({target: "network", header: "addNetwork", content: {ssid: selectedNetwork.ssid, password: false}});
-			} else {
-				startTextInput(2, "Add "+selectedNetwork.ssid, "The network requires a "+selectedNetwork.security.toUpperCase()+" password.", {placeholders: {password: "Password"}, minLength: {password: 6}}, network.addNetwork);
-			}
+	function addNetwork(open) {
+		if (open) {
+			// Add an open network.
+			send({target: "network", header: "addNetwork", content: {ssid: selectedNetwork.ssid, password: false}});
 		} else {
-			if (!input.text) input.text = false;
-			send({target: "network", header: "addNetwork", content: {ssid: selectedNetwork.ssid, username: input.text, password: input.password}});
+			startTextInput(2, "Add "+selectedNetwork.ssid, "The network requires a "+selectedNetwork.security.toUpperCase()+" password.", {placeholders: {password: "Password"}, minLength: {password: 6}}, function(input) {
+				if (input) {
+					if (!input.text) input.text = false;
+					send({target: "network", header: "addNetwork", content: {ssid: selectedNetwork.ssid, username: input.text, password: input.password}});
+				}
+			});
 		}
 	}
 	
@@ -528,22 +530,24 @@ var network = (function() {
 		}
 	}
 	
-	function updatePassword(input) {
-		if (!input) {
-			ask();
-			startTextInput(2, "Update Password", "If the password for "+selectedNetwork.ssid+" has changed, type the new password.", {placeholders: {password: "Password"}, minLength: {password: 6}}, network.updatePassword);
-		} else {
-			send({target: "network", header: "addNetwork", content: {ssid: selectedNetwork.ssid, password: input.password, update: true}});
-		}
+	function updatePassword() {
+		
+		ask();
+		startTextInput(2, "Update Password", "If the password for "+selectedNetwork.ssid+" has changed, type the new password.", {placeholders: {password: "Password"}, minLength: {password: 6}}, function(input) {
+			if (input) {
+				send({target: "network", header: "addNetwork", content: {ssid: selectedNetwork.ssid, password: input.password, update: true}});
+			}
+		});
 	}
 	
-	function addOtherNetwork(input) {
-		if (!input) {
-			startTextInput(3, "Add Other Network", "Type the name of the network to add. If the network has no password, leave it blank.", {placeholders: {password: "Password", text: "Network name"}, minLength: {text: 1, password: 6}, optional: {password: true}}, network.addOtherNetwork);
-		} else {
-			if (!input.password) input.password = false;
-			send({target: "network", header: "addNetwork", content: {ssid: input.text, password: input.password}});
-		}
+	function addOtherNetwork() {
+		
+		startTextInput(3, "Add Other Network", "Type the name of the network to add. If the network has no password, leave it blank.", {placeholders: {password: "Password", text: "Network name"}, minLength: {text: 1, password: 6}, optional: {password: true}}, function(input) {
+			if (input) {
+				if (!input.password) input.password = false;
+				send({target: "network", header: "addNetwork", content: {ssid: input.text, password: input.password}});
+			}
+		});
 	}
 	
 	function qualityToBars(quality) {

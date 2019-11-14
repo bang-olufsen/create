@@ -159,15 +159,12 @@ function cycleSystemInformation(updateOnly) {
 	$(".system-info-cycle").text(infoText);
 }
 
-function changeProductName(name) {
-	if (!name) { // Show text input
-		startTextInput(1, "Change Name", "This name is shown to your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(text) {
-			changeProductName(text);
-		});
-	} else {
-		//ask("product-name-restart-prompt");
-		send({target: "product-information", header: "setSystemName", content: {newSystemName: name.text}});
-	}
+function changeProductName() {
+	startTextInput(1, "Change Name", "This name is shown to your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(input) {
+		if (input) {
+			send({target: "product-information", header: "setSystemName", content: {newSystemName: input.text}});
+		}
+	});
 }
 
 function setProductModel(theModelID) {

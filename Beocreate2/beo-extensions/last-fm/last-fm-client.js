@@ -25,13 +25,13 @@ $(document).on("last-fm", function(event, data) {
 });
 
 
-function logIn(input) {
-	if (!input) {
-		startTextInput(3, "Log In with Last.fm", "Enter your Last.fm user name and password.", {placeholders: {password: "Password", text: "User name"}, minLength: {text: 2, password: 3}}, lastFM.logIn);
-	} else {
-		send({target: "last-fm", header: "logIn", content: {username: input.text, password: input.password}});
-		notify({title: "Updating settings...", icon: "attention", timeout: false, id: "last-fm"});
-	}
+function logIn() {
+	startTextInput(3, "Log In with Last.fm", "Enter your Last.fm user name and password.", {placeholders: {password: "Password", text: "User name"}, minLength: {text: 2, password: 3}}, function(input) {
+		if (input) {
+			send({target: "last-fm", header: "logIn", content: {username: input.text, password: input.password}});
+			notify({title: "Updating settings...", icon: "attention", timeout: false, id: "last-fm"});
+		}
+	});
 }
 
 function logOut() {

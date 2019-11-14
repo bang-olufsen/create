@@ -865,6 +865,8 @@ function completeShutdownForExtension(extensionID) {
 function completeShutdown() {
 	
 	beoCom.stopSocket(function() {
+		if (debugMode) console.log("Saving pending settings...");
+		savePendingSettings();
 		if (debugMode) console.log("Stopped WebSocket communication.");
 		beoServer.close(function() {
 			if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");

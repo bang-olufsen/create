@@ -48,6 +48,13 @@ $( document ).ready(function() {
 	$("input[type=file]#file-input").on('change',function(){
 	    uploadFile(null, null, this.files[0]);
 	});
+	
+	// Preload animated wait icons:
+	if (!hifiberryOS) {
+		attentionIcon.src = "common/create-wait-animate.svg";
+	} else {
+		attentionIcon.src = "common/hifiberry-wait-animate.svg";
+	}
 });
 
 darkAppearance = false;
@@ -841,6 +848,7 @@ function createMenuItem(options) {
 			}
 		}
 		if (options.valueAsButton) menuItem += ' button';
+		if (options.valueAsBadge) menuItem += ' badge';
 		menuItem += '"';
 		if (options.translation && options.translation.value) {
 			menuItem += ' data-translation="'+options.translation.value+'"'
@@ -961,6 +969,7 @@ var notificationTimeout;
 var notificationAnimationTimeout;
 var currentNotificationID = false;
 var notificationIcon = "";
+var attentionIcon = new Image();
 
 function notify(options, dismissWithID) { // Display a standard HUD notification
 	
@@ -1024,11 +1033,12 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
 				//icon = "common/symbols-black/wait-star.svg"
-				if (!hifiberryOS) {
+				/*if (!hifiberryOS) {
 					icon = "common/create-wait-animate.svg";
 				} else {
 					icon = "common/hifiberry-wait-animate.svg";
-				}
+				}*/
+				icon = attentionIcon.src;
 				$("#hud-notification-icon").addClass("beo-load");
 		
 				$("#hud-notification-icon").removeClass("hidden");
@@ -1074,6 +1084,8 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		}
 	}
 }
+
+
 
 
 // TABS WITHIN ELEMENTS (not the "favourites" at the bottom in compact layouts)
@@ -1309,9 +1321,10 @@ function popupBackplateClick(view, backplate, universalOverride) {
 var textInputCallback;
 var textInputMode = 0;
 var textInputOptions;
+var textInputCloseTimeout;
 
-function startTextInput(type, title, prompt, options, callback) {
-	
+function startTextInput(type, title, prompt, options, callback, cancelCallback) {
+	clearTimeout(textInputCloseTimeout);
 	$("#text-input, #text-input-back-plate").addClass("block");
 	setTimeout(function() {
 		$("#text-input, #text-input-back-plate").addClass("visible");
@@ -1382,7 +1395,7 @@ function validateTextInput() {
 			}
 		} else {
 			if (!passwd) textInputValid = false;
-			if (textInputOptions.minLength.password) {
+			if (textInputOptions.minLength && textInputOptions.minLength.password) {
 				if (passwd.length < textInputOptions.minLength.password) textInputValid = false;
 			}
 		}
@@ -1398,21 +1411,26 @@ function submitText() {
 	if (textInputValid) {
 		txt = $("#text-input input[type=text]").val();
 		passwd = $("#text-input input[type=password]").val();
-		cancelText();
+		cancelText(true);
 		textInputCallback({text: txt, password: passwd});
 		return true;
 	} else {
-		return false;	
+		return false;
 	}
 }
 
 
-function cancelText() {
+function cancelText(hideOnly) {
 	$("#text-input input[type=text], #text-input input[type=password]").blur();
 	$("#text-input, #text-input-back-plate").removeClass("visible");
-	setTimeout(function() {
+	textInputCloseTimeout = setTimeout(function() {
 		$("#text-input, #text-input-back-plate").removeClass("block");
+		$("#text-input input[type=text]").val("");
+		$("#text-input input[type=password]").val("");
 	}, 500);
+	if (!hideOnly) {
+		textInputCallback();
+	}
 }
 
 function prepareTextInput() {

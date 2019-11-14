@@ -6,7 +6,7 @@ var newVersion = null;
 $(document).on("software-update", function(event, data) {
 	
 	if (data.header == "badge") {
-		if (data.content.badge) {
+		if (data.content && data.content.badge) {
 			$(".software-update-badge").text("1").addClass("badge");
 		} else {
 			$(".software-update-badge").text("").removeClass("badge");

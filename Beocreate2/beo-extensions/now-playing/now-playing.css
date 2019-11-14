@@ -47,10 +47,6 @@
 	filter: blur(0);
 }
 
-#now-playing.visible .now-playing-artwork-wrap {
-	transform: translateY(0);
-	filter: blur(0);
-}
 
 /* @group Controls */
 
@@ -79,6 +75,10 @@
 #now-playing.visible #now-playing-control-area {
 	opacity: 1;
 	transform: translateY(0);
+}
+
+#now-playing.visible.no-animation #now-playing-control-area {
+	transition: none;
 }
 
 #now-playing .square-helper {
@@ -298,6 +298,15 @@
 	opacity: 0;
 	transition-delay: opacity 0.2s;
 	pointer-events: none;
+}
+
+#now-playing.visible .now-playing-artwork-wrap {
+	transform: translateY(0);
+	filter: blur(0);
+}
+
+#now-playing.visible.no-animation .now-playing-artwork-wrap {
+	transition: none;
 }
 
 .now-playing-artwork-wrap.incoming {

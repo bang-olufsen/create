@@ -136,6 +136,25 @@ window.onresize = function() {
 	}, 200);
 };
 
+document.onkeydown = function(evt) {
+    evt = evt || window.event;
+    var isEscape = false;
+    if ("key" in evt) {
+        isEscape = (evt.key === "Escape" || evt.key === "Esc");
+    } else {
+        isEscape = (evt.keyCode === 27);
+    }
+    if (isEscape) {
+		if (textInputOpen) {
+			cancelText();
+		} else if (askOpen) {
+			ask();
+		} else if (currentPopup) {
+			popupBackplateClick('#open-popup', '#open-popup-back-plate', true);
+		}
+    }
+};
+
 var extensions = {};
 var interfaceMode = 1; // 1 = normal, 2 = compact
 
@@ -1219,9 +1238,11 @@ function commaAndList(list, andWord, translationID, extensionID) {
 
 // ASK
 
+var askOpen = false;
 var askCallbacks = null;
 function ask(menuID, dynamicContent, callbacks, cancelAction) {
 	if (menuID) {
+		askOpen = true;
 		if (callbacks) askCallbacks = callbacks;
 		if (cancelAction) {
 			$("#ask-back-plate").attr("onclick", cancelAction);
@@ -1244,6 +1265,7 @@ function ask(menuID, dynamicContent, callbacks, cancelAction) {
 			$("#ask, #ask-back-plate").removeClass("block");
 		}, 500);
 		askCallbacks = null;
+		askOpen = false;
 	}
 }
 
@@ -1322,6 +1344,7 @@ var textInputCallback;
 var textInputMode = 0;
 var textInputOptions;
 var textInputCloseTimeout;
+var textInputOpen = false;
 
 function startTextInput(type, title, prompt, options, callback, cancelCallback) {
 	clearTimeout(textInputCloseTimeout);
@@ -1374,7 +1397,7 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 	}
 	//}, 600);
 	validateTextInput();
-
+	textInputOpen = true;
 }
 
 var textInputValid = false;
@@ -1431,6 +1454,7 @@ function cancelText(hideOnly) {
 	if (!hideOnly) {
 		textInputCallback();
 	}
+	textInputOpen = false;
 }
 
 function prepareTextInput() {

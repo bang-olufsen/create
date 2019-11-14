@@ -185,6 +185,43 @@ function hideNowPlaying() {
 	}, 600);
 }
 
+var artworkDragStartPosition;
+$( ".main-artwork" ).draggable({
+//	cursorAt: { top: 0, left: 0 },
+	//delay: 500,
+	scroll: false,
+	helper: function( event ) {
+	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
+	},
+	start: function( event, ui ) {
+		$("#now-playing").addClass("no-animation");
+	},
+	stop: function( event, ui ) {
+		$("#now-playing").removeClass("no-animation");
+		$(".now-playing-artwork-wrap").css("transform", "");
+		$("#now-playing-control-area").css("transform", "");
+		offset = ui.position.top - artworkDragStartPosition.top;
+		if (offset > 40) hideNowPlaying();
+		artworkDragStartPosition = null;
+	},
+	drag: function( event, ui ) {
+		if (artworkDragStartPosition) {
+			offset = ui.position.top - artworkDragStartPosition.top;
+			if (offset < 0) {
+				visibleOffset = offset/6;
+			} else if (offset >= 0 && offset < 50) {
+				visibleOffset = offset/2;
+			} else {
+				visibleOffset = 25+(offset-50)/4;
+			}
+			$(".now-playing-artwork-wrap").css("transform", "translateY("+visibleOffset+"px)");
+			$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
+		} else {
+			artworkDragStartPosition = ui.position;
+		}
+	}
+});
+
 var functionRowVisible = false;
 var functionRowItems = {
 	love: {visible: false}

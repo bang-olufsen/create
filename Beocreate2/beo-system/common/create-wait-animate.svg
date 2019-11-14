@@ -1,12 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:serif="http://www.serif.com/" width="100%" height="100%" viewBox="0 0 150 150" version="1.1" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
-	<rect id="Artboard1" x="25" y="25" width="100" height="100" style="fill:none;"/>
-	<g id="Layer-1" serif:id="Layer 1"><path d="M75,44.987c16.576,0 30.012,13.437 30.012,30.012c0,16.575 -13.436,30.014 -30.012,30.014c-16.573,0 -30.012,-13.439 -30.012,-30.014c0,-16.544 13.389,-29.961 30.012,-30.012Zm9.815,15.84l0,-2.126l-9.916,0c-6.456,0.038 -12.76,3.58 -15.674,9.225c-2.937,5.689 -1.839,12.974 2.428,17.632l-2.179,4.683l1.93,0.895l1.87,-4.018l0.093,0.078c3.11,2.553 7.074,3.981 11.094,4.098c0.219,0.004 0.219,0.004 0.439,0.005l17.884,0l-14.177,-30.472l6.208,0Zm-8.936,0c-0.218,0.006 -0.411,0.127 -0.517,0.312c-4.127,7.787 -7.436,15.98 -11.154,23.97c2.846,2.623 6.772,4.04 10.694,4.063l14.546,0c-4.347,-9.344 -8.227,-18.922 -13.044,-28.033c-0.108,-0.188 -0.303,-0.312 -0.525,-0.312Zm-2.846,0.105c-7.187,0.859 -13.579,7.027 -13.402,14.387c0.07,2.933 1.167,5.798 3.006,8.118c0,0 10.476,-22.514 10.476,-22.514c-0.026,0.003 -0.053,0.006 -0.08,0.009Z"/>
-		<circle id="ring-1" cx="0" cy="0" r="28.5" transform="translate(75 75)" style="fill:none;stroke:#000;stroke-width:1px;" />
-		<circle id="ring-2" cx="0" cy="0" r="28.5" transform="translate(75 75)" style="fill:none;stroke:#000;stroke-width:1px;" />
-		<circle id="ring-3" cx="0" cy="0" r="28.5" transform="translate(75 75)" style="fill:none;stroke:#000;stroke-width:1px;" />
-		
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg width="100%" height="100%" viewBox="0 0 150 150" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;"><rect id="Artboard1" x="25" y="25" width="100" height="100" style="fill:none;"/><g id="Layer-1" serif:id="Layer 1"><path d="M75,44.987c16.576,0 30.012,13.437 30.012,30.012c0,16.575 -13.436,30.014 -30.012,30.014c-16.573,0 -30.012,-13.439 -30.012,-30.014c0,-16.513 13.339,-29.911 30.012,-30.012Zm8.903,16.535l0,-2.022l-9.43,0c-6.14,0.036 -12.135,3.405 -14.906,8.773c-2.793,5.41 -1.749,12.338 2.309,16.767l-2.072,4.454l1.835,0.851l1.778,-3.821l0.089,0.074c2.957,2.428 6.727,3.786 10.55,3.897c0.208,0.004 0.208,0.004 0.418,0.005l17.007,0l-13.482,-28.978l5.904,0Zm-8.498,0c-0.208,0.005 -0.391,0.121 -0.492,0.296c-3.925,7.406 -7.072,15.197 -10.607,22.795c2.706,2.495 6.44,3.842 10.169,3.864l13.833,0c-4.134,-8.886 -7.823,-17.994 -12.404,-26.659c-0.088,-0.153 -0.238,-0.262 -0.499,-0.296Zm-2.707,0.1c-6.835,0.817 -12.913,6.682 -12.745,13.681c0.067,2.79 1.11,5.514 2.859,7.72l9.962,-21.41l-0.076,0.009Z"/><circle id="ring-1" cx="75" cy="75" r="28.5" style="fill:none;stroke:#000;stroke-width:1px;"/><circle id="ring-2" cx="75" cy="75" r="28.5" style="fill:none;stroke:#000;stroke-width:1px;"/><circle id="ring-3" cx="75" cy="75" r="28.5" style="fill:none;stroke:#000;stroke-width:1px;"/></g>
+
 		<animate attributeName="r"
 			xlink:href="#ring-1"
 		    from="28.5"
@@ -60,5 +53,4 @@
 			dur="2.4s"
 			repeatCount="indefinite"
 		/>
-</g>
 </svg>

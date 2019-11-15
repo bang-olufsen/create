@@ -205,25 +205,25 @@ nav.full {
 
 nav.full .menu-item {
 	padding-left: 25px;
+	color: #888;
 }
 
 nav.full .menu-item .menu-label {
 	text-transform: uppercase;
 	font-size: 0.8em;
 	letter-spacing: var(--uppercase-spacing);
-	color: silver;
 }
 
 nav.full .menu-item .menu-icon {
-	opacity: 0.7;
+	background-color: currentColor;
 }
 
 nav.full .menu-item.selected {
 	background-color: transparent;
 }
 
-nav.full .menu-item.selected .menu-label,
-.no-touch nav.full .menu-item:hover .menu-label {
+nav.full .menu-item.selected,
+.no-touch nav.full .menu-item:hover {
 	color: white;
 }
 
@@ -248,7 +248,7 @@ nav.full .menu-item:active .menu-label {
 nav.full .menu-item:before {
 	display: block;
 	content: "";
-	background-color: white;
+	background-color: currentColor;
 	width: 0px;
 	height: 2px;
 	flex-shrink: 0;
@@ -258,12 +258,11 @@ nav.full .menu-item:before {
 }
 
 nav.full .menu-item.selected:before {
-	
 	width: 12px;
 }
 
 nav.full hr {
-	border-color: rgba(255,255,255,0.3);
+	border-color: var(--menu-line-dark);
 	margin-left: 5px;
 	margin-right: 5px;
 }

@@ -16,9 +16,11 @@ $(document).on("ssh", function(event, data) {
 		
 		if (data.content.sshPasswordChanged) {
 			sshPasswordChanged = true;
+			$("#ssh-change-password-button").addClass("grey").removeClass("black");
 			$("#ssh-password-change-notice").addClass("hidden");
 		} else {
 			sshPasswordChanged = false;
+			$("#ssh-change-password-button").addClass("black").removeClass("grey");
 			$("#ssh-password-change-notice").removeClass("hidden");
 		}
 		

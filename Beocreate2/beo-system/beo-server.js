@@ -265,7 +265,8 @@ global.beo = {
 	sendToUI: sendToUI,
 	download: download,
 	downloadJSON: downloadJSON,
-	allowDownloadsFrom: allowDownloadsFrom
+	addDownloadRoute: addDownloadRoute,
+	removeDownloadRoute: removeDownloadRoute
 };
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
@@ -330,8 +331,36 @@ expressServer.post("/:extension/:header", function (req, res) {
 	}
 });
 
-function allowDownloadsFrom(directory, withURL) {
-	
+// Serve downloads:
+var downloadRoutes = {};
+expressServer.get("/:extension/download/:urlPath", function (req, res) {
+	if (downloadRoutes[req.params.extension]) {
+		if (downloadRoutes[req.params.extension][req.params.urlPath]) {
+			// Serve file from the specified path.
+			if (debugMode >= 2) console.log("Sending file '"+downloadRoutes[req.params.extension][req.params.urlPath].filePath+"' for download.");
+			res.download(downloadRoutes[req.params.extension][req.params.urlPath].filePath);
+			if (!downloadRoutes[req.params.extension][req.params.urlPath].permanent) {
+				if (debugMode) console.log("Download route for '"+downloadRoutes[req.params.extension][req.params.urlPath].filePath+"' was removed automatically.");
+				delete downloadRoutes[req.params.extension][req.params.urlPath];
+			}
+		}
+	}
+});
+
+function addDownloadRoute(extension, urlPath, filePath, permanent = false) {
+	if (extension && urlPath && filePath) {
+		if (!downloadRoutes[extension]) downloadRoutes[extension] = {};
+		if (!downloadRoutes[extension][urlPath]) downloadRoutes[extension][urlPath] = {filePath: filePath, permanent: permanent};
+		if (debugMode) console.log("'"+filePath+"' is now allowed to be downloaded.");
+		return extension+"/download/"+urlPath;
+	}
+}
+
+function removeDownloadRoute(extension, urlPath) {
+	if (downloadRoutes[extension] && downloadRoutes[extension][urlPath]) {
+		if (debugMode) console.log("Download route for '"+downloadRoutes[extension][urlPath].filePath+"' was removed.");
+		delete downloadRoutes[extension][urlPath];
+	}
 }
 
 // START WEBSOCKET

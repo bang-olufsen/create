@@ -1645,18 +1645,21 @@ div.symbol.static {
 }
 
 p.success, 
-p.warning {
+p.warning,
+p.loading {
 	margin-left: 35px;
 	position: relative;
 }
 
 .menu-item.icon .menu-custom-markup > p.warning,
-.menu-item.icon .menu-custom-markup > p.success {
+.menu-item.icon .menu-custom-markup > p.success,
+.menu-item.icon .menu-custom-markup > p.loading {
 	margin-left: 0;
 }
 
 p.success:before, 
-p.warning:before {
+p.warning:before,
+p.loading:before {
 	content: "";
 	width: 21px;
 	height: 21px;
@@ -1665,14 +1668,28 @@ p.warning:before {
 	/*margin-top: -11px;
 	top: 50%;*/
 	margin-top: -3px;
+	-webkit-mask-size: 21px;
+	mask-size: 21px;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	background-color: currentColor;
 }
 
 p.success:before {
-	background-image: url(symbols-colour/checkmark-green.svg);
+	mask-image: url(symbols-colour/checkmark-green.svg);
+	-webkit-mask-image: url(symbols-colour/checkmark-green.svg);
 }
 
 p.warning:before {
-	background-image: url(symbols-colour/warning-yellow.svg);
+	mask-image: url(symbols-colour/warning-yellow.svg);
+	-webkit-mask-image: url(symbols-colour/warning-yellow.svg);
+}
+
+p.loading:before {
+	mask-image: url(symbols-black/wait-star.svg);
+	-webkit-mask-image: url(symbols-black/wait-star.svg);
 }
 
 p.warning {

@@ -31,6 +31,39 @@ $(document).on("software-update", function(event, data) {
 		$(".software-update-available").removeClass("hidden");
 		$("#update-available-container").empty();
 		$("#update-available-container").append(createMenuItem(menuOptions));
+		
+		$("#update-release-notes").empty();
+		if (data.content.releaseNotes) {
+			releaseNotes = data.content.releaseNotes.split("\n");
+			console.log(releaseNotes);
+			openUL = "";
+			notesHTML = ""
+			for (var i = 0; i < releaseNotes.length; i++) {
+		
+				if (releaseNotes[i].trim().charAt(0) == "-") {
+					// A dash is a list item.
+					if (!openUL) {
+						openUL += "\n<ul>";
+					}
+					openUL += "\n<li>"+releaseNotes[i].trim().substring(2)+"</li>"
+				} else {
+					// Normal lines make p elements.
+					if (openUL) {
+						openUL += "\n</ul>";
+						notesHTML += openUL;
+						openUL = "";
+					}
+					notesHTML += "<p>"+releaseNotes[i].trim()+"</p";
+				}
+			}
+			if (openUL) {
+				openUL += "\n</ul>";
+				notesHTML += openUL;
+			}
+			$("#update-release-notes").append(notesHTML);
+		} else {
+			$("#update-release-notes").html("<p>No release notes included.</p>");
+		}
 	}
 	
 	if (data.header == "upToDate") {

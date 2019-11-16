@@ -72,9 +72,12 @@ function checkForUpdate(forceCheck) {
 	if (checkTime - lastChecked > 300000 || forceCheck) {
 		exec("/opt/hifiberry/bin/update --check", function(error, stdout, stderr) {
 			lastChecked = checkTime;
-			newVersion = stdout.trim();
+			updateLines = stdout.trim().split("\n");
+			newVersion = updateLines[0];
 			if (newVersion) {
 				if (debug) console.log("Software update is available – release "+newVersion+".");
+				updateLines.splice(0, 1);
+				releaseNotes = updateLines.join("\n").trim();
 				beo.sendToUI({target: "software-update", header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 			} else {
 				newVersion = null;

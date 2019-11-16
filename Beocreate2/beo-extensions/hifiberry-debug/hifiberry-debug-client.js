@@ -18,24 +18,14 @@ $(document).on("hifiberry-debug", function(event, data) {
 	}
 	
 	if (data.header == "archive") {
-		if (data.content.archiveURL) {
+		if (data.content && data.content.archiveURL) {
 			archiveURL = data.content.archiveURL;
+			
+			$("#diagnostic-collect-button").removeClass("black").addClass("grey");
 			$("#diagnostic-archive").removeClass("hidden");
-			d = new Date(data.content.archiveDate);
-			$("#diagnostic-archive-timestamp").text(d.toLocaleString());
-			currentDate = new Date();
-			if (currentDate - data.content.archiveDate > 300000) {
-				// If data is older than 5 minutes, make collect button the prominent one.
-				$("#diagnostic-collect-button").removeClass("grey").addClass("black");
-				$("#diagnostic-download-button").removeClass("black").addClass("grey");
-				$("#diagnostic-archive-old").removeClass("hidden");
-			} else {
-				$("#diagnostic-collect-button").removeClass("black").addClass("grey");
-				$("#diagnostic-download-button").removeClass("grey").addClass("black");
-				$("#diagnostic-archive-old").addClass("hidden");
-			}
 		} else {
 			$("#diagnostic-archive").addClass("hidden");
+			$("#diagnostic-collect-button").removeClass("grey").addClass("black");
 		}
 	}
 });

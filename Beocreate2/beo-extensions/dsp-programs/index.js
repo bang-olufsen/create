@@ -30,11 +30,13 @@ if (Gpio) {
 
 	var debug = beo.debug;
 	
-	var currentMetadata = {};
+	var currentMetadata = null;
 	var metadataFromDSP = false;
 	var currentChecksum = null;
 	var dspConnected = false;
 	var dspResponding = false;
+	
+	var dspUpgrade = false;
 	
 	var version = require("./package.json").version;
 	
@@ -44,7 +46,8 @@ if (Gpio) {
 	var systemDSPDirectory = beo.systemDirectory+"/beo-dsp-programs"; // System DSP directory.
 	
 	var defaultSettings = {
-		"muteUnknownPrograms": true
+		"muteUnknownPrograms": true,
+		"autoUpgrade": true
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
@@ -65,16 +68,23 @@ if (Gpio) {
 					getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
 						currentMetadata = metadata;
 						
-						if (metadata) {
-							if (debug == 2) {
-								console.dir(metadata);
-							} else if (debug) {
-								console.log("Received metadata from DSP.");
+						shouldUpgrade = checkForDSPUpgrades();
+						
+						if (!shouldUpgrade) {
+							if (metadata) {
+								if (debug == 2) {
+									console.dir(metadata);
+								} else if (debug) {
+									console.log("Received metadata from DSP.");
+								}
+								beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+							} else {
+								if (debug) console.log("No metadata found for current DSP program.");
+								beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
 							}
-							beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
 						} else {
-							if (debug) console.log("No metadata found for current DSP program.");
-							beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
+							if (debug) console.log("'"+shouldUpgrade+"' is an upgrade to the current DSP program. Upgrading...");
+							installDSPProgram(shouldUpgrade);
 						}
 						
 					}, true);
@@ -107,8 +117,8 @@ if (Gpio) {
 						programs[program].active = false;
 					}
 				}
-				beo.bus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active}});
-				beo.bus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active, dspUpgrade: dspUpgrade}});
+				beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
 			}
 		}
 	});
@@ -222,7 +232,17 @@ if (Gpio) {
 				settings.muteUnknownPrograms = false;
 			}
 			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
-			beo.bus.emit("ui", {target: "dsp-programs", header: "muteUnknownPrograms", content: {muteUnknown: settings.muteUnknownPrograms}});
+			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
+		}
+		
+		if (event.header == "autoUpgrade") {
+			if (event.content.autoUpgrade) {
+				settings.autoUpgrade = true;
+			} else {
+				settings.autoUpgrade = false;
+			}
+			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
+			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
 		}
 	});
 	
@@ -359,6 +379,10 @@ if (Gpio) {
 			// The function will independently send status updates to UI.
 				getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
 					currentMetadata = metadata;
+					if (program == dspUpgrade) {
+						dspUpgrade = false;
+						beo.bus.emit("ui", {target: "dsp-programs", header: "dspUpgrade", content: {dspUpgrade: false}});
+					}
 					
 					if (metadata) {
 						if (debug == 2) {
@@ -390,7 +414,7 @@ if (Gpio) {
 	
 	
 	function installAndCheckDSPProgram(reference, callback) {
-		path = dspDirectory+"/"+dspPrograms[reference].filename;
+		path = dspPrograms[reference].path;
 		if (dspPrograms[reference] && fs.existsSync(path)) {
 			beo.bus.emit("ui", {target: "dsp-programs", header: "flashEEPROM", content: {status: "flashing"}});
 			amplifierMute(true);
@@ -436,8 +460,8 @@ if (Gpio) {
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
 				filename = dspFiles[i].slice(0, -4);
-				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(name, checksum, meta) {
-					dspPrograms[filename] = {name: name, metadata: meta, checksum: checksum, filename: filename, readOnly: true};
+				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(name, path, checksum, meta) {
+					dspPrograms[filename] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename, readOnly: true};
 				});
 			}
 		}
@@ -446,8 +470,8 @@ if (Gpio) {
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
 				filename = dspFiles[i].slice(0, -4);
-				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(name, checksum, meta) {
-					dspPrograms[filename] = {name: name, metadata: meta, checksum: checksum, filename: filename};
+				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(name, path, checksum, meta) {
+					dspPrograms[filename] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename};
 				});
 			}
 		}
@@ -462,8 +486,60 @@ if (Gpio) {
 				metadata = parseDSPMetadata(snippet);
 				name = getProgramName(metadata, filename);
 				checksum = getChecksumFromMetadata(metadata);
-				callback(name, checksum, metadata);
+				callback(name, path, checksum, metadata);
 			});
+		}
+	}
+	
+	function checkForDSPUpgrades() {
+		match = false;
+		matchVersion = 0;
+		for (program in dspPrograms) {
+			if (program.checksum && program.checksum != currentChecksum) {
+				// Compare program ID and version.
+				if (currentMetadata && 
+					currentMetadata.programID && 
+					dspPrograms[program].metadata && 
+					dspPrograms[program].metadata.programID) {
+					if (dspPrograms[program].metadata.programID.value == currentMetadata.programID.value) {
+						if (dspPrograms[program].metadata.profileVersion &&
+							currentMetadata.metadata.profileVersion) {
+							if (dspPrograms[program].metadata.profileVersion.value > currentMetadata.metadata.profileVersion.value &&
+								dspPrograms[program].metadata.profileVersion.value > matchVersion) {
+								match = program;
+								matchVersion = dspPrograms[program].metadata.profileVersion.value;
+							}
+						}
+					}
+				}
+				
+				// Alternatively, if the metadata lists checksums that this program is an upgrade to, check if there's a match.
+				// Requires "upgradeFrom" metadata entry, which can contain multiple comma-separated checksums.
+				if (dspPrograms[program].metadata && 
+					dspPrograms[program].metadata.upgradeFrom) {
+					upgradeFrom = dspPrograms[program].metadata.upgradeFrom.value.split(",");
+					for (var i = 0; i < upgradeFrom.length; i++) {
+						if (upgradeFrom[i].trim() == currentChecksum) {
+							if (dspPrograms[program].metadata.profileVersion.value) {
+								if (dspPrograms[program].metadata.profileVersion.value > matchVersion) {
+									match = program;
+									matchVersion = dspPrograms[program].metadata.profileVersion.value;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if (match) {
+			if (settings.autoUpgrade == false) {
+				if (debug) console.log("An upgrade to the current DSP program is on file.");
+				dspUpgrade = match;
+			} else {
+				return match;
+			}
+		} else {
+			return false;
 		}
 	}
 	

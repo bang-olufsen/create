@@ -2,6 +2,15 @@ var software_update = (function() {
 
 var newVersion = null;
 
+$(document).on("general", function(event, data) {
+	
+	if (data.header == "activatedExtension") {
+		if (data.content.extension == "software-update") {
+			$(".checking-for-update").removeClass("hidden");
+		}
+	}
+	
+});
 
 $(document).on("software-update", function(event, data) {
 	
@@ -14,6 +23,7 @@ $(document).on("software-update", function(event, data) {
 	}
 	
 	if (data.header == "updateAvailable" && data.content.version) {
+		$(".checking-for-update").addClass("hidden");
 		newVersion = data.content.version;
 		menuOptions = {
 			value: newVersion,
@@ -67,6 +77,7 @@ $(document).on("software-update", function(event, data) {
 	}
 	
 	if (data.header == "upToDate") {
+		$(".checking-for-update").addClass("hidden");
 		$(".no-update-available").removeClass("hidden");
 		$(".software-update-available").addClass("hidden");
 		newVersion = null;

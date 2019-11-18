@@ -79,6 +79,13 @@ $(document).on("product-information", function(event, data) {
 			$(".hifiberry-version").text(hifiberryVersion);
 		}
 		cycleSystemInformation(true);
+	}
+	
+	if (data.header == "showSystemName") {
+		systemName = data.content.systemName;
+		$(".system-name").text(systemName);
+		sendToProductView({header: "systemName", content: {name: systemName}});
+		document.title = systemName;
 		if (data.content.staticName) {
 			if (document.domain.indexOf(".local") != -1) {
 				if (document.domain != data.content.staticName.toLowerCase()+".local") {

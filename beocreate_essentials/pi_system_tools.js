@@ -57,6 +57,7 @@ function setHostname(productName, callback) {
 	getHostname(function(names) { // First get current names so that they can be replaced in /etc/hosts
 		productName = productName.replace(/\r?\n|\r/g, ""); // Remove newlines
 		exec("/usr/bin/hostnamectl set-hostname --pretty \""+productName+"\"", function(error, stdout, stderr) {
+			
 			if (error) {
 				callback(null, error);
 			} else {
@@ -67,10 +68,12 @@ function setHostname(productName, callback) {
 				n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
 				
 				exec("/usr/bin/hostnamectl set-hostname --static "+n, function(error, stdout, stderr) {
+					
 					if (error) {
 						callback(null, error);
 					} else {
 						exec("/usr/bin/hostnamectl --pretty", function(error, stdout, stderr) {
+							
 							if (error) {
 								callback(null, error);
 							} else {
@@ -96,7 +99,7 @@ function setHostname(productName, callback) {
 										}
 										hostsText = hostsFile.join("\n");
 										fs.writeFileSync("/etc/hosts", hostsText);
-										callback({static: staticName, ui: uiName});
+										callback(true, {static: staticName, ui: uiName});
 										setTimeout(function() {
 											exec("systemctl restart avahi-daemon");
 										}, 500);

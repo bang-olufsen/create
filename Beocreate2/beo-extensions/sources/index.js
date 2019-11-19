@@ -521,8 +521,8 @@ var exec = require("child_process").exec;
 					if (allSources[source].enabled) count ++;
 				}
 			}
-			if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
 			if (count != enabledHifiberrySources) {
+				if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
 				configure = false;
 				if (enabledHifiberrySources == 1 && count != 0) {
 					configure = true;

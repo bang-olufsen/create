@@ -309,19 +309,20 @@ if (Gpio) {
 		rawMetadata = xmlJS.xml2js(metadataXML, {compact: true}).beometa.metadata;
 		if (rawMetadata) {
 			for (var i = 0; i < rawMetadata.length; i++) {
-				values = rawMetadata[i]._text.split(",");
-				for (var v = 0; v < values.length; v++) {
-					if (!isNaN(values[v])) values[v] = parseFloat(values[v]);
+				if (rawMetadata[i]._text) {
+					values = rawMetadata[i]._text.split(",");
+					for (var v = 0; v < values.length; v++) {
+						if (!isNaN(values[v])) values[v] = parseFloat(values[v]);
+					}
+					beoMeta[rawMetadata[i]._attributes.type] = {value: values};
+					for (var key in rawMetadata[i]._attributes) {
+					    if (rawMetadata[i]._attributes.hasOwnProperty(key)) {
+							if (key != "type") {
+								beoMeta[rawMetadata[i]._attributes.type][key] = rawMetadata[i]._attributes[key];
+							}
+					    }
+					}
 				}
-				beoMeta[rawMetadata[i]._attributes.type] = {value: values};
-				for (var key in rawMetadata[i]._attributes) {
-				    if (rawMetadata[i]._attributes.hasOwnProperty(key)) {
-						if (key != "type") {
-							beoMeta[rawMetadata[i]._attributes.type][key] = rawMetadata[i]._attributes[key];
-						}
-				    }
-				}
-				
 			}
 		} else {
 			beoMeta = null;
@@ -460,8 +461,8 @@ if (Gpio) {
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
 				filename = dspFiles[i].slice(0, -4);
-				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(name, path, checksum, meta) {
-					dspPrograms[filename] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename, readOnly: true};
+				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(id, name, path, checksum, meta) {
+					dspPrograms[id] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename, readOnly: true};
 				});
 			}
 		}
@@ -470,8 +471,8 @@ if (Gpio) {
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
 				filename = dspFiles[i].slice(0, -4);
-				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(name, path, checksum, meta) {
-					dspPrograms[filename] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename};
+				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(id, name, path, checksum, meta) {
+					dspPrograms[id] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename};
 				});
 			}
 		}
@@ -486,7 +487,7 @@ if (Gpio) {
 				metadata = parseDSPMetadata(snippet);
 				name = getProgramName(metadata, filename);
 				checksum = getChecksumFromMetadata(metadata);
-				callback(name, path, checksum, metadata);
+				callback(filename, name, path, checksum, metadata);
 			});
 		}
 	}
@@ -495,19 +496,19 @@ if (Gpio) {
 		match = false;
 		matchVersion = 0;
 		for (program in dspPrograms) {
-			if (program.checksum && program.checksum != currentChecksum) {
+			if (dspPrograms[program].checksum && dspPrograms[program].checksum != currentChecksum) {
 				// Compare program ID and version.
 				if (currentMetadata && 
 					currentMetadata.programID && 
 					dspPrograms[program].metadata && 
 					dspPrograms[program].metadata.programID) {
-					if (dspPrograms[program].metadata.programID.value == currentMetadata.programID.value) {
+					if (dspPrograms[program].metadata.programID.value[0] == currentMetadata.programID.value[0]) {
 						if (dspPrograms[program].metadata.profileVersion &&
 							currentMetadata.metadata.profileVersion) {
-							if (dspPrograms[program].metadata.profileVersion.value > currentMetadata.metadata.profileVersion.value &&
-								dspPrograms[program].metadata.profileVersion.value > matchVersion) {
+							if (dspPrograms[program].metadata.profileVersion.value[0] > currentMetadata.metadata.profileVersion.value[0] &&
+								dspPrograms[program].metadata.profileVersion.value[0] > matchVersion) {
 								match = program;
-								matchVersion = dspPrograms[program].metadata.profileVersion.value;
+								matchVersion = dspPrograms[program].metadata.profileVersion.value[0];
 							}
 						}
 					}
@@ -517,13 +518,13 @@ if (Gpio) {
 				// Requires "upgradeFrom" metadata entry, which can contain multiple comma-separated checksums.
 				if (dspPrograms[program].metadata && 
 					dspPrograms[program].metadata.upgradeFrom) {
-					upgradeFrom = dspPrograms[program].metadata.upgradeFrom.value.split(",");
+					upgradeFrom = dspPrograms[program].metadata.upgradeFrom.value[0].split(",");
 					for (var i = 0; i < upgradeFrom.length; i++) {
 						if (upgradeFrom[i].trim() == currentChecksum) {
-							if (dspPrograms[program].metadata.profileVersion.value) {
-								if (dspPrograms[program].metadata.profileVersion.value > matchVersion) {
+							if (dspPrograms[program].metadata.profileVersion.value[0]) {
+								if (dspPrograms[program].metadata.profileVersion.value[0] > matchVersion) {
 									match = program;
-									matchVersion = dspPrograms[program].metadata.profileVersion.value;
+									matchVersion = dspPrograms[program].metadata.profileVersion.value[0];
 								}
 							}
 						}

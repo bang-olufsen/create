@@ -36,9 +36,9 @@ $(document).on("spotifyd", function(event, data) {
 function toggleEnabled() {
 	enabled = (!spotifydEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning Spotify Connect on...", icon: "attention", timeout: false, id: "spotifyd"});
+		notify({title: "Turning Spotify Connect on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning Spotify Connect off...", icon: "attention", timeout: false, id: "spotifyd"});
+		notify({title: "Turning Spotify Connect off...", icon: "attention", timeout: false});
 	}
 	send({target: "spotifyd", header: "spotifydEnabled", content: {enabled: enabled}});
 }

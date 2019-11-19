@@ -413,7 +413,7 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 			}
 			break;
 		case "always":
-			if (externalURL && currentExternalPicture != externalURL) {
+			if (externalURL) {
 				loadArtwork(externalURL);
 				currentExternalPicture = externalURL;
 			}

@@ -17,6 +17,7 @@ SOFTWARE.*/
 
 // BEOCREATE SOURCES
 var request = require("request");
+var exec = require("child_process").exec;
 
 	var debug = beo.debug;
 	
@@ -26,6 +27,8 @@ var request = require("request");
 	var allSources = {};
 	var currentSource = null;
 	var focusedSource = null;
+	
+	var enabledHifiberrySources = 0;
 	
 	var startableSources = {}; // Different sources may hold multiple "sub-sources" (connected devices, physical media) that can be started.
 	
@@ -512,6 +515,34 @@ var request = require("request");
 		
 		if (!sourceAdded) { 
 			beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+			count = 0;
+			for (source in allSources) {
+				if (allSources[source].usesHifiberryControl) {
+					if (allSources[source].enabled) count ++;
+				}
+			}
+			if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
+			if (count != enabledHifiberrySources) {
+				configure = false;
+				if (enabledHifiberrySources == 1 && count != 0) {
+					configure = true;
+				} else if (count == 1) {
+					configure = true;
+				}
+				if (configure) {
+					beo.bus.emit("ui", {target: "sources", header: "configuringSystem", content: {reason: "hfiberryExclusive"}});
+					if (debug) console.log("Calling HiFiBerry player reconfiguration...");
+					exec("/opt/hifiberry/bin/reconfigure-players", function(error, stdout, stderr) {
+						if (error) {
+							if (debug) console.error("Reconfiguration failed: "+error);
+						} else {
+							if (debug) console.error("Reconfiguration finished.");
+						}
+						beo.bus.emit("ui", {target: "sources", header: "systemConfigured"});
+					});
+				}
+				enabledHifiberrySources = count;
+			}
 		} else {
 			if (allSourcesRegistered) {
 				if (debug) console.log("All sources registered.");
@@ -519,6 +550,12 @@ var request = require("request");
 				audioControlGet("status", function(result) {
 					audioControlGet("metadata");
 				});
+				enabledHifiberrySources = 0;
+				for (source in allSources) {
+					if (allSources[source].usesHifiberryControl) {
+						if (allSources[source].enabled) enabledHifiberrySources++;
+					}
+				}
 			}
 		}
 	}

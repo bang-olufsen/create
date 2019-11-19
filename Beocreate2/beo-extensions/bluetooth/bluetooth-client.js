@@ -21,9 +21,9 @@ $(document).on("bluetooth", function(event, data) {
 function toggleEnabled() {
 	enabled = (!bluetoothEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning Bluetooth on...", icon: "attention", timeout: false, id: "bluetooth"});
+		notify({title: "Turning Bluetooth on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning Bluetooth off...", icon: "attention", timeout: false, id: "bluetooth"});
+		notify({title: "Turning Bluetooth off...", icon: "attention", timeout: false});
 	}
 	send({target: "bluetooth", header: "bluetoothEnabled", content: {enabled: enabled}});
 }

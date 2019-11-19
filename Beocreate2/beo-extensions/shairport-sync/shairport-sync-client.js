@@ -42,9 +42,9 @@ $(document).on("shairport-sync", function(event, data) {
 function toggleEnabled() {
 	enabled = (!shairportSyncEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning AirPlay 1 on...", icon: "attention", timeout: false, id: "shairport-sync"});
+		notify({title: "Turning AirPlay 1 on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning AirPlay 1 off...", icon: "attention", timeout: false, id: "shairport-sync"});
+		notify({title: "Turning AirPlay 1 off...", icon: "attention", timeout: false});
 	}
 	send({target: "shairport-sync", header: "shairportSyncEnabled", content: {enabled: enabled}});
 }

@@ -47,6 +47,14 @@ $(document).on("sources", function(event, data) {
 		}
 	}
 	
+	if (data.header == "configuringSystem") {
+		notify({title: "Setting up sources...", icon: "attention", timeout: false, id: "sources"});
+	}
+	
+	if (data.header == "systemConfigured") {
+		notify(false, "sources");
+	}
+	
 });
 
 function showActiveSources() {

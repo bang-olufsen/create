@@ -470,9 +470,9 @@ var request = require('request'); // for sending HTTP requests to the DACP serve
 	}
 	
 	function updateControllableSources() {
-		sources = {};
+		allSources = {};
 		for (source in controllableSources) {
-			if (!controllableSources[source].inLimbo) sources[source] = controllableSources[source];
+			if (!controllableSources[source].inLimbo) allSources[source] = controllableSources[source];
 		}
 		//beo.bus.emit("sources", {header: "startableSources", content: {extension: "shairport-sync", sources: sources}});
 	}

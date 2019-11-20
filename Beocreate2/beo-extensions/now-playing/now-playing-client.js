@@ -313,14 +313,13 @@ function toggleShowAlbumName(hide) {
 }
 
 var artworkChangeTimeout;
-var previousSrc = "";
+var currentPicture = "";
 var hasPicture = false;
 var currentArtworkView = "a";
 var hiddenArtworkView = "b";
 
-function loadArtwork(url, port, external) {
+function loadArtwork(url, port, testExternal) {
 	evaluateExternalArtwork = false;
-	//console.log("Artwork load requested with URL: "+url+".");
 	if (!url || url.indexOf("file:///") == -1) {
 		if (url) {
 			if (url.indexOf("http") == 0) {
@@ -334,7 +333,7 @@ function loadArtwork(url, port, external) {
 				}
 			}
 			src = imageURL;
-			if (!external) hasPicture = true;
+			if (!testExternal) hasPicture = true;
 		} else {
 			// Load appropriately branded placeholder artwork.
 			if ($("body").hasClass("hifiberry-os")) {
@@ -344,25 +343,24 @@ function loadArtwork(url, port, external) {
 			}
 			hasPicture = false;
 		}
-		if (src != previousSrc) {
-			//$("#now-playing-artwork-wrap-a").removeClass("visible");
+		if (src != currentPicture) {
 			clearTimeout(artworkChangeTimeout);
-			if (!external) previousSrc = src;
-			//artworkChangeTimeout = setTimeout(function() {
-				$(".artwork-img-"+hiddenArtworkView).attr("src", src);
-				if (!external) {
-					console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+"...");
-				} else {
-					console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
-				}
-				if (!url) {
-					$(".artwork-img-"+hiddenArtworkView).addClass("placeholder");
-					$(".artwork-bg-"+hiddenArtworkView).css("background-image", "none");
-				} else {
-					$(".artwork-img-"+hiddenArtworkView).removeClass("placeholder");
-					$(".artwork-bg"+hiddenArtworkView).css("background-image", "url(" + src + ")");
-				}
-			//}, 500);
+			if (!testExternal) currentPicture = src;
+			pictureInTargetView = $(".artwork-img-"+hiddenArtworkView).attr("src");
+			$(".artwork-img-"+hiddenArtworkView).attr("src", src);
+			if (!testExternal) {
+				console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+"...");
+			} else {
+				console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
+			}
+			if (!url) {
+				$(".artwork-img-"+hiddenArtworkView).addClass("placeholder");
+				$(".artwork-bg-"+hiddenArtworkView).css("background-image", "none");
+			} else {
+				$(".artwork-img-"+hiddenArtworkView).removeClass("placeholder");
+				$(".artwork-bg"+hiddenArtworkView).css("background-image", "url(" + src + ")");
+			}
+			if (pictureInTargetView == currentPicture) artworkLoaded(hiddenArtworkView);
 		}
 	} else {
 		// In case of a file URL, wait for one second for the actual artwork. Otherwise load default artwork.
@@ -382,6 +380,8 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 		loadArtwork(internalURL, port);
 		if (internalURL != null && internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
 		currentInternalPicture = internalURL;
+	} else if (internalURL && currentPicture != internalURL) {
+		loadArtwork(internalURL, port);
 	}
 	
 	// If external artwork is set to "never", don't do anything.
@@ -391,7 +391,7 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 	
 	switch (useExternalArtwork) {
 		case "missing":
-			if (!internalURL && externalURL && currentExternalPicture != externalURL) {
+			if (!internalURL && externalURL && (currentExternalPicture != externalURL || externalURL != currentPicture)) {
 				loadArtwork(externalURL);
 				currentExternalPicture = externalURL;
 			}
@@ -413,7 +413,7 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 			}
 			break;
 		case "always":
-			if (externalURL) {
+			if (externalURL && (currentExternalPicture != externalURL || externalURL != currentPicture)) {
 				loadArtwork(externalURL);
 				currentExternalPicture = externalURL;
 			}
@@ -443,45 +443,40 @@ function testArtworkSwap() {
 	return view;
 }
 
-$("#main-artwork-a").on('load', function() {
+function artworkLoaded(view) {
 	shouldSwitch = true;
 	noAnimation = false;
-	artworkDimensionsA[0] = $(this).get(0).naturalWidth;
-	artworkDimensionsA[1] = $(this).get(0).naturalHeight;
-	artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	if (view == "a") {
+		artworkDimensionsA[0] = $(this).get(0).naturalWidth;
+		artworkDimensionsA[1] = $(this).get(0).naturalHeight;
+		artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	} else {
+		artworkDimensionsA[0] = $(this).get(0).naturalWidth;
+		artworkDimensionsA[1] = $(this).get(0).naturalHeight;
+		artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	}
 	resizeArtwork();
-	if (evaluateExternalArtwork == "a") {
+	if (evaluateExternalArtwork == view) {
 		// If the downloaded image is equal size or smaller than the current one, don't switch them.
-		if (artworkDimensionsA[0] <= artworkDimensionsB[0]) {
+		hiddenViewDimension = (view == "a") ? artworkDimensionsA[0] : artworkViewDimensionsB[0];
+		currentViewDimension = (view == "a") ? artworkDimensionsB[0] : artworkViewDimensionsA[0];
+		if (hiddenViewDimension <= currentViewDimension) {
 			shouldSwitch = false;
 			console.log("External artwork is not higher-resolution.");
 		} else {
 			noAnimation = true;
-			console.log("Switching to higher-resolution downloaded artwork in view A.");
+			console.log("Switching to higher-resolution downloaded artwork in view "+view.toUpperCase()+".");
 		}
 		evaluateExternalArtwork = false;
 	}
-	if (shouldSwitch) switchArtwork("a", noAnimation);
+	if (shouldSwitch) switchArtwork(view, noAnimation);
+}
+
+$("#main-artwork-a").on('load', function() {
+	artworkLoaded("a");
 });
 $("#main-artwork-b").on('load', function() {
-	shouldSwitch = true;
-	noAnimation = false;
-	artworkDimensionsB[0] = $(this).get(0).naturalWidth;
-	artworkDimensionsB[1] = $(this).get(0).naturalHeight;
-	artworkAspectRatioB = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
-	resizeArtwork();
-	if (evaluateExternalArtwork == "b") {
-		// If the downloaded image is equal size or smaller than the current one, don't switch them.
-		if (artworkDimensionsB[0] <= artworkDimensionsA[0]) {
-			shouldSwitch = false;
-			console.log("External artwork is not higher-resolution.");
-		} else {
-			noAnimation = true;
-			console.log("Switching to higher-resolution downloaded artwork in view B.");
-		}
-		evaluateExternalArtwork = false;
-	}
-	if (shouldSwitch) switchArtwork("b", noAnimation);
+	artworkLoaded("b");
 });
 $("#main-artwork-a").on('error', function() {
 	if (evaluateExternalArtwork != "b") {

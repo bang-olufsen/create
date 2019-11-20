@@ -84,3 +84,6 @@ typings/
 
 # Dynamically generated directories
 /Beocreate2/beo-settings/*
+
+# Distribution files for Beocreate Connect
+/BeocreateConnect/dist/*

@@ -118,31 +118,11 @@
 	margin-bottom: 0;
 }
 
-.sound-preset-product-image-wrap {
-	width: 100%;
-	height: 40vh;
-	background-color: var(--ultra-light-grey);
-	display: block;
-	margin-right: auto;
-	margin-left: auto;
-	position: relative;
-}
 
 .header-image.sound-preset-product-image {
-	width: 100%;
-	background-size: contain;
-	background-repeat: no-repeat;
-	background-position: center;
-	position: absolute;
-	box-sizing: border-box;
 	bottom: 10px;
 	top: 10px;
 }
-
-.dark .sound-preset-product-image-wrap {
-	background-color: var(--ultra-light-grey-dark);
-}
-
 
 @media only screen and (min-width: 621px) {
 	

@@ -24,10 +24,15 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	var metadata = {};
 	var defaultSettings = {
 			"toslinkEnabled": false, 
+			"sensitivity": "high",
 			"toslinkStopsOtherSources": true
 		};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
-	var canControlToslink = true;
+	var canControlToslink = {
+			"enabled": false,
+			"sensitivity": false
+		};
+	var canControlToslinkSensitivity = false;
 	
 	var canReadToslinkStatus = false;
 	var toslinkSignal = false;
@@ -77,9 +82,15 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				metadata = event.content.metadata;
 				
 				if (metadata.enableSPDIFRegister && metadata.enableSPDIFRegister.value) {
-					canControlToslink = true;
+					canControlToslink.enabled = true;
 				} else {
-					canControlToslink = false;
+					canControlToslink.enabled = false;
+				}
+				
+				if (metadata.sensitivitySPDIFRegister && metadata.sensitivitySPDIFRegister.value) {
+					canControlToslink.sensitivity = true;
+				} else {
+					canControlToslink.sensitivity = false;
 				}
 				
 				if (metadata.readSPDIFOnRegister && metadata.readSPDIFOnRegister.value) {
@@ -91,11 +102,13 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				}
 				
 				applyToslinkEnabledFromSettings();
+				applyToslinkSensitivityFromSettings();
 				
 			} else {
 				metadata = {};
 				readToslinkStatus(false);
-				canControlToslink = false;
+				canControlToslink.enabled = false;
+				canControlToslink.sensitivity = false;
 				canReadToslinkStatus = false;
 			}
 		}
@@ -112,13 +125,28 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		if (event.header == "toslinkEnabled") {
 			if (event.content.enabled != undefined) {
 				settings.toslinkEnabled = event.content.enabled;
-				applyToslinkEnabledFromSettings();
 				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
 				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
 				if (sources) {
 					sources.setSourceOptions("toslink", {
 						enabled: settings.toslinkEnabled
 					});
+				}
+				applyToslinkEnabledFromSettings();
+			}
+		}
+		
+		if (event.header == "setSensitivity") {
+			if (event.content.sensitivity) {
+				switch (event.content.sensitivity) {
+					case "high":
+					case "medium":
+					case "low":
+						settings.sensitivity = event.content.sensitivity;
+						applyToslinkSensitivityFromSettings();
+						beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
+						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
+						break;
 				}
 			}
 		}
@@ -139,7 +167,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	
 	
 	function applyToslinkEnabledFromSettings() {
-		if (canControlToslink) {
+		if (canControlToslink.enabled) {
 			if (settings.toslinkEnabled) {
 				beoDSP.writeDSP(metadata.enableSPDIFRegister.value[0], 1, false);
 				if (toslinkSignal == true) {
@@ -152,6 +180,27 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					toslinkActive = false;
 					if (sources) sources.sourceDeactivated("toslink", "stopped");
 				}
+			}
+		}
+	}
+	
+	function applyToslinkSensitivityFromSettings() {
+		if (canControlToslink.sensitivity) {
+			levelValue = null;
+			switch (settings.sensitivity) {
+				case "high":
+					levelValue = beoDSP.convertVolume("dB", "amplification", -60);
+					break;
+				case "medium":
+					levelValue = beoDSP.convertVolume("dB", "amplification", -40);
+					break;
+				case "low":
+					levelValue = beoDSP.convertVolume("dB", "amplification", -20);
+					break;
+			}
+			if (levelValue) {
+				if (debug) console.log("Setting Toslink sensitivity to "+settings.sensitivity+".");
+				beoDSP.writeDSP(metadata["sensitivitySPDIFRegister"].value[0], levelValue, true, true);
 			}
 		}
 	}

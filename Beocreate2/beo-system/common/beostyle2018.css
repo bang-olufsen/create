@@ -2987,6 +2987,11 @@ a.button {
 	margin-right: auto;
 	margin-left: auto;
 	position: relative;
+	background-color: var(--ultra-light-grey);
+}
+
+.dark .header-image-wrap {
+	background-color: var(--ultra-light-grey-dark);
 }
 
 .header-image {
@@ -3009,6 +3014,7 @@ a.button {
 }
 
 input[type=text], 
+input[type=search],
 input[type=password] {
 	font-size: 0.9em;
 	font-family: inherit;
@@ -3031,6 +3037,7 @@ input[type=password] {
 }
 
 .dark input[type=text], 
+.dark input[type=search], 
 .dark input[type=password] {
 	background-color: var(--ultra-light-grey-dark);
 	border-color: var(--ultra-light-grey-dark);
@@ -3052,6 +3059,7 @@ form {
 }
 
 input[type=text]:focus, 
+input[type=search]:focus, 
 input[type=password]:focus {
 	border-color: #333;
 	background-color: white;
@@ -3061,10 +3069,11 @@ input[type=password]:focus {
 
 input[type=text]::placeholder, 
 input[type=password]::placeholder {
-	color: #ddd;
+	/*color: #ddd;*/
 }
 
-.dark input[type=text]:focus, 
+.dark input[type=text]:focus,
+.dark input[type=search]:focus, 
 .dark input[type=password]:focus {
 	border-color: #eee;
 	background-color: var(--main-bg-dark);
@@ -3079,6 +3088,38 @@ input[type=submit] {
 #text-input header {
 	box-shadow: none;
 	margin-bottom: -10px;
+}
+
+input[type=search] {
+	position: relative;
+	padding-left: 35px;
+	border-radius: 30px;
+}
+
+.search-container {
+	position: relative;
+}
+
+.search-container:before {
+	content: "";
+	-webkit-mask-size: 21px;
+	mask-size: 21px;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	background-color: currentColor;
+	mask-image: url(symbols-black/search.svg);
+	-webkit-mask-image: url(symbols-black/search.svg);
+	height: 21px;
+	position: absolute;
+	left: 15px;
+	z-index: 1;
+	width: 21px;
+	top: 50%;
+	margin-top: -10px;
+	opacity: 0.5;
+	pointer-events: none;
 }
 
 /* @end */

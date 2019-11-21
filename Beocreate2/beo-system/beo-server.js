@@ -334,6 +334,7 @@ expressServer.post("/:extension/:header", function (req, res) {
 // Serve downloads:
 var downloadRoutes = {};
 expressServer.get("/:extension/download/:urlPath", function (req, res) {
+	
 	if (downloadRoutes[req.params.extension]) {
 		if (downloadRoutes[req.params.extension][req.params.urlPath]) {
 			// Serve file from the specified path.
@@ -343,7 +344,35 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 				if (debugMode) console.log("Download route for '"+downloadRoutes[req.params.extension][req.params.urlPath].filePath+"' was removed automatically.");
 				delete downloadRoutes[req.params.extension][req.params.urlPath];
 			}
+		} else {
+			console.error("The requested download is not available.");
+			res.status(404);
+			res.send("Notfound");
 		}
+	} else {
+		console.error("The requested download is not available.");
+		res.status(404);
+		res.send("Notfound");
+	}
+});
+
+expressServer.get("/:extension/:header/", function (req, res) {
+
+	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
+		extensions[req.params.extension].restAPI(req.params.header, function(response) {
+			if (response) {
+				res.status(200);
+				res.send(response);
+			} else {
+				console.error("'"+req.params.extension+"' can't respond to '"+req.params.header+"' request.");
+				res.status(404);
+				res.send("Notfound");
+			}
+		});
+	} else {
+		console.error("'"+req.params.extension+"' can't respond to GET requests.");
+		res.status(404);
+		res.send("Notfound");
 	}
 });
 

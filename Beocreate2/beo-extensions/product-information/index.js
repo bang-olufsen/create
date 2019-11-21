@@ -511,6 +511,14 @@ var fs = require("fs");
 	}
 	
 	
+	function restAPI(header, callback) {
+		if (header == "discovery") {
+			callback({name: systemName.ui, serviceType: "beocreate", advertisePort: beo.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
+		} else {
+			callback(null);
+		}
+	}
+	
 module.exports = {
 	getProductInformation: getProductInformation,
 	setProductIdentity: setProductModel,
@@ -518,6 +526,7 @@ module.exports = {
 	getProductImage: getProductImage,
 	addProductIdentity: checkAndAddProductIdentity,
 	deleteProductIdentity: deleteProductIdentity,
+	restAPI: restAPI,
 	version: version
 };
 

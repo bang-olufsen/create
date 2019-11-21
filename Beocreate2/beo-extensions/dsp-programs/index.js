@@ -302,7 +302,7 @@ if (Gpio) {
 		}
 	}
 	
-	function parseDSPMetadata(xml, filename) {
+	function parseDSPMetadata(xml, fileref) {
 		// Get the DSP metadata from the XML as a JavaScript object.
 		metadataXML = '<beometa>' + xml.split("</beometa>")[0].split("<beometa>")[1] + "</beometa>";
 		beoMeta = {};
@@ -331,7 +331,7 @@ if (Gpio) {
 			return {metadata: beoMeta, error: null};
 		} catch (error) {
 			if (filename) {
-				console.error("Invalid XML encountered in DSP program '"+filename+"'. Error:", error);
+				console.error("Invalid XML encountered in DSP program '"+fileref+"'. Error:", error);
 			} else {
 				console.error("Invalid XML encountered in the received DSP program. Error:", error);
 			}
@@ -339,7 +339,7 @@ if (Gpio) {
 		}
 	}
 	
-	function getProgramName(metadata, filename) {
+	function getProgramName(metadata, id) {
 		if (metadata) {
 			if (metadata.programName) {
 				// Prefer profile name.
@@ -350,15 +350,15 @@ if (Gpio) {
 			} else if (metadata.modelName) {
 				// Fall back to model name...
 				name = metadata.modelName.value[0];
-			} else if (filename) {
+			} else if (id) {
 				// File name...
-				name = filename.slice(0, -4);
+				name = id;
 			} else {
 				name = null;
 			}
 		} else {
-			if (filename) {
-				name = filename.slice(0, -4);
+			if (id) {
+				name = id;
 			} else {
 				name = null;
 			}
@@ -491,17 +491,17 @@ if (Gpio) {
 	
 	function addDSPProgramToList(id, path, metadata, readOnly) {
 		if (!metadata.error) {
-			name = getProgramName(metadata, id);
-			checksum = getChecksumFromMetadata(metadata);
-			version = (metadata.profileVersion) ? metadata.profileVersion.value[0] : null;
+			name = getProgramName(metadata.metadata, id);
+			checksum = getChecksumFromMetadata(metadata.metadata);
+			version = (metadata.metadata.profileVersion) ? metadata.metadata.profileVersion.value[0] : null;
 			dspPrograms[id] = {name: name, path: path, metadata: metadata.metadata, checksum: checksum, version: version, filename: id+".xml", readOnly: readOnly};
+			if (debug >= 2) console.log("Added DSP program '"+name+"' ("+id+").");
 		}
 	}
 	
 	function readDSPProgramFromFile(path, filename, callback) {
 		if (callback) {
 			stream = fs.createReadStream(path, { start: 1, end: 6000 });
-			
 			stream.on("data", function(chunk) {
 				snippet = chunk.toString();
 				metadata = parseDSPMetadata(snippet, filename);

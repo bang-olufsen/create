@@ -149,15 +149,18 @@ $(document).on("dsp-programs", function(event, data) {
 						icon: $("#dsp-programs").attr("data-asset-path")+"/symbols-black/dsp-file.svg"
 					}
 					// Show version if a program of the same name is loaded or otherwise exists, to differentiate them.
+					showVersion = false;
 					if (currentProgram.name && currentProgram.name == programs[program].name) {
-						if (programs[program].version) menuOptions.value = "Version "+programs[program].version;
+						showVersion = true;
 					} else {
 						nameCount = -1;
 						for (prg in programs) {
 							if (programs[prg].name == programs[program].name) nameCount++;
 						}
-						if (nameCount && programs[program].version) menuOptions.value = "Version "+programs[program].version;
+						if (nameCount) showVersion = true;
 					}
+					if (showVersion && programs[program].version) menuOptions.value = "Version "+programs[program].version;
+					
 					if (program == dspUpgrade) {
 						menuOptions.classes.push("upgrade");
 						menuOptions.value = "Upgrade";

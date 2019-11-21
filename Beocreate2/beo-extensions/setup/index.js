@@ -22,6 +22,11 @@ SOFTWARE.*/
 	var setup = beo.setup;
 	var debug = beo.debug;
 	
+	var defaultSettings = {
+			"firstTimeSetup": true
+		};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
 	var version = require("./package.json").version;
 	
 	beo.bus.on('general', function(event) {
@@ -41,6 +46,12 @@ SOFTWARE.*/
 	// Setup is in the flow by default and two times, because it shows both introduction and finish screens.
 	
 	beo.bus.on('setup', function(event) {
+		
+		if (event.header == "settings") {
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+		}
 
 		if (event.header == "getSetupStatus") {
 			// The client always asks for this when it connects.
@@ -54,10 +65,10 @@ SOFTWARE.*/
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, reset: true, restartAfter: restartAfter}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, reset: true, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, restartAfter: restartAfter}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
 				}
 			}
 			
@@ -76,6 +87,8 @@ SOFTWARE.*/
 						setup = false;
 						beo.bus.emit("setup", {header: "finishingSetup"});
 						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
+						settings.firstTimeSetup = false;
+						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "setup", settings: settings}});
 						if (restartAfter) {
 							beo.bus.emit("general", {header: "requestReboot", content: {extension: "setup"}});
 						}

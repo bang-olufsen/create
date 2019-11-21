@@ -68,6 +68,18 @@ $(document).on("setup", function(event, data) {
 					showExtensionWithHistory(extensionHistory, data.content.selectedExtension);
 				}
 			}
+			
+			if (data.content.firstTime || data.content.firstTime == undefined) {
+				$("#setup .menu-content.first-time").removeClass("hidden");
+				$("#setup .menu-content.additional-setup").addClass("hidden");
+			} else {
+				$("#setup .menu-content.first-time").addClass("hidden");
+				$("#setup .menu-content.additional-setup").removeClass("hidden");
+			}
+			$(".setup-list").empty();
+			for (var i = 1; i < setupFlow.length-1; i++) {
+				$(".setup-list").append("<li>"+extensions[setupFlow[i].extension].title+"</li>");
+			}
 		}
 	}
 	

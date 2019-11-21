@@ -246,8 +246,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					
 					programName = false;
 					if (extensions["dsp-programs"]) {
-						if (extensions["dsp-programs"].getCurrentProgramName != undefined) {
-							programName = extensions["dsp-programs"].getCurrentProgramName();
+						if (extensions["dsp-programs"].getCurrentProgramName.name != undefined) {
+							programName = extensions["dsp-programs"].getCurrentProgramName().name;
 						}
 					}
 					

@@ -1,6 +1,7 @@
 var dsp_programs = (function() {
 
 var programs = {};
+var currentProgram = {};
 var previewedDSPProgram = null;
 var muteUnknown = false;
 var autoUpgrade = false;
@@ -73,11 +74,18 @@ $(document).on("dsp-programs", function(event, data) {
 	}
 	
 	if (data.header == "showCurrent") {
+		currentProgram = data.content;
 		if (data.content.name) {
 			// Current program.
 			$("#dsp-programs .current-dsp-program-name").text(data.content.name);
 		} else {
 			$("#dsp-programs .current-dsp-program-name").text("Unknown Program");
+		}
+		if (data.content.version) {
+			// Current program.
+			$("#dsp-programs .current-dsp-program-version").text("Version "+data.content.version);
+		} else {
+			$("#dsp-programs .current-dsp-program-version").text("");
 		}
 		if (data.content.dspConnected != undefined) {
 			dspConnected = data.content.dspConnected;
@@ -139,6 +147,16 @@ $(document).on("dsp-programs", function(event, data) {
 						classes: ["dsp-program-item"],
 						data: {"data-dsp-program-id": program},
 						icon: $("#dsp-programs").attr("data-asset-path")+"/symbols-black/dsp-file.svg"
+					}
+					// Show version if a program of the same name is loaded or otherwise exists, to differentiate them.
+					if (currentProgram.name && currentProgram.name == programs[program].name) {
+						if (programs[program].version) menuOptions.value = "Version "+programs[program].version;
+					} else {
+						nameCount = -1;
+						for (prg in programs) {
+							if (programs[prg].name == programs[program].name) nameCount++;
+						}
+						if (nameCount && programs[program].version) menuOptions.value = "Version "+programs[program].version;
 					}
 					if (program == dspUpgrade) {
 						menuOptions.classes.push("upgrade");

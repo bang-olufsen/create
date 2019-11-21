@@ -102,14 +102,14 @@ if (Gpio) {
 		if (event.header == "activatedExtension") {
 			if (event.content == "dsp-programs") {
 				
-				name = getProgramName(currentMetadata);
-				beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: {name: name}});
+				info = getCurrentProgramInfo();
+				beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: info});
 				beo.bus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
 				
 				programs = {};
 				active = 0;
 				for (program in dspPrograms) {
-					programs[program] = {name: dspPrograms[program].name, checksum: dspPrograms[program].checksum}
+					programs[program] = {name: dspPrograms[program].name, checksum: dspPrograms[program].checksum, version: dspPrograms[program].version};
 					if (programs[program].checksum == currentChecksum) {
 						active++;
 						programs[program].active = true;
@@ -368,8 +368,10 @@ if (Gpio) {
 		}
 	}
 	
-	function getCurrentProgramName() {
-		return getProgramName(currentMetadata);
+	function getCurrentProgramInfo() {
+		version = (currentMetadata.profileVersion) ? currentMetadata.profileVersion.value[0] : null;
+		name = getProgramName(currentMetadata);
+		return {name: name, version: version};
 	}
 	
 	
@@ -461,8 +463,8 @@ if (Gpio) {
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
 				filename = dspFiles[i].slice(0, -4);
-				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(id, name, path, checksum, meta) {
-					dspPrograms[id] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename, readOnly: true};
+				readDSPProgramFromFile(systemDSPDirectory+"/"+dspFiles[i], filename, function(id, path, meta) {
+					addDSPProgramToList(id, path, meta, true);
 				});
 			}
 		}
@@ -471,11 +473,18 @@ if (Gpio) {
 		for (var i = 0; i < dspFiles.length; i++) {
 			if (!dspPrograms[dspFiles[i].slice(0, -4)] && dspFiles[i].slice(-4) == ".xml") {
 				filename = dspFiles[i].slice(0, -4);
-				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(id, name, path, checksum, meta) {
-					dspPrograms[id] = {name: name, path: path, metadata: meta, checksum: checksum, filename: filename};
+				readDSPProgramFromFile(dspDirectory+"/"+dspFiles[i], filename, function(id, path, meta) {
+					addDSPProgramToList(id, path, meta, false);
 				});
 			}
 		}
+	}
+	
+	function addDSPProgramToList(id, path, metadata, readOnly) {
+		name = getProgramName(metadata, id);
+		checksum = getChecksumFromMetadata(metadata);
+		version = (metadata.profileVersion) ? metadata.profileVersion.value[0] : null;
+		dspPrograms[id] = {name: name, path: path, metadata: metadata, checksum: checksum, version: version, filename: id+".xml", readOnly: readOnly};
 	}
 	
 	function readDSPProgramFromFile(path, filename, callback) {
@@ -485,9 +494,7 @@ if (Gpio) {
 			stream.on("data", function(chunk) {
 				snippet = chunk.toString();
 				metadata = parseDSPMetadata(snippet);
-				name = getProgramName(metadata, filename);
-				checksum = getChecksumFromMetadata(metadata);
-				callback(filename, name, path, checksum, metadata);
+				callback(filename, path, metadata);
 			});
 		}
 	}
@@ -558,7 +565,7 @@ if (Gpio) {
 
 	
 module.exports = {
-	getCurrentProgramName: getCurrentProgramName,
+	getCurrentProgramInfo: getCurrentProgramInfo,
 	installDSPProgram: installDSPProgram,
 	version: version
 };

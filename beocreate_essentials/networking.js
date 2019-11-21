@@ -39,7 +39,9 @@ var networking = module.exports = {
 	removeNetwork: removeNetwork,
 	addNetwork: addNetwork,
 	setupNetwork: setupNetwork,
+	setSetupNetworkStatus: setSetupNetworkStatus,
 	getSetupNetworkStatus: getSetupNetworkStatus,
+	reconfigure: reconfigure,
 	checkForInternet: checkForInternet,
 	configureIPAddress: configureIPAddress
 }
@@ -47,6 +49,7 @@ var networking = module.exports = {
 var wifiConfiguration = {networks: []};
 var wifiConfigModified = 0;
 var setupNetworkName = "";
+var externalSetupNetwork = false;
 var setupNetworkActive = false;
 
 var wifiConfigPath = null;
@@ -344,57 +347,68 @@ function removeNetwork(ssid) {
 // MANAGE SETUP NETWORK
 
 function setupNetwork(withName) {
-	readWifiConfiguration();
-	if (withName) { // Start setup network.
-		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
-			wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
-		}
-		addNetwork({ssid: withName, key_mgmt: "NONE", proto: "RSN", pairwise: "CCMP", group: "CCMP", mode: 2, frequency: 2432, disabled: 0, setupNetwork: true}, true);
-		setupNetworkName = withName;
-		setupNetworkActive = true;
-		
-		/*var options = {
-			interface: 'wlan0',
-			start: '192.168.1.100',
-			end: '192.168.1.200',
-			option: {
-				router: '192.168.1.1',
-				subnet: '255.255.255.0'
-		  }
-		};
-		 
-		udhcpd.enable(options, function(err) {
-		  // the dhcp server was started
-		  if (err) console.log(err);
-			//console.log("Started DHCP server.");
-		});*/
-	} else { // Stop setup network.
-		/*udhcpd.disable('wlan0', function(err) {
-		  // the dhcp server was stopped
-			//console.log("Stopped DHCP server.");
-		});*/
-		networkIndex = -1;
-		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
-			if (wifiConfiguration.networks[i].setupNetwork) {
-				networkIndex = i;
-			} else {
-				wifiConfiguration.networks[i].disabled = 0;
-				// Enable all other networks.
+	if (!externalSetupNetwork) {
+		readWifiConfiguration();
+		if (withName) { // Start setup network.
+			for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+				wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
 			}
+			addNetwork({ssid: withName, key_mgmt: "NONE", proto: "RSN", pairwise: "CCMP", group: "CCMP", mode: 2, frequency: 2432, disabled: 0, setupNetwork: true}, true);
+			setupNetworkName = withName;
+			setupNetworkActive = true;
+			
+			
+		} else { // Stop setup network.
+			
+			networkIndex = -1;
+			for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+				if (wifiConfiguration.networks[i].setupNetwork) {
+					networkIndex = i;
+				} else {
+					wifiConfiguration.networks[i].disabled = 0;
+					// Enable all other networks.
+				}
+			}
+			wifiConfiguration.networks.splice(networkIndex, 1);
+			setupNetworkActive = false;
 		}
-		wifiConfiguration.networks.splice(networkIndex, 1);
-		setupNetworkActive = false;
+		saveWifiConfiguration(true);
 	}
-	saveWifiConfiguration(true);
 }
 
 function getSetupNetworkStatus() {
 	return setupNetworkActive;
 }
 
+function setSetupNetworkStatus(status) {
+	externalSetupNetwork = true;
+	setupNetworkActive = status;
+	readWifiConfiguration();
+	if (status == true) {
+		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+			wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
+		}
+	} else { // Stop setup network.	
+		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+			wifiConfiguration.networks[i].disabled = 0; // Enable all networks
+		}
+	}
+	saveWifiConfiguration(true);
+}
+
 function channelToFrequency(channel) {
 	if (channel > 11) channel = 11; // Channels usable in all regions.
 	return 2412 + (channel - 1) * 5; 
+}
+
+function reconfigure() {
+	exec('wpa_cli -i wlan0 reconfigure', function(error, stdout, stderr){
+	    if (error !== null) {
+	        //callback(false);
+	    } else {
+			//callback(true);
+		}
+	});
 }
 
 

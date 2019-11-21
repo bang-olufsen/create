@@ -39,14 +39,15 @@ $(document).on("setup", function(event, data) {
 			if (data.content.setup == "finished") {
 				$("body").css("opacity", "0");
 				setTimeout(function() {
-					showExtension("product-information");
+					window.location.reload();
+					/*showExtension("product-information");
 					delete menuState.setup.submenu;
 					$(".back-button.master").removeClass("visible");
 					$("section.top-level .menu-screen").removeClass("block");
 					$("section.top-level .menu-screen:first-child").addClass("block");
 					$("#setup-finish").removeClass("block").addClass("hidden-right");
 					$("#setup").removeClass("hidden-left").addClass("block");
-					$("body").removeClass("setup").css("opacity", "1");
+					$("body").removeClass("setup").css("opacity", "1");*/
 				}, 550);
 			} else {
 				$("body").removeClass("setup");

@@ -87,7 +87,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 			networks = networkCore.listSavedNetworks();
 			if (networks.length > 0 && beo.setup) {
 				if (extensions["setup"] && extensions["setup"].allowAdvancing) {
-					extensions["setup"].allowAdvancing("network");
+					extensions["setup"].allowAdvancing("network", true);
 				}
 			}
 			beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
@@ -171,7 +171,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					if (debug) console.log("Network '"+event.content.ssid+"' was removed.");
 					networks = networkCore.listSavedNetworks();
 					wifiScan();
-					if (networks.length == 0 && beo.setup) {
+					if (networks.length != 0 && beo.setup) {
 						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
 							extensions["setup"].allowAdvancing("network", false);
 						}
@@ -223,7 +223,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	
 	beo.bus.on('setup', function(event) {
 	
-		if (event.header == "advancing" && event.content.extension == "network") {
+		if (event.header == "advancing" && event.content.fromExtension == "network") {
 			beo.bus.emit("ui", {target: "network", header: "exitingHotspot"});
 			setConnectionMode({mode: "initial"});
 		}
@@ -409,11 +409,13 @@ var networkCore = require('../../beocreate_essentials/networking');
 				networkCore.setupNetwork(hotspotName);
 			} else {
 				if (networkHardware.wifi && networkCore.getSetupNetworkStatus()) {
+					if (debug) console.log("Stopping setup hotspot...");
 					networkCore.setupNetwork();
 				}
 			}
 		} else {
 			if (start) {
+				networkCore.setSetupNetworkStatus(true);
 				if (fs.existsSync("/etc/tempap-hostapd.conf")) {
 					hotspotConfig = fs.readFileSync("/etc/tempap-hostapd.conf", "utf8").split('\n');
 					for (var i = 0; i < hotspotConfig.length; i++) {
@@ -425,7 +427,9 @@ var networkCore = require('../../beocreate_essentials/networking');
 				}
 				child_process.exec("systemctl start tempap.service");
 			} else {
+				if (debug) console.log("Stopping setup hotspot...");
 				child_process.exec("systemctl stop tempap.service");
+				networkCore.setSetupNetworkStatus(false);
 			}
 		}
 	}

@@ -54,7 +54,7 @@ var fs = require("fs");
 		"modelID": "beocreate-4ca-mk1", 
 		"modelName": "BeoCreate 4-Channel Amplifier",
 		"productImage": "/product-images/beocreate-4ca-mk1.png",
-		"bonjourEnabled": false
+		"bonjourEnabled": true
 	};
 	if (hifiberryOS) {
 		defaultSettings = {

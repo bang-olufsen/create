@@ -19,7 +19,6 @@ SOFTWARE.*/
 
 	var extensions = beo.extensions;
 	var selectedExtension = beo.selectedExtension;
-	var setup = beo.setup;
 	var debug = beo.debug;
 	
 	var defaultSettings = {
@@ -57,18 +56,18 @@ SOFTWARE.*/
 			// The client always asks for this when it connects.
 			if (setupFlow.length == 2) {
 				// No (actual) extensions in the setup flow.
-				beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: setup, selectedExtension: selectedExtension}});
+				beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: beo.setup, selectedExtension: selectedExtension}});
 			} else {
-				if (!setup) {
+				if (!beo.setup) {
 					// Setup will start with the first extension when the client connects for the first time.
-					setup = true;
+					beo.setup = true;
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, reset: true, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: setup, selectedExtension: selectedExtension, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
 				}
 			}
 			
@@ -84,7 +83,7 @@ SOFTWARE.*/
 					} else {
 						// No more extensions, finish.
 						setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
-						setup = false;
+						beo.setup = false;
 						beo.bus.emit("setup", {header: "finishingSetup"});
 						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
 						settings.firstTimeSetup = false;

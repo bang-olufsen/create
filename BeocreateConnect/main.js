@@ -1,6 +1,6 @@
 const {app, Menu, BrowserWindow, ipcMain, systemPreferences} = require('electron');
 const windowStateKeeper = require('electron-window-state');
-const dnssd = require('dnssd');
+const dnssd = require('dnssd2');
 const drivelist = require('drivelist');
 var shell = require('electron').shell;
 

@@ -1,51 +1,56 @@
 {
-  "name": "BeocreateConnect",
+ "name": "BeocreateConnect",
+ "productName": "Beocreate Connect",
+ "version": "0.1.0",
+ "description": "Desktop utility for Beocreate-based sound systems",
+ "main": "main.js",
+ "scripts": {
+  "start": "electron .",
+  "dist": "electron-builder",
+  "pack": "electron-builder --dir"
+ },
+ "keywords": [],
+ "author": "",
+ "license": "MIT",
+ "devDependencies": {
+  "electron": "^5.0.6",
+  "electron-builder": "^20.44.4",
+  "electron-rebuild": "^1.8.2"
+ },
+ "dependencies": {
+  "dnssd2": "^1.0.0",
+  "drivelist": "^6.4.2",
+  "electron-window-state": "^5.0.3",
+  "multicast-dns": "^7.2.0"
+ },
+ "build": {
+  "appId": "dk.bang-olufsen.beocreateconnect",
   "productName": "Beocreate Connect",
-  "version": "0.1.0",
-  "description": "Desktop utility for Beocreate-based sound systems",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-	"dist": "electron-builder",
-	"pack": "electron-builder --dir"
+  "copyright": "Copyright 2019 Bang & Olufsen A/S. Licensed under MIT.",
+  "nodeVersion": "current",
+  "readonly": false,
+  "directories": {
+   "buildResources": "build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^5.0.6",
-    "electron-builder": "^20.44.4",
-    "electron-rebuild": "^1.8.2"
+  "mac": {
+   "target": [
+    "zip",
+    "dmg"
+   ],
+   "icon": "build/create.icns",
+   "category": "public.app-category.utilities",
+   "darkModeSupport": true,
+   "identity": null
   },
-  "dependencies": {
-    "dnssd": "^0.4.1",
-    "drivelist": "^6.4.2",
-    "electron-window-state": "^5.0.3",
-    "multicast-dns": "^7.2.0"
+  "dmg": {
+   "title": "Beocreate Connect",
+   "background": "build/background.tiff"
   },
-  "build": {
-    "appId": "dk.bang-olufsen.beocreateconnect",
-    "productName": "Beocreate Connect",
-	"copyright": "Copyright 2019 Bang & Olufsen A/S. Licensed under MIT.",
-	"nodeVersion": "current",
-	"readonly": false,
-	"directories": {
-		"buildResources": "build"
-	},
-	"mac": {
-		"target": ["zip", "dmg"],
-		"icon": "build/create.icns",
-		"category": "public.app-category.utilities",
-		"darkModeSupport": true,
-		"identity": null
-	},
-	"dmg": {
-		"title": "Beocreate Connect",
-		"background": "build/background.tiff"
-	},
-	"win": {
-		"icon": "build/create.ico",
-		"target": ["portable"]
-	}
+  "win": {
+   "icon": "build/create.ico",
+   "target": [
+    "portable"
+   ]
   }
+ }
 }

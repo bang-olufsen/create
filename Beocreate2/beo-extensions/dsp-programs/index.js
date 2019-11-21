@@ -261,7 +261,7 @@ if (Gpio) {
 				currentChecksum = checksum;
 				beoDSP.getXML(function(response) {
 					// Reads the current program from the DSP.
-					metadata = (response != null) ? parseDSPMetadata(response) : null;
+					metadata = (response != null) ? parseDSPMetadata(response).metadata : null;
 					
 					if (metadata) {
 						if (!metadataFromDSP && !startup) {
@@ -302,32 +302,41 @@ if (Gpio) {
 		}
 	}
 	
-	function parseDSPMetadata(xml) {
+	function parseDSPMetadata(xml, filename) {
 		// Get the DSP metadata from the XML as a JavaScript object.
 		metadataXML = '<beometa>' + xml.split("</beometa>")[0].split("<beometa>")[1] + "</beometa>";
 		beoMeta = {};
-		rawMetadata = xmlJS.xml2js(metadataXML, {compact: true}).beometa.metadata;
-		if (rawMetadata) {
-			for (var i = 0; i < rawMetadata.length; i++) {
-				if (rawMetadata[i]._text) {
-					values = rawMetadata[i]._text.split(",");
-					for (var v = 0; v < values.length; v++) {
-						if (!isNaN(values[v])) values[v] = parseFloat(values[v]);
-					}
-					beoMeta[rawMetadata[i]._attributes.type] = {value: values};
-					for (var key in rawMetadata[i]._attributes) {
-					    if (rawMetadata[i]._attributes.hasOwnProperty(key)) {
-							if (key != "type") {
-								beoMeta[rawMetadata[i]._attributes.type][key] = rawMetadata[i]._attributes[key];
-							}
-					    }
+		try {
+			rawMetadata = xmlJS.xml2js(metadataXML, {compact: true}).beometa.metadata;
+			if (rawMetadata) {
+				for (var i = 0; i < rawMetadata.length; i++) {
+					if (rawMetadata[i]._text) {
+						values = rawMetadata[i]._text.split(",");
+						for (var v = 0; v < values.length; v++) {
+							if (!isNaN(values[v])) values[v] = parseFloat(values[v]);
+						}
+						beoMeta[rawMetadata[i]._attributes.type] = {value: values};
+						for (var key in rawMetadata[i]._attributes) {
+						    if (rawMetadata[i]._attributes.hasOwnProperty(key)) {
+								if (key != "type") {
+									beoMeta[rawMetadata[i]._attributes.type][key] = rawMetadata[i]._attributes[key];
+								}
+						    }
+						}
 					}
 				}
+			} else {
+				beoMeta = null;
 			}
-		} else {
-			beoMeta = null;
+			return {metadata: beoMeta, error: null};
+		} catch (error) {
+			if (filename) {
+				console.error("Invalid XML encountered in DSP program '"+filename+"'. Error:", error);
+			} else {
+				console.error("Invalid XML encountered in the received DSP program. Error:", error);
+			}
+			return {metadata: null, error: error};
 		}
-		return beoMeta;
 	}
 	
 	function getProgramName(metadata, filename) {
@@ -481,10 +490,12 @@ if (Gpio) {
 	}
 	
 	function addDSPProgramToList(id, path, metadata, readOnly) {
-		name = getProgramName(metadata, id);
-		checksum = getChecksumFromMetadata(metadata);
-		version = (metadata.profileVersion) ? metadata.profileVersion.value[0] : null;
-		dspPrograms[id] = {name: name, path: path, metadata: metadata, checksum: checksum, version: version, filename: id+".xml", readOnly: readOnly};
+		if (!metadata.error) {
+			name = getProgramName(metadata, id);
+			checksum = getChecksumFromMetadata(metadata);
+			version = (metadata.profileVersion) ? metadata.profileVersion.value[0] : null;
+			dspPrograms[id] = {name: name, path: path, metadata: metadata.metadata, checksum: checksum, version: version, filename: id+".xml", readOnly: readOnly};
+		}
 	}
 	
 	function readDSPProgramFromFile(path, filename, callback) {
@@ -493,7 +504,7 @@ if (Gpio) {
 			
 			stream.on("data", function(chunk) {
 				snippet = chunk.toString();
-				metadata = parseDSPMetadata(snippet);
+				metadata = parseDSPMetadata(snippet, filename);
 				callback(filename, path, metadata);
 			});
 		}

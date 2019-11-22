@@ -21,18 +21,18 @@ var piSystem = require("../../beocreate_essentials/pi_system_tools");
 var beoCom = require("../../beocreate_essentials/communication")();
 var fs = require("fs");
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var extensions = globals.extensions;
-	var setup = globals.setup;
-	var download = globals.download;
-	var debug = globals.debug;
+	var extensions = beo.extensions;
+	var setup = beo.setup;
+	var download = beo.download;
+	var debug = beo.debug;
 	
-	var soundPresetDirectory = dataDirectory+"/beo-sound-presets"; // Sound presets directory.
-	var productIdentityDirectory = dataDirectory+"/beo-product-identities"; // Product identities directory.
+	var soundPresetDirectory = beo.dataDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var systemSoundPresetDirectory = beo.systemDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var productIdentityDirectory = beo.dataDirectory+"/beo-product-identities"; // Product identities directory.
+	var systemProductIdentityDirectory = beo.systemDirectory+"/beo-product-identities"; // Product identities directory.
 	
 	
-	var hifiberryOS = (globals.systemConfiguration.cardType && globals.systemConfiguration.cardType.indexOf("Beocreate") == -1) ? true : false;
+	var hifiberryOS = (beo.systemConfiguration.cardType && beo.systemConfiguration.cardType.indexOf("Beocreate") == -1) ? true : false;
 	var genericProductImage = "";
 	if (!hifiberryOS) {
 		genericProductImage = "/common/beocreate-generic.png";
@@ -54,7 +54,7 @@ module.exports = function(beoBus, globals) {
 		"modelID": "beocreate-4ca-mk1", 
 		"modelName": "BeoCreate 4-Channel Amplifier",
 		"productImage": "/product-images/beocreate-4ca-mk1.png",
-		"bonjourEnabled": false
+		"bonjourEnabled": true
 	};
 	if (hifiberryOS) {
 		defaultSettings = {
@@ -70,10 +70,12 @@ module.exports = function(beoBus, globals) {
 	
 	var productIdentities = {};
 	
-	var imageDirectory = dataDirectory+"/beo-product-images/";
+	var imageDirectory = beo.dataDirectory+"/beo-product-images/";
+	var systemImageDirectory = beo.systemDirectory+"/beo-product-images/";
 	if (!fs.existsSync(imageDirectory)) fs.mkdirSync(imageDirectory);
+	if (!fs.existsSync(productIdentityDirectory)) fs.mkdirSync(productIdentityDirectory);
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			systemVersion = event.content.systemVersion;
@@ -98,10 +100,10 @@ module.exports = function(beoBus, globals) {
 					if (!err) systemName = response;
 					if (systemName.ui) {
 						if (!systemNameSent) {
-							beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+							beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
 							systemNameSent = true;
 						}
-						beoBus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
+						beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 						startOrUpdateBonjour();
 					} else {
 						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name.
@@ -120,10 +122,10 @@ module.exports = function(beoBus, globals) {
 								systemName = response;
 								if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");
 								if (!systemNameSent) {
-									beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+									beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
 									systemNameSent = true;
 								}
-								beoBus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
+								beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 								startOrUpdateBonjour();
 							} else {
 								if (debug) console.error("Setting system name failed: "+response);
@@ -136,21 +138,21 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "product-information") {
-				beoBus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: globals.systemConfiguration}});
+				beo.bus.emit("ui", {target: "product-information", header: "showProductIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage}});
 			}
 		}
 		
 		if (event.header == "shutdown") {
 			if (beoCom.isBonjourStarted()) {
 				beoCom.stopBonjour(function() {
-					beoBus.emit("general", {header: "shutdownComplete", content: {extension: "product-information"}});
+					beo.bus.emit("general", {header: "shutdownComplete", content: {extension: "product-information"}});
 				});
 			}
 		}
 	});
 
 	
-	beoBus.on('product-information', function(event) {
+	beo.bus.on('product-information', function(event) {
 		
 		if (event.header == "settings") {
 			
@@ -168,11 +170,11 @@ module.exports = function(beoBus, globals) {
 					if (success == true) { 
 						systemName = response;
 						if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");
-						beoBus.emit('product-information', {header: "systemNameChanged", content: {systemName: systemName.ui, staticName: systemName.static}});
+						beo.bus.emit('product-information', {header: "systemNameChanged", content: {systemName: systemName.ui, staticName: systemName.static}});
 						startOrUpdateBonjour("systemName");
-						beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, staticName: systemName.static}});
+						beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, staticName: systemName.static}});
 						if (!setup) {
-							//beoBus.emit("ui", {target: "product-information", header: "askToRestartAfterSystemNameChange"});
+							//beo.bus.emit("ui", {target: "product-information", header: "askToRestartAfterSystemNameChange"});
 							// No need to ask for restart, system name can be changed without restarting.
 						}
 					} else {
@@ -182,9 +184,9 @@ module.exports = function(beoBus, globals) {
 			}
 		}
 		
-		if (event.header == "getSystemName") {
+		if (event.header == "getBasicProductInformation") {
 			if (systemName.ui) {
-				beoBus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+				beo.bus.emit("ui", {target: "product-information", header: "basicProductInformation", content: {systemName: systemName.ui, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: beo.systemConfiguration}});
 				systemNameSent = true;
 			}
 		}
@@ -209,18 +211,18 @@ module.exports = function(beoBus, globals) {
 		}
 		
 		if (event.header == "getProductIdentities") {
-			beoBus.emit("ui", {target: "product-information", header: "allProductIdentities", content: {identities: productIdentities}});
+			beo.bus.emit("ui", {target: "product-information", header: "allProductIdentities", content: {identities: productIdentities}});
 		}
 		
 		if (event.header == "restartProduct") {
 			if (debug) console.error("User-requested product reboot...");
-			beoBus.emit("general", {header: "requestReboot", content: {extension: "product-information"}});
+			beo.bus.emit("general", {header: "requestReboot", content: {extension: "product-information"}});
 			
 		}
 		
 		if (event.header == "shutdownProduct") {
 			if (debug) console.error("User-requested product shutdown...");
-			beoBus.emit("general", {header: "requestShutdown", content: {extension: "product-information"}});
+			beo.bus.emit("general", {header: "requestShutdown", content: {extension: "product-information"}});
 			
 		}
 		
@@ -229,7 +231,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 
-	beoBus.on('network', function(event) {
+	beo.bus.on('network', function(event) {
 		
 		if (event.header == "internetStatus") {
 			if (event.content == true) {
@@ -258,12 +260,12 @@ module.exports = function(beoBus, globals) {
 	
 	function startOrUpdateBonjour(newData) {
 		if (settings.bonjourEnabled) {
-			systemStatus = (!globals.setup) ? "normal" : "yellow";
+			systemStatus = (!beo.setup) ? "normal" : "yellow";
 			if (!beoCom.isBonjourStarted()) {
 				// Bonjour is currently not advertising, start.
 				if (debug) console.log("Advertising system as '"+systemName.ui+"'...");
-				beoCom.startBonjour({name: systemName.ui, serviceType: "beocreate", advertisePort: globals.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
-				beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "product-information"}});
+				beoCom.startBonjour({name: systemName.ui, serviceType: "beocreate", advertisePort: beo.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
+				beo.bus.emit("general", {header: "requestShutdownTime", content: {extension: "product-information"}});
 				setTimeout(function() {
 					bonjourStartedRecently = false;
 				}, 2000);
@@ -297,16 +299,31 @@ module.exports = function(beoBus, globals) {
 			settings.productImage = productIdentities[modelID].productImage[0];
 			currentProductImage = productIdentities[modelID].productImage[1];
 			if (debug) console.log("Product model name is now '"+settings.modelName+"'.");
-			beoBus.emit("settings", {header: "saveSettings", content: {extension: "product-information", settings: settings}});
-			beoBus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
+			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "product-information", settings: settings}});
+			beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 			startOrUpdateBonjour("model");
-			beoBus.emit("ui", {target: "product-information", header: "showProductModel", content: {modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage}});
+			beo.bus.emit("ui", {target: "product-information", header: "showProductModel", content: {modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage}});
 		}
 	}
 	
 	
 	function updateProductIdentities() {
-		// Combines product identities from beo-product-identities and beo-sound-presets directories.
+		// Combines product identities from beo-product-identities and beo-sound-presets directories, from system and user locations.
+		if (fs.existsSync(systemSoundPresetDirectory)) {
+			presetFiles = fs.readdirSync(systemSoundPresetDirectory);
+			for (var i = 0; i < presetFiles.length; i++) {
+				try {
+					preset = JSON.parse(fs.readFileSync(systemSoundPresetDirectory+"/"+presetFiles[i], "utf8"));
+					if (preset["product-information"]) {
+						checkAndAddProductIdentity(preset["product-information"]);
+					} else {
+						if (debug == 2) console.log("No product identity data in sound preset '"+presetFiles[i]+"'.");
+					}
+				} catch (error) {
+					console.error("Invalid JSON data for sound preset '"+presetFiles[i]+"':", error);
+				}
+			}
+		}
 		if (fs.existsSync(soundPresetDirectory)) {
 			presetFiles = fs.readdirSync(soundPresetDirectory);
 			for (var i = 0; i < presetFiles.length; i++) {
@@ -322,6 +339,18 @@ module.exports = function(beoBus, globals) {
 				}
 			}
 		}
+		
+		
+		if (fs.existsSync(systemProductIdentityDirectory)) {
+			identityFiles = fs.readdirSync(systemProductIdentityDirectory);
+			for (var i = 0; i < identityFiles.length; i++) {
+				try {
+					checkAndAddProductIdentity(JSON.parse(fs.readFileSync(systemProductIdentityDirectory+"/"+identityFiles[i], "utf8")), true);
+				} catch (error) {
+					console.error("Invalid JSON data for product identity '"+identityFiles[i]+"':", error);
+				}
+			}
+		}
 		if (fs.existsSync(productIdentityDirectory)) {
 			identityFiles = fs.readdirSync(productIdentityDirectory);
 			for (var i = 0; i < identityFiles.length; i++) {
@@ -332,7 +361,7 @@ module.exports = function(beoBus, globals) {
 				}
 			}
 		}
-		//beoBus.emit('product-information', {header: "identitiesReady"});
+		//beo.bus.emit('product-information', {header: "identitiesReady"});
 	}
 	
 	
@@ -385,7 +414,9 @@ module.exports = function(beoBus, globals) {
 				// Only delete "internal" presets with an override.
 				if (internal && productIdentities[identity].fileReference) {
 					// Delete the identity file if it is referenced.
-					if (fs.existsSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference)) fs.unlinkSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference);
+					if (fs.existsSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference)) {
+						fs.unlinkSync(productIdentityDirectory+"/"+productIdentities[identity].fileReference);
+					}
 				}
 				if (debug) console.log("Removing product identity '"+identity+"'.");
 				delete productIdentities[identity];
@@ -417,7 +448,10 @@ module.exports = function(beoBus, globals) {
 			return ["/common/hifiberry-generic.png", "/common/hifiberry-generic.png"];
 		} else if (imageName) {
 			if (imageName.indexOf(".png") == -1) imageName += ".png";
-			if (fs.existsSync(imageDirectory+"/"+imageName)) {
+			if (fs.existsSync(systemImageDirectory+"/"+imageName)) {
+				image = imageName;
+				return ["/product-images/"+imageName, "/product-images/"+imageName];
+			} else if (fs.existsSync(imageDirectory+"/"+imageName)) {
 				image = imageName;
 				return ["/product-images/"+imageName, "/product-images/"+imageName];
 			} else {
@@ -477,15 +511,23 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	return {
-		getProductInformation: getProductInformation,
-		setProductIdentity: setProductModel,
-		getProductIdentity: getProductIdentity,
-		getProductImage: getProductImage,
-		addProductIdentity: checkAndAddProductIdentity,
-		deleteProductIdentity: deleteProductIdentity,
-		version: version
-	};
+	function restAPI(header, callback) {
+		if (header == "discovery") {
+			callback({name: systemName.ui, serviceType: "beocreate", advertisePort: beo.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
+		} else {
+			callback(null);
+		}
+	}
+	
+module.exports = {
+	getProductInformation: getProductInformation,
+	setProductIdentity: setProductModel,
+	getProductIdentity: getProductIdentity,
+	getProductImage: getProductImage,
+	addProductIdentity: checkAndAddProductIdentity,
+	deleteProductIdentity: deleteProductIdentity,
+	restAPI: restAPI,
+	version: version
 };
 
 

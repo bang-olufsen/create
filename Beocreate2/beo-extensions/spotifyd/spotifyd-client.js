@@ -36,20 +36,21 @@ $(document).on("spotifyd", function(event, data) {
 function toggleEnabled() {
 	enabled = (!spotifydEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning Spotify Connect on...", icon: "attention", timeout: false, id: "spotifyd"});
+		notify({title: "Turning Spotify Connect on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning Spotify Connect off...", icon: "attention", timeout: false, id: "spotifyd"});
+		notify({title: "Turning Spotify Connect off...", icon: "attention", timeout: false});
 	}
 	send({target: "spotifyd", header: "spotifydEnabled", content: {enabled: enabled}});
 }
 
-function logIn(input) {
-	if (!input) {
-		startTextInput(3, "Log In with Spotify", "Enter your Spotify user name and password.", {placeholders: {password: "Password", text: "User name"}, minLength: {text: 2, password: 3}}, spotifyd.logIn);
-	} else {
-		send({target: "spotifyd", header: "logIn", content: {username: input.text, password: input.password}});
-		notify({title: "Updating settings...", icon: "attention", timeout: false, id: "spotifyd"});
-	}
+function logIn() {
+	
+	startTextInput(3, "Log In with Spotify", "Enter your Spotify user name and password.", {placeholders: {password: "Password", text: "User name"}, minLength: {text: 2, password: 3}}, function(input) {
+		if (input) {
+			send({target: "spotifyd", header: "logIn", content: {username: input.text, password: input.password}});
+			notify({title: "Updating settings...", icon: "attention", timeout: false, id: "spotifyd"});
+		}
+	});
 }
 
 function logOut() {

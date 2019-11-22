@@ -7,12 +7,15 @@ var focusedSource = null;
 var cacheIndex = 0;
 var playerState = "stopped";
 
+var useExternalArtwork = null;
+var disableInternalArtwork = false;
+
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			//if ($("#now-playing").hasClass("visible")) {
-				send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
+				send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
 			//}
 		}
 	}
@@ -21,7 +24,10 @@ $(document).on("general", function(event, data) {
 
 var loveAnimTimeout;
 $(document).on("now-playing", function(event, data) {
-
+	
+	if (data.header == "useExternalArtwork") {
+		if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
+	}
 	
 	if (data.header == "metadata") {
 		if (data.content.metadata != undefined && Object.keys(data.content.metadata).length > 0) {
@@ -41,9 +47,14 @@ $(document).on("now-playing", function(event, data) {
 			if (data.content.metadata.artist) {
 				$(".now-playing-artist").text(data.content.metadata.artist);
 			}*/
+			
+			if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
+			
 			if (data.content.metadata.album) {
 				$(".artwork-img").attr("alt", data.content.metadata.album);
 				$("#artwork-wrap-inner").attr("data-album", data.content.metadata.album);
+			} else {
+				
 			}
 			if (data.content.metadata.title != undefined) {
 				artistAlbum = false;
@@ -58,16 +69,23 @@ $(document).on("now-playing", function(event, data) {
 				setNowPlayingTitles(data.content.metadata.title, artistAlbum);
 			}
 			
-			if (data.content.metadata.picture != undefined) {
-				if (data.content.metadata.picture != false && data.content.metadata.picture != true) {
-					loadArtwork(data.content.metadata.picture, data.content.metadata.picturePort);
-				} else if (data.content.metadata.picture != true) {
-					loadArtwork();
-				}
+			// Album covers.
+			port = data.content.metadata.picturePort;
+			if (data.content.metadata.picture && !disableInternalArtwork) {
+				internalURL = data.content.metadata.picture;
 			} else {
-				loadArtwork();
+				internalURL = null;
 			}
 			
+			if (data.content.metadata.externalPicture) {
+				externalURL = data.content.metadata.externalPicture;
+			} else {
+				externalURL = null;
+			}
+			determineArtworkToShow(internalURL, externalURL, port);
+			
+			clearTimeout(loveAnimTimeout);
+			$("#love-button").removeClass("love-in-progress");
 			if (data.content.metadata.loved) {
 				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart-filled.svg");
 				$("#love-button").addClass("beat-anim");
@@ -167,6 +185,43 @@ function hideNowPlaying() {
 	}, 600);
 }
 
+var artworkDragStartPosition;
+$( ".main-artwork" ).draggable({
+//	cursorAt: { top: 0, left: 0 },
+	//delay: 500,
+	scroll: false,
+	helper: function( event ) {
+	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
+	},
+	start: function( event, ui ) {
+		$("#now-playing").addClass("no-animation");
+	},
+	stop: function( event, ui ) {
+		$("#now-playing").removeClass("no-animation");
+		$(".now-playing-artwork-wrap").css("transform", "");
+		$("#now-playing-control-area").css("transform", "");
+		offset = ui.position.top - artworkDragStartPosition.top;
+		if (offset > 40) hideNowPlaying();
+		artworkDragStartPosition = null;
+	},
+	drag: function( event, ui ) {
+		if (artworkDragStartPosition) {
+			offset = ui.position.top - artworkDragStartPosition.top;
+			if (offset < 0) {
+				visibleOffset = offset/6;
+			} else if (offset >= 0 && offset < 50) {
+				visibleOffset = offset/2;
+			} else {
+				visibleOffset = 25+(offset-50)/4;
+			}
+			$(".now-playing-artwork-wrap").css("transform", "translateY("+visibleOffset+"px)");
+			$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
+		} else {
+			artworkDragStartPosition = ui.position;
+		}
+	}
+});
+
 var functionRowVisible = false;
 var functionRowItems = {
 	love: {visible: false}
@@ -216,8 +271,14 @@ function transport(action) {
 	}
 }
 
+
 function toggleLove() {
 	send({target: "now-playing", header: "toggleLove"});
+	$("#love-button").addClass("love-in-progress");
+	clearTimeout(loveAnimTimeout);
+	loveAnimTimeout = setTimeout(function() {
+		$("#love-button").removeClass("love-in-progress");
+	}, 3000);
 }
 
 var playButtonSymbolTimeout;
@@ -244,18 +305,22 @@ function playButtonPress() {
 }
 
 function toggleShowAlbumName(hide) {
-	if (hide || $("#artwork-wrap-inner").hasClass("show-name")) {
-		$("#artwork-wrap-inner").removeClass("show-name")
+	if (hide || $(".artwork-wrap-inner").hasClass("show-name")) {
+		$(".artwork-wrap-inner").removeClass("show-name")
 	} else {
 		//$("#artwork-wrap-inner").addClass("show-name")
 	}
 }
 
 var artworkChangeTimeout;
-var previousSrc = "";
+var currentPicture = "";
+var hasPicture = false;
+var currentArtworkView = "a";
+var hiddenArtworkView = "b";
 
-function loadArtwork(url, port) {
-	if (!url || url.indexOf("file:///") == -1) { // Don't try loading file URLs
+function loadArtwork(url, port, testExternal) {
+	evaluateExternalArtwork = false;
+	if (!url || url.indexOf("file:///") == -1) {
 		if (url) {
 			if (url.indexOf("http") == 0) {
 				// Remote url, use as is.
@@ -268,6 +333,7 @@ function loadArtwork(url, port) {
 				}
 			}
 			src = imageURL;
+			if (!testExternal) hasPicture = true;
 		} else {
 			// Load appropriately branded placeholder artwork.
 			if ($("body").hasClass("hifiberry-os")) {
@@ -275,33 +341,157 @@ function loadArtwork(url, port) {
 			} else {
 				src = $("#now-playing").attr("data-asset-path")+"/placeholder.png";
 			}
+			hasPicture = false;
 		}
-		if (src != previousSrc) {
-			$("#main-artwork").removeClass("visible");
+		if (src != currentPicture) {
 			clearTimeout(artworkChangeTimeout);
-			previousSrc = src;
-			artworkChangeTimeout = setTimeout(function() {
-				$(".artwork-img").attr("src", src);
-				if (!url) {
-					$(".artwork-img").addClass("placeholder");
-					$(".artwork-bg").css("background-image", "none");
-				} else {
-					$(".artwork-img").removeClass("placeholder");
-					$(".artwork-bg").css("background-image", "url(" + src + ")");
-				}
-			}, 250);
+			if (!testExternal) currentPicture = src;
+			pictureInTargetView = $(".artwork-img-"+hiddenArtworkView).attr("src");
+			$(".artwork-img-"+hiddenArtworkView).attr("src", src);
+			if (!testExternal) {
+				console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+"...");
+			} else {
+				console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
+			}
+			if (!url) {
+				$(".artwork-img-"+hiddenArtworkView).addClass("placeholder");
+				$(".artwork-bg-"+hiddenArtworkView).css("background-image", "none");
+			} else {
+				$(".artwork-img-"+hiddenArtworkView).removeClass("placeholder");
+				$(".artwork-bg"+hiddenArtworkView).css("background-image", "url(" + src + ")");
+			}
+			if (pictureInTargetView == currentPicture) artworkLoaded(hiddenArtworkView);
 		}
 	} else {
 		// In case of a file URL, wait for one second for the actual artwork. Otherwise load default artwork.
+		hasPicture = false;
 		artworkChangeTimeout = setTimeout(function() {
 			loadArtwork();
 		}, 1000);
 	}
 }
 
-function artworkLoaded() {
-	$("#main-artwork").addClass("visible");
+var evaluateExternalArtwork = false;
+var currentInternalPicture = null;
+var currentExternalPicture = null;
+function determineArtworkToShow(internalURL, externalURL, port) {
+	
+	if (internalURL != currentInternalPicture || (!internalURL && !externalURL)) { // Always load internal artwork first, or if neither image is available.
+		loadArtwork(internalURL, port);
+		if (internalURL != null && internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
+		currentInternalPicture = internalURL;
+	} else if (internalURL && currentPicture != internalURL) {
+		loadArtwork(internalURL, port);
+	}
+	
+	// If external artwork is set to "never", don't do anything.
+	// If no picture, load external artwork ("missing" mode).
+	// If current picture file is smaller than the picture view, load and check external artwork size. If larger, switch ("auto" mode).
+	// Load external artwork always ("always" mode).
+	
+	switch (useExternalArtwork) {
+		case "missing":
+			if (!internalURL && externalURL && (currentExternalPicture != externalURL || externalURL != currentPicture)) {
+				loadArtwork(externalURL);
+				currentExternalPicture = externalURL;
+			}
+			break;
+		case "auto":
+			if (externalURL && currentExternalPicture != externalURL) {
+				if (!internalURL) {
+					loadArtwork(externalURL);
+					currentExternalPicture = externalURL;
+				} else {
+					artworkWidth = (currentArtworkView == "a") ? artworkDimensionsA[0] : artworkDimensionsB[0];
+					if ($("#main-artwork-"+currentArtworkView).innerWidth() * window.devicePixelRatio > artworkWidth) {
+						// Image view is larger than the image.
+						loadArtwork(externalURL, null, true);
+						evaluateExternalArtwork = hiddenArtworkView;
+						currentExternalPicture = externalURL;
+					}
+				}
+			}
+			break;
+		case "always":
+			if (externalURL && (currentExternalPicture != externalURL || externalURL != currentPicture)) {
+				loadArtwork(externalURL);
+				currentExternalPicture = externalURL;
+			}
+			break;
+			
+	}
+	
 }
+
+function switchArtwork(view) {
+	show = view;
+	hide = (show == "a") ? "b" : "a";
+	if (noAnimation) $(".now-playing-artwork-wrap").addClass("no-animation");
+	$("#now-playing-artwork-wrap-"+show).addClass("visible incoming");
+	$("#now-playing-artwork-wrap-"+hide).removeClass("visible").addClass("outgoing");
+	setTimeout(function() {
+		$(".now-playing-artwork-wrap").removeClass("incoming outgoing");
+	}, 500);
+	previousSrc = $(".artwork-img-"+show).attr("src");
+	currentArtworkView = show;
+	hiddenArtworkView = hide;
+}
+
+function testArtworkSwap() {
+	view = (currentArtworkView == "a") ? "b" : "a";
+	switchArtwork(view);
+	return view;
+}
+
+function artworkLoaded(view) {
+	shouldSwitch = true;
+	noAnimation = false;
+	if (view == "a") {
+		artworkDimensionsA[0] = $(this).get(0).naturalWidth;
+		artworkDimensionsA[1] = $(this).get(0).naturalHeight;
+		artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	} else {
+		artworkDimensionsA[0] = $(this).get(0).naturalWidth;
+		artworkDimensionsA[1] = $(this).get(0).naturalHeight;
+		artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+	}
+	resizeArtwork();
+	if (evaluateExternalArtwork == view) {
+		// If the downloaded image is equal size or smaller than the current one, don't switch them.
+		hiddenViewDimension = (view == "a") ? artworkDimensionsA[0] : artworkViewDimensionsB[0];
+		currentViewDimension = (view == "a") ? artworkDimensionsB[0] : artworkViewDimensionsA[0];
+		if (hiddenViewDimension <= currentViewDimension) {
+			shouldSwitch = false;
+			console.log("External artwork is not higher-resolution.");
+		} else {
+			noAnimation = true;
+			console.log("Switching to higher-resolution downloaded artwork in view "+view.toUpperCase()+".");
+		}
+		evaluateExternalArtwork = false;
+	}
+	if (shouldSwitch) switchArtwork(view, noAnimation);
+}
+
+$("#main-artwork-a").on('load', function() {
+	artworkLoaded("a");
+});
+$("#main-artwork-b").on('load', function() {
+	artworkLoaded("b");
+});
+$("#main-artwork-a").on('error', function() {
+	if (evaluateExternalArtwork != "b") {
+		loadArtwork();
+	} else {
+		evaluateExternalArtwork = false;
+	}
+});
+$("#main-artwork-b").on('error', function() {
+	if (evaluateExternalArtwork != "a") {
+		loadArtwork();
+	} else {
+		evaluateExternalArtwork = false;
+	}
+});
 
 function loadSmallSampleArtwork() {
 	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
@@ -312,25 +502,50 @@ window.onresize = function() {
 };
 
 var windowAspectRatio = 1;
-var artworkAspectRatio = 1; // wide > 1 < tall
+var artworkAspectRatioA = 1; // wide > 1 < tall
+var artworkAspectRatioB = 1;
+var artworkDimensionsA = [0,0];
+var artworkDimensionsB = [0,0];
 function resizeArtwork() {
-	containerAspectRatio = $("#artwork-wrap-inner").innerWidth() / $("#artwork-wrap-inner").innerHeight();
+	containerAspectRatio = $(".artwork-wrap-inner").innerWidth() / $(".artwork-wrap-inner").innerHeight();
 	
-	if (containerAspectRatio >= artworkAspectRatio) { // Container is wider
-		$("#main-artwork").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
-		$("#artwork-wrap-inner").css("flex-direction", "column");
+	if (containerAspectRatio >= artworkAspectRatioA) { // Container is wider
+		$("#main-artwork-a").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
+		$("#artwork-wrap-inner-a").css("flex-direction", "column");
 	} else {
-		$("#main-artwork").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
-		$("#artwork-wrap-inner").css("flex-direction", "row");
+		$("#main-artwork-a").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
+		$("#artwork-wrap-inner-a").css("flex-direction", "row");
 	}
 	
-	//$("#main-artwork").css("max-width", container[0]+"px").css("max-height", container[1]+"px")
+	if (containerAspectRatio >= artworkAspectRatioB) { // Container is wider
+		$("#main-artwork-b").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
+		$("#artwork-wrap-inner-b").css("flex-direction", "column");
+	} else {
+		$("#main-artwork-b").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
+		$("#artwork-wrap-inner-b").css("flex-direction", "row");
+	}
+	
 }
 
-$("#main-artwork").on('load', function() {
-	artworkAspectRatio = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
-	resizeArtwork();
-});
+
+
+function setUseExternalArtwork(mode, updateOnly) {
+	switch (mode) {
+		case "never":
+		case "missing":
+		case "auto":
+		case "always":
+			if (updateOnly) {
+				$(".external-artwork-settings .menu-item").removeClass("checked");
+				$(".external-artwork-settings .menu-item#external-artwork-"+mode).addClass("checked");
+				useExternalArtwork = mode;
+			} else {
+				if (!updateOnly) send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
+			}
+			break;
+	}
+	
+}
 
 
 // MANAGE AND SWITCH TOP TEXT AND BANG & OLUFSEN LOGO
@@ -368,7 +583,10 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 	} else {
 		newSecondRow = secondRow;
 	}
-
+	
+	changed = false;
+	if (previousFirstRow != newFirstRow || previousSecondRow != newSecondRow) changed = true;
+	
 	if (!temp) {
 		previousFirstRow = newFirstRow;
 		previousSecondRow = newSecondRow;
@@ -376,7 +594,9 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 		//clearTimeout(tempTopTextTimeout);
 		tempTopTextTimeout = null;
 	}
-
+	
+	
+	
 
 	if (!tempTopTextTimeout) {
 
@@ -395,14 +615,14 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 			$(".now-playing-titles").addClass("one-row").removeClass("logo");
 			$("#player-bar-info-area .focused-source").addClass("icon-only");
 			clearTimeout(sourceNameTimeout);
-			evaluateTextScrolling();
+			if (changed) evaluateTextScrolling();
 		} else { // Both rows have text, show them.
 			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
 			$(".now-playing-titles .second-row").text(newSecondRow).attr("data-content", newSecondRow);
 			$(".now-playing-titles").removeClass("logo one-row");
 			$("#player-bar-info-area .focused-source").addClass("icon-only");
 			clearTimeout(sourceNameTimeout);
-			evaluateTextScrolling();
+			if (changed) evaluateTextScrolling();
 			clearTimeout(topTextNotifyTimeout);
 			/*topTextNotifyTimeout = setTimeout(function() {
 				tabBarNotify("now-playing", newFirstRow, newSecondRow);
@@ -505,10 +725,13 @@ return {
 	transport: transport,
 	enableSourceStart: enableSourceStart,
 	loadArtwork: loadArtwork,
-	artworkLoaded: artworkLoaded,
+	switchArtwork: switchArtwork,
 	loadSmallSampleArtwork: loadSmallSampleArtwork,
+	testArtworkSwap: testArtworkSwap,
 	toggleLove: toggleLove,
-	functionRow: functionRow
+	functionRow: functionRow,
+	setUseExternalArtwork: setUseExternalArtwork,
+	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable}
 }
 
 })();

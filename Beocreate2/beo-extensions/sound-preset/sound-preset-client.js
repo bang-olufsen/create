@@ -156,7 +156,7 @@ $(document).on("sound-preset", function(event, data) {
 				notify({title: "Incomplete preset", message: "Sound preset did not contain a preset name. Please refer to documentation on sound presets.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "existingPresetReadOnly":
-				notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is read-only. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is a system preset. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "askToReplace":
 				ask("replace-sound-preset-prompt", [data.content.existingPresetName], null, "sound_preset.replaceExistingPreset(false);");

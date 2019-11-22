@@ -1,0 +1,23 @@
+<div class="menu-screen" id="ssh" data-icon="terminal.svg" data-menu-title="Remote Login" data-context="system-settings/services">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Remote Login</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>Remote login (SSH) allows connecting to the sound system from command line for tinkering or troubleshooting.</p>
+			<div class="menu-item toggle" id="ssh-enabled-toggle" onclick="ssh.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<hr>
+			<div class="button pill grey" id="ssh-change-password-button" onclick="ssh.changePassword(0);">Change Password...</div>
+			<p class="warning margin-top" id="ssh-password-change-notice">Password has not been changed. Change it to protect your sound system.</p>
+		</div>
+	</div>
+
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/ssh-client.js"></script>

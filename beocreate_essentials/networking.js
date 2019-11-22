@@ -1,4 +1,4 @@
-/*Copyright 2018 Bang & Olufsen A/S
+/*Copyright 2018-2019 Bang & Olufsen A/S
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -39,13 +39,17 @@ var networking = module.exports = {
 	removeNetwork: removeNetwork,
 	addNetwork: addNetwork,
 	setupNetwork: setupNetwork,
+	setSetupNetworkStatus: setSetupNetworkStatus,
 	getSetupNetworkStatus: getSetupNetworkStatus,
-	checkForInternet: checkForInternet
+	reconfigure: reconfigure,
+	checkForInternet: checkForInternet,
+	configureIPAddress: configureIPAddress
 }
 
 var wifiConfiguration = {networks: []};
 var wifiConfigModified = 0;
 var setupNetworkName = "";
+var externalSetupNetwork = false;
 var setupNetworkActive = false;
 
 var wifiConfigPath = null;
@@ -83,6 +87,20 @@ function getWifiStatus(callback) {
 							wifiStatus.ipv6 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
 						}
 					}
+					dhcp = readDHCPSettings("wifi");
+					if (dhcp && dhcp.Network) {
+						if (dhcp.Network.DHCP) {
+							// Automatic settings.
+							wifiStatus.ipSetup = {auto: true};
+						} else {
+							// Manual settings.
+							wifiStatus.ipSetup = {auto: false};
+							wifiStatus.ipSetup.address = dhcp.Network.Address.split("/")[0];
+							wifiStatus.ipSetup.subnetmask = CIDRToSubnetmask(dhcp.Network.Address.split("/")[1]);
+							wifiStatus.ipSetup.dns = dhcp.Network.DNS;
+							wifiStatus.ipSetup.router = dhcp.Network.Gateway;
+						}
+					}
 				}
 				callback(wifiStatus, false);
 			}
@@ -110,6 +128,20 @@ function getEthernetStatus(callback) {
 						if (eth0[i].family == "IPv6") {
 							ethernetStatus.ipv6 = {address: eth0[i].address, subnetmask: eth0[i].netmask};
 						}
+					}
+				}
+				dhcp = readDHCPSettings("ethernet");
+				if (dhcp && dhcp.Network) {
+					if (dhcp.Network.DHCP) {
+						// Automatic settings.
+						ethernetStatus.ipSetup = {auto: true};
+					} else {
+						// Manual settings.
+						ethernetStatus.ipSetup = {auto: false};
+						ethernetStatus.ipSetup.address = dhcp.Network.Address.split("/")[0];
+						ethernetStatus.ipSetup.subnetmask = CIDRToSubnetmask(dhcp.Network.Address.split("/")[1]);
+						ethernetStatus.ipSetup.dns = dhcp.Network.DNS;
+						ethernetStatus.ipSetup.router = dhcp.Network.Gateway;
 					}
 				}
 				callback(ethernetStatus, false);
@@ -315,57 +347,131 @@ function removeNetwork(ssid) {
 // MANAGE SETUP NETWORK
 
 function setupNetwork(withName) {
-	readWifiConfiguration();
-	if (withName) { // Start setup network.
-		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
-			wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
-		}
-		addNetwork({ssid: withName, key_mgmt: "NONE", proto: "RSN", pairwise: "CCMP", group: "CCMP", mode: 2, frequency: 2432, disabled: 0, setupNetwork: true}, true);
-		setupNetworkName = withName;
-		setupNetworkActive = true;
-		
-		/*var options = {
-			interface: 'wlan0',
-			start: '192.168.1.100',
-			end: '192.168.1.200',
-			option: {
-				router: '192.168.1.1',
-				subnet: '255.255.255.0'
-		  }
-		};
-		 
-		udhcpd.enable(options, function(err) {
-		  // the dhcp server was started
-		  if (err) console.log(err);
-			//console.log("Started DHCP server.");
-		});*/
-	} else { // Stop setup network.
-		/*udhcpd.disable('wlan0', function(err) {
-		  // the dhcp server was stopped
-			//console.log("Stopped DHCP server.");
-		});*/
-		networkIndex = -1;
-		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
-			if (wifiConfiguration.networks[i].setupNetwork) {
-				networkIndex = i;
-			} else {
-				wifiConfiguration.networks[i].disabled = 0;
-				// Enable all other networks.
+	if (!externalSetupNetwork) {
+		readWifiConfiguration();
+		if (withName) { // Start setup network.
+			for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+				wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
 			}
+			addNetwork({ssid: withName, key_mgmt: "NONE", proto: "RSN", pairwise: "CCMP", group: "CCMP", mode: 2, frequency: 2432, disabled: 0, setupNetwork: true}, true);
+			setupNetworkName = withName;
+			setupNetworkActive = true;
+			
+			
+		} else { // Stop setup network.
+			
+			networkIndex = -1;
+			for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+				if (wifiConfiguration.networks[i].setupNetwork) {
+					networkIndex = i;
+				} else {
+					wifiConfiguration.networks[i].disabled = 0;
+					// Enable all other networks.
+				}
+			}
+			wifiConfiguration.networks.splice(networkIndex, 1);
+			setupNetworkActive = false;
 		}
-		wifiConfiguration.networks.splice(networkIndex, 1);
-		setupNetworkActive = false;
+		saveWifiConfiguration(true);
 	}
-	saveWifiConfiguration(true);
 }
 
 function getSetupNetworkStatus() {
 	return setupNetworkActive;
 }
 
+function setSetupNetworkStatus(status) {
+	externalSetupNetwork = true;
+	setupNetworkActive = status;
+	readWifiConfiguration();
+	if (status == true) {
+		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+			wifiConfiguration.networks[i].disabled = 1; // Disable all other networks.
+		}
+	} else { // Stop setup network.	
+		for (var i = 0; i < wifiConfiguration.networks.length; i++) {
+			wifiConfiguration.networks[i].disabled = 0; // Enable all networks
+		}
+	}
+	saveWifiConfiguration(true);
+}
+
 function channelToFrequency(channel) {
 	if (channel > 11) channel = 11; // Channels usable in all regions.
 	return 2412 + (channel - 1) * 5; 
+}
+
+function reconfigure() {
+	exec('wpa_cli -i wlan0 reconfigure', function(error, stdout, stderr){
+	    if (error !== null) {
+	        //callback(false);
+	    } else {
+			//callback(true);
+		}
+	});
+}
+
+
+// CONFIGURE STATIC IP OR DHCP
+
+function configureIPAddress(options, forInterface, callback) {
+	// If no options, automatic everything.
+	config = readDHCPSettings(forInterface);
+	hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
+	staticName = null;
+	for (var i = 0; i < hostsFile.length; i++) {
+		if (hostsFile[i].indexOf("127.0.1.1") != -1) {
+			staticName = hostsFile[i].trim().split(/\s+/)[1];
+		}
+	}
+	hostsLineToChange = null;
+	if (dhcpConfig[forInterface].Network.Address) {
+		for (var i = 0; i < hostsFile.length; i++) {
+			if (hostsFile[i].indexOf(dhcpConfig[forInterface].Network.Address.split("/")[0]) != -1 &&
+				hostsFile[i].indexOf(staticName) != -1) {
+				hostsLineToChange = i;
+				break;
+			}
+		}
+	}
+	if (config) {
+		if (options &&
+			options.address &&
+			options.dns &&
+			options.subnetmask &&
+			options.router) {
+			dhcpConfig[forInterface].Network = {
+				Address: options.address+"/"+subnetmaskToCIDR(options.subnetmask),
+				DNS: options.dns,
+				Gateway: options.router
+			};
+			if (hostsLineToChange != null) {
+				hostsFile[hostsLineToChange] = options.address+"\t"+staticName;
+			} else {
+				// Add new line.
+				hostsFile.push(options.address+"\t"+staticName);
+			}
+		} else {
+			dhcpConfig[forInterface].Network = {DHCP: "yes"};
+			if (hostsLineToChange != null) {
+				// Remove the static IP address from file.
+				hostsFile.splice(hostsLineToChange, 1);
+			} 
+		}
+		
+		hostsText = hostsFile.join("\n");
+		fs.writeFileSync("/etc/hosts", hostsText);
+		
+		writeDHCPSettings(forInterface);
+		exec("systemctl restart systemd-networkd.service systemd-resolved.service", function(error, stdout, stderr) {
+			if (error) {
+				console.error("Restarting network services failed: "+error);
+				if (callback) callback(false, error);
+			} else {
+				if (callback) callback(true);
+			}
+		});
+	}
 }
 
 
@@ -483,6 +589,102 @@ function saveWifiConfiguration(reconfigure) {
 			}
 		});
 	}
+}
+
+dhcpModified = {wifi: 0, ethernet: 0};
+dhcpConfig = {wifi: {}, ethernet: {}};
+function readDHCPSettings(forInterface) {
+	path = null;
+	if (forInterface == "wifi") path = "/etc/systemd/network/wireless.network";
+	if (forInterface == "ethernet") path = "/etc/systemd/network/dhcp.network";
+	if (path) {
+		if (fs.existsSync(path)) {
+			modified = fs.statSync(path).mtimeMs;
+			if (modified != dhcpModified[forInterface]) {
+				// Reads configuration into a JavaScript object for easy access.
+				dhcpModified[forInterface] = modified;
+				dhcpConfig[forInterface] = {};
+				dhcpConfigRaw = fs.readFileSync(path, "utf8").split('\n');
+				section = null;
+				for (var i = 0; i < dhcpConfigRaw.length; i++) {
+					// Find settings sections.
+					if (dhcpConfigRaw[i].indexOf("[") != -1 && dhcpConfigRaw[i].indexOf("]") != -1) {
+						section = dhcpConfigRaw[i].trim().slice(1, -1);
+						dhcpConfig[forInterface][section] = {};
+					} else {
+						if (section != null) {
+							lineItems = dhcpConfigRaw[i].trim().split("=");
+							if (lineItems.length == 2) {
+								value = lineItems[1].trim();
+								option = lineItems[0].trim();
+								if (dhcpConfig[forInterface][section][option]) {
+									// This option already exists, change it into an array or if it already is, just push the new value.
+									if (typeof dhcpConfig[forInterface][section][option] == "object") {
+										dhcpConfig[forInterface][section][option].push(value);
+									} else {
+										dhcpConfig[forInterface][section][option] = [dhcpConfig[forInterface][section][option]];
+									}
+								} else {
+									dhcpConfig[forInterface][section][lineItems[0].trim()] = value;
+								}
+							}
+						}
+					}
+				}
+			}
+			return dhcpConfig[forInterface];
+		} else {
+			return null;
+		}
+	} else {
+		return null;
+	}
+}
+
+function writeDHCPSettings(forInterface) {
+	path = null;
+	if (forInterface == "wifi") path = "/etc/systemd/network/wireless.network";
+	if (forInterface == "ethernet") path = "/etc/systemd/network/dhcp.network";
+	if (path) {
+		// Saves current configuration back into the file.
+		if (fs.existsSync(path)) {
+			config = [];
+			for (section in dhcpConfig[forInterface]) {
+				sectionStart = (config.length != 0) ? "\n["+section+"]" : "["+section+"]";
+				config.push(sectionStart);
+				for (option in dhcpConfig[forInterface][section]) {
+					if (typeof dhcpConfig[forInterface][section][option] == "object") {
+						// Iterate over the options of an array to add multiple lines of the same.
+						for (var i = 0; i < dhcpConfig[forInterface][section][option].length; i++) {
+							config.push(option+"="+dhcpConfig[forInterface][section][option][i]);
+						}
+					} else {
+						config.push(option+"="+dhcpConfig[forInterface][section][option]);
+					}
+				}
+			}
+			//console.log(config.join("\n"));
+			fs.writeFileSync(path, config.join("\n"));
+			dhcpModified[forInterface] = fs.statSync(path).mtimeMs;
+		}
+	}
+}
+
+// Adapted from: https://stackoverflow.com/a/43694151
+function subnetmaskToCIDR(netmask) {
+	return (netmask.split('.').map(Number)
+    	.map(part => (part >>> 0).toString(2))
+		.join('')).split('1').length -1;
+}
+
+function CIDRToSubnetmask(bitCount) {
+	var mask = [];
+	for (var i = 0; i < 4; i++) {
+		var n = Math.min(bitCount, 8);
+		mask.push(256 - Math.pow(2, 8-n));
+		bitCount -= n;
+	}
+	return mask.join('.');
 }
 
 

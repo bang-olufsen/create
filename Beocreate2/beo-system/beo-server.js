@@ -61,11 +61,14 @@ var systemStatus = "normal";
 */
 var extensionsRequestingShutdownTime = [];
 
-global.systemDirectory = __dirname;
-global.dataDirectory = "/etc/beocreate"; // Data directory for settings, sound presets, product images, etc.
+systemDirectory = __dirname;
+dataDirectory = "/etc/beocreate"; // Data directory for settings, sound presets, product images, etc.
 
 var debugMode = false;
 var daemonMode = false;
+var developerMode = false;
+var quietMode = false;
+var forceBeosounds = false;
 
 console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen");
 
@@ -76,7 +79,12 @@ if (cmdArgs.indexOf("v") != -1) debugMode = 1;
 if (cmdArgs.indexOf("vv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("vvv") != -1) debugMode = 2;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
+if (cmdArgs.indexOf("dev") != -1) developerMode = true;
+if (cmdArgs.indexOf("q") != -1) quietMode = true;
+if (cmdArgs.indexOf("beosounds") != -1) forceBeosounds = true;
 
+if (debugMode) console.log("Debug logging level: "+debugMode+".");
+if (developerMode) console.log("Developer mode, user interface will not be cached.");
 
 // LOAD SYSTEM SETTINGS
 // Contains sound card type, port to use, possibly disabled extensions.
@@ -242,6 +250,24 @@ function getAllSettings() {
 var extensions = {}; // Import Node logic from extensions into this object.
 var extensionsList = {};
 var extensionsLoaded = false;
+global.beo = {
+	bus: beoBus,
+	systemDirectory: systemDirectory+"/..",
+	dataDirectory: dataDirectory,
+	systemConfiguration: systemConfiguration,
+	extensions: extensions,
+	extensionsList: extensionsList,
+	setup: false,
+	selectedExtension: selectedExtension, 
+	debug: debugMode,
+	developerMode: developerMode,
+	daemon: daemonMode,
+	sendToUI: sendToUI,
+	download: download,
+	downloadJSON: downloadJSON,
+	addDownloadRoute: addDownloadRoute,
+	removeDownloadRoute: removeDownloadRoute
+};
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
 var selectedExtension = null;
@@ -251,15 +277,17 @@ var selectedExtension = null;
 var expressServer = express();
 var beoServer = http.createServer(expressServer).listen(systemConfiguration.port); // Create a HTTP server.
 
-etags = (debugMode) ? false : true; // Disable etags (caching) when running with debug.
-expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For product images.
-expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For product images.
+etags = (developerMode) ? false : true; // Disable etags (caching) when running with debug.
+expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.
+expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: etags})); // Prefer product images from system directory.
+expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For user product images.
 expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For extensions.
 expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
 	if (beoUI != false) {
 		res.status(200);
-		if (debugMode) {
+		if (developerMode) {
+			console.log("Developer mode, reconstructing user interface...");
 			res.send(assembleBeoUI()); // No cache - use in development/debug
 	  	} else {
 	  		res.send(beoUI); // Cached version - use this in production
@@ -303,6 +331,67 @@ expressServer.post("/:extension/:header", function (req, res) {
 	}
 });
 
+// Serve downloads:
+var downloadRoutes = {};
+expressServer.get("/:extension/download/:urlPath", function (req, res) {
+	
+	if (downloadRoutes[req.params.extension]) {
+		if (downloadRoutes[req.params.extension][req.params.urlPath]) {
+			// Serve file from the specified path.
+			if (debugMode >= 2) console.log("Sending file '"+downloadRoutes[req.params.extension][req.params.urlPath].filePath+"' for download.");
+			res.download(downloadRoutes[req.params.extension][req.params.urlPath].filePath);
+			if (!downloadRoutes[req.params.extension][req.params.urlPath].permanent) {
+				if (debugMode) console.log("Download route for '"+downloadRoutes[req.params.extension][req.params.urlPath].filePath+"' was removed automatically.");
+				delete downloadRoutes[req.params.extension][req.params.urlPath];
+			}
+		} else {
+			console.error("The requested download is not available.");
+			res.status(404);
+			res.send("Notfound");
+		}
+	} else {
+		console.error("The requested download is not available.");
+		res.status(404);
+		res.send("Notfound");
+	}
+});
+
+expressServer.get("/:extension/:header/", function (req, res) {
+
+	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
+		extensions[req.params.extension].restAPI(req.params.header, function(response) {
+			if (response) {
+				res.status(200);
+				res.send(response);
+			} else {
+				console.error("'"+req.params.extension+"' can't respond to '"+req.params.header+"' request.");
+				res.status(404);
+				res.send("Notfound");
+			}
+		});
+	} else {
+		console.error("'"+req.params.extension+"' can't respond to GET requests.");
+		res.status(404);
+		res.send("Notfound");
+	}
+});
+
+function addDownloadRoute(extension, urlPath, filePath, permanent = false) {
+	if (extension && urlPath && filePath) {
+		if (!downloadRoutes[extension]) downloadRoutes[extension] = {};
+		if (!downloadRoutes[extension][urlPath]) downloadRoutes[extension][urlPath] = {filePath: filePath, permanent: permanent};
+		if (debugMode) console.log("'"+filePath+"' is now allowed to be downloaded.");
+		return extension+"/download/"+urlPath;
+	}
+}
+
+function removeDownloadRoute(extension, urlPath) {
+	if (downloadRoutes[extension] && downloadRoutes[extension][urlPath]) {
+		if (debugMode) console.log("Download route for '"+downloadRoutes[extension][urlPath].filePath+"' was removed.");
+		delete downloadRoutes[extension][urlPath];
+	}
+}
+
 // START WEBSOCKET
 beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});
 
@@ -319,12 +408,15 @@ if (systemConfiguration.runAtStart) {
 	}
 }
 
-if (debugMode) {
-	// If we're in debug, don't play startup sound, just output to log.
-	console.log("System startup.");
-} else {
+console.log("System startup.");
+if (!quietMode) {
 	// Play startup sound:
-	playProductSound("startup");
+	if (systemConfiguration.cardType == "Beocreate 4-Channel Amplifier" || forceBeosounds) {
+		
+		setTimeout(function() {
+			playProductSound("startup");
+		}, 1000);
+	}
 }
 
 
@@ -547,18 +639,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 				try {
 					require.resolve(fullPath);
 					try {
-						extensions[extensionName] = require(fullPath)(beoBus, {
-							systemConfiguration: systemConfiguration,
-							extensions: extensions,
-							extensionsList: extensionsList,
-							setup: false,
-							selectedExtension: selectedExtension, 
-							debug: debugMode,
-							daemon: daemonMode,
-							sendToUI: sendToUI,
-							download: download,
-							downloadJSON: downloadJSON
-						});
+						extensions[extensionName] = require(fullPath);
 						extensionLoadedSuccesfully = true;
 					}
 					catch (error) {
@@ -647,7 +728,7 @@ var productSound = null;
 function playProductSound(sound) {
 	if (debugMode) console.log("Playing sound: "+sound+"...");
 	if (!productSound) productSound = new aplay();
-	soundPath = __dirname+"/sounds/";
+	soundPath = systemDirectory+"/sounds/";
 	soundFile = null;
 	switch (sound) {
 		case "startup":
@@ -746,18 +827,28 @@ function downloadJSON(url, callback) {
 //var extensionsRequestingShutdownTime = []; // This is found at the top.
 var shutdownTimeout = null;
 var powerCommand = null;
+var shutdownDone = false;
 
-//setTimeout(function() {
+
 process.once('SIGINT', function() {
-	if (debugMode) console.log("SIGINT received. Starting shutdown.");
-	startShutdown();
+	if (!shutdownDone) {
+		if (debugMode) console.log("\nSIGINT received. Starting shutdown.");
+		startShutdown();
+	} else {
+		console.log("Exiting Beocreate 2.");
+		process.exit(0);
+	}
 });
 
 process.once('SIGTERM', function() {
-	if (debugMode) console.log("SIGTERM received. Starting shutdown.");
-	startShutdown();
+	if (!shutdownDone) {
+		if (debugMode) console.log("\nSIGTERM received. Starting shutdown.");
+		startShutdown();
+	} else {
+		console.log("Exiting Beocreate 2.");
+		process.exit(0);
+	}
 });
-//}, 2000);
 
 function rebootSystem(extension) {
 	if (extension) {
@@ -832,27 +923,23 @@ function completeShutdownForExtension(extensionID) {
 function completeShutdown() {
 	
 	beoCom.stopSocket(function() {
+		if (debugMode) console.log("Saving pending settings...");
+		savePendingSettings();
 		if (debugMode) console.log("Stopped WebSocket communication.");
 		beoServer.close(function() {
 			if (debugMode) console.log("Stopped HTTP server. Shutdown complete.");
+			shutdownDone = true;
 		    if (powerCommand) {
-		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+".");
+		    	if (debugMode) console.log("Executing Raspberry Pi "+powerCommand+". It will trigger process exit.");
 		    	piSystem.power(powerCommand);
-		    } 
+		    } else {
+				console.log("Exiting Beocreate 2.");
+				process.exit(0);
+			}
 		   
-			/*setTimeout(function() {
-				log();
-			}, 100);*/
-			
-			console.log("Exiting Beocreate 2.");
-		    process.exit(0);
+		
 		});
 		
 	});
 	
 }
-
-/* process.on( 'exit', function() {
-	console.log("Forcing exit...");
-    process.kill( process.pid, 'SIGTERM' );
-} ); */

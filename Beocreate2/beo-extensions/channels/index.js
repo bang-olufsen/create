@@ -20,13 +20,11 @@ SOFTWARE.*/
 var _ = require('underscore');
 var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var extensions = globals.extensions;
+	var extensions = beo.extensions;
 	
 	var version = require("./package.json").version;
 	
-	var debug = false;
+	var debug = beo.debug;
 	
 	var metadata = {};
 	var Fs = null;
@@ -96,27 +94,26 @@ module.exports = function(beoBus, globals) {
 	var simpleChannelSelection = null;
 	
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
 		
 		if (event.header == "startup") {
 			
-			if (event.content.debug) debug = true;
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "channels") {
 				
-				beoBus.emit("ui", {target: "channels", header: "channelSettings", content: {settings: settings, simpleChannelSelection: simpleChannelSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup, canControlChannels: canControlChannels}});
+				beo.bus.emit("ui", {target: "channels", header: "channelSettings", content: {settings: settings, simpleChannelSelection: simpleChannelSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup, canControlChannels: canControlChannels}});
 				
 			}
 		}
 	});
 	
-	beoBus.on('channels', function(event) {
+	beo.bus.on('channels', function(event) {
 		
 		if (event.header == "settings") {
 			
@@ -131,7 +128,7 @@ module.exports = function(beoBus, globals) {
 			if (event.content.balance != undefined) {
 				settings.balance = event.content.balance;
 				applyBalanceFromSettings();
-				beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
 			}
 			
 		}
@@ -142,14 +139,14 @@ module.exports = function(beoBus, globals) {
 					if (event.content.level) {
 						settings[event.content.channel.charAt(c)].enabled = true;
 						settings[event.content.channel.charAt(c)].level = event.content.level;
-						beoBus.emit("ui", {target: "channels", header: "setLevelProto", content: {level: event.content.level}});
+						beo.bus.emit("ui", {target: "channels", header: "setLevelProto", content: {level: event.content.level}});
 					} else {
 						// Mute channel:
 						settings[event.content.channel.charAt(c)].enabled = false;
 					}
 					applyChannelLevelFromSettings(event.content.channel.charAt(c));
 					
-					beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+					beo.bus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
 				}
 			}
 		}
@@ -159,14 +156,14 @@ module.exports = function(beoBus, globals) {
 				for (var c = 0; c < event.content.channel.length; c++) {
 					if (event.content.invert) {
 						settings[event.content.channel.charAt(c)].invert = true;
-						beoBus.emit("ui", {target: "channels", header: "setInvertProto", content: {invert: event.content.invert}});
+						beo.bus.emit("ui", {target: "channels", header: "setInvertProto", content: {invert: event.content.invert}});
 					} else {
 						// Mute channel:
 						settings[event.content.channel.charAt(c)].invert = false;
 					}
 					applyChannelInvertFromSettings(event.content.channel.charAt(c));
 					
-					beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+					beo.bus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
 				}
 			}
 		}
@@ -227,15 +224,15 @@ module.exports = function(beoBus, globals) {
 						//applyChannelLevelFromSettings(channel);
 					}
 					simpleChannelRoleFromSettings();
-					beoBus.emit("ui", {target: "channels", header: "channelSettings", content: {settings: settings, simpleChannelSelection: simpleChannelSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup}});
-					beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+					beo.bus.emit("ui", {target: "channels", header: "channelSettings", content: {settings: settings, simpleChannelSelection: simpleChannelSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup}});
+					beo.bus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
 				}
 			}
 			
 		}
 	});
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -306,7 +303,7 @@ module.exports = function(beoBus, globals) {
 	
 	// Listen for "currentSettings" events from the equaliser extension, and use them to determine whether or not the current sound preset supports one-touch stereo.
 	var equaliserPairs = [];
-	beoBus.on('sound-preset', function(event) {
+	beo.bus.on('sound-preset', function(event) {
 		
 		if (event.header == "currentSettings") {
 			
@@ -478,7 +475,7 @@ module.exports = function(beoBus, globals) {
 		}
 		simpleChannelRoleFromSettings();
 		
-		beoBus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
+		beo.bus.emit("settings", {header: "saveSettings", content: {extension: "channels", settings: settings}});
 	}
 	
 	
@@ -634,11 +631,10 @@ module.exports = function(beoBus, globals) {
 	}
 		
 	
-	return {
-		checkSettings: checkSettings,
-		applySoundPreset: applySoundPreset,
-		version: version
-	};
+module.exports = {
+	checkSettings: checkSettings,
+	applySoundPreset: applySoundPreset,
+	version: version
 };
 
 

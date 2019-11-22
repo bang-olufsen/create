@@ -20,9 +20,7 @@ SOFTWARE.*/
 var exec = require("child_process").exec;
 var fs = require("fs");
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
 	
@@ -34,14 +32,14 @@ module.exports = function(beoBus, globals) {
 	};
 	var configuration = {};
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			if (globals.extensions.sources &&
-				globals.extensions.sources.setSourceOptions &&
-				globals.extensions.sources.sourceDeactivated) {
-				sources = globals.extensions.sources;
+			if (beo.extensions.sources &&
+				beo.extensions.sources.setSourceOptions &&
+				beo.extensions.sources.sourceDeactivated) {
+				sources = beo.extensions.sources;
 			}
 			
 			if (sources) {
@@ -69,12 +67,12 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "spotifyd") {
-				beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+				beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 			}
 		}
 	});
 	
-	beoBus.on('product-information', function(event) {
+	beo.bus.on('product-information', function(event) {
 		
 		if (event.header == "systemNameChanged") {
 			// Listen to changes in system name and update the spotifyd display name.
@@ -87,19 +85,19 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('spotifyd', function(event) {
+	beo.bus.on('spotifyd', function(event) {
 		
 		if (event.header == "spotifydEnabled") {
 			
 			if (event.content.enabled != undefined) {
 				setSpotifydStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+					beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 					if (sources) sources.setSourceOptions("spotifyd", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("spotifyd");
 					}
 					if (error) {
-						beoBus.emit("ui", {target: "spotifyd", header: "errorTogglingSpotifyd", content: {}});
+						beo.bus.emit("ui", {target: "spotifyd", header: "errorTogglingSpotifyd", content: {}});
 					}
 				});
 			}
@@ -115,15 +113,15 @@ module.exports = function(beoBus, globals) {
 				], true, function(success, error) {
 					if (success) {
 						settings.loggedInAs = event.content.username;
-						beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+						beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 					} else {
-						beoBus.emit("ui", {target: "spotifyd", header: "logInError"});
+						beo.bus.emit("ui", {target: "spotifyd", header: "logInError"});
 						configureSpotifyd([
 							{section: "global", option: "username", remove: true},
 							{section: "global", option: "password", remove: true}
 						], true);
 						settings.loggedInAs = false;
-						beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+						beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 					}
 				});
 			}
@@ -135,7 +133,7 @@ module.exports = function(beoBus, globals) {
 				{section: "global", option: "username", remove: true},
 				{section: "global", option: "password", remove: true}
 			], true, function() {
-				beoBus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+				beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 			});
 		}
 	});
@@ -261,7 +259,8 @@ module.exports = function(beoBus, globals) {
 		if (fs.existsSync("/etc/spotifyd.conf")) {
 			spotifydConfig = [];
 			for (section in configuration) {
-				spotifydConfig.push("["+section+"]");
+				sectionStart = (spotifydConfig.length != 0) ? "\n["+section+"]" : "["+section+"]";
+				spotifydConfig.push(sectionStart);
 				for (option in configuration[section]) {
 					if (configuration[section][option].comment) {
 						line = "#"+option+" = "+configuration[section][option].value;
@@ -276,9 +275,7 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	}
-	
+module.exports = {
+	version: version
 };
 

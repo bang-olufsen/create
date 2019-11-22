@@ -19,13 +19,9 @@ SOFTWARE.*/
 
 var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var module = {};
-	var beoBus = beoBus;
-	
 	var version = require("./package.json").version;
 	
-	var debug = globals.debug;
+	var debug = beo.debug;
 	var metadata = {};
 	
 	var defaultSettings = {
@@ -41,14 +37,14 @@ module.exports = function(beoBus, globals) {
 		"volumeLimitI2S2": false
 	};
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		//console.log("Volume Limit received general event: "+event);
 		
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "volume-limit") {
 				
-				beoBus.emit("ui", {target: "volume-limit", header: "canControlVolumeLimit", content: {canControlVolumeLimit: canControlVolumeLimit, range: 60}});
+				beo.bus.emit("ui", {target: "volume-limit", header: "canControlVolumeLimit", content: {canControlVolumeLimit: canControlVolumeLimit, range: 60}});
 				
 				registersToRead = 0;
 				registersRead = 0;
@@ -66,7 +62,7 @@ module.exports = function(beoBus, globals) {
 						if (limit != settings.volumeLimitSPDIF) settings.volumeLimitSPDIF = limit;
 						registersRead++;
 						if (registersRead == registersToRead) {
-							beoBus.emit("ui", {target: "volume-limit", header: "volumeLimitSettings", content: {settings: settings}});
+							beo.bus.emit("ui", {target: "volume-limit", header: "volumeLimitSettings", content: {settings: settings}});
 						}
 					});
 				}
@@ -79,7 +75,7 @@ module.exports = function(beoBus, globals) {
 						if (limit != settings.volumeLimitPi) settings.volumeLimitPi = limit;
 						registersRead++;
 						if (registersRead == registersToRead) {
-							beoBus.emit("ui", {target: "volume-limit", header: "volumeLimitSettings", content: {settings: settings}});
+							beo.bus.emit("ui", {target: "volume-limit", header: "volumeLimitSettings", content: {settings: settings}});
 						}
 					});
 				}
@@ -92,7 +88,7 @@ module.exports = function(beoBus, globals) {
 						if (limit != settings.volumeLimitI2S2) settings.volumeLimitI2S2 = limit;
 						registersRead++;
 						if (registersRead == registersToRead) {
-							beoBus.emit("ui", {target: "volume-limit", header: "volumeLimitSettings", content: {settings: settings}});
+							beo.bus.emit("ui", {target: "volume-limit", header: "volumeLimitSettings", content: {settings: settings}});
 						}
 					});
 				}
@@ -102,7 +98,7 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('volume-limit', function(event) {
+	beo.bus.on('volume-limit', function(event) {
 		
 		if (event.header == "settings") {
 			
@@ -123,7 +119,7 @@ module.exports = function(beoBus, globals) {
 				if (settings[event.content.adjustment] != undefined) {
 					settings[event.content.adjustment] = theLimit;
 					applyVolumeLimitFromSettings(event.content.adjustment);
-					beoBus.emit("settings", {header: "saveSettings", content: {extension: "volume-limit", settings: settings}});
+					beo.bus.emit("settings", {header: "saveSettings", content: {extension: "volume-limit", settings: settings}});
 				}
 			}
 			
@@ -133,7 +129,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -173,8 +169,7 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	};
+module.exports = {
+	version: version
 };
 

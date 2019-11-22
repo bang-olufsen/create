@@ -19,9 +19,7 @@ SOFTWARE.*/
 
 var exec = require("child_process").exec;
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
@@ -30,14 +28,14 @@ module.exports = function(beoBus, globals) {
 	
 	var mpdEnabled = false;
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			if (globals.extensions.sources &&
-				globals.extensions.sources.setSourceOptions &&
-				globals.extensions.sources.sourceDeactivated) {
-				sources = globals.extensions.sources;
+			if (beo.extensions.sources &&
+				beo.extensions.sources.setSourceOptions &&
+				beo.extensions.sources.sourceDeactivated) {
+				sources = beo.extensions.sources;
 			}
 			
 			if (sources) {
@@ -55,24 +53,24 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "mpd") {
-				beoBus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
+				beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
 			}
 		}
 	});
 	
-	beoBus.on('mpd', function(event) {
+	beo.bus.on('mpd', function(event) {
 		
 		if (event.header == "mpdEnabled") {
 			
 			if (event.content.enabled != undefined) {
 				setMPDStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: newStatus}});
+					beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("mpd", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("mpd");
 					}
 					if (error) {
-						beoBus.emit("ui", {target: "mpd", header: "errorTogglingMPD", content: {}});
+						beo.bus.emit("ui", {target: "mpd", header: "errorTogglingMPD", content: {}});
 					}
 				});
 			}
@@ -118,9 +116,7 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	}
-	
+module.exports = {
+	version: version
 };
 

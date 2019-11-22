@@ -1,7 +1,4 @@
-/* @override 
-	http://beocreate-core.local/extensions/product-information/product-information.css
-	http://beocreate-4-encore.local/extensions/product-information/product-information.css
-	http://hifiberry.local:81/extensions/product-information/product-information.css */
+/* @override http://beocreate-core.local/extensions/product-information/product-information.css */
 	
 #product-overview {
 	text-align: center;
@@ -14,7 +11,8 @@
 	padding-bottom: 1rem;
 }
 
-.product-overview-image-wrap {
+.product-overview-image-wrap, 
+#about-logos {
 	/*background-color: #f5f5f5;*/
 	/*background-color: var(--spindle);*/
 	display: flex;
@@ -28,7 +26,8 @@
 	content: "Select";
 }
 
-#product-overview-image-wrap-inline {
+#product-overview-image-wrap-inline, 
+#about-logos {
 	/*background-color: var(--spindle);*/
 	height: 55%;
 	margin-bottom: 5%;
@@ -38,10 +37,6 @@
 	/*padding-top: 20px;*/
 }
 
-#product-overview-image-wrap-sidebar {
-	display: none;
-	position: absolute;
-}
 
 .product-overview-image {
 	max-height: 500px;
@@ -59,6 +54,14 @@
 	transition: opacity 0.7s ease;
 }
 
+#product-identity-area, #about-texts {
+	margin-right: auto;
+	margin-left: auto;
+	padding-right: 20px;
+	padding-left: 20px;
+}
+
+
 #product-overview h2.model-name {
 	margin-top: 0;
 	height: auto;
@@ -68,24 +71,28 @@
 #about-product {
 	display: flex;
 	flex-direction: column;
+	height: 100%;
 }
 
-#about-top {
+#about-logos {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	margin-bottom: auto;
 }
 
-.hifiberry-os #about-top {
+
+#about-texts {
+	max-width: 320px;
+}
+
+.hifiberry-os #about-logos {
 	flex-direction: column-reverse;
 }
 
 .create-logo {
-	margin-top: 3rem;
 	width: 200px;
 	height: 66px;
-	margin-bottom: 3rem;
+	margin-bottom: 1rem;
 	background-color: currentColor;
 	mask-size: contain;
 	-webkit-mask-size: contain;
@@ -106,15 +113,25 @@
 
 .hifiberry-logo {
 	width: 120px;
+	height: 32px;
 	display: block;
+	background-color: currentColor;
+	mask-size: contain;
+	-webkit-mask-size: contain;
+	mask-repeat: no-repeat;
+	-webkit-mask-repeat: no-repeat;
 	margin-right: auto;
 	margin-left: auto;
+	margin-bottom: 1rem;
+	margin-top: 2rem;
 }
 
 .hifiberry-os .hifiberry-logo {
 	width: 200px;
-	margin-top: 3rem;
-	margin-bottom: 1rem;
+	height: 54px;
+	display: block;
+	margin-top: 0;
+	background-color: #e11e42;
 }
 
 .beo-logo {
@@ -196,7 +213,7 @@ p#copy-hifiberry-os {
 	left: 20px;
 }
 
-#product-information .about-texts {
+#about-texts {
 	text-align: center;
 }
 
@@ -211,15 +228,15 @@ p#copy-hifiberry-os {
 	}
 	
 	
-	#product-overview,
-	.no-touch #product-overview {
+	#product-overview, 
+	#about-product {
 		display: flex;
 		flex-direction: row;
 		align-items: center;
 		padding-top: 0;
 	}
 	
-	#product-overview-image-wrap-inline {
+	#product-overview-image-wrap-inline, #about-logos {
 		/*box-shadow: 1px 0 var(--menu-line);*/
 		/*background-color: var(--spindle);*/
 		/*box-sizing: border-box;*/
@@ -233,17 +250,10 @@ p#copy-hifiberry-os {
 		margin-right: -20px;
 	}
 	
-	#product-identity-area {
-		margin-right: auto;
-		margin-left: auto;
-		padding-right: 20px;
-		padding-left: 20px;
+	#about-logos {
+		margin-right: 0;
 	}
 	
-	#product-overview-image-wrap-sidebar {
-		display: flex;
-		overflow: visible;
-	}
 	
 	#about-product {
 		position: relative;
@@ -256,27 +266,7 @@ p#copy-hifiberry-os {
 	.hifiberry-os .hifiberry-logo {
 		margin-top: 0;
 	}
-	
-	#about-top {
-		flex-shrink: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 5%;
-		flex-grow: 1;
-		padding: 0;
-		margin-top: 5%;
-	}
-	
-	#about-menu-content-wrap {
-		min-height: 100%;
-		position: absolute;
-		width: 100%;
-		box-sizing: border-box;
-		display: flex;
-		align-items: center;
-	}
-	
+
 	
 }
 

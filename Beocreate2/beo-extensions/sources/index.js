@@ -17,10 +17,9 @@ SOFTWARE.*/
 
 // BEOCREATE SOURCES
 var request = require("request");
+var exec = require("child_process").exec;
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
@@ -28,6 +27,8 @@ module.exports = function(beoBus, globals) {
 	var allSources = {};
 	var currentSource = null;
 	var focusedSource = null;
+	
+	var enabledHifiberrySources = 0;
 	
 	var startableSources = {}; // Different sources may hold multiple "sub-sources" (connected devices, physical media) that can be started.
 	
@@ -39,8 +40,8 @@ module.exports = function(beoBus, globals) {
 	
 	
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
@@ -58,7 +59,7 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	
-	beoBus.on("sources", function(event) {
+	beo.bus.on("sources", function(event) {
 		
 		
 		switch (event.header) {
@@ -69,7 +70,7 @@ module.exports = function(beoBus, globals) {
 				}
 				break;
 			case "getSources":
-				beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				break;
 			case "startableSources":
 				if (event.content.sources && event.content.extension) {
@@ -82,19 +83,19 @@ module.exports = function(beoBus, globals) {
 						startableSources[source] = event.content.sources[source];
 						startableSources[source].extension = event.content.extension;
 					}
-					beoBus.emit("ui", {target: "sources", header: "startableSources", content: startableSources});
+					beo.bus.emit("ui", {target: "sources", header: "startableSources", content: startableSources});
 				}
 				break;
 			case "startSource":
 				if (event.content.sourceID) {
 					if (startableSources[event.content.sourceID] && startableSources[event.content.sourceID].extension) {
-						beoBus.emit(startableSources[event.content.sourceID].extension, {header: "startSource", content: {sourceID: event.content.sourceID}});
+						beo.bus.emit(startableSources[event.content.sourceID].extension, {header: "startSource", content: {sourceID: event.content.sourceID}});
 					}
 				}
 				break;
 			case "setSourceVolume":
 				if (currentSource && event.content.percentage != undefined) {
-					beoBus.emit(currentSource, {header: "setVolume", content: {percentage: event.content.percentage}});
+					beo.bus.emit(currentSource, {header: "setVolume", content: {percentage: event.content.percentage}});
 				}
 				break;
 			case "metadata": // Metadata from AudioControl.
@@ -106,8 +107,8 @@ module.exports = function(beoBus, globals) {
 				audioControlGet("metadata");
 				break;
 			case "transport":
-				if (currentSource && allSources[currentSource].transportControls) {
-					if (allSources[currentSource].usesHifiberryControl) {
+				if (focusedSource && allSources[focusedSource].transportControls) {
+					if (allSources[focusedSource].usesHifiberryControl) {
 						audioControl(event.content.action, function(success) {
 							if (!success) {
 								switch (event.content.action) {
@@ -116,7 +117,7 @@ module.exports = function(beoBus, globals) {
 									case "stop":
 									case "next":
 									case "previous":
-										beoBus.emit(currentSource, {header: "transport", content: {action: event.content.action}});
+										beo.bus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
 										break;
 								}
 							}
@@ -128,26 +129,26 @@ module.exports = function(beoBus, globals) {
 							case "stop":
 							case "next":
 							case "previous":
-								beoBus.emit(currentSource, {header: "transport", content: {action: event.content.action}});
+								beo.bus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
 								break;
 						}
 					}
 				}
 				break;
 			case "toggleLove":
-				if (currentSource && allSources[currentSource].canLove) {
-					if (!allSources[currentSource].metadata.loved) {
+				if (focusedSource && allSources[focusedSource].canLove) {
+					if (!allSources[focusedSource].metadata.loved) {
 						love = true;
 					} else {
 						love = false;
 					}
-					if (allSources[currentSource].usesHifiberryControl) {
+					if (allSources[focusedSource].usesHifiberryControl) {
 						action = (love) ? "love" : "unlove";
 						
 						audioControl(action, function(success) {
 							if (success) {
-								allSources[currentSource].metadata.loved = love;
-								beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[currentSource].metadata, extension: currentSource}});
+								allSources[focusedSource].metadata.loved = love;
+								beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
 							}
 						});
 					}
@@ -198,6 +199,7 @@ module.exports = function(beoBus, globals) {
 		switch (operation) {
 			case "playPause":
 			case "play":
+			case "pause":
 			case "stop":
 			case "next":
 			case "previous":
@@ -259,7 +261,7 @@ module.exports = function(beoBus, globals) {
 							if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
 						}
 						
-						beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+						beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 						
 						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
 							// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
@@ -292,21 +294,23 @@ module.exports = function(beoBus, globals) {
 					sourceDeactivated(extension);
 				}
 				
-				beoBus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 			}
 			
 			if (metadata.title != allSources[extension].metadata.title ||
 				metadata.artist != allSources[extension].metadata.artist ||
-				metadata.albumTitle != allSources[extension].metadata.album||
-				metadata.artUrl != allSources[extension].metadata.picture) {
+				metadata.albumTitle != allSources[extension].metadata.album ||
+				metadata.artUrl != allSources[extension].metadata.picture||
+				metadata.externalArtUrl != allSources[extension].metadata.externalPicture) {
 				// Metadata updated.
 				allSources[extension].metadata.title = metadata.title;
 				allSources[extension].metadata.artist = metadata.artist;
 				allSources[extension].metadata.album = metadata.albumTitle;
 				allSources[extension].metadata.loved = metadata.loved;
 				allSources[extension].metadata.picture = metadata.artUrl;
+				allSources[extension].metadata.externalPicture = metadata.externalArtUrl;
 				allSources[extension].metadata.picturePort = settings.port;
-				beoBus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
+				beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
 				// "Love track" support.
 				if (allSources[extension].canLove != metadata.loveSupported) {
 					setSourceOptions(extension, {canLove: metadata.loveSupported});
@@ -368,6 +372,7 @@ module.exports = function(beoBus, globals) {
 			if (allSources[extension].stopOthers) {
 				if (allSources[currentSource] && allSources[currentSource].usesHifiberryControl && !allSources[extension].usesHifiberryControl) {
 					// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
+					if (debug) console.log("Pausing sources under HiFiBerry control...");
 					audioControl("pause");
 				}
 				for (source in allSources) {
@@ -375,7 +380,7 @@ module.exports = function(beoBus, globals) {
 						allSources[source].active) {
 						if (!allSources[source].usesHifiberryControl) {
 							// Stop all other non-AudioControl sources.
-							beoBus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
+							beo.bus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
 						}
 					}
 				}
@@ -385,7 +390,7 @@ module.exports = function(beoBus, globals) {
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				beoBus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
+				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
 		}
 	}
@@ -410,7 +415,7 @@ module.exports = function(beoBus, globals) {
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				beoBus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
+				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
 		}
 	}
@@ -434,17 +439,17 @@ module.exports = function(beoBus, globals) {
 		if (activeSourceCount == 0) {
 			if (currentSource != null) {
 				currentSource = null;
-				beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "red"}}});
+				beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "red"}}});
 			}
 		} else {
 			if (newSource != currentSource) {
 				currentSource = newSource;
-				beoBus.emit("led", {header: "fadeTo", content: {options: {colour: "green", speed: "fast"}, then: {action: "fadeOut", after: 10}}});
+				beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "green", speed: "fast"}, then: {action: "fadeOut", after: 10}}});
 			}
 		}
 		
-		beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
-		beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 		logSourceStatus();
 	}
 	
@@ -459,6 +464,11 @@ module.exports = function(beoBus, globals) {
 				message += "\n";
 			}
 		}
+	}
+	
+	
+	function setMetadata(extension, metadata) {
+		
 	}
 	
 	
@@ -482,9 +492,9 @@ module.exports = function(beoBus, globals) {
 			};
 			if (debug) console.log("Registering source '"+extension+"'...");
 			
-			if (globals.extensionsList) {
-				for (listedExtension in globals.extensionsList) {
-					if (globals.extensionsList[listedExtension].isSource) {
+			if (beo.extensionsList) {
+				for (listedExtension in beo.extensionsList) {
+					if (beo.extensionsList[listedExtension].isSource) {
 						if (!allSources[listedExtension]) {
 							allSourcesRegistered = false;
 						}
@@ -504,14 +514,48 @@ module.exports = function(beoBus, globals) {
 		
 		
 		if (!sourceAdded) { 
-			beoBus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+			beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+			count = 0;
+			for (source in allSources) {
+				if (allSources[source].usesHifiberryControl) {
+					if (allSources[source].enabled) count ++;
+				}
+			}
+			if (count != enabledHifiberrySources) {
+				if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
+				configure = false;
+				if (enabledHifiberrySources == 1 && count != 0) {
+					configure = true;
+				} else if (count == 1) {
+					configure = true;
+				}
+				if (configure) {
+					beo.bus.emit("ui", {target: "sources", header: "configuringSystem", content: {reason: "hfiberryExclusive"}});
+					if (debug) console.log("Calling HiFiBerry player reconfiguration...");
+					exec("/opt/hifiberry/bin/reconfigure-players", function(error, stdout, stderr) {
+						if (error) {
+							if (debug) console.error("Reconfiguration failed: "+error);
+						} else {
+							if (debug) console.error("Reconfiguration finished.");
+						}
+						beo.bus.emit("ui", {target: "sources", header: "systemConfigured"});
+					});
+				}
+				enabledHifiberrySources = count;
+			}
 		} else {
 			if (allSourcesRegistered) {
 				if (debug) console.log("All sources registered.");
-				beoBus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				audioControlGet("status", function(result) {
 					audioControlGet("metadata");
 				});
+				enabledHifiberrySources = 0;
+				for (source in allSources) {
+					if (allSources[source].usesHifiberryControl) {
+						if (allSources[source].enabled) enabledHifiberrySources++;
+					}
+				}
 			}
 		}
 	}
@@ -519,14 +563,14 @@ module.exports = function(beoBus, globals) {
 	
 	
 	
-	return {
-		version: version,
-		setSourceOptions: setSourceOptions,
-		sourceActivated: sourceActivated,
-		sourceDeactivated: sourceDeactivated,
-		allSources: allSources,
-		settings: settings
-	};
+module.exports = {
+	version: version,
+	setSourceOptions: setSourceOptions,
+	setMetadata: setMetadata,
+	sourceActivated: sourceActivated,
+	sourceDeactivated: sourceDeactivated,
+	allSources: allSources,
+	settings: settings
 };
 
 

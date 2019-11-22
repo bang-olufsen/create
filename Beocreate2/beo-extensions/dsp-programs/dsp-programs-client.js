@@ -1,8 +1,13 @@
 var dsp_programs = (function() {
 
 var programs = {};
+var currentProgram = {};
 var previewedDSPProgram = null;
 var muteUnknown = false;
+var autoUpgrade = false;
+var dspConnected = false;
+var dspResponding = false;
+var dspUpgrade = false;
 
 
 $(document).on("dsp-programs", function(event, data) {
@@ -38,12 +43,18 @@ $(document).on("dsp-programs", function(event, data) {
 			$("#dsp-program-preview-popup footer .reinstall").addClass("disabled");
 		}
 		
+		$("#dsp-program-preview-popup footer .reinstall, #dsp-program-preview-popup footer .upgrade, #dsp-program-preview-popup footer .install").addClass("hidden");
+		$(".dsp-upgrade-text").addClass("hidden");
+		
 		if (data.content.current) {
 			$("#dsp-program-preview-popup footer .reinstall").removeClass("hidden");
-			$("#dsp-program-preview-popup footer .install").addClass("hidden");
 		} else {
-			$("#dsp-program-preview-popup footer .install").removeClass("hidden");
-			$("#dsp-program-preview-popup footer .reinstall").addClass("hidden");
+			if (data.content.id == dspUpgrade) {
+				$("#dsp-program-preview-popup footer .upgrade").removeClass("hidden");
+				$(".dsp-upgrade-text").removeClass("hidden");
+			} else {
+				$("#dsp-program-preview-popup footer .install").removeClass("hidden");
+			}
 		}
 		
 		previewedDSPProgram = data.content.id;
@@ -63,10 +74,65 @@ $(document).on("dsp-programs", function(event, data) {
 	}
 	
 	if (data.header == "showCurrent") {
+		currentProgram = data.content;
 		if (data.content.name) {
+			// Current program.
 			$("#dsp-programs .current-dsp-program-name").text(data.content.name);
 		} else {
 			$("#dsp-programs .current-dsp-program-name").text("Unknown Program");
+		}
+		if (data.content.version) {
+			// Current program.
+			$("#dsp-programs .current-dsp-program-version").text("Version "+data.content.version);
+		} else {
+			$("#dsp-programs .current-dsp-program-version").text("");
+		}
+		if (data.content.dspConnected != undefined) {
+			dspConnected = data.content.dspConnected;
+		}
+		if (data.content.dspResponding != undefined) {
+			dspResponding = data.content.dspResponding;
+		}
+		if (dspConnected && dspResponding) {
+			$("#dsp-error-wrap").addClass("hidden");
+			$("#current-dsp-program-wrap").removeClass("hidden");
+		} else {
+			if (!dspConnected) {
+				$("#dsp-problem-description").text("unable to connect");
+			} else if (!dspResponding) {
+				$("#dsp-problem-description").text("not responding");
+			}
+			$("#dsp-error-wrap").removeClass("hidden");
+			$("#current-dsp-program-wrap").addClass("hidden");
+		}
+	}
+	
+	if (data.header == "status") {
+		
+		if (data.content.dspConnected != undefined) {
+			dspConnected = data.content.dspConnected;
+		}
+		if (data.content.dspResponding != undefined) {
+			dspResponding = data.content.dspResponding;
+		}
+		if (dspConnected && dspResponding) {
+			$("#dsp-error-wrap").addClass("hidden");
+			$("#current-dsp-program-wrap").removeClass("hidden");
+		} else {
+			if (!dspConnected) {
+				$("#dsp-problem-description").text("unable to connect");
+			} else if (!dspResponding) {
+				$("#dsp-problem-description").text("not responding");
+			}
+			$("#dsp-error-wrap").removeClass("hidden");
+			$("#current-dsp-program-wrap").addClass("hidden");
+		}
+	}
+	
+	if (data.content && data.content.dspUpgrade != undefined) {
+		dspUpgrade = data.content.dspUpgrade;
+		if (!dspUpgrade) {
+			$(".dsp-program-item.upgrade .menu-value").text("").removeClass("button");
 		}
 	}
 	
@@ -81,6 +147,24 @@ $(document).on("dsp-programs", function(event, data) {
 						classes: ["dsp-program-item"],
 						data: {"data-dsp-program-id": program},
 						icon: $("#dsp-programs").attr("data-asset-path")+"/symbols-black/dsp-file.svg"
+					}
+					// Show version if a program of the same name is loaded or otherwise exists, to differentiate them.
+					showVersion = false;
+					if (currentProgram.name && currentProgram.name == programs[program].name) {
+						showVersion = true;
+					} else {
+						nameCount = -1;
+						for (prg in programs) {
+							if (programs[prg].name == programs[program].name) nameCount++;
+						}
+						if (nameCount) showVersion = true;
+					}
+					if (showVersion && programs[program].version) menuOptions.value = "Version "+programs[program].version;
+					
+					if (program == dspUpgrade) {
+						menuOptions.classes.push("upgrade");
+						menuOptions.value = "Upgrade";
+						menuOptions.valueAsButton = true;
 					}
 					$(".dsp-program-list").append(createMenuItem(menuOptions));
 			}
@@ -108,15 +192,24 @@ $(document).on("dsp-programs", function(event, data) {
 		}
 	}
 	
-	if (data.header == "muteUnknownPrograms") {
-		if (data.content.muteUnknown) {
+	if (data.header == "settings") {
+		if (data.content.muteUnknownPrograms) {
 			muteUnknown = true;
 			$("#mute-unknown-enabled-toggle").addClass("on");
 		} else {
 			muteUnknown = false;
 			$("#mute-unknown-enabled-toggle").removeClass("on");
 		}
+		
+		if (data.content.autoUpgrade) {
+			autoUpgrade = true;
+			$("#auto-upgrade-dsp-toggle").addClass("on");
+		} else {
+			autoUpgrade = false;
+			$("#auto-upgrade-dsp-toggle").removeClass("on");
+		}
 	}
+
 });
 
 
@@ -162,13 +255,22 @@ function toggleMuteUnknown(confirmed) {
 	}
 }
 
+function toggleAutoUpgrade() {
+	if (autoUpgrade) {
+		send({target: "dsp-programs", header: "autoUpgrade", content: {autoUpgrade: false}});
+	} else {
+		send({target: "dsp-programs", header: "autoUpgrade", content: {autoUpgrade: true}});
+	}
+}
+
 return {
 	jumpToSoundPresets: jumpToSoundPresets,
 	getPreview: getPreview,
 	closePreview: closePreview,
 	reinstallProgram: reinstallProgram,
 	installProgram: installProgram,
-	toggleMuteUnknown: toggleMuteUnknown
+	toggleMuteUnknown: toggleMuteUnknown,
+	toggleAutoUpgrade: toggleAutoUpgrade
 };
 
 })();

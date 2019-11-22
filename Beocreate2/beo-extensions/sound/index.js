@@ -24,9 +24,7 @@ var request = require('request');
 
 
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
@@ -54,15 +52,15 @@ module.exports = function(beoBus, globals) {
 	var alsaDSPVolumeControlAvailable = false;
 	var alsaMixer = null;
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
 		
 		if (event.header == "startup") {
 			
-			if (globals.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
+			if (beo.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
 				
 			}
 			
@@ -77,7 +75,7 @@ module.exports = function(beoBus, globals) {
 		if (event.header == "activatedExtension") {
 			if (event.content == "sound") {
 				
-				beoBus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
+				beo.bus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
 				
 			}
 			
@@ -86,7 +84,7 @@ module.exports = function(beoBus, globals) {
 		
 	});
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -114,7 +112,7 @@ module.exports = function(beoBus, globals) {
 	
 	
 	
-	beoBus.on("sound", function(event) {
+	beo.bus.on("sound", function(event) {
 		// Global, high-level sound control events.
 		switch (event.header) {
 			
@@ -154,19 +152,19 @@ module.exports = function(beoBus, globals) {
 				break;
 			case "getVolume":
 				getVolume(function(volume) {
-					beoBus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: systemVolume, volumeControl: volumeControl}});
+					beo.bus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: systemVolume, volumeControl: volumeControl}});
 				}, 1);
 				break;
 			case "advancedSoundAdjustmentsEnabled":
 				settings.advancedSoundAdjustmentsEnabled = (event.content.enabled) ? true : false;
 				
-				beoBus.emit("settings", {header: "saveSettings", content: {extension: "sound", settings: settings}});
-				beoBus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "sound", settings: settings}});
+				beo.bus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
 				break;
 		}
 	});
 	
-	beoBus.on("sources", function(event) {
+	beo.bus.on("sources", function(event) {
 		// Capture settings for "sources" extension, because they include the port for AudioControl.
 		if (event.header == "settings" && event.content.settings) {
 			sourcesSettings = Object.assign(sourcesSettings, event.content.settings);
@@ -225,8 +223,8 @@ module.exports = function(beoBus, globals) {
 	function reportVolume(newVolume, callback, flag) {
 		if (systemVolume != newVolume) {
 			systemVolume = newVolume;
-			beoBus.emit("sound", {header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
-			if (flag != 1) beoBus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
+			beo.bus.emit("sound", {header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
+			if (flag != 1) beo.bus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
 		}
 		if (callback) callback(newVolume);
 	}
@@ -424,12 +422,11 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	return {
-		version: version,
-		setVolume: setVolume,
-		getVolume: getVolume,
-		mute: mute
-	};
+module.exports = {
+	version: version,
+	setVolume: setVolume,
+	getVolume: getVolume,
+	mute: mute
 };
 
 

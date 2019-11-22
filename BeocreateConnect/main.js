@@ -1,10 +1,13 @@
 const {app, Menu, BrowserWindow, ipcMain, systemPreferences} = require('electron');
 const windowStateKeeper = require('electron-window-state');
-const dnssd = require('dnssd');
+const dnssd = require('dnssd2');
 const drivelist = require('drivelist');
+const request = require('request');
+const os = require('os');
 var shell = require('electron').shell;
 
 var debug = false;
+var activeWindow = true;
 
 // MENU
 
@@ -13,7 +16,7 @@ const template = [
     label: 'File',
     submenu: [
       { label: 'Look for Products Again',
-      click () { startDiscovery() }}
+      click () { startDiscovery(); startManualDiscovery(); }}
     ]
   },
   {
@@ -142,7 +145,7 @@ Menu.setApplicationMenu(menu);
 		minHeight: 300, 
 		//acceptFirstMouse: true, 
 		titleBarStyle: "hiddenInset", 
-		title: "Bang & Olufsen Create",
+		title: "Beocreate Connect",
 		frame: false,
 		show: false,
 		fullscreenWindowTitle: true,
@@ -162,6 +165,8 @@ Menu.setApplicationMenu(menu);
 		}
 		win.webContents.send('styleForWindows', process.platform !== 'darwin');
 		startDiscovery(true);
+		startCheckingIPAddress();
+		startManualDiscovery();
 		setTimeout(function() {
 			win.show();	
 		}, 100);
@@ -182,6 +187,8 @@ Menu.setApplicationMenu(menu);
       // Dereference the window object, usually you would store windows
       // in an array if your app supports multi windows, this is the time
       // when you should delete the corresponding element.
+	  stopManualDiscovery();
+	  clearInterval(ipCheckInterval);
 	  stopDiscovery();
       win = null;
     })
@@ -193,13 +200,14 @@ Menu.setApplicationMenu(menu);
 		} else {
 			console.log("No browser.");
 		}*/
-		refreshProducts(null, false);
-		refreshProducts(null, true);
+		refreshProducts(null);
+		activeWindow = true;
 		//if (products.length == 0) startDiscovery();
     });
     
     win.on('blur', () => {
     	win.webContents.send('windowEvent', "resignActive");
+		activeWindow = null;
     });
 	
 	win.on("enter-full-screen", () => {
@@ -238,6 +246,14 @@ Menu.setApplicationMenu(menu);
     }
     
   })
+  
+  app.on('before-quit', () => {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    
+	console.log("Quitting.");
+    
+  })
 
 
 // DARK / LIGHT MODE
@@ -252,29 +268,25 @@ if (process.platform == "darwin") {
   
 // FIND BEOCREATE SYSTEMS
 var browser = null;
-var browserLegacy = null; // for "BeoCreate 1" systems
 var startedOnce = false;
 function startDiscovery(once) { // Start or restart discovery.
 	if (!once || !startedOnce) {
 	  	if (!browser) {
 		  	browser = new dnssd.Browser(dnssd.tcp('beocreate'), {maintain: true});
-		  	browserLegacy = new dnssd.Browser(dnssd.tcp('beolink-open'), {maintain: true});
+	
 	  		
 	  		browser.on('serviceUp', service => discoveryEvent("up", service, false));
 	  		browser.on('serviceDown', service => discoveryEvent("down", service, false));
 	  		browser.on('serviceChanged', service => discoveryEvent("changed", service, false));
 	  		browser.on('error', error => console.log("dnssd error: "+error));
-	  		
-	  		browserLegacy.on('serviceUp', service => discoveryEvent("up", service, true));
-	  		browserLegacy.on('serviceDown', service => discoveryEvent("down", service, true));
-	  		browserLegacy.on('serviceChanged', service => discoveryEvent("changed", service, true));
+	 
 	  		
 	  	} else {
 	  		stopDiscovery();
 	  	}
 	  	
 		browser.start();
-		browserLegacy.start();
+		bonjourProductCount = 0;
 		startedOnce = true;
   }
 }
@@ -282,7 +294,6 @@ function startDiscovery(once) { // Start or restart discovery.
 function stopDiscovery() {
 	if (browser) {
 		browser.stop();
-		browserLegacy.stop();
 		products = {};
 		try {
 			win.webContents.send('discoveredProducts', products);
@@ -293,40 +304,36 @@ function stopDiscovery() {
 }
 
 var products = {};
-function discoveryEvent(event, service, legacyProduct) {
+var bonjourProductCount = 0;
+function discoveryEvent(event, service, manual) {
 	if (debug) console.log(event, new Date(Date.now()).toLocaleString(), service.fullname, service.addresses, service.txt);
 	if (event == "up" || event == "down") {
-		
-		if (!legacyProduct) {
-			list = browser.list();
-		} else {
-			list = browserLegacy.list();
-		}
-		if (list) refreshProducts(list, legacyProduct);
+		list = browser.list();
+		//list = [];
+		if (list) refreshProducts(list);
+		bonjourProductCount = (list) ? list.length : 0;
 	}
 	
 	if (event == "changed") {
 		if (products[service.fullname]) {
-			setProductInfo(service, legacyProduct);
+			setProductInfo(service);
 			win.webContents.send('updateProduct', products[service.fullname]);
 		}
 	}
 	
 }
 
-function refreshProducts(services, legacyProduct) {
+function refreshProducts(services) {
 	if (services == null) {
-		if (!legacyProduct) {
-			if (browser) services = browser.list();
-		} else {
-			if (browserLegacy) services = browserLegacy.list();
-		}
+		services = [];
+		if (browser) services = browser.list();
 	}
+	if (services.length == 0 && manuallyDiscoveredProduct) services.push(manuallyDiscoveredProduct);
 	if (services) {
 		// Find out which services have been added.
 		for (var s = 0; s < services.length; s++) {
 			if (!products[services[s].fullname]) {
-				setProductInfo(services[s], legacyProduct); // Adds product.
+				setProductInfo(services[s]); // Adds product.
 				//console.log(products[services[s].fullname].addresses);
 				win.webContents.send('addProduct', products[services[s].fullname]);
 			}
@@ -338,7 +345,7 @@ function refreshProducts(services, legacyProduct) {
 			for (var s = 0; s < services.length; s++) {
 				if (services[s].fullname == fullname) serviceFound = s;
 			}
-			if (serviceFound == -1 && legacyProduct == products[fullname].legacyProduct) {
+			if (serviceFound == -1) {
 				win.webContents.send('removeProduct', products[fullname]);
 				delete products[fullname]; // Removes product.
 			}
@@ -346,7 +353,7 @@ function refreshProducts(services, legacyProduct) {
 	}
 }
 
-function setProductInfo(service, legacyProduct) {
+function setProductInfo(service, manual) {
 	modelID = null;
 	modelName = null;
 	systemID = null;
@@ -378,7 +385,6 @@ function setProductInfo(service, legacyProduct) {
 	}
 	product = {
 		fullname: service.fullname,
-		legacyProduct: legacyProduct,
 		addresses: service.addresses,
 		host: service.host,
 		port: service.port,
@@ -389,15 +395,122 @@ function setProductInfo(service, legacyProduct) {
 		systemID: systemID,
 		systemStatus: systemStatus
 	};
+	if (service.manual) product.manual = true;
 	products[service.fullname] = product;
+	return product;
 }
 
 ipcMain.on("getAllProducts", (event, arg) => {
 	win.webContents.send('discoveredProducts', products);
-}); 
+});
 
+ipcMain.on("refreshProducts", (event, arg) => {
+	startDiscovery(); 
+	startManualDiscovery();
+});  
 
+var manuallyDiscoveredProduct = null;
+var manualDiscoveryInterval;
+var manualDiscoveryAddress = "10.0.0.1";
+function discoverProductAtAddress(address) {
+	if (bonjourProductCount == 0) {
+		request('http://'+address+'/product-information/discovery', { json: true }, (err, res, body) => {
+			if (res && res.statusCode == 200) {
+				service = {name: body.name, fullname: body.name+"._"+body.serviceType+"._tcp.local.", port: body.advertisePort, addresses: [address], host: address, txt: body.txtRecord, manual: true};
+				if (!manuallyDiscoveredProduct) {
+					manuallyDiscoveredProduct = service;
+					refreshProducts();
+				}
+			} else {
+				if (manuallyDiscoveredProduct != null) {
+					manuallyDiscoveredProduct = null;
+					refreshProducts();
+				}
+			}
+		});
+	} else {
+		if (manuallyDiscoveredProduct != null) {
+			manuallyDiscoveredProduct = null;
+			refreshProducts();
+		}
+	}
+}
 
+function startManualDiscovery() {
+	manuallyDiscoveredProduct = null;
+	clearInterval(manualDiscoveryInterval);
+	discoverProductAtAddress(manualDiscoveryAddress);
+	manualDiscoveryInterval = setInterval(function() {
+		discoverProductAtAddress(manualDiscoveryAddress);
+	}, 10000);
+}
+
+function stopManualDiscovery() {
+	clearInterval(manualDiscoveryInterval);
+}
+
+var ipCheckInterval;
+function startCheckingIPAddress() {
+	hasIPChanged();
+	ipCheckInterval = setInterval(function() {
+		if (activeWindow) {
+			if (hasIPChanged()) {
+				startDiscovery();
+				startManualDiscovery();
+			}
+		}
+	}, 10000);
+}
+
+oldIPs = [];
+function hasIPChanged() {
+	ifaces = os.networkInterfaces();
+	newIPs = []
+	for (iface in ifaces) {
+		for (var i = 0; i < ifaces[iface].length; i++) {
+			if (ifaces[iface][i].family == "IPv4") {
+				newIPs.push(ifaces[iface][i].address);
+			}
+		}
+	}
+	if (oldIPs.equals(newIPs)) {
+		return false;
+	} else {
+		oldIPs = newIPs;
+		return true;
+	}
+}
+
+// https://stackoverflow.com/questions/7837456/how-to-compare-arrays-in-javascript
+// Warn if overriding existing method
+if(Array.prototype.equals)
+    console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
+// attach the .equals method to Array's prototype to call it on any array
+Array.prototype.equals = function (array) {
+    // if the other array is a falsy value, return
+    if (!array)
+        return false;
+
+    // compare lengths - can save a lot of time 
+    if (this.length != array.length)
+        return false;
+
+    for (var i = 0, l=this.length; i < l; i++) {
+        // Check if we have nested arrays
+        if (this[i] instanceof Array && array[i] instanceof Array) {
+            // recurse into the nested arrays
+            if (!this[i].equals(array[i]))
+                return false;       
+        }           
+        else if (this[i] != array[i]) { 
+            // Warning - two different object instances will never be equal: {x:20} != {x:20}
+            return false;   
+        }           
+    }       
+    return true;
+}
+// Hide method from for-in loops
+Object.defineProperty(Array.prototype, "equals", {enumerable: false});
 
 
 // SD CARD LOGIC

@@ -15,12 +15,18 @@
 				<div class="menu-label">Status</div>
 				<div class="menu-value ball toslink-status"></div>
 			</div>
+			<p id="toslink-error-prompt">Optical input status can't be determined with the current DSP program.</p>
 			<hr>
 			<div class="menu-item toggle disabled" id="toslink-stops-other-sources-toggle" onclick="toslink.toggleStopsOtherSources();">
 				<div class="menu-label">Auto-Stop Other Sources</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p id="toslink-error-prompt">Optical input status can't be determined with the current DSP program.</p>
+			<h2>Sensitivity</h2>
+			<div class="segmented-control disabled" id="toslink-sensitivity-control">
+				<div onclick="toslink.setSensitivity('low');" class="low">Low</div>
+				<div onclick="toslink.setSensitivity('medium');" class="medium">Medium</div>
+				<div onclick="toslink.setSensitivity('high');" class="high selected">High</div>
+			</div>
 		</div>
 	</div>
 </div>

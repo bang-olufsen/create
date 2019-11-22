@@ -7,11 +7,16 @@
 	<div class="scroll-area">
 		<div class="menu-content">
 			<p>A DSP program determines the sound processing flow and which sound adjustment features are available.</p>
+			<div id="dsp-error-wrap">
+				<p class="warning">There is a problem accessing the sound processor (<span id="dsp-problem-description"></span>).</p>
+				<hr>
+			</div>
 			<div id="current-dsp-program-wrap">
 				<div class="menu-item checkmark left icon checked" onclick="dsp_programs.getPreview();">
 					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
 						<div class="menu-text-wrap">
 							<div class="menu-label current-dsp-program-name">Beocreate Universal</div>
+							<div class="menu-value current-dsp-program-version"></div>
 						</div>
 				</div>
 				<hr>
@@ -29,6 +34,12 @@
 					<div class="menu-toggle"></div>
 				</div>
 				<p>Keeps the amplifier muted if one of the listed DSP programs is not detected.</p>
+				
+				<div class="menu-item toggle" id="auto-upgrade-dsp-toggle" onclick="dsp_programs.toggleAutoUpgrade();">
+					<div class="menu-label">Upgrade Automatically</div>
+					<div class="menu-toggle"></div>
+				</div>
+				<p>Upgrades the program stored in the DSP memory automatically after a system update.</p>
 			</div>
 		</div>
 	</div>
@@ -41,6 +52,9 @@
 		</header>
 		
 		<div class="scroll-area">
+			<div class="dsp-program-header-wrap header-image-wrap">
+				<div class="header-image dsp-program-header-image" style="background-image: url(€/dsp-program.png);bottom: 10px;top: 10px;"></div>
+			</div>
 			<div class="menu-content">
 				<div class="dsp-program-information centre">
 					<h1>Program Name</h1>
@@ -53,6 +67,7 @@
 					<p class="warning no-volume-control-register">Volume control register is not defined. Volume can't be controlled.</p>
 					<p class="warning no-sample-rate">Sampling rate is not defined. Filters can't be controlled.</p>
 				</div>
+				<p class="dsp-upgrade-text hidden">This is an upgrade to the currently active DSP program.</p>
 				<div class="dsp-program-metadata-wrap">
 					<h2 class="disclosure" data-disclosure=".dsp-program-metadata-inner">Program Metadata</h2>
 					<p class="dsp-program-metadata-inner hidden">Metadata lists basic information about the DSP program. It also tells the system, which sound adjustments are supported and where to find them.</p>
@@ -66,6 +81,7 @@
 		<footer>
 			<div class="button pill black hidden install" onclick="dsp_programs.installProgram();">Install This Program</div>
 			<div class="button pill grey hidden reinstall" onclick="dsp_programs.reinstallProgram();">Reinstall This Program</div>
+			<div class="button pill black hidden upgrade" onclick="dsp_programs.installProgram();">Upgrade to This Program</div>
 		</footer>
 	</div>
 	

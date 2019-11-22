@@ -133,8 +133,17 @@
 		</div>
 	</div>
 	
+	<div class="ask-menu" id="apply-ip-settings-prompt">
+		<h2>Apply IP Address Settings?</h2>
+		<p>The product may temporarily lose connection to the network.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="network.applyIPSettings(true);">Apply Settings</div>
+			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+		</div>
+	</div>
 	
-	<div class="popup-content hidden" id="ip-address-wifi-popup">
+	
+	<div class="popup-content hidden ip-address-popup" id="ip-address-popup">
 		<header class="popup">
 			<div class="button symbol left" onclick="network.showIPAddressSettings(false);" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
 			<h1>Wireless IP Address</h1>
@@ -143,48 +152,48 @@
 		<div class="scroll-area">
 			
 			<div class="menu-content">
-				<div class="segmented-control disabled" id="wifi-ip-address-mode-control">
-					<div onclick="network.setAutomaticWifiIPAddress(true);" class="left selected">Automatic</div>
-					<div onclick="network.setAutomaticWifiIPAddress(false);" class="mono">Manual</div>
+				<div class="segmented-control ip-address-mode-selector">
+					<div onclick="network.setIPAddressMode(true);" class="auto selected">Automatic</div>
+					<div onclick="network.setIPAddressMode(false);" class="manual">Manual</div>
 				</div>
-				<div class="menu-item static wifi-ip-menu-item">
-					<div class="menu-label">IP Address</div>
-					<div class="menu-value wifi-ip">N/A</div>
+				<div class="auto-ip-section ip-address-section">
+					<div class="menu-item static">
+						<div class="menu-label">IP Address</div>
+						<div class="menu-value ip-automatic">N/A</div>
+					</div>
+					<div class="menu-item static">
+						<div class="menu-label">Subnet Mask</div>
+						<div class="menu-value subnetmask-automatic">N/A</div>
+					</div>
 				</div>
-				<div class="menu-item static wifi-subnetmask-menu-item">
-					<div class="menu-label">Subnet Mask</div>
-					<div class="menu-value wifi-subnetmask">N/A</div>
+				<div class="manual-ip-section ip-address-section hidden">
+					<div class="menu-item" onclick="network.inputIPAddressSetting('address');">
+						<div class="menu-label">IP Address</div>
+						<div class="menu-value ip-manual button">Set...</div>
+					</div>
+					<div class="menu-item" onclick="network.inputIPAddressSetting('subnetmask');">
+						<div class="menu-label">Subnet Mask</div>
+						<div class="menu-value subnetmask-manual button">Set...</div>
+					</div>
+					<div class="menu-item" onclick="network.inputIPAddressSetting('router');">
+						<div class="menu-label">Router</div>
+						<div class="menu-value router-manual button">Set...</div>
+					</div>
+					<div class="menu-item" onclick="network.inputIPAddressSetting('dns');">
+						<div class="menu-label">DNS Servers</div>
+						<div class="menu-value dns-manual button">Set...</div>
+					</div>
+					<p>All fields must be set before settings can be applied.</p>
 				</div>
-				<p>Setting up a static IP address is not yet available.</p>
+				
 			</div>
 		</div>
+		
+		<footer>
+			<div onclick="network.applyIPSettings();" class="button pill disabled black apply-ip-settings-button">Apply Settings</div>
+		</footer>
 	</div>
 	
-	<div class="popup-content hidden" id="ip-address-ethernet-popup">
-		<header class="popup">
-			<div class="button symbol left" onclick="network.showIPAddressSettings(false);" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
-			<h1>Ethernet IP Address</h1>
-		</header>
-		
-		<div class="scroll-area">
-			
-			<div class="menu-content">
-				<div class="segmented-control disabled" id="ethernet-ip-address-mode-control">
-					<div onclick="network.setAutomaticEthernetIPAddress(true);" class="left selected">Automatic</div>
-					<div onclick="network.setAutomaticEthernetIPAddress(false);" class="mono">Manual</div>
-				</div>
-				<div class="menu-item static ethernet-ip-menu-item">
-					<div class="menu-label">IP Address</div>
-					<div class="menu-value ethernet-ip">N/A</div>
-				</div>
-				<div class="menu-item static ethernet-subnetmask-menu-item">
-					<div class="menu-label">Subnet Mask</div>
-					<div class="menu-value ethernet-subnetmask">N/A</div>
-				</div>
-				<p>Setting up a static IP address is not yet available.</p>
-			</div>
-		</div>
-	</div>
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/network-client.js"></script>

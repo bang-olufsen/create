@@ -1,0 +1,40 @@
+<div class="menu-screen" id="software-update" data-icon="update.svg" data-menu-title="Software Update" data-menu-value-class="software-update-badge" data-context="system-settings/essentials">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Software Update</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			
+			<p class="loading hidden checking-for-update">Checking for update...</p>
+			
+			<div class="no-update-available hidden">
+				<p class="margin-top">No updates are currently available.</p>
+				<div class="menu-item icon static">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark-round.svg); mask-image: url(commom/symbols-black/checkmark-round.svg);"></div>
+					<div class="menu-label">Up to date</div>
+					<div class="menu-value hifiberry-version"></div>
+				</div>
+			</div>
+			<div class="software-update-available hidden">
+				<p>An update is available for this product.</p>
+				<div id="update-available-container">
+					<!-- OS name & version -->
+				</div>
+				<hr class="margin-bottom">
+				<div class="button pill grey software-update-available hidden" id="install-update-button" onclick="software_update.install();">Update Now</div>
+				<h2>New in This Version</h2>
+				<div id="update-release-notes">
+					
+				</div>
+
+			</div>
+			<!--<h2>Previous Releases</h2>-->
+		</div>
+	</div>
+
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/software-update-client.js"></script>

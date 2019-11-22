@@ -20,7 +20,7 @@ SOFTWARE.*/
 // Handles socket communication between the sound system and the client.
 
 //var mdns = require('mdns');
-var dnssd = require('dnssd'); // Replacing mdns, to avoid Avahi errors and to be consistent with the desktop app.
+var dnssd = require('dnssd2'); // Replacing mdns, to avoid Avahi errors and to be consistent with the desktop app.
 //var bonjour = require('bonjour')();
 var fs = require('fs');
 var server = require('websocket').server;

@@ -18,12 +18,15 @@ SOFTWARE.*/
 // BEOCREATE NOW PLAYING
 
 
-module.exports = function(beoBus, globals) {
-	var debug = globals.debug;
-	var send = globals.sendToUI;
-	var beoBus = beoBus;
+	var debug = beo.debug;
+	var send = beo.sendToUI;
 	
 	var version = require("./package.json").version;
+	
+	var defaultSettings = {
+		useExternalArtwork: "auto"
+	};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
 	var allSources = {};
 	var currentSource = null;
@@ -35,8 +38,8 @@ module.exports = function(beoBus, globals) {
 	
 	var sources = null;
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
@@ -49,10 +52,14 @@ module.exports = function(beoBus, globals) {
 			if (event.content == "now-playing") {
 				
 			}
+			
+			if (event.content == "ui-settings") {
+				beo.bus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
+			}
 		}
 	});
 	
-	beoBus.on("sources", function(event) {
+	beo.bus.on("sources", function(event) {
 		
 		
 		if (event.header == "sourcesChanged") {
@@ -104,7 +111,22 @@ module.exports = function(beoBus, globals) {
 	});
 	
 	
-	beoBus.on("now-playing", function(event) {
+	beo.bus.on("now-playing", function(event) {
+		
+		if (event.header == "settings") {
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+		}
+		
+		if (event.header == "useExternalArtwork") {
+			if (event.content && event.content.useExternalArtwork) {
+				settings.useExternalArtwork = event.content.useExternalArtwork;
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "now-playing", settings: settings}});
+			}
+			beo.bus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
+		}
+		
 		if (event.header == "metadata") {
 			sendMetadata = {};
 			if (!metadataCache[event.content.extension]) {
@@ -160,62 +182,61 @@ module.exports = function(beoBus, globals) {
 			}
 		}
 		
-		if (event.header == "showingNowPlaying") {
+		if (event.header == "getData") {
 			send({target: "now-playing", header: "playerState", content: {state: playerState}});
 			if (focusedSource) {
 				if (event.content.cacheIndex != metadataCacheIndex) {
-					sendMetadata(focusedSource);
+					sendMetadata(focusedSource, false, true);
 				}
 			} else {
-				sendMetadata();
+				sendMetadata(null, false, true);
 				//if (event.content.cacheIndex != metadataCacheIndex) sendMetadata(lastSource);
 			}
 		}
 		
 		if (event.header == "transport") {
 			if (event.content.action) {
-				beoBus.emit("sources", {header: "transport", content: {action: event.content.action}});
+				beo.bus.emit("sources", {header: "transport", content: {action: event.content.action}});
 			}
 		}
 		
 		if (event.header == "toggleLove") {
-			beoBus.emit("sources", {header: "toggleLove"});
+			beo.bus.emit("sources", {header: "toggleLove"});
 		}
 	});
 	
 	
-	beoBus.on("remote", function(event) {
+	beo.bus.on("remote", function(event) {
 		switch (event.content.command) {
 			
 			case "VOL UP":
-				beoBus.emit("sound", {header: "setVolume", content: "+2"});
+				beo.bus.emit("sound", {header: "setVolume", content: "+2"});
 				break;
 			case "VOL DOWN":
-				beoBus.emit("sound", {header: "setVolume", content: "-2"});
+				beo.bus.emit("sound", {header: "setVolume", content: "-2"});
 				break;
 			case "MUTE":
-				beoBus.emit("sound", {header: "toggleMute"});
+				beo.bus.emit("sound", {header: "toggleMute"});
 				break;
 		}
 	});
 	
 	
-	function sendMetadata(forSource = null, increment) {
+	function sendMetadata(forSource = null, increment, sendSettings) {
 		if (increment) {
 			metadataCacheIndex++;
 			if (metadataCacheIndex > 1000) metadataCacheIndex = 1;
 		}
 		if (forSource && allSources[forSource] && allSources[forSource].metadata) {
-			send({target: "now-playing", header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex}});
+			send({target: "now-playing", header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
 		} else {
-			send({target: "now-playing", header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex}});
+			send({target: "now-playing", header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
 		}
 	}
 	
 	
-	return {
-		version: version
-	};
+module.exports = {
+	version: version
 };
 
 

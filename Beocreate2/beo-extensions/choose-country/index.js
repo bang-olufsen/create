@@ -19,18 +19,16 @@ SOFTWARE.*/
 
 var countryList = require('country-list');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var extensions = globals.extensions;
+	var extensions = beo.extensions;
 	var currentCountryCode = null;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
 	var orderedCountries = {};
 	
-	beoBus.on('general', function(event) {
-		// See documentation on how to use BeoBus.
+	beo.bus.on('general', function(event) {
+		// See documentation on how to use beo.bus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
 		//console.dir(event);
@@ -66,7 +64,7 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "choose-country") {
-				beoBus.emit("ui", {target: "choose-country", header: "showList", content: {countries: orderedCountries}});
+				beo.bus.emit("ui", {target: "choose-country", header: "showList", content: {countries: orderedCountries}});
 				getAndShowCurrentCountry();
 			}
 			
@@ -76,13 +74,13 @@ module.exports = function(beoBus, globals) {
 		}
 	});
 	
-	beoBus.on('choose-country', function(event) {
+	beo.bus.on('choose-country', function(event) {
 		
 		if (event.header == "currentCountry") {
 			
 			if (event.content.country != undefined) currentCountryCode = event.content.country;
 			countryName = (currentCountryCode != null) ? countryList.getName(currentCountryCode) : null;
-			beoBus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
+			beo.bus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
 			
 			
 		}
@@ -95,7 +93,7 @@ module.exports = function(beoBus, globals) {
 					if (newCountry) {
 						currentCountryCode = newCountry;
 						countryName = (currentCountryCode != null) ? countryList.getName(currentCountryCode) : null;
-						beoBus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
+						beo.bus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
 						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
 							extensions["setup"].allowAdvancing("choose-country", true);
 						}
@@ -111,14 +109,13 @@ module.exports = function(beoBus, globals) {
 			country = extensions["network"].getCountry();
 			if (country != undefined) currentCountryCode = country;
 			countryName = (currentCountryCode != null) ? countryList.getName(currentCountryCode) : null;
-			beoBus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
+			beo.bus.emit("ui", {target: "choose-country", header: "showCurrent", content: {countryCode: currentCountryCode, countryName: countryName}});
 		}
 	}
 	
 	
-	return {
-		version: version
-	};
+module.exports = {
+	version: version
 };
 
 

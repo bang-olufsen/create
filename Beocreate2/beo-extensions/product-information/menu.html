@@ -20,48 +20,35 @@
 				<h1 class="system-name">Sound System</h1>
 				<div class="button-row centre">
 					<div data-translation="changeNameButton" class="button pill black compact setup-only" onclick="product_information.changeProductName();">Change Name…</div>
-					<!--<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="product_information.startCustomisation();">Change…</div>-->
 					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="ask('product-appearance-prompt');">Change…</div>
 				</div>
 			</div>
-			<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">System</h2>
+			<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">About</h2>
 		</div>
 			
 	
 		<div id="about-product" class="full-height setup-hide">
-			<div id="about-top" class="as-sidebar">
+			<div id="about-logos">
 				<!--<img class="create-logo" src="€/create.svg"/>-->
 				<div class="create-logo" style="-webkit-mask-image: url(€/create.svg); mask-image: url(€/create.svg);"></div>
-				<img class="hifiberry-logo" src="€/hifiberry-logo.svg"/>
+				<div class="hifiberry-logo" style="-webkit-mask-image: url(€/hifiberry-logo.svg); mask-image: url(€/hifiberry-logo.svg);"></div>
 			</div>
-			<div class="menu-content-wrap no-full-width" id="about-menu-content-wrap">
-				<div class="menu-content no-full-width">
 					
 					
-					<div class="about-texts">
-						<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
-						<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>
-						
-						<p class="about-line-0 card-type">DAC+ DSP</p>
-						
-						<p class="about-line-1" id="copy-beocreate">&copy; 2017–2019 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry</p>
-						<p class="about-line-1" id="copy-hifiberry-os">&copy; 2017–2019 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen</p>
-						
-						<p class="about-line-2 system-info-cycle" onclick="product_information.cycleSystemInformation();"></p>
-						
-					</div>
-					<hr>
-					<div class="beo-dynamic-menu"></div>
-					<div class="menu-item icon" onclick="ask('product-shutdown-prompt');">
-						<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/power.svg); mask-image: url(€/symbols-black/power.svg);"></div>
-						<div class="menu-label">Power…</div>
-					</div>
-					
-					
-					
-					<!-- EXIST TO CREATE -->
-				</div>
+			<div id="about-texts">
+				<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
+				<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>
+				
+				<p class="about-line-0 card-type">DAC+ DSP</p>
+				
+				<p class="about-line-1 system-info-cycle" onclick="product_information.cycleSystemInformation();"></p>
+				
+				<p class="about-line-2" id="copy-beocreate">&copy; 2017–2019 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry. Licensed under MIT.</p>
+				<p class="about-line-2" id="copy-hifiberry-os">&copy; 2017–2019 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen. Licensed under MIT.</p>
+				
+				<!-- EXIST TO CREATE -->
 			</div>
+			
 		</div>
 	</div>
 	

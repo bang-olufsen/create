@@ -48,6 +48,13 @@ $( document ).ready(function() {
 	$("input[type=file]#file-input").on('change',function(){
 	    uploadFile(null, null, this.files[0]);
 	});
+	
+	// Preload animated wait icons:
+	if (!hifiberryOS) {
+		attentionIcon.src = "common/create-wait-animate.svg";
+	} else {
+		attentionIcon.src = "common/hifiberry-wait-animate.svg";
+	}
 });
 
 darkAppearance = false;
@@ -129,12 +136,31 @@ window.onresize = function() {
 	}, 200);
 };
 
+document.onkeydown = function(evt) {
+    evt = evt || window.event;
+    var isEscape = false;
+    if ("key" in evt) {
+        isEscape = (evt.key === "Escape" || evt.key === "Esc");
+    } else {
+        isEscape = (evt.keyCode === 27);
+    }
+    if (isEscape) {
+		if (textInputOpen) {
+			cancelText();
+		} else if (askOpen) {
+			ask();
+		} else if (currentPopup) {
+			popupBackplateClick('#open-popup', '#open-popup-back-plate', true);
+		}
+    }
+};
+
 var extensions = {};
 var interfaceMode = 1; // 1 = normal, 2 = compact
 
 function prepareMenus() {
 	// Find every top level menu
-	console.log("Preparing menus");
+	console.log("Preparing menus...");
 	menuGroup = "";
 	$("nav.bar .nav-content").append('<div class="nav-spacer"></div>');
 		
@@ -275,6 +301,7 @@ function prepareMenus() {
 	}
 	
 	$(document).trigger("ui", {header: "menusReady"});
+	console.log("Menus ready.");
 }
 
 var configuredTabs = [];
@@ -745,7 +772,9 @@ $(document).on("ui", function(event, data) {
 			uiSettings = data.content.settings;
 			if (uiSettings.disclosure) {
 				for (element in uiSettings.disclosure) {
-					disclosure(element, uiSettings.disclosure[element]);
+					if ($('.disclosure[data-disclosure="'+element+'"]').length > 0) {
+						disclosure(element, uiSettings.disclosure[element]);
+					}
 				}
 			}
 		}
@@ -838,6 +867,7 @@ function createMenuItem(options) {
 			}
 		}
 		if (options.valueAsButton) menuItem += ' button';
+		if (options.valueAsBadge) menuItem += ' badge';
 		menuItem += '"';
 		if (options.translation && options.translation.value) {
 			menuItem += ' data-translation="'+options.translation.value+'"'
@@ -958,6 +988,7 @@ var notificationTimeout;
 var notificationAnimationTimeout;
 var currentNotificationID = false;
 var notificationIcon = "";
+var attentionIcon = new Image();
 
 function notify(options, dismissWithID) { // Display a standard HUD notification
 	
@@ -1016,27 +1047,35 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		
 		if (!options.icon) {
 			icon = "common/symbols-black/notification.svg";
-			$(".hud-notification img").removeClass("beo-load").addClass("hidden");
+			$("#hud-notification-icon").removeClass("beo-load").addClass("hidden");
 			notificationIcon = "";
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
 				//icon = "common/symbols-black/wait-star.svg"
-				if (!hifiberryOS) {
+				/*if (!hifiberryOS) {
 					icon = "common/create-wait-animate.svg";
 				} else {
 					icon = "common/hifiberry-wait-animate.svg";
-				}
-				$(".hud-notification img").addClass("beo-load");
+				}*/
+				icon = attentionIcon.src;
+				$("#hud-notification-icon").addClass("beo-load");
 		
-				$(".hud-notification img").removeClass("hidden");
-				$(".hud-notification img").attr("src", icon);
+				$("#hud-notification-icon").removeClass("hidden");
+				$("#hud-notification-icon").css("-webkit-mask-image", "url("+icon+")");
 				notificationIcon = "attention";
 			}
 		} else {
 			icon = options.icon;
-			$(".hud-notification img").removeClass("beo-load hidden");
-			$(".hud-notification img").attr("src", icon);
+			$("#hud-notification-icon").removeClass("beo-load hidden");
+			$("#hud-notification-icon").css("-webkit-mask-image", "url("+icon+")");
 			notificationIcon = icon;
+		}
+		
+		if (options.progress == undefined) {
+			$("#hud-progress").addClass("hidden");
+		} else {
+			$("#hud-progress").removeClass("hidden");
+			$("#hud-progress-fill").css("width", options.progress+"%");
 		}
 		
 		if (options.timeout == undefined) {
@@ -1064,6 +1103,8 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		}
 	}
 }
+
+
 
 
 // TABS WITHIN ELEMENTS (not the "favourites" at the bottom in compact layouts)
@@ -1197,9 +1238,11 @@ function commaAndList(list, andWord, translationID, extensionID) {
 
 // ASK
 
+var askOpen = false;
 var askCallbacks = null;
 function ask(menuID, dynamicContent, callbacks, cancelAction) {
 	if (menuID) {
+		askOpen = true;
 		if (callbacks) askCallbacks = callbacks;
 		if (cancelAction) {
 			$("#ask-back-plate").attr("onclick", cancelAction);
@@ -1222,6 +1265,7 @@ function ask(menuID, dynamicContent, callbacks, cancelAction) {
 			$("#ask, #ask-back-plate").removeClass("block");
 		}, 500);
 		askCallbacks = null;
+		askOpen = false;
 	}
 }
 
@@ -1299,9 +1343,11 @@ function popupBackplateClick(view, backplate, universalOverride) {
 var textInputCallback;
 var textInputMode = 0;
 var textInputOptions;
+var textInputCloseTimeout;
+var textInputOpen = false;
 
-function startTextInput(type, title, prompt, options, callback) {
-	
+function startTextInput(type, title, prompt, options, callback, cancelCallback) {
+	clearTimeout(textInputCloseTimeout);
 	$("#text-input, #text-input-back-plate").addClass("block");
 	setTimeout(function() {
 		$("#text-input, #text-input-back-plate").addClass("visible");
@@ -1331,11 +1377,13 @@ function startTextInput(type, title, prompt, options, callback) {
 	} else {
 		$("#text-input input[type=text]").attr("autocorrect", "off");
 	}
-	
+	$("#text-input input[type=password]").attr("placeholder", "");
+	$("#text-input input[type=text]").attr("placeholder", "");
 	if (options.placeholders.text) $("#text-input input[type=text]").attr("placeholder", options.placeholders.text);
 	if (options.placeholders.password) $("#text-input input[type=password]").attr("placeholder", options.placeholders.password);
 	
 	$("#text-input input[type=text], #text-input input[type=password]").val("");
+	if (options.text) $("#text-input input[type=text]").val(options.text);
 	
 	$("#text-prompt").text(prompt);
 	$("#text-input h1").text(title);
@@ -1348,8 +1396,8 @@ function startTextInput(type, title, prompt, options, callback) {
 		$("#text-input input[type=text]").focus();
 	}
 	//}, 600);
-	
-
+	validateTextInput();
+	textInputOpen = true;
 }
 
 var textInputValid = false;
@@ -1370,7 +1418,7 @@ function validateTextInput() {
 			}
 		} else {
 			if (!passwd) textInputValid = false;
-			if (textInputOptions.minLength.password) {
+			if (textInputOptions.minLength && textInputOptions.minLength.password) {
 				if (passwd.length < textInputOptions.minLength.password) textInputValid = false;
 			}
 		}
@@ -1386,21 +1434,27 @@ function submitText() {
 	if (textInputValid) {
 		txt = $("#text-input input[type=text]").val();
 		passwd = $("#text-input input[type=password]").val();
-		cancelText();
+		cancelText(true);
 		textInputCallback({text: txt, password: passwd});
 		return true;
 	} else {
-		return false;	
+		return false;
 	}
 }
 
 
-function cancelText() {
+function cancelText(hideOnly) {
 	$("#text-input input[type=text], #text-input input[type=password]").blur();
 	$("#text-input, #text-input-back-plate").removeClass("visible");
-	setTimeout(function() {
+	textInputCloseTimeout = setTimeout(function() {
 		$("#text-input, #text-input-back-plate").removeClass("block");
+		$("#text-input input[type=text]").val("");
+		$("#text-input input[type=password]").val("");
 	}, 500);
+	if (!hideOnly) {
+		textInputCallback();
+	}
+	textInputOpen = false;
 }
 
 function prepareTextInput() {

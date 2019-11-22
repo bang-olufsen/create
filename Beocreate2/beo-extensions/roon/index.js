@@ -19,9 +19,7 @@ SOFTWARE.*/
 
 var exec = require("child_process").exec;
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
+	var debug = beo.debug;
 	
 	var version = require("./package.json").version;
 	
@@ -29,14 +27,14 @@ module.exports = function(beoBus, globals) {
 	
 	var roonEnabled = false;
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
 			
-			if (globals.extensions.sources &&
-				globals.extensions.sources.setSourceOptions &&
-				globals.extensions.sources.sourceDeactivated) {
-				sources = globals.extensions.sources;
+			if (beo.extensions.sources &&
+				beo.extensions.sources.setSourceOptions &&
+				beo.extensions.sources.sourceDeactivated) {
+				sources = beo.extensions.sources;
 			}
 			
 			if (sources) {
@@ -55,24 +53,24 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "roon") {
-				beoBus.emit("ui", {target: "roon", header: "roonSettings", content: {roonEnabled: roonEnabled}});
+				beo.bus.emit("ui", {target: "roon", header: "roonSettings", content: {roonEnabled: roonEnabled}});
 			}
 		}
 	});
 	
-	beoBus.on('roon', function(event) {
+	beo.bus.on('roon', function(event) {
 		
 		if (event.header == "roonEnabled") {
 			
 			if (event.content.enabled != undefined) {
 				setRoonStatus(event.content.enabled, function(newStatus, error) {
-					beoBus.emit("ui", {target: "roon", header: "roonSettings", content: {roonEnabled: newStatus}});
+					beo.bus.emit("ui", {target: "roon", header: "roonSettings", content: {roonEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("roon", {enabled: newStatus});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("roon");
 					}
 					if (error) {
-						beoBus.emit("ui", {target: "roon", header: "errorTogglingRoon", content: {}});
+						beo.bus.emit("ui", {target: "roon", header: "errorTogglingRoon", content: {}});
 					}
 				});
 			}
@@ -118,9 +116,6 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	}
-	
+module.exports = {
+	version: version
 };
-

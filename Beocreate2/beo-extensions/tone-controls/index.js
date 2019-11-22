@@ -19,10 +19,8 @@ SOFTWARE.*/
 
 var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var debug = globals.debug;
-	var systemVolume = globals.volume;
+	var debug = beo.debug;
+	var systemVolume = beo.volume;
 	var Fs = null;
 	
 	var version = require("./package.json").version;
@@ -39,7 +37,7 @@ module.exports = function(beoBus, globals) {
 		"toneControls": 0
 	};
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		if (event.header == "startup") {
 			
 			
@@ -47,13 +45,13 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "tone-controls") {
-				beoBus.emit("ui", {target: "tone-controls", header: "toneControlSettings", content: {settings: settings}});
-				beoBus.emit("ui", {target: "tone-controls", header: "canDoToneControl", content: {canDoToneControl: canDoToneControl}});
+				beo.bus.emit("ui", {target: "tone-controls", header: "toneControlSettings", content: {settings: settings}});
+				beo.bus.emit("ui", {target: "tone-controls", header: "canDoToneControl", content: {canDoToneControl: canDoToneControl}});
 			}
 		}
 	});
 	
-	beoBus.on('tone-controls', function(event) {
+	beo.bus.on('tone-controls', function(event) {
 		if (event.header == "settings") {
 			settings = event.content.settings;
 			
@@ -68,7 +66,7 @@ module.exports = function(beoBus, globals) {
 					
 					settings.toneTouchXY = event.content.toneTouchXY;
 					applyToneTouchFromSettings();
-					beoBus.emit("settings", {header: "saveSettings", content: {extension: "tone-controls", settings: settings}});
+					beo.bus.emit("settings", {header: "saveSettings", content: {extension: "tone-controls", settings: settings}});
 				}
 			}
 			
@@ -82,13 +80,13 @@ module.exports = function(beoBus, globals) {
 				
 				// Apply loudness.
 				
-				beoBus.emit("settings", {header: "saveSettings", content: {extension: "tone-controls", settings: settings}});
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "tone-controls", settings: settings}});
 			}
 			
 		}
 	});
 	
-	beoBus.on('dsp', function(event) {
+	beo.bus.on('dsp', function(event) {
 		
 		
 		if (event.header == "metadata") {
@@ -163,8 +161,6 @@ module.exports = function(beoBus, globals) {
 	}
 	
 	
-	return {
-		version: version
-	};
+module.exports = {
+	version: version
 };
-

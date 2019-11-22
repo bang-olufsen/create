@@ -26,14 +26,15 @@ $(document).on("tone-controls", function(event, data) {
 		
 		}
 		
-		if (!data.content.canDoToneControl.toneControl) {
+		if (!data.content.canDoToneControl.toneControls) {
 			// No ToneTouch or loudness.
+			$("#tone-touch-dot").addClass("disabled");
 		} 
-		if (data.content.canDoToneControl.toneControl >= 2) {
+		if (data.content.canDoToneControl.toneControls >= 2) {
 			// Enable ToneTouch.
-			
+			$("#tone-touch-dot").removeClass("disabled");
 		}
-		if (data.content.canDoToneControl.toneControl >= 4) {
+		if (data.content.canDoToneControl.toneControls >= 4) {
 			// Enable loudness.
 			
 		}

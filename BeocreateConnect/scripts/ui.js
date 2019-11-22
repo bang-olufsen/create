@@ -13,6 +13,7 @@ if (typeof require !== 'undefined') {
 }
 
 var darkAppearance = false;
+var windows = false;
 
 window.matchMedia("(prefers-color-scheme: dark)").addListener(e => e.matches && setAppearance(true))
 window.matchMedia("(prefers-color-scheme: light)").addListener(e => e.matches && setAppearance(false))
@@ -76,8 +77,10 @@ if (ipc) {
 	});
 	ipc.on('styleForWindows', (event, message) => {
 		if (message == true) {
+			windows = true;
 			$("body").addClass("windows").removeClass("mac");
 		} else {
+			windows = false;
 			$("body").removeClass("windows").addClass("mac");
 		}
 	});
@@ -170,7 +173,7 @@ function titleBarMode(mode) {
         });
 
         function toggleMaxRestoreButtons() {
-			if (remote) {
+			if (remote && windows) {
 	            window = remote.getCurrentWindow();
 	            if (window.isMaximized()) {
 	                maxButton.style.display = "none";
@@ -219,8 +222,10 @@ function toggleMenu(force) {
 		$(".menu-button").addClass("menu-open");
 		menuOpen = true;
 		showWindowTitle(false);
+		connectOnDiscovery = {identifier: null, productName: null};
 	} else {
 		//startLoadRowAnimation();
+		connectOnDiscovery = {identifier: null, productName: null};
 		if (currentAssistant) startAssistant();
 		$("body").addClass("animating-menu");
 		$("body").removeClass("in-menu")
@@ -238,7 +243,7 @@ function toggleMenu(force) {
 
 function applyColourTheme(theme) {
 	if (theme == undefined) theme = Math.floor((Math.random() * menuColourThemes.length));
-	console.log(theme);
+	//console.log(theme);
 	$("#main-menu .colour-background .element-1").css("background-color", "var(--"+menuColourThemes[theme][0]+")");
 	$("#main-menu .colour-background .element-2").css("background-color", "var(--"+menuColourThemes[theme][1]+")");
 	$("#main-menu .colour-background .element-3").css("background-color", "var(--"+menuColourThemes[theme][2]+")");
@@ -331,7 +336,7 @@ function toggle(inElement, outElement) {
 // Receives discovered products from the app.
 products = {};
 selectedProduct = null;
-connectOnDiscovery = {identifierType: null, identifier: null, systemName: null};
+connectOnDiscovery = {identifier: null, systemName: null};
 
 
 if (ipc) {
@@ -403,13 +408,12 @@ function updateProductLists() {
 
 function addProduct(product) {
 	info = getProductInfo(product);
+	console.log(connectOnDiscovery.identifier, product.systemID);
 	if (connectOnDiscovery.identifier != null) {
 		// Check if this product is the one that should be automatically reconnected.
-		if (connectOnDiscovery.identifierType == "systemID") {
-			if (product.systemID == connectOnDiscovery.identifier) {
-				configureProduct(product.fullname, true);
-				productNotification();
-			}
+		if (product.systemID == connectOnDiscovery.identifier) {
+			configureProduct(product.fullname, true);
+			productNotification();
 		}
 	}
 	if ($(".found-products .discovered[data-product-fullname=\""+product.fullname+"\"]")) {
@@ -463,7 +467,7 @@ function configureProduct(fullname, fromDiscovery) {
 		endAssistant();
 		setWindowTitle(products[fullname].name);
 		showMenuButton(true);
-		connectOnDiscovery = {identifierType: null, identifier: null, productName: null};
+		connectOnDiscovery = {identifier: null, productName: null};
 		setTimeout(function() {
 			productNotification();
 		}, 600);
@@ -605,6 +609,7 @@ function assistantFlow(step) {
 					assistantButtons("Previous Step", "Next Step");
 					enableAssistantButtons(true, false);
 					showScreen('wait-for-discovery', direction);
+					ipc.send("refreshProducts");
 					break;
 			}
 			break;
@@ -647,14 +652,8 @@ window.addEventListener("message", function(event) {
 				// The product sends its name, update it to the header.
 				if (inProductView) setWindowTitle(data.content.name);
 				break;
-			case "autoReconnectLegacy":
-				// When a BeoCreate 1 product changes name, make note of its new name and wait until it drops connection. Wait for it to be discovered under the new name and automatically connect to it.
-				if (data.content.newName) {
-					connectOnDiscovery = {identifierType: "name", identifier: data.content.newName, systemName: selectedProduct.name};
-				}
-				break;
 			case "autoReconnect":
-				connectOnDiscovery = {identifierType: "systemID", identifier: data.content.newName, systemName: selectedProduct.name};
+				connectOnDiscovery = {identifier: data.content.systemID, systemName: data.content.systemName};
 				productNotification(data.content.systemName+" will be automatically reconnected", "Make sure this computer is connected to the same network as the product.");
 				break;
 			case "connection":

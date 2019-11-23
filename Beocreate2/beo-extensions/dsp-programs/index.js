@@ -378,7 +378,11 @@ if (Gpio) {
 	}
 	
 	function getCurrentProgramInfo() {
-		version = (currentMetadata.profileVersion) ? currentMetadata.profileVersion.value[0] : null;
+		if (currentMetadata) {
+			version = (currentMetadata.profileVersion) ? currentMetadata.profileVersion.value[0] : null;
+		} else {
+			version = null;
+		}
 		name = getProgramName(currentMetadata);
 		return {name: name, version: version};
 	}

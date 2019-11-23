@@ -117,5 +117,6 @@ var exec = require("child_process").exec;
 	}
 	
 module.exports = {
-	version: version
+	version: version,
+	isEnabled: getRoonStatus
 };

@@ -539,5 +539,6 @@ var request = require('request'); // for sending HTTP requests to the DACP serve
 
 	
 module.exports = {
-	version: version
+	version: version,
+	getStatus: getShairportSyncStatus
 };

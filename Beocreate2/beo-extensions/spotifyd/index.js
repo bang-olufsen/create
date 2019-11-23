@@ -276,6 +276,7 @@ var fs = require("fs");
 	}
 	
 module.exports = {
-	version: version
+	version: version,
+	isEnabled: getSpotifydStatus
 };
 

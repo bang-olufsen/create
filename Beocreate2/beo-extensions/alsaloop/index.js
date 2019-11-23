@@ -81,10 +81,10 @@ var exec = require("child_process").exec;
 	function getLoopStatus(callback) {
 		exec("systemctl is-active --quiet alsaloop.service").on('exit', function(code) {
 			if (code == 0) {
-				alsaloopEnabled = true;
+				loopEnabled = true;
 				callback(true);
 			} else {
-				alsaloopEnabled = false;
+				loopEnabled = false;
 				callback(false);
 			}
 		});
@@ -116,6 +116,7 @@ var exec = require("child_process").exec;
 	}
 	
 module.exports = {
-	version: version
+	version: version,
+	isEnabled: getLoopStatus
 };
 

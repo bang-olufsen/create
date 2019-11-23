@@ -242,4 +242,6 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 	}
 	
-
+module.exports = {
+	isEnabled: function(callback) {callback(settings.toslinkEnabled)}
+}

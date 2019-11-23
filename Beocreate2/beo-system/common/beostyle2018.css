@@ -4050,6 +4050,10 @@ p.setup-prompt {
 	display: none;
 }
 
+.dark p.setup-prompt {
+	color: white;
+}
+
 .setup p.setup-prompt {
 	display: block;
 }

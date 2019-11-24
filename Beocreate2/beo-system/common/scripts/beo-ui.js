@@ -179,6 +179,12 @@ function prepareMenus() {
 		// Loop through every menu screen of that menu
 			$(".menu-screen", this).each(function() {
 					
+				if ($(this).attr("data-parent-extension")) { // Some extensions support deeper navigation hierarchies ("deep menu").
+					deepMenu = true;
+				} else {
+					deepMenu = false;
+				}
+					
 				// Translate this screen or title.
 				thisScreen = this;
 				translatedString("", "menuTitle", $(this).attr("id"), function(finalString) {
@@ -224,68 +230,87 @@ function prepareMenus() {
 					$(this).addClass("block");
 					submenuGroup = "";
 					menuID = $(this).attr("id");
-					extensions[menuID] = {id: menuID, parentMenu: undefined, icon: $(this).attr("data-icon"), assetPath: $(this).attr("data-asset-path"), title: $(this).attr("data-menu-title")};
+					extensions[menuID] = {
+						id: menuID, parentMenu: undefined, 
+						icon: $(this).attr("data-icon"), 
+						assetPath: $(this).attr("data-asset-path"), 
+						title: $(this).attr("data-menu-title"),
+						deepMenu: []
+					};
 					$(".scroll-area", this).first().prepend('<h1 class="large-title">'+$("header h1", this).first().text()+'</h1>'); // Duplicate title for views that use a large title.					
 				} else {
 					// SUBMENUS
-					
-					iconName = $(this).attr("data-icon");
-					if (hifiberryOS && $(this).attr("data-icon-hifiberry")) {
-						iconName = $(this).attr("data-icon-hifiberry");
-					}
-					menuOptions = {
-						label: $(this).attr("data-menu-title"),
-						onclick: 'showExtension(\''+$(this).attr("id")+'\');',
-						icon: $(this).attr("data-asset-path")+"/symbols-black/"+iconName, // Still not quite sure if it looks better with or without icons.
-						id: $(this).attr("id")+'-menu-item',
-						chevron: true,
-						data: {"data-extension-id": $(this).attr("id")},
-						classes: []
-					};
-					if ($(this).hasClass("source")) {
-						// Use icons for sources.
-						menuOptions.icon = $(this).attr("data-asset-path")+"/symbols-black/"+$(this).attr("data-icon");
-						menuOptions.iconRight = "common/symbols-black/volume.svg";
-						menuOptions.classes.push("hide-icon-right", "source-menu-item");
-					}
-					if ($(this).attr("data-menu-value-class")) {
-						menuOptions.valueClasses = [$(this).attr("data-menu-value-class")];
-						menuOptions.value = "";
-					}
-					if ($(this).attr("data-menu-title-class")) {
-						menuOptions.labelClasses = [$(this).attr("data-menu-title-class")];
-					}
-					if ($(this).attr("data-menu-class")) {
-						menuOptions.classes.push($(this).attr("data-menu-class"));
-					}
-					if (!$(this).attr("data-hidden")) {
-						menuItemPlaced = false;
-						if ($(this).attr("data-context")) {
-							context = $(this).attr("data-context").split("/");
-							if (context[1]) {
-								if ($(".menu-screen:first-of-type .beo-dynamic-menu."+context[1], thisSection)) {
-									$(".menu-screen:first-of-type .beo-dynamic-menu."+context[1], thisSection).append(createMenuItem(menuOptions));
-									menuItemPlaced = true;
+					if (!deepMenu) {
+						iconName = $(this).attr("data-icon");
+						if (hifiberryOS && $(this).attr("data-icon-hifiberry")) {
+							iconName = $(this).attr("data-icon-hifiberry");
+						}
+						menuOptions = {
+							label: $(this).attr("data-menu-title"),
+							onclick: 'showExtension(\''+$(this).attr("id")+'\');',
+							icon: $(this).attr("data-asset-path")+"/symbols-black/"+iconName, // Still not quite sure if it looks better with or without icons.
+							id: $(this).attr("id")+'-menu-item',
+							chevron: true,
+							data: {"data-extension-id": $(this).attr("id")},
+							classes: []
+						};
+						if ($(this).hasClass("source")) {
+							// Use icons for sources.
+							menuOptions.icon = $(this).attr("data-asset-path")+"/symbols-black/"+$(this).attr("data-icon");
+							menuOptions.iconRight = "common/symbols-black/volume.svg";
+							menuOptions.classes.push("hide-icon-right", "source-menu-item");
+						}
+						if ($(this).attr("data-menu-value-class")) {
+							menuOptions.valueClasses = [$(this).attr("data-menu-value-class")];
+							menuOptions.value = "";
+						}
+						if ($(this).attr("data-menu-title-class")) {
+							menuOptions.labelClasses = [$(this).attr("data-menu-title-class")];
+						}
+						if ($(this).attr("data-menu-class")) {
+							menuOptions.classes.push($(this).attr("data-menu-class"));
+						}
+						if (!$(this).attr("data-hidden")) {
+							menuItemPlaced = false;
+							if ($(this).attr("data-context")) {
+								context = $(this).attr("data-context").split("/");
+								if (context[1]) {
+									if ($(".menu-screen:first-of-type .beo-dynamic-menu."+context[1], thisSection)) {
+										$(".menu-screen:first-of-type .beo-dynamic-menu."+context[1], thisSection).append(createMenuItem(menuOptions));
+										menuItemPlaced = true;
+									}
 								}
+							} 
+							if (!menuItemPlaced) {
+								$(".menu-screen:first-of-type .beo-dynamic-menu", thisSection).append(createMenuItem(menuOptions));
 							}
-						} 
-						if (!menuItemPlaced) {
-							$(".menu-screen:first-of-type .beo-dynamic-menu", thisSection).append(createMenuItem(menuOptions));
+						}
+						if ($(this).attr("data-stylesheet")) {
+							$('head').append('<link rel="stylesheet" type="text/css" href="'+$(this).attr("data-asset-path")+'/'+$(this).attr("data-stylesheet")+'">');
 						}
 					}
-					if ($(this).attr("data-stylesheet")) {
-						$('head').append('<link rel="stylesheet" type="text/css" href="'+$(this).attr("data-asset-path")+'/'+$(this).attr("data-stylesheet")+'">');
-					}
+					
 					$(this).addClass("hidden-right");
 					
-					extensions[$(this).attr("id")] = {id: $(this).attr("id"), parentMenu: menuID, icon: $(this).attr("data-icon"), assetPath: $(this).attr("data-asset-path"), title: $(this).attr("data-menu-title")};
+					if (!deepMenu) {
+						extensions[$(this).attr("id")] = {
+							id: $(this).attr("id"), 
+							parentMenu: menuID, 
+							icon: $(this).attr("data-icon"), 
+							assetPath: $(this).attr("data-asset-path"), 
+							title: $(this).attr("data-menu-title"),
+							deepMenu: []
+						};
+					} else { // Add deep menu to the list
+						extensions[$(this).attr("data-parent-extension")].deepMenu.push($(this).attr("id"));
+					}
 					
 					$(".scroll-area", this).first().prepend('<h1 class="large-title">'+$("header h1", this).first().text()+'</h1>'); // Duplicate title for views that use a large title.
 				}
 				if ($(this).attr("data-extension-name")) {
 					extensions[$(this).attr("id")].genericTitle = $(this).attr("data-extension-name");
 				}
-				extensions[$(this).attr("id")].builtIn = ($(this).attr("data-built-in")) ? true : false;
+				if (!deepMenu) extensions[$(this).attr("id")].builtIn = ($(this).attr("data-built-in")) ? true : false;
 				extensionCounter++;
 				
 				//$(".menu-content h2, .menu-content .beo-dynamic-menu .menu-item, .menu-content .menu-item, .menu-content p", thisScreen).first().addClass("first");
@@ -486,12 +511,6 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 			} else {
 				$(sectionToFadeOut).addClass("faded-out "+outDirection).removeClass("block");
 				$(sectionToFadeIn).removeClass("left right faded-out "+direction);
-				/* $(sectionToFadeOut).addClass("faded-out animating "+outDirection);
-				$(sectionToFadeIn).addClass("animating");
-				$(sectionToFadeOut).removeClass("block faded-out left right");
-				$(sectionToFadeIn).addClass("block faded-out "+direction);
-				$(sectionToFadeIn).removeClass("faded-out left right");
-				$(sectionToFadeIn+", "+sectionToFadeOut).removeClass("animating"); */
 			}
 			
 		}
@@ -609,6 +628,11 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 				// This is the same top level menu as previously.
 				if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu) {
 					// There's already another submenu open for this menu, close it.
+					
+					// Close deep menus too.
+					if (deepMenuState[menuState[selectedParentMenu].submenu] && deepMenuState[menuState[selectedParentMenu].submenu].length > 0) {
+						showDeepMenu(menuState[selectedParentMenu].submenu, menuState[selectedParentMenu].submenu, true);
+					}
 					if (!invisibly) activatedExtension(selectedParentMenu);
 					if (!direction) {
 						if (!invisibly) {
@@ -649,6 +673,9 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 						navigating = false;
 					}
 				} else {
+					if (deepMenuState[selectedParentMenu] && deepMenuState[selectedParentMenu].length > 0) {
+						showDeepMenu(selectedParentMenu, selectedParentMenu);
+					}
 					navigating = false;
 				}
 			}
@@ -678,7 +705,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		$('nav .nav-item[data-extension-id="'+selectedParentMenu+'"] .menu-icon').attr("src", extensions[selectedParentMenu].assetPath+"/symbols-white/"+extensions[selectedParentMenu].icon);
 		
 		if (interfaceMode == 2 && mainMenuVisible && !invisibly) toggleMainMenu();
-		selectedExtension = newExtension;
+		//selectedExtension = newExtension;
 	}
 	
 }
@@ -708,10 +735,86 @@ function showExtensionWithHistory(extensionHistory, extension) {
 	historyConstructed = true;
 }
 
+var deepMenuState = {};
+function showDeepMenu(menuID, overrideWithExtension, hideNew) {
+	extension = (overrideWithExtension) ? overrideWithExtension : selectedExtension;
+	if (extensions[extension].deepMenu.indexOf(menuID) == -1) {
+		// First make sure the extension containing this deep menu is selected.
+		for (ext in extensions) {
+			if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
+				showExtension(ext);
+				break;
+			}
+		}
+	}
+	newMenu = menuID;
+	back = false;
+	if (!deepMenuState[extension]) deepMenuState[extension] = [];
+	console.log(deepMenuState[extension], newMenu, selectedExtension, overrideWithExtension);
+	if (deepMenuState[extension].length == 0) {
+		// This extension currently has no deep menus open.
+		oldMenu = extension;
+		deepMenuState[extension] = [newMenu];
+	} else {
+		newMenuIndex = deepMenuState[extension].indexOf(newMenu); // Check if the new menu is in the deep menu hierarachy.
+		oldMenu = deepMenuState[extension][deepMenuState[extension].length-1];
+		if (newMenu == extension) {
+			deepMenuState[extension] = [];
+			back = true;
+		} else if (deepMenuState[extension].length == 1 && newMenu == extension) { // Returning to the main menu of the extension.
+			deepMenuState[extension] = [];
+			back = true;
+		} else {
+			if (newMenuIndex == -1) { // Going forwards.
+				deepMenuState[extension].push(newMenu);
+			} else { // Going backwards.
+				deepMenuState[extension].length = newMenuIndex+1;
+				back = true;
+			}
+		}
+	}
+	if (oldMenu != newMenu) {
+		if (back) {
+			if (!hideNew) {
+				$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
+			} else {
+				$("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+			}
+		} else {
+			if (!hideNew) $("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+		}
+		if (!hideNew) $("#" + newMenu).addClass("block new");
+		setTimeout(function() {
+			if (!hideNew) $("#" + newMenu).removeClass("hidden-right hidden-left");
+			if (back) {
+				$("#" + oldMenu).addClass("hidden-right");
+			} else {
+				$("#" + oldMenu).addClass("hidden-left");
+				if (!hideNew) $("#" + newMenu).attr("data-edge-swipe-previous-deep", oldMenu);
+			}
+		}, 50);
+		setTimeout(function() {
+			$("#" + oldMenu).removeClass("block");
+			if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
+		}, 600);
+		backTitle = $("#"+oldMenu).attr("data-menu-title");
+		if (!back && !hideNew) {
+			$("#"+newMenu+" .back-button.master").addClass("visible");
+			$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
+		}
+	}
+}
+
+function setMenuTitle(forMenu, title) {
+	$("#"+forMenu).attr("data-menu-title", title);
+	$("#"+forMenu+" > header h1, #"+forMenu+" h1.large-title").text(title);
+}
 
 
 $(document).on("click", ".back-button.master", function() {
-	if ($(this).attr("data-back-target")) {
+	if ($(this).attr("data-back-target-deep")) {
+		showDeepMenu($(this).attr("data-back-target-deep"));
+	} else if ($(this).attr("data-back-target")) {
 		backDirection = false;
 		if ($(this).attr("data-back-direction")) backDirection = $(this).attr("data-back-direction");
 		showExtension($(this).attr("data-back-target"), backDirection, true);
@@ -725,7 +828,7 @@ function activatedExtension(extensionID) {
 	setTimeout(function() {
 		updateSliderWidths();
 	}, 20);
-	
+	selectedExtension = extensionID;
 	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID}});
 	send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
 	sendToProductView(extensionID);

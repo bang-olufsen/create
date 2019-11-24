@@ -447,13 +447,13 @@ function artworkLoaded(view) {
 	shouldSwitch = true;
 	noAnimation = false;
 	if (view == "a") {
-		artworkDimensionsA[0] = $(this).get(0).naturalWidth;
-		artworkDimensionsA[1] = $(this).get(0).naturalHeight;
-		artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+		artworkDimensionsA[0] = $("#main-artwork-a").get(0).naturalWidth;
+		artworkDimensionsA[1] = $("#main-artwork-a").get(0).naturalHeight;
+		artworkAspectRatioA = $("#main-artwork-a").get(0).naturalWidth / $("#main-artwork-a").get(0).naturalHeight;
 	} else {
-		artworkDimensionsA[0] = $(this).get(0).naturalWidth;
-		artworkDimensionsA[1] = $(this).get(0).naturalHeight;
-		artworkAspectRatioA = $(this).get(0).naturalWidth / $(this).get(0).naturalHeight;
+		artworkDimensionsB[0] = $("#main-artwork-b").get(0).naturalWidth;
+		artworkDimensionsB[1] = $("#main-artwork-b").get(0).naturalHeight;
+		artworkAspectRatioB = $("#main-artwork-b").get(0).naturalWidth / $("#main-artwork-b").get(0).naturalHeight;
 	}
 	resizeArtwork();
 	if (evaluateExternalArtwork == view) {
@@ -495,6 +495,26 @@ $("#main-artwork-b").on('error', function() {
 
 function loadSmallSampleArtwork() {
 	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
+}
+
+artworkCycle = 0;
+function loadNonSquareArtwork() {
+	switch (artworkCycle) {
+		case 0:
+			loadArtwork("extensions/now-playing/partiravecmoi.jpg");
+			album = "Partir Avec Moi – square";
+			break;
+		case 1:
+			loadArtwork("extensions/now-playing/landscape-cover.png");
+			album = "Turquoise – landscape";
+			break;
+		case 2:
+			loadArtwork("extensions/now-playing/portrait-cover.png");
+			album = "Waxflower – portrait";
+			break;
+	}
+	artworkCycle = (artworkCycle < 2) ? artworkCycle+1 : 0;
+	return album;
 }
 
 window.onresize = function() {
@@ -727,6 +747,7 @@ return {
 	loadArtwork: loadArtwork,
 	switchArtwork: switchArtwork,
 	loadSmallSampleArtwork: loadSmallSampleArtwork,
+	loadNonSquareArtwork: loadNonSquareArtwork,
 	testArtworkSwap: testArtworkSwap,
 	toggleLove: toggleLove,
 	functionRow: functionRow,

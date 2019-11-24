@@ -53,7 +53,7 @@ var exec = require("child_process").exec;
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "sources") {
-				
+				checkEnabled();
 			}
 		}
 	});
@@ -471,92 +471,112 @@ var exec = require("child_process").exec;
 		
 	}
 	
-	
-	function setSourceOptions(extension, options) {
+	var sourceRegistrationTimeout;
+	var sourcesRegistered = false;
+	function setSourceOptions(extension, options, noUpdate) {
 
-		sourceAdded = false;
-		allSourcesRegistered = true;
-		
-		if (!allSources[extension]) {
-			sourceAdded = true;
-			allSources[extension] = {
-				active: false,
-				enabled: false,
-				playerState: "stopped",
-				stopOthers: true,
-				transportControls: false,
-				usesHifiberryControl: false,
-				canLove: false,
-				startableSources: [],
-				metadata: {}
-			};
-			if (debug) console.log("Registering source '"+extension+"'...");
+		if (beo.extensions[extension]) {
+			sourceAdded = false;
+			if (!allSources[extension]) {
+				sourceAdded = true;
+				allSources[extension] = {
+					active: false,
+					enabled: false,
+					playerState: "stopped",
+					stopOthers: true,
+					transportControls: false,
+					usesHifiberryControl: false,
+					canLove: false,
+					startableSources: [],
+					metadata: {}
+				};
+				if (debug) console.log("Registering source '"+extension+"'...");
+			}
 			
-			if (beo.extensionsList) {
-				for (listedExtension in beo.extensionsList) {
-					if (beo.extensionsList[listedExtension].isSource) {
-						if (!allSources[listedExtension]) {
-							allSourcesRegistered = false;
+			if (options.enabled != undefined) allSources[extension].enabled = (options.enabled) ? true : false;
+			if (options.transportControls != undefined) allSources[extension].transportControls = (options.transportControls) ? true : false;
+			if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
+			if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
+			if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
+			if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
+			if (options.startableSources) allSources[extension].startableSources = options.startableSources; // Add a list of startable sources under the main source (e.g. multiple AirPlay senders).
+			if (options.playerState) allSources[extension].playerState = options.playerState;
+			
+			
+			if (!sourceAdded) { 
+				if (!noUpdate) beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				count = 0;
+				for (source in allSources) {
+					if (allSources[source].usesHifiberryControl) {
+						if (allSources[source].enabled) count ++;
+					}
+				}
+				if (count != enabledHifiberrySources) {
+					if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
+					configure = false;
+					if (enabledHifiberrySources == 1 && count != 0) {
+						configure = true;
+					} else if (count == 1) {
+						configure = true;
+					}
+					if (configure) {
+						beo.bus.emit("ui", {target: "sources", header: "configuringSystem", content: {reason: "hfiberryExclusive"}});
+						if (debug) console.log("Calling HiFiBerry player reconfiguration...");
+						exec("/opt/hifiberry/bin/reconfigure-players", function(error, stdout, stderr) {
+							if (error) {
+								if (debug) console.error("Reconfiguration failed: "+error);
+							} else {
+								if (debug) console.error("Reconfiguration finished.");
+							}
+							beo.bus.emit("ui", {target: "sources", header: "systemConfigured"});
+						});
+					}
+					enabledHifiberrySources = count;
+				}
+			}
+			
+			if (!sourcesRegistered) {
+				clearTimeout(sourceRegistrationTimeout)
+				sourceRegistrationTimeout = setTimeout (function() {
+					if (debug) console.log("All sources registered.");
+					beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+					audioControlGet("status", function(result) {
+						audioControlGet("metadata");
+					});
+					enabledHifiberrySources = 0;
+					for (source in allSources) {
+						if (allSources[source].usesHifiberryControl) {
+							if (allSources[source].enabled) enabledHifiberrySources++;
 						}
 					}
+					sourcesRegistered = true;
+				}, 1000);
+			}
+		}
+	}
+	
+	function checkEnabled(queue) {
+		if (!queue) {
+			if (debug) console.log("Checking enabled status for all sources...");
+			queue = [];
+			for (extension in allSources) {
+				if (beo.extensions[extension].isEnabled) {
+					queue.push(extension);
 				}
 			}
 		}
-		
-		if (options.enabled != undefined) allSources[extension].enabled = (options.enabled) ? true : false;
-		if (options.transportControls != undefined) allSources[extension].transportControls = (options.transportControls) ? true : false;
-		if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
-		if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
-		if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
-		if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
-		if (options.startableSources) allSources[extension].startableSources = options.startableSources; // Add a list of startable sources under the main source (e.g. multiple AirPlay senders).
-		if (options.playerState) allSources[extension].playerState = options.playerState;
-		
-		
-		if (!sourceAdded) { 
-			beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
-			count = 0;
-			for (source in allSources) {
-				if (allSources[source].usesHifiberryControl) {
-					if (allSources[source].enabled) count ++;
-				}
-			}
-			if (count != enabledHifiberrySources) {
-				if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
-				configure = false;
-				if (enabledHifiberrySources == 1 && count != 0) {
-					configure = true;
-				} else if (count == 1) {
-					configure = true;
-				}
-				if (configure) {
-					beo.bus.emit("ui", {target: "sources", header: "configuringSystem", content: {reason: "hfiberryExclusive"}});
-					if (debug) console.log("Calling HiFiBerry player reconfiguration...");
-					exec("/opt/hifiberry/bin/reconfigure-players", function(error, stdout, stderr) {
-						if (error) {
-							if (debug) console.error("Reconfiguration failed: "+error);
-						} else {
-							if (debug) console.error("Reconfiguration finished.");
-						}
-						beo.bus.emit("ui", {target: "sources", header: "systemConfigured"});
-					});
-				}
-				enabledHifiberrySources = count;
-			}
-		} else {
-			if (allSourcesRegistered) {
-				if (debug) console.log("All sources registered.");
-				beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
-				audioControlGet("status", function(result) {
-					audioControlGet("metadata");
-				});
-				enabledHifiberrySources = 0;
-				for (source in allSources) {
-					if (allSources[source].usesHifiberryControl) {
-						if (allSources[source].enabled) enabledHifiberrySources++;
+		if (queue.length > 0) {
+			source = queue.shift();
+			beo.extensions[source].isEnabled(function(enabled) {
+				 if (allSources[source].enabled != enabled) {
+					if (debug) {
+						readableStatus = (enabled) ? "enabled" : "disabled";
+						if (debug) console.log("Source '"+source+"' is now "+readableStatus+".");
 					}
+					setSourceOptions(source, {enabled: enabled});
 				}
-			}
+				if (queue.length > 0) checkEnabled(queue);
+			});
 		}
 	}
 	

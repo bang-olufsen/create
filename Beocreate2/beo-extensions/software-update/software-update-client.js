@@ -49,21 +49,23 @@ $(document).on("software-update", function(event, data) {
 			openUL = "";
 			notesHTML = ""
 			for (var i = 0; i < releaseNotes.length; i++) {
-		
-				if (releaseNotes[i].trim().charAt(0) == "-") {
-					// A dash is a list item.
-					if (!openUL) {
-						openUL += "\n<ul>";
+				if (!(i == 0 && releaseNotes[i].trim() == newVersion)) {
+					if (releaseNotes[i].trim().charAt(0) == "-") {
+						// A dash is a list item.
+						if (!openUL) {
+							openUL += "\n<ul>";
+						}
+						openUL += "\n<li>"+releaseNotes[i].trim().substring(2)+"</li>";
+						//console.log(openUL);
+					} else {
+						// Normal lines make p elements.
+						if (openUL) {
+							openUL += "\n</ul>";
+							notesHTML += openUL;
+							openUL = "";
+						}
+						notesHTML += "<p>"+releaseNotes[i].trim()+"</p>";
 					}
-					openUL += "\n<li>"+releaseNotes[i].trim().substring(2)+"</li>"
-				} else {
-					// Normal lines make p elements.
-					if (openUL) {
-						openUL += "\n</ul>";
-						notesHTML += openUL;
-						openUL = "";
-					}
-					notesHTML += "<p>"+releaseNotes[i].trim()+"</p";
 				}
 			}
 			if (openUL) {

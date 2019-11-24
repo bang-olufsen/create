@@ -40,10 +40,10 @@ var exec = require("child_process").exec;
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
 	var defaultAliases = {
+		cd: {name: "CD", icon: "cd.svg"},
 		phono: {name: "Phono", icon: "beogram.svg"},
 		tape: {name: "Tape", icon: "tape.svg"},
 		tv: {name: "Television", icon: "tv.svg"},
-		cd: {name: "CD", icon: "cd.svg"},
 		computer: {name: "Computer", icon: "computer.svg"}
 	}
 	

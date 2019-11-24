@@ -41,6 +41,7 @@ const m_FullScaleIntValue = 16777216;
 var openReadRequests = {};
 var readQueue = [];
 var flashCallback = null;
+var keepAlive = true;
 
 // EXPORT FUNCTIONS
 
@@ -62,10 +63,6 @@ var dsp = module.exports = {
 	lowShelf: lowShelf,
 	highShelf: highShelf,
 	convertVolume: convertVolume
-	//serverRunning: serverRunning,
-	//startServer: startServer,
-	//stopServer: stopServer,
-	//dspEvents: dspEvents
 };
 
 
@@ -292,6 +289,7 @@ var connectTimeoutCycle = 0;
 
 function connectDSP(callback, socketAddress) {
 	if (!dspConnected) {
+		keepAlive = true;
 		if (!socketAddress) socketAddress = '127.0.1.1';
 		if (callback) connectCallback = callback;
 		dspClient.connect(8086, socketAddress);
@@ -302,6 +300,7 @@ function connectDSP(callback, socketAddress) {
 }
 
 function disconnectDSP(callback) {
+	keepAlive = false;
 	dspClient.end(null, null, function() {
 		if (callback) callback();
 	});
@@ -329,17 +328,42 @@ function onConnect(error) {
 	connectTimeoutCycle = 0;
 	dspClient.on('close', onClose);
 	dspClient.on('data', onData);
-	if (reconnectAfterError) {
-		reconnectAfterError = false;
+	dspClient.on('end', onEnd);
+	if (sendRequestsAfterConnecting) {
+		sendRequestsAfterConnecting = false;
 		if (checksumCallback) {
 			console.log("Trying to get checksum again...");
 			getChecksum();
 		}
+		if (xmlCallback) {
+			console.log("Trying to get XML again...");
+			getXML();
+		}
 	}
 }
 
-function onClose(error) {
+function onEnd() {
+	//console.log("DSP connection ended.");
 	dspConnected = false;
+}
+
+function onClose(hadError) {
+	dspConnected = false;
+	closedError = (hadError) ? " due to an error" : "";
+	if (keepAlive && connectTimeoutCycle < 10) {
+		if (!dspClient.connecting && !dspConnected) {
+			connectTimeout = setTimeout(function() {
+				connectTimeoutCycle++;
+				console.log("Connection to the DSP was closed"+closedError+". Reconnecting (attempt "+connectTimeoutCycle+")...");
+				if (!dspConnected && !dspClient.connecting) connectDSP();
+			}, 2000);
+		}
+	} else {
+		keepAlive = false;
+		console.log("Connection to the DSP was closed"+closedError+".");
+		connectTimeoutCycle = 0;
+		connectCallback = null;
+	}
 };
 
 function onData(data) {
@@ -391,27 +415,15 @@ function onData(data) {
 	//console.log(data.readInt8(0));
 };
 
-reconnectAfterError = false;
+sendRequestsAfterConnecting = false;
 function onError(error) {
 	console.error("Error with DSP server connection (connection attempt "+(connectTimeoutCycle+1)+"):", error);
-	reconnectAfterError = true;
+	sendRequestsAfterConnecting = true;
 	if (checksumCallback) {
 		console.log("Couldn't get checksum because of DSP connection error. Attempting again after re-establishing connection.");
 	}
-	dspConnected = false;
-	//dspClient.removeListener('error', onError);
-	//dspClient.destroy();
-	if (connectTimeoutCycle < 10) {
-		// Retry 10 times, waiting 2 seconds after error.
-		connectTimeoutCycle++;
-		connectTimeout = setTimeout(function() {
-			connectDSP();
-		}, 2000);
-	} else {
-		console.error("Could not connect to the DSP server, tried "+(connectTimeoutCycle+1)+" times.");
-		if (connectCallback) connectCallback(false);
-		connectTimeoutCycle = 0;
-		connectCallback = null;
+	if (xmlCallback) {
+		console.log("Couldn't get XML because of DSP connection error. Attempting again after re-establishing connection.");
 	}
 }
 
@@ -508,7 +520,12 @@ function getChecksum(callback) {
 		}
 	});*/
 	checksumRequest = Buffer.from(createHifiberryRequest(hifiberryCommandChecksumCode));
-	dspClient.write(checksumRequest);
+	if (dspConnected) {
+		dspClient.write(checksumRequest);
+	} else {
+		console.log("Couldn't get checksum because of DSP is not connected. Attempting again after connection is opened.");
+		sendRequestsAfterConnecting = true;
+	}
 }
 
 function checkEEPROM(callback) {
@@ -542,13 +559,19 @@ function resetDSP(callback) {
 var xmlCallback = null;
 var xmlTimeout = null;
 function getXML(callback) {
-	xmlCallback = callback;
+	if (callback) xmlCallback = callback;
 	xmlRequest = Buffer.from(createHifiberryRequest(hifiberryCommandXMLCode));
-	dspClient.write(xmlRequest);
-	xmlTimeout = setTimeout(function() {
-		if (xmlCallback) xmlCallback(null);
-		xmlCallback = null;
-	}, 2000);
+	if (dspConnected) {
+		dspClient.write(xmlRequest);
+		xmlTimeout = setTimeout(function() {
+			if (xmlCallback) xmlCallback(null);
+			console.log("DSP request for program XML timed out.");
+			xmlCallback = null;
+		}, 2000);
+	} else {
+		console.log("Couldn't get XML because of DSP is not connected. Attempting again after connection is opened.");
+		sendRequestsAfterConnecting = true;
+	}
 }
 
 

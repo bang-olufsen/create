@@ -12,6 +12,16 @@ $(document).on("general", function(event, data) {
 		}
 	}
 	
+	if (data.header == "activatedExtension") {
+		if (allSources[data.content.extension]) {
+			if (allSources[data.content.extension].alias) {
+				$("#"+data.content.extension+" .source-alias-control .menu-value").text(allSources[data.content.extension].alias.name).removeClass("button");
+			} else {
+				$("#"+data.content.extension+" .source-alias-control .menu-value").text("Set...").addClass("button");
+			}
+		}
+	}
+	
 });
 
 $(document).on("sources", function(event, data) {
@@ -34,6 +44,7 @@ $(document).on("sources", function(event, data) {
 			}
 			showActiveSources();
 			updateDisabledSources();
+			updateAliases();
 		}
 	}
 	
@@ -55,21 +66,68 @@ $(document).on("sources", function(event, data) {
 		notify(false, "sources");
 	}
 	
+	if (data.header == "defaultAliases") {
+		if (aliasSource && data.content.aliases) {
+			$(".default-aliases").empty();
+			for (alias in data.content.aliases) {
+				
+				$(".default-aliases").append(createMenuItem({
+					label: data.content.aliases[alias].name,
+					icon: extensions.sources.assetPath+"/symbols-black/"+data.content.aliases[alias].icon,
+					onclick: "sources.setAlias('"+aliasSource+"', '"+alias+"', true);"
+				}));
+			}
+			if (allSources[aliasSource].alias) {
+				$(".remove-source-alias").removeClass("hidden");
+			} else {
+				$(".remove-source-alias").addClass("hidden");
+			}
+			ask("set-source-alias-prompt", [extensions[aliasSource].title], [
+				function() {
+					defaultText = (allSources[aliasSource].alias) ? allSources[aliasSource].alias.name : extensions[aliasSource].title;
+					startTextInput(1, "Set Alias", "Enter the display name for "+extensions[aliasSource].title+".", {placeholders: {text: "Alias"}, text: defaultText}, function(input) {
+						if (input && input.text) {
+							setAlias(aliasSource, input.text);
+						} else {
+							aliasSource = null;
+						}
+					});
+				},
+				function() {setAlias(aliasSource, null, true)}], function() {
+				aliasSource = null;
+			});
+		}
+	}
+	
 });
 
 function showActiveSources() {
 	$(".source-menu-item").addClass("hide-icon-right");
 	// Current, playing source.
 	if (currentSource != null) {
-		if (extensions[currentSource].icon && extensions[currentSource].assetPath) {
+		icon = null;
+		name = null;
+		if (allSources[currentSource].alias) {
+			if (allSources[currentSource].alias.icon) {
+				icon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
+			}
+			name = allSources[currentSource].alias.name;
+		}
+		if (!icon && 
+			extensions[currentSource].icon && 
+			extensions[currentSource].assetPath) {
+				icon = extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon;
+		}
+		if (name) name = extensions[currentSource].title;
+		if (icon) {
 			$(".active-source-icon").each(function() {
-				$(this).css("-webkit-mask-image", "url("+extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon+")").css("mask-image", "url("+extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon+")");
+				$(this).css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
 			});
 			$(".active-source-icon").removeClass("hidden");
 		} else {
 			$(".active-source-icon").addClass("hidden");
 		}
-		$(".active-source-name").text(extensions[currentSource].title);
+		$(".active-source-name").text(name);
 		$('.source-menu-item[data-extension-id="'+currentSource+'"]').removeClass("hide-icon-right");
 		setTimeout(function() {
 			$(".active-source").addClass("visible");
@@ -80,15 +138,29 @@ function showActiveSources() {
 	
 	// Which source is focused.
 	if (focusedSource != null) {
-		if (extensions[focusedSource].icon && extensions[focusedSource].assetPath) {
+		icon = null;
+		name = null;
+		if (allSources[currentSource].alias) {
+			if (allSources[currentSource].alias.icon) {
+				icon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
+			}
+			name = allSources[currentSource].alias.name;
+		}
+		if (!icon && 
+			extensions[focusedSource].icon && 
+			extensions[focusedSource].assetPath) {
+				icon = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
+		}
+		if (name) name = extensions[focusedSource].title;
+		if (icon) {
 			$(".focused-source-icon").each(function() {
-				$(this).css("-webkit-mask-image", "url("+extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon+")").css("mask-image", "url("+extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon+")");
+				$(this).css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
 			});
 			$(".focused-source-icon").removeClass("hidden");
 		} else {
 			$(".focused-source-icon").addClass("hidden");
 		}
-		$(".focused-source-name").text(extensions[focusedSource].title);
+		$(".focused-source-name").text(name);
 		setTimeout(function() {
 			$(".focused-source").addClass("visible");
 		}, 50);
@@ -120,6 +192,24 @@ function updateDisabledSources() {
 	
 }
 
+function updateAliases() {
+	for (extension in allSources) {
+		if (allSources[extension].alias && allSources[extension].alias.icon) {
+			icon = extensions.sources.assetPath+"/symbols-black/"+allSources[extension].alias.icon;
+		} else {
+			icon = extensions[extension].assetPath+"/symbols-black/"+extensions[extension].icon;
+		}
+		$('.menu-item[data-extension-id="'+extension+'"] .menu-icon').css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
+		if (allSources[extension].alias && allSources[extension].alias.name) {
+			$('.menu-item[data-extension-id="'+extension+'"] .menu-label').text(allSources[extension].alias.name);
+			$("#"+extension+" .source-alias-control .menu-value").text(allSources[extension].alias.name).removeClass("button");
+		} else {
+			$('.menu-item[data-extension-id="'+extension+'"] .menu-label').text(extensions[extension].title);
+			$("#"+extension+" .source-alias-control .menu-value").text("Set...").addClass("button");
+		}
+	}
+}
+
 function getStartableSources() {
 	if (Object.keys(startableSources).length == 0) {
 		return false;
@@ -148,9 +238,25 @@ function startSource(sourceID) {
 	ask();
 }
 
+var aliasSource = null;
+function setAlias(extension, alias, defaultAlias) {
+	if (!alias && !defaultAlias) {
+		aliasSource = extension;
+		send({target: "sources", header: "getDefaultAliases"});
+	} else {
+		if (!alias) { // Remove alias.
+			send({target: "sources", header: "setAlias", content: {extension: extension, alias: null}});
+		} else {
+			send({target: "sources", header: "setAlias", content: {extension: extension, alias: alias, defaultAlias: defaultAlias}});
+		}
+		ask();
+	}
+}
+
 return {
 	showStartableSources: showStartableSources,
 	getStartableSources: getStartableSources,
+	setAlias: setAlias
 }
 
 })();

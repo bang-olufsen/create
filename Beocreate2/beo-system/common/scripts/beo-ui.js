@@ -736,71 +736,77 @@ function showExtensionWithHistory(extensionHistory, extension) {
 }
 
 var deepMenuState = {};
+var deepNavigating = false;
 function showDeepMenu(menuID, overrideWithExtension, hideNew) {
-	extension = (overrideWithExtension) ? overrideWithExtension : selectedExtension;
-	if (extensions[extension].deepMenu.indexOf(menuID) == -1) {
-		// First make sure the extension containing this deep menu is selected.
-		for (ext in extensions) {
-			if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
-				showExtension(ext);
-				break;
+	if (!deepNavigating) {
+		deepNavigating = true;
+		extension = (overrideWithExtension) ? overrideWithExtension : selectedExtension;
+		if (extensions[extension].deepMenu.indexOf(menuID) == -1) {
+			// First make sure the extension containing this deep menu is selected.
+			for (ext in extensions) {
+				if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
+					showExtension(ext);
+					break;
+				}
 			}
 		}
-	}
-	newMenu = menuID;
-	back = false;
-	if (!deepMenuState[extension]) deepMenuState[extension] = [];
-	console.log(deepMenuState[extension], newMenu, selectedExtension, overrideWithExtension);
-	if (deepMenuState[extension].length == 0) {
-		// This extension currently has no deep menus open.
-		oldMenu = extension;
-		deepMenuState[extension] = [newMenu];
-	} else {
-		newMenuIndex = deepMenuState[extension].indexOf(newMenu); // Check if the new menu is in the deep menu hierarachy.
-		oldMenu = deepMenuState[extension][deepMenuState[extension].length-1];
-		if (newMenu == extension) {
-			deepMenuState[extension] = [];
-			back = true;
-		} else if (deepMenuState[extension].length == 1 && newMenu == extension) { // Returning to the main menu of the extension.
-			deepMenuState[extension] = [];
-			back = true;
+		newMenu = menuID;
+		back = false;
+		if (!deepMenuState[extension]) deepMenuState[extension] = [];
+		if (deepMenuState[extension].length == 0) {
+			// This extension currently has no deep menus open.
+			oldMenu = extension;
+			deepMenuState[extension] = [newMenu];
 		} else {
-			if (newMenuIndex == -1) { // Going forwards.
-				deepMenuState[extension].push(newMenu);
-			} else { // Going backwards.
-				deepMenuState[extension].length = newMenuIndex+1;
+			newMenuIndex = deepMenuState[extension].indexOf(newMenu); // Check if the new menu is in the deep menu hierarachy.
+			oldMenu = deepMenuState[extension][deepMenuState[extension].length-1];
+			if (newMenu == extension) {
+				deepMenuState[extension] = [];
 				back = true;
+			} else if (deepMenuState[extension].length == 1 && newMenu == extension) { // Returning to the main menu of the extension.
+				deepMenuState[extension] = [];
+				back = true;
+			} else {
+				if (newMenuIndex == -1) { // Going forwards.
+					deepMenuState[extension].push(newMenu);
+				} else { // Going backwards.
+					deepMenuState[extension].length = newMenuIndex+1;
+					back = true;
+				}
 			}
 		}
-	}
-	if (oldMenu != newMenu) {
-		if (back) {
-			if (!hideNew) {
-				$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
+		if (oldMenu != newMenu) {
+			if (back) {
+				if (!hideNew) {
+					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
+				} else {
+					$("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+				}
 			} else {
-				$("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+				if (!hideNew) $("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+			}
+			if (!hideNew) $("#" + newMenu).addClass("block new");
+			setTimeout(function() {
+				if (!hideNew) $("#" + newMenu).removeClass("hidden-right hidden-left");
+				if (back) {
+					$("#" + oldMenu).addClass("hidden-right");
+				} else {
+					$("#" + oldMenu).addClass("hidden-left");
+					if (!hideNew) $("#" + newMenu).attr("data-edge-swipe-previous-deep", oldMenu);
+				}
+			}, 50);
+			setTimeout(function() {
+				$("#" + oldMenu).removeClass("block");
+				if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
+				deepNavigating = false;
+			}, 600);
+			backTitle = $("#"+oldMenu).attr("data-menu-title");
+			if (!back && !hideNew) {
+				$("#"+newMenu+" .back-button.master").addClass("visible");
+				$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
 			}
 		} else {
-			if (!hideNew) $("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
-		}
-		if (!hideNew) $("#" + newMenu).addClass("block new");
-		setTimeout(function() {
-			if (!hideNew) $("#" + newMenu).removeClass("hidden-right hidden-left");
-			if (back) {
-				$("#" + oldMenu).addClass("hidden-right");
-			} else {
-				$("#" + oldMenu).addClass("hidden-left");
-				if (!hideNew) $("#" + newMenu).attr("data-edge-swipe-previous-deep", oldMenu);
-			}
-		}, 50);
-		setTimeout(function() {
-			$("#" + oldMenu).removeClass("block");
-			if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
-		}, 600);
-		backTitle = $("#"+oldMenu).attr("data-menu-title");
-		if (!back && !hideNew) {
-			$("#"+newMenu+" .back-button.master").addClass("visible");
-			$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
+			deepNavigating = false;
 		}
 	}
 }
@@ -1343,15 +1349,17 @@ function commaAndList(list, andWord, translationID, extensionID) {
 
 var askOpen = false;
 var askCallbacks = null;
-function ask(menuID, dynamicContent, callbacks, cancelAction) {
+var askCancelCallback = null;
+function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 	if (menuID) {
 		askOpen = true;
 		if (callbacks) askCallbacks = callbacks;
-		if (cancelAction) {
+		if (cancelCallback) askCancelCallback = cancelCallback;
+		/*if (cancelAction) {
 			$("#ask-back-plate").attr("onclick", cancelAction);
 		} else {
 			$("#ask-back-plate").attr("onclick", "ask();");
-		}
+		}*/
 		$("#ask-menu-content").html($("#"+menuID).html());
 		if (dynamicContent) {
 			for (var i = 0; i < dynamicContent.length; i++) {
@@ -1363,20 +1371,27 @@ function ask(menuID, dynamicContent, callbacks, cancelAction) {
 			$("#ask, #ask-back-plate").addClass("visible");
 		}, 150);
 	} else {
+		if (askCancelCallback) askCancelCallback();
 		$("#ask, #ask-back-plate").removeClass("visible");
 		setTimeout(function() {
 			$("#ask, #ask-back-plate").removeClass("block");
 		}, 500);
 		askCallbacks = null;
+		askCancelCallback = null;
 		askOpen = false;
 	}
 }
 
 function askOption(callbackIndex) {
+	$("#ask, #ask-back-plate").removeClass("visible");
+	setTimeout(function() {
+		$("#ask, #ask-back-plate").removeClass("block");
+	}, 500);
 	if (askCallbacks) {
 		askCallbacks[callbackIndex]();
 	}
-	ask();
+	askCallbacks = null;
+	askOpen = false;
 }
 
 

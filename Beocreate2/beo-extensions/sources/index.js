@@ -34,9 +34,18 @@ var exec = require("child_process").exec;
 	
 	var focusIndex = 0; // Increment and assign to each source, so that it's known which one activated latest.
 	var defaultSettings = {
-			"port": 81 // HiFiBerry API port.
-		};
+			"port": 81, // HiFiBerry API port.
+			"aliases": {}
+	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
+	var defaultAliases = {
+		phono: {name: "Phono", icon: "beogram.svg"},
+		tape: {name: "Tape", icon: "tape.svg"},
+		tv: {name: "Television", icon: "tv.svg"},
+		cd: {name: "CD", icon: "cd.svg"},
+		computer: {name: "Computer", icon: "computer.svg"}
+	}
 	
 	
 	
@@ -71,6 +80,26 @@ var exec = require("child_process").exec;
 				break;
 			case "getSources":
 				beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				break;
+			case "getDefaultAliases":
+				beo.bus.emit("ui", {target: "sources", header: "defaultAliases", content: {aliases: defaultAliases}});
+				break;
+			case "setAlias":
+				if (event.content.extension) {
+					if (event.content.alias) {
+						if (event.content.defaultAlias) {
+							if (defaultAliases[event.content.alias]) {
+								setSourceOptions(event.content.extension, {alias: defaultAliases[event.content.alias]});
+							} else {
+								setSourceOptions(event.content.extension, {alias: false});
+							}
+						} else {
+							setSourceOptions(event.content.extension, {alias: {name: event.content.alias, icon: null}});
+						}
+					} else {
+						setSourceOptions(event.content.extension, {alias: false});
+					}
+				}
 				break;
 			case "startableSources":
 				if (event.content.sources && event.content.extension) {
@@ -488,7 +517,8 @@ var exec = require("child_process").exec;
 					usesHifiberryControl: false,
 					canLove: false,
 					startableSources: [],
-					metadata: {}
+					metadata: {},
+					alias: null
 				};
 				if (debug) console.log("Registering source '"+extension+"'...");
 			}
@@ -501,6 +531,18 @@ var exec = require("child_process").exec;
 			if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
 			if (options.startableSources) allSources[extension].startableSources = options.startableSources; // Add a list of startable sources under the main source (e.g. multiple AirPlay senders).
 			if (options.playerState) allSources[extension].playerState = options.playerState;
+			if (options.alias != undefined) { // An alias is an alternate name and icon for the source in Sources and Now Playing. Within the source's own menu the original name is shown for clarity. Alias is read from settings further below.
+				if (options.alias) {
+					allSources[extension].alias = {name: options.alias.name, icon: options.alias.icon};
+					settings.aliases[extension] = {name: options.alias.name, icon: options.alias.icon};
+					if (debug) console.log("Alias for source '"+extension+"' is now "+options.alias.name+".");
+				} else {
+					allSources[extension].alias = null;
+					settings.aliases[extension] = null;
+					if (debug) console.log("Alias for source '"+extension+"' was removed.");
+				}
+				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "sources", settings: settings}});
+			}
 			
 			
 			if (!sourceAdded) { 
@@ -532,6 +574,11 @@ var exec = require("child_process").exec;
 						});
 					}
 					enabledHifiberrySources = count;
+				}
+			} else {
+				
+				if (settings.aliases[extension]) {
+					allSources[extension].alias = {name: settings.aliases[extension].name, icon: settings.aliases[extension].icon};
 				}
 			}
 			
@@ -579,8 +626,6 @@ var exec = require("child_process").exec;
 			});
 		}
 	}
-	
-	
 	
 	
 module.exports = {

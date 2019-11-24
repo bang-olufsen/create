@@ -118,7 +118,7 @@ function showActiveSources() {
 			extensions[currentSource].assetPath) {
 				icon = extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon;
 		}
-		if (name) name = extensions[currentSource].title;
+		if (!name) name = extensions[currentSource].title;
 		if (icon) {
 			$(".active-source-icon").each(function() {
 				$(this).css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
@@ -151,7 +151,7 @@ function showActiveSources() {
 			extensions[focusedSource].assetPath) {
 				icon = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
 		}
-		if (name) name = extensions[focusedSource].title;
+		if (!name) name = extensions[focusedSource].title;
 		if (icon) {
 			$(".focused-source-icon").each(function() {
 				$(this).css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
@@ -199,7 +199,7 @@ function updateAliases() {
 		} else {
 			icon = extensions[extension].assetPath+"/symbols-black/"+extensions[extension].icon;
 		}
-		$('.menu-item[data-extension-id="'+extension+'"] .menu-icon').css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
+		$('.menu-item[data-extension-id="'+extension+'"] .menu-icon:not(.right)').css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
 		if (allSources[extension].alias && allSources[extension].alias.name) {
 			$('.menu-item[data-extension-id="'+extension+'"] .menu-label').text(allSources[extension].alias.name);
 			$("#"+extension+" .source-alias-control .menu-value").text(allSources[extension].alias.name).removeClass("button");
@@ -253,10 +253,25 @@ function setAlias(extension, alias, defaultAlias) {
 	}
 }
 
+function testSetActive(extension, active) {
+	if (allSources[extension]) {
+		if (active) {
+			currentSource = extension;
+			focusedSource = extension;
+		} else {
+			currentSource = null;
+			focusedSource = null;
+		}
+		allSources[extension].active = active;
+		showActiveSources();
+	}
+}
+
 return {
 	showStartableSources: showStartableSources,
 	getStartableSources: getStartableSources,
-	setAlias: setAlias
+	setAlias: setAlias,
+	testSetActive: testSetActive
 }
 
 })();

@@ -13,7 +13,7 @@ $(document).on("bluetooth", function(event, data) {
 			bluetoothEnabled = false;
 			$("#bluetooth-toggle").removeClass("on");
 		}
-		notify(false, "bluetooth");
+		beo.notify(false, "bluetooth");
 	}
 });
 
@@ -21,11 +21,11 @@ $(document).on("bluetooth", function(event, data) {
 function toggleEnabled() {
 	enabled = (!bluetoothEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning Bluetooth on...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning Bluetooth on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning Bluetooth off...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning Bluetooth off...", icon: "attention", timeout: false});
 	}
-	send({target: "bluetooth", header: "bluetoothEnabled", content: {enabled: enabled}});
+	beo.send({target: "bluetooth", header: "bluetoothEnabled", content: {enabled: enabled}});
 }
 
 

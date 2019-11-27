@@ -24,7 +24,7 @@ $(document).on("ssh", function(event, data) {
 			$("#ssh-password-change-notice").removeClass("hidden");
 		}
 		
-		notify(false, "ssh");
+		beo.notify(false, "ssh");
 	}
 	
 	if (data.header == "passwordCorrect") {
@@ -37,7 +37,7 @@ $(document).on("ssh", function(event, data) {
 	}
 	
 	if (data.header == "passwordChanged") {
-		notify({title: "Password changed", icon: "common/symbols-black/checkmark-round.svg", id: "ssh"});
+		beo.notify({title: "Password changed", icon: "common/symbols-black/checkmark-round.svg", id: "ssh"});
 	}
 });
 
@@ -46,11 +46,11 @@ $(document).on("ssh", function(event, data) {
 function toggleEnabled() {
 	enabled = (!sshEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning remote login on...", icon: "attention", timeout: false, id: "ssh"});
+		beo.notify({title: "Turning remote login on...", icon: "attention", timeout: false, id: "ssh"});
 	} else {
-		notify({title: "Turning remote login off...", icon: "attention", timeout: false, id: "ssh"});
+		beo.notify({title: "Turning remote login off...", icon: "attention", timeout: false, id: "ssh"});
 	}
-	send({target: "ssh", header: "sshEnabled", content: {enabled: enabled}});
+	beo.send({target: "ssh", header: "sshEnabled", content: {enabled: enabled}});
 }
 
 currentPassword = null;
@@ -65,7 +65,7 @@ function changePassword(step, password) {
 				if (step == 0 || passwordChangeInProgress) {
 					passwordChangeInProgress = true;
 					message = (step == 0) ? "Enter current system password." : "Incorrect current system password, please try again.";
-					startTextInput(2, "Change System Password", message, {placeholders: {password: "Password"}}, function(input) {
+					beo.startTextInput(2, "Change System Password", message, {placeholders: {password: "Password"}}, function(input) {
 						if (input && input.password) {
 							changePassword(0, input.password);
 						} else {
@@ -78,7 +78,7 @@ function changePassword(step, password) {
 			case 3:
 				if (passwordChangeInProgress) {
 					message = (step == 1) ? "Enter new system password." : "Passwords do not match, please enter new password again.";
-					startTextInput(2, "Change System Password", message, {placeholders: {password: "Password"}, minLength: {password: 6}}, function(input) {
+					beo.startTextInput(2, "Change System Password", message, {placeholders: {password: "Password"}, minLength: {password: 6}}, function(input) {
 						if (input && input.password) {
 							changePassword(1, input.password);
 						} else {
@@ -91,7 +91,7 @@ function changePassword(step, password) {
 				break;
 			case 2:
 				if (passwordChangeInProgress) {
-					startTextInput(2, "Change System Password", "Verify the new system password.", {placeholders: {password: "Password"}, minLength: {password: 6}}, function(input) {
+					beo.startTextInput(2, "Change System Password", "Verify the new system password.", {placeholders: {password: "Password"}, minLength: {password: 6}}, function(input) {
 						if (input && input.password) {
 							changePassword(2, input.password);
 						} else {
@@ -107,7 +107,7 @@ function changePassword(step, password) {
 		switch (step) {
 			case 0:
 				currentPassword = password;
-				send({target: "ssh", header: "checkCurrentPassword", content: {currentPassword: password}});
+				beo.send({target: "ssh", header: "checkCurrentPassword", content: {currentPassword: password}});
 				break;
 			case 1:
 				newPassword = password;
@@ -115,7 +115,7 @@ function changePassword(step, password) {
 				break;
 			case 2:
 				if (newPassword == password) { // Passwords match.
-					send({target: "ssh", header: "setNewPassword", content: {currentPassword: currentPassword, newPassword: password}});
+					beo.send({target: "ssh", header: "setNewPassword", content: {currentPassword: currentPassword, newPassword: password}});
 				} else {
 					changePassword(3);
 				}

@@ -33,7 +33,7 @@ $(".master-balance-slider").slider({
 	value: 0,
 	slide: function( event, ui ) {
 		$(".master-balance-slider span").attr("data-content", balanceValueToText(ui.value));
-		send({target: "channels", header: "setBalance", content: {balance: ui.value}});
+		beo.send({target: "channels", header: "setBalance", content: {balance: ui.value}});
 	}
 });
 $(".master-balance-slider .ui-slider-range").append("<div></div>");
@@ -51,7 +51,7 @@ function balanceValueToText(value) {
 }
 
 function selectChannelSimple(channel) {
-	send({target: "channels", header: "selectChannelSimple", content: {channel: channel}});
+	beo.send({target: "channels", header: "selectChannelSimple", content: {channel: channel}});
 }
 
 
@@ -121,11 +121,11 @@ function showSimpleChannelSelection(channelSelection) {
 }
 
 function setLevelProto(channels, level) {
-	send({target: "channels", header: "setLevelProto", content: {channel: channels, level: level}});
+	beo.send({target: "channels", header: "setLevelProto", content: {channel: channels, level: level}});
 }
 
 function setInvertProto(channels, invert) {
-	send({target: "channels", header: "setInvertProto", content: {channel: channels, invert: invert}});
+	beo.send({target: "channels", header: "setInvertProto", content: {channel: channels, invert: invert}});
 }
 
 
@@ -168,47 +168,47 @@ function generateSettingsPreview(settings) {
 	}
 	
 	if (roleIssues.length == 4) {
-		compatibilityNote += translatedString("Setting speaker role is not supported. ", "roleNotSupportedAll", "channels");
+		compatibilityNote += beo.translatedString("Setting speaker role is not supported. ", "roleNotSupportedAll", "channels");
 	} else if (roleIssues.length > 1) {
-		compatibilityNote += translatedStringWithFormat("Channels %@ do not support setting speaker role. ", commaAndList(roleIssues, "and", "and", "channels"), "roleNotSupportedPlural", "channels");
+		compatibilityNote += beo.translatedStringWithFormat("Channels %@ do not support setting speaker role. ", beo.commaAndList(roleIssues, "and", "and", "channels"), "roleNotSupportedPlural", "channels");
 	} else if (roleIssues.length == 1) {
-		compatibilityNote += translatedStringWithFormat("Channel %@ does not support setting speaker role. ", roleIssues[0], "roleNotSupportedSingular", "channels");
+		compatibilityNote += beo.translatedStringWithFormat("Channel %@ does not support setting speaker role. ", roleIssues[0], "roleNotSupportedSingular", "channels");
 	}
 	
 	if (levelIssues.length == 4) {
-		compatibilityNote += translatedString("Adjusting channel level is not supported. ", "levelNotSupportedAll", "channels");
+		compatibilityNote += beo.translatedString("Adjusting channel level is not supported. ", "levelNotSupportedAll", "channels");
 	} else if (levelIssues.length > 1) {
-		compatibilityNote += translatedStringWithFormat("Channels %@ do not support adjusting level. ", commaAndList(roleIssues, "and", "and", "channels"), "levelNotSupportedPlural", "channels");
+		compatibilityNote += beo.translatedStringWithFormat("Channels %@ do not support adjusting level. ", beo.commaAndList(roleIssues, "and", "and", "channels"), "levelNotSupportedPlural", "channels");
 	} else if (levelIssues.length == 1) {
-		compatibilityNote += translatedStringWithFormat("Channel %@ does not support adjusting level. ", roleIssues[0], "levelNotSupportedSingular", "channels");
+		compatibilityNote += beo.translatedStringWithFormat("Channel %@ does not support adjusting level. ", roleIssues[0], "levelNotSupportedSingular", "channels");
 	}
 	
 	previewString = "";
 	
 	// Check for what's common with all channels:
 	forAllChannels = [];
-	if (level.length == 4) forAllChannels.push(translatedString("levels", "levels", "channels"));
-	if (delay.length == 4) forAllChannels.push(translatedString("delays", "delays", "channels"));
-	if (role.length == 4) forAllChannels.push(translatedString("roles", "roles", "channels"));
+	if (level.length == 4) forAllChannels.push(beo.translatedString("levels", "levels", "channels"));
+	if (delay.length == 4) forAllChannels.push(beo.translatedString("delays", "delays", "channels"));
+	if (role.length == 4) forAllChannels.push(beo.translatedString("roles", "roles", "channels"));
 	
 	if (forAllChannels.length == 1) {
-		previewString += capitaliseFirst(forAllChannels[0]) + " " + translatedString("for all channels", "forAllChannels", "channels") + ". "
+		previewString += beo.capitaliseFirst(forAllChannels[0]) + " " + beo.translatedString("for all channels", "forAllChannels", "channels") + ". "
 	} else if (forAllChannels.length > 1) {
-		previewString += capitaliseFirst(commaAndList(forAllChannels, "and", "and", "channels")) + " " + translatedString("for all channels", "forAllChannels", "channels") + ". ";
+		previewString += beo.capitaliseFirst(beo.commaAndList(forAllChannels, "and", "and", "channels")) + " " + beo.translatedString("for all channels", "forAllChannels", "channels") + ". ";
 	}
 	
 	if (muted.length == 4) {
-		previewString += translatedString("All channels are muted.", "allChannelsMuted", "channels");
+		previewString += beo.translatedString("All channels are muted.", "allChannelsMuted", "channels");
 	} else if (muted.length > 1) {
-		previewString += translatedStringWithFormat("Channels %@ are muted.", commaAndList(muted, "and", "and", "channels"), "channelsAreMuted", "channels");
+		previewString += beo.translatedStringWithFormat("Channels %@ are muted.", beo.commaAndList(muted, "and", "and", "channels"), "channelsAreMuted", "channels");
 	} else if (muted.length == 1) {
-		previewString += translatedStringWithFormat("Channel %@ is muted.", muted[0], "channelIsMuted", "channels");
+		previewString += beo.translatedStringWithFormat("Channel %@ is muted.", muted[0], "channelIsMuted", "channels");
 	}
 	
 	/*
 	
 	*/
-	return [translatedString("Channels", "channelsTitle", "channels"), '<p>'+previewString+'</p>', compatibilityNote];
+	return [beo.translatedString("Channels", "channelsTitle", "channels"), '<p>'+previewString+'</p>', compatibilityNote];
 }
 
 return {

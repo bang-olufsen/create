@@ -15,7 +15,7 @@ $(document).on("mpd", function(event, data) {
 			$("#mpd-enabled-toggle").removeClass("on");
 			$("#mpd-link").addClass("hidden");
 		}
-		notify(false, "mpd");
+		beo.notify(false, "mpd");
 	}
 });
 
@@ -23,11 +23,11 @@ $(document).on("mpd", function(event, data) {
 function toggleEnabled() {
 	enabled = (!mpdEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning MPD on...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning MPD on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning MPD off...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning MPD off...", icon: "attention", timeout: false});
 	}
-	send({target: "mpd", header: "mpdEnabled", content: {enabled: enabled}});
+	beo.send({target: "mpd", header: "mpdEnabled", content: {enabled: enabled}});
 }
 
 

@@ -15,7 +15,7 @@ $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			//if ($("#now-playing").hasClass("visible")) {
-				send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
+				beo.send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
 			//}
 		}
 	}
@@ -169,7 +169,7 @@ function enableSourceStart(startableSources) {
 function showNowPlaying() {
 	$("#now-playing").removeClass("hidden");
 	resizeArtwork();
-	//send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
+	//beo.send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
 	setTimeout(function() {
 		$(".player-bar").addClass("shifted");
 		$("#now-playing").addClass("visible");
@@ -266,14 +266,14 @@ function transport(action) {
 		case "playPause":
 		case "next":
 		case "previous":
-			send({target: "now-playing", header: "transport", content: {action: action}});
+			beo.send({target: "now-playing", header: "transport", content: {action: action}});
 			break;
 	}
 }
 
 
 function toggleLove() {
-	send({target: "now-playing", header: "toggleLove"});
+	beo.send({target: "now-playing", header: "toggleLove"});
 	$("#love-button").addClass("love-in-progress");
 	clearTimeout(loveAnimTimeout);
 	loveAnimTimeout = setTimeout(function() {
@@ -560,7 +560,7 @@ function setUseExternalArtwork(mode, updateOnly) {
 				$(".external-artwork-settings .menu-item#external-artwork-"+mode).addClass("checked");
 				useExternalArtwork = mode;
 			} else {
-				if (!updateOnly) send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
+				if (!updateOnly) beo.send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
 			}
 			break;
 	}

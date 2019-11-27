@@ -66,7 +66,7 @@ function toggleEnabled(enabled) {
 			enabled = true;
 		}
 	}
-	send({target: "toslink", header: "toslinkEnabled", content: {enabled: enabled}});
+	beo.send({target: "toslink", header: "toslinkEnabled", content: {enabled: enabled}});
 }
 
 function setSensitivity(sensitivity) {
@@ -74,7 +74,7 @@ function setSensitivity(sensitivity) {
 		case "high":
 		case "medium":
 		case "low":
-			send({target: "toslink", header: "setSensitivity", content: {sensitivity: sensitivity}});
+			beo.send({target: "toslink", header: "setSensitivity", content: {sensitivity: sensitivity}});
 			break;
 	}
 }
@@ -87,7 +87,7 @@ function toggleStopsOtherSources(stopsOthers) {
 			stopsOthers = true;
 		}
 	}
-	send({target: "toslink", header: "toslinkStopsOtherSources", content: {stopsOtherSources: stopsOthers}});
+	beo.send({target: "toslink", header: "toslinkStopsOtherSources", content: {stopsOtherSources: stopsOthers}});
 }
 
 
@@ -112,20 +112,20 @@ function showCanReadToslinkStatus() {
 
 function showToslinkStatus() {
 	if (!canReadToslinkStatus) {
-		$(".toslink-status").removeClass("fill").text(translatedString("Unknown", "unknown", "toslink"));
+		$(".toslink-status").removeClass("fill").text(beo.translatedString("Unknown", "unknown", "toslink"));
 	} else {
 		if (toslinkStatus) {
 			if (toslinkEnabled) {
-				$(".toslink-status").addClass("fill").text(translatedString("Active", "active", "toslink"));
+				$(".toslink-status").addClass("fill").text(beo.translatedString("Active", "active", "toslink"));
 			} else {
-				$(".toslink-status").removeClass("fill").text(translatedString("Disabled, has signal", "disabledHasSignal", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.translatedString("Disabled, has signal", "disabledHasSignal", "toslink"));
 			}
 		} else {
 			
 			if (toslinkEnabled) {
-				$(".toslink-status").removeClass("fill").text(translatedString("Inactive", "inactive", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.translatedString("Inactive", "inactive", "toslink"));
 			} else {
-				$(".toslink-status").removeClass("fill").text(translatedString("Disabled", "disabled", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.translatedString("Disabled", "disabled", "toslink"));
 			}
 		}
 	}

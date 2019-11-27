@@ -46,7 +46,11 @@ if (!cmdArgs[2]) {
 		settings = {};
 	}
 	if (settings != null) {
-		if (isNaN(value)) {
+		if (value == "true" || value == "false") {
+			settings[cmdArgs[1]] = (value == "true") ? true : false;
+		} else if (value == "null") {
+			settings[cmdArgs[1]] = null;
+		} else if (isNaN(value)) {
 			settings[cmdArgs[1]] = value;
 		} else {
 			settings[cmdArgs[1]] = Number(value);

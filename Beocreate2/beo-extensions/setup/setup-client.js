@@ -6,7 +6,7 @@ restartAfter = false;
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			send({target: "setup", header: "getSetupStatus"});
+			beo.send({target: "setup", header: "getSetupStatus"});
 		}
 	}
 	
@@ -40,7 +40,7 @@ $(document).on("setup", function(event, data) {
 				$("body").css("opacity", "0");
 				setTimeout(function() {
 					window.location.reload();
-					/*showExtension("product-information");
+					/*beo.showExtension("product-information");
 					delete menuState.setup.submenu;
 					$(".back-button.master").removeClass("visible");
 					$("section.top-level .menu-screen").removeClass("block");
@@ -52,9 +52,9 @@ $(document).on("setup", function(event, data) {
 			} else {
 				$("body").removeClass("setup");
 				if (data.content.selectedExtension && data.content.selectedExtension != "setup" && data.content.selectedExtension != "setup-finish") {
-					restoreState(data.content.selectedExtension);
+					beo.restoreState(data.content.selectedExtension);
 				} else {
-					restoreState("product-information");
+					beo.restoreState("product-information");
 				}
 			}
 		} else {
@@ -66,7 +66,7 @@ $(document).on("setup", function(event, data) {
 					for (var i = 0; i < setupFlow.length; i++) {
 						extensionHistory.push(setupFlow[i].extension);
 					}
-					showExtensionWithHistory(extensionHistory, data.content.selectedExtension);
+					beo.showExtensionWithHistory(extensionHistory, data.content.selectedExtension);
 				}
 			}
 			
@@ -148,15 +148,15 @@ function changeExtension(extension) {
 		}
 		//if (extension == "setup-finish") extension = "setup";
 		if (newExtensionIndex > selectedExtensionIndex) {
-			showExtension(extension, "right");
+			beo.showExtension(extension, "right");
 		} else {
-			showExtension(extension, "left");
+			beo.showExtension(extension, "left");
 		}
 	}
 }
 
 function nextStep() {
-	send({target: "setup", header: "nextStep"});
+	beo.send({target: "setup", header: "nextStep"});
 }
 
 

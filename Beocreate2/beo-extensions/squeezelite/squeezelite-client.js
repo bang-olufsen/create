@@ -13,7 +13,7 @@ $(document).on("squeezelite", function(event, data) {
 			squeezeliteEnabled = false;
 			$("#squeezelite-enabled-toggle").removeClass("on");
 		}
-		notify(false, "squeezelite");
+		beo.notify(false, "squeezelite");
 	}
 });
 
@@ -21,11 +21,11 @@ $(document).on("squeezelite", function(event, data) {
 function toggleEnabled() {
 	enabled = (!squeezeliteEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning Squeezelite on...", icon: "attention", timeout: false, id: "squeezelite"});
+		beo.notify({title: "Turning Squeezelite on...", icon: "attention", timeout: false, id: "squeezelite"});
 	} else {
-		notify({title: "Turning Squeezelite off...", icon: "attention", timeout: false, id: "squeezelite"});
+		beo.notify({title: "Turning Squeezelite off...", icon: "attention", timeout: false, id: "squeezelite"});
 	}
-	send({target: "squeezelite", header: "squeezeliteEnabled", content: {enabled: enabled}});
+	beo.send({target: "squeezelite", header: "squeezeliteEnabled", content: {enabled: enabled}});
 }
 
 

@@ -32,7 +32,7 @@ $(document).on("hifiberry-debug", function(event, data) {
 
 
 function collect() {
-	send({target: "hifiberry-debug", header: "collect"});
+	beo.send({target: "hifiberry-debug", header: "collect"});
 }
 
 function download() {

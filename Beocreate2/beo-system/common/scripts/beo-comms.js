@@ -25,6 +25,8 @@ var connectionAttempts = 0;
 var maxConnectionAttempts = 5;
 var noConnectionNotifications = false;
 
+beoCom = (function() {
+
 var productConnectionTimeout;
 var productReconnectTimeout;
 
@@ -36,7 +38,7 @@ function connectToCurrentProduct() {
 	productAddress = window.location.host;
 	//if (productAddress.indexOf(":") == -1) productAddress += ":80";
 	if (!simulation && noExtensions == false && productAddress) connectProduct();
-	//notify(false, "connection");
+	//beo.notify(false, "connection");
 }
 
 function connectProduct() {
@@ -51,10 +53,10 @@ function connectProduct() {
 	
 	productConnectionNotificationTimeout = setTimeout(function() {
 		// Show "Connecting..." with a timeout so that it doesn't flash every time the UI loads.
-		if (!noConnectionNotifications) notify({title: "Connecting...", icon: "attention", timeout: false, id: "connection"});
+		if (!noConnectionNotifications) beo.notify({title: "Connecting...", icon: "attention", timeout: false, id: "connection"});
 	}, 1000);
 	$(document).trigger("general", {header: "connection", content: {status: "connecting"}});
-	sendToProductView({header: "connection", content: {status: "connecting"}});
+	beo.sendToProductView({header: "connection", content: {status: "connecting"}});
 	
 	productConnectionTimeout = setTimeout(function() {
 		productConnection.close();
@@ -71,11 +73,11 @@ function connectProduct() {
 		clearTimeout(productConnectionNotificationTimeout);
 		console.log("Succesfully connected to " + productAddress + ".");
 		$("body").addClass("connected").removeClass("disconnected connecting");
-		notify(false, "connection");
+		beo.notify(false, "connection");
 		noConnectionNotifications = false;
 		$(document).trigger("general", {header: "connection", content: {status: "connected"}});
-		sendToProductView({header: "connection", content: {status: "connected"}});
-		//if (!stateRestored) restoreState();
+		beo.sendToProductView({header: "connection", content: {status: "connected"}});
+		//if (!stateRestored) beo.restoreState();
 	};
 	
 	// DISCONNECTED
@@ -84,7 +86,7 @@ function connectProduct() {
 		if (connected) {
 			connected = false;
 			console.log("Disconnected from " + productAddress + ", reconnecting...");
-			sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: true}});
+			beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: true}});
 			$("body").addClass("connecting").removeClass("connected disconnected");
 			connectProduct();
 		} else {
@@ -98,8 +100,8 @@ function connectProduct() {
 				console.log("Stopping attempts to connect to " + productAddress + ".");
 				clearTimeout(productConnectionNotificationTimeout);
 				$("body").addClass("disconnected").removeClass("connecting connected");
-				sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: false}});
-				if (maxConnectionAttempts > 0) notify({title: "Product is unreachable", message: "Make sure the product is on and that the product and your device are connected to the same network.", buttonAction: "connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
+				beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: false}});
+				if (maxConnectionAttempts > 0) beo.notify({title: "Product is unreachable", message: "Make sure the product is on and that the product and your device are connected to the same network.", buttonAction: "connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
 				clearTimeout(productConnectionTimeout);
 				connectionAttempts = 0;
 			}
@@ -126,6 +128,14 @@ function send(data) {
 	if (productConnection) {
 		productConnection.send(JSON.stringify(data));
 	} else if (simulation) {
-		
+		console.log("Simulated send of data:"+data);
 	}
 }
+beo.send = send;
+
+return {
+	connectToCurrentProduct: connectToCurrentProduct,
+	send: send
+}
+
+})();

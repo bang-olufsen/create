@@ -20,7 +20,7 @@
 				<h1 class="system-name">Sound System</h1>
 				<div class="button-row centre">
 					<div data-translation="changeNameButton" class="button pill black compact setup-only" onclick="product_information.changeProductName();">Change Name…</div>
-					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="ask('product-appearance-prompt');">Change…</div>
+					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>
 				</div>
 			</div>
 			<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">About</h2>
@@ -54,9 +54,9 @@
 	
 	<div class="ask-menu" id="product-appearance-prompt">
 		<div class="ask-buttons">
-			<div class="button pill grey" onclick="ask();product_information.changeProductName();">Change Product Name…</div>
-			<div class="button pill grey" onclick="ask();product_information.startCustomisation();">Change Icon…</div>
-			<div class="button pill black cancel" onclick="ask();">Cancel</div>
+			<div class="button pill grey" onclick="beo.ask();product_information.changeProductName();">Change Product Name…</div>
+			<div class="button pill grey" onclick="beo.ask();product_information.startCustomisation();">Change Icon…</div>
+			<div class="button pill black cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
@@ -66,7 +66,7 @@
 		<div class="ask-buttons">
 			
 			<div class="button pill black default" onclick="product_information.restartProduct();">Restart Now</div>
-			<div class="button pill grey cancel" onclick="ask();">Restart Later</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Restart Later</div>
 		</div>
 	</div>
 	
@@ -75,7 +75,7 @@
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="product_information.shutdownProduct();">Shut Down</div>
 			<div class="button pill grey" onclick="product_information.restartProduct();">Restart</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	

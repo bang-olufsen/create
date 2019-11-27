@@ -19,7 +19,7 @@ $(document).on("sound-preset", function(event, data) {
 			bangOlufsenSoundPresetCount = 0;
 			customSoundPresetCount = 0;
 			for (presetID in soundPresets) {
-				presetItem = createCollectionItem({
+				presetItem = beo.createCollectionItem({
 					classes: ["sound-preset-item"],
 					label: soundPresets[presetID].presetName,
 					icon: soundPresets[presetID].productImage,
@@ -47,7 +47,7 @@ $(document).on("sound-preset", function(event, data) {
 		if (data.content.action) {
 			switch (data.content.action) {
 				case "presetRemoved":
-					notify({title: "Preset removed", icon: "common/symbols-black/checkmark-round.svg"});
+					beo.notify({title: "Preset removed", icon: "common/symbols-black/checkmark-round.svg"});
 					break;
 			}
 		}
@@ -99,8 +99,8 @@ $(document).on("sound-preset", function(event, data) {
 					// Has settings, the extension exists, and provided a preview.
 					if (preset.content[soundAdjustment].report.previewProcessor != undefined) {
 						//presetPreview = executeFunctionByName(preset.content[soundAdjustment].report.previewProcessor, window, preset.content[soundAdjustment].report);
-						if (functionExists(preset.content[soundAdjustment].report.previewProcessor)) {
-							presetPreview = executeFunction(preset.content[soundAdjustment].report.previewProcessor, [preset.content[soundAdjustment].report, preset.presetName]);
+						if (beo.functionExists(preset.content[soundAdjustment].report.previewProcessor)) {
+							presetPreview = beo.executeFunction(preset.content[soundAdjustment].report.previewProcessor, [preset.content[soundAdjustment].report, preset.presetName]);
 							menuOptions = {
 								label: presetPreview[0],
 								onclick: 'sound_preset.toggleSetting(\''+soundAdjustment+'\');',
@@ -117,7 +117,7 @@ $(document).on("sound-preset", function(event, data) {
 								$(".install-fallback-dsp-toggle").addClass("on");
 								willInstallFallbackDSP = true;
 							}
-							$(".sound-preset-contents").append(createMenuItem(menuOptions));
+							$(".sound-preset-contents").append(beo.createMenuItem(menuOptions));
 						
 						
 						}
@@ -133,15 +133,15 @@ $(document).on("sound-preset", function(event, data) {
 				}
 			}
 			
-			showPopupView("sound-preset-preview-popup");
+			beo.showPopupView("sound-preset-preview-popup");
 		}
 		
 	}
 	
 	if (data.header == "presetApplied" && data.content.presetID) {
 	
-		notify({title: soundPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
-		hidePopupView("sound-preset-preview-popup");
+		beo.notify({title: soundPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
+		beo.hidePopupView("sound-preset-preview-popup");
 		
 		currentSoundPreset = data.content.presetID;
 		showCurrentPreset();
@@ -150,16 +150,16 @@ $(document).on("sound-preset", function(event, data) {
 	if (data.header == "presetImport") {
 		switch (data.content.message) {
 			case "invalidJSON":
-				notify({title: "Faulty preset data", message: "There was a problem with reading JSON data from the sound preset file. Make sure the data is formatted correctly and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				beo.notify({title: "Faulty preset data", message: "There was a problem with reading JSON data from the sound preset file. Make sure the data is formatted correctly and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "noPresetName":
-				notify({title: "Incomplete preset", message: "Sound preset did not contain a preset name. Please refer to documentation on sound presets.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				beo.notify({title: "Incomplete preset", message: "Sound preset did not contain a preset name. Please refer to documentation on sound presets.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "existingPresetReadOnly":
-				notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is a system preset. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				beo.notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is a system preset. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "askToReplace":
-				ask("replace-sound-preset-prompt", [data.content.existingPresetName], null, "sound_preset.replaceExistingPreset(false);");
+				beo.ask("replace-sound-preset-prompt", [data.content.existingPresetName], null, "sound_preset.replaceExistingPreset(false);");
 				break;
 		}
 	}
@@ -193,8 +193,8 @@ function toggleInstallFallbackDSP() {
 }
 
 function selectPreset(presetID) {
-	send({target: "sound-preset", header: "selectSoundPreset", content: {presetID: presetID}});
-	//showPopupView("sound-preset-preview-popup");
+	beo.send({target: "sound-preset", header: "selectSoundPreset", content: {presetID: presetID}});
+	//beo.showPopupView("sound-preset-preview-popup");
 }
 
 function showCurrentPreset() {
@@ -205,20 +205,20 @@ function showCurrentPreset() {
 }
 
 function closePreview() {
-	hidePopupView("sound-preset-preview-popup");
+	beo.hidePopupView("sound-preset-preview-popup");
 	selectedSoundPreset = null;
 }
 
 function applyPreset() {
-	send({target: "sound-preset", header: "applySoundPreset", content: {presetID: selectedSoundPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
+	beo.send({target: "sound-preset", header: "applySoundPreset", content: {presetID: selectedSoundPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
 }
 
 function optionsForSelectedPreset() {
 	if (selectedSoundPreset) {
 		if (soundPresets[selectedSoundPreset].readOnly) {
-			ask("sound-preset-options-readonly-prompt");
+			beo.ask("sound-preset-options-readonly-prompt");
 		} else {
-			ask("sound-preset-options-prompt");
+			beo.ask("sound-preset-options-prompt");
 		}
 	}
 }
@@ -226,18 +226,18 @@ function optionsForSelectedPreset() {
 function deletePreset(confirmed) {
 	if (selectedSoundPreset) {
 		if (!confirmed) {
-			ask("delete-sound-preset-prompt", [soundPresets[selectedSoundPreset].presetName]);
+			beo.ask("delete-sound-preset-prompt", [soundPresets[selectedSoundPreset].presetName]);
 		} else {
-			send({target: "sound-preset", header: "deleteSoundPreset", content: {presetID: selectedSoundPreset}});
+			beo.send({target: "sound-preset", header: "deleteSoundPreset", content: {presetID: selectedSoundPreset}});
 			closePreview();
-			ask();
+			beo.ask();
 		}
 	}
 }
 
 function replaceExistingPreset(replace) {
-	ask();
-	send({target: "sound-preset", header: "replaceExistingPreset", content: {replace: replace}});
+	beo.ask();
+	beo.send({target: "sound-preset", header: "replaceExistingPreset", content: {replace: replace}});
 }
 
 return {

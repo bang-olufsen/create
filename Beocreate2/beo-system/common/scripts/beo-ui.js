@@ -16,6 +16,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 noExtensions = false;
+
+var extensions = {};
+
+beo = (function() {
+
 stateRestored = false;
 uiSettings = {
 	disclosure: {}
@@ -38,7 +43,7 @@ $( document ).ready(function() {
 	prepareTextInput();
 	updateInterfaceMode();
 	setAppearance();
-	connectToCurrentProduct();
+	beoCom.connectToCurrentProduct();
 	
 	$("body").css("opacity", "1");
 	
@@ -155,7 +160,7 @@ document.onkeydown = function(evt) {
     }
 };
 
-var extensions = {};
+
 var interfaceMode = 1; // 1 = normal, 2 = compact
 
 function prepareMenus() {
@@ -220,7 +225,7 @@ function prepareMenus() {
 						
 					if (!$(this).attr("data-hidden")) {
 						$("nav.full .nav-content").append(createMenuItem(menuOptions));
-						$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="showExtension(\''+$(this).attr("id")+'\');">'+menuOptions.label+'</div>');
+						$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="beo.showExtension(\''+$(this).attr("id")+'\');">'+menuOptions.label+'</div>');
 					}
 					
 					$(thisSection).attr("data-top-level-menu-id", $(this).attr("id"));
@@ -247,7 +252,7 @@ function prepareMenus() {
 						}
 						menuOptions = {
 							label: $(this).attr("data-menu-title"),
-							onclick: 'showExtension(\''+$(this).attr("id")+'\');',
+							onclick: 'beo.showExtension(\''+$(this).attr("id")+'\');',
 							icon: $(this).attr("data-asset-path")+"/symbols-black/"+iconName, // Still not quite sure if it looks better with or without icons.
 							id: $(this).attr("id")+'-menu-item',
 							chevron: true,
@@ -836,7 +841,7 @@ function activatedExtension(extensionID) {
 	}, 20);
 	selectedExtension = extensionID;
 	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID}});
-	send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
+	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
 	sendToProductView(extensionID);
 	
 	// Save state, so that the UI returns to the same menu when reloaded.
@@ -867,7 +872,7 @@ function restoreState(theMenu) {
 		} else {
 			showExtension(theMenu);
 		}
-		send({target: "ui", header: "getUISettings"});
+		beoCom.send({target: "ui", header: "getUISettings"});
 		stateRestored = true;
 	} else {
 		// If state has already been restored (i.e. this is a reconnection), only indicate the currently selected extension to the product.
@@ -1257,7 +1262,7 @@ $(document).on("click", ".disclosure", function() {
 			isOn = true;
 		}
 		if (!$(this).attr("data-disclosure-volatile")) {
-			send({target: "ui", header: "disclosure", content: {element: element, isOn: isOn}});
+			beoCom.send({target: "ui", header: "disclosure", content: {element: element, isOn: isOn}});
 		}
 	}
 });
@@ -1670,10 +1675,10 @@ function executeFunction(functionName, args) {
 	}
 }*/
 
-function functionExists(name) {
-	namespaces = name.split(".");
+function functionExists(funcName) {
+	namespaces = funcName.split(".");
 	if (namespaces.length == 1) {
-		if (window[name]) {
+		if (window[funcName]) {
 			return true;
 		} else {
 			return false;
@@ -1695,3 +1700,36 @@ Math.radians = function(degrees) {
 Math.distance = function(x1, y1, x2, y2) {
 	return Math.sqrt((x2 -= x1) * x2 + (y2 -= y1) * y2);
 };
+
+
+return {
+	ask: ask,
+	askOption: askOption,
+	showPopupView: showPopupView,
+	hidePopupView: hidePopupView,
+	popupBackplateClick: popupBackplateClick,
+	startTextInput: startTextInput,
+	submitText: submitText,
+	cancelText: cancelText,
+	uploadFile: uploadFile,
+	executeFunction: executeFunction,
+	functionExists: functionExists,
+	translatedString: translatedString,
+	translatedStringWithFormat: translatedStringWithFormat,
+	capitaliseFirst: capitaliseFirst,
+	commaAndList: commaAndList,
+	showMenuTab: showMenuTab,
+	notify: notify,
+	restoreState: restoreState,
+	setMenuTitle: setMenuTitle,
+	showExtension: showExtension,
+	showExtensionWithHistory: showExtensionWithHistory,
+	showDeepMenu: showDeepMenu,
+	toggleMainMenu: toggleMainMenu,
+	createMenuItem: createMenuItem,
+	createCollectionItem: createCollectionItem,
+	setSymbol: setSymbol,
+	sendToProductView: sendToProductView
+}
+
+})();

@@ -8,7 +8,7 @@ focusedSource = null;
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			send({target: "sources", header: "getSources"});
+			beo.send({target: "sources", header: "getSources"});
 		}
 	}
 	
@@ -59,11 +59,11 @@ $(document).on("sources", function(event, data) {
 	}
 	
 	if (data.header == "configuringSystem") {
-		notify({title: "Setting up sources...", icon: "attention", timeout: false, id: "sources"});
+		beo.notify({title: "Setting up sources...", icon: "attention", timeout: false, id: "sources"});
 	}
 	
 	if (data.header == "systemConfigured") {
-		notify(false, "sources");
+		beo.notify(false, "sources");
 	}
 	
 	if (data.header == "defaultAliases") {
@@ -71,7 +71,7 @@ $(document).on("sources", function(event, data) {
 			$(".default-aliases").empty();
 			for (alias in data.content.aliases) {
 				
-				$(".default-aliases").append(createMenuItem({
+				$(".default-aliases").append(beo.createMenuItem({
 					label: data.content.aliases[alias].name,
 					icon: extensions.sources.assetPath+"/symbols-black/"+data.content.aliases[alias].icon,
 					onclick: "sources.setAlias('"+aliasSource+"', '"+alias+"', true);"
@@ -82,10 +82,10 @@ $(document).on("sources", function(event, data) {
 			} else {
 				$(".remove-source-alias").addClass("hidden");
 			}
-			ask("set-source-alias-prompt", [extensions[aliasSource].title], [
+			beo.ask("set-source-alias-prompt", [extensions[aliasSource].title], [
 				function() {
 					defaultText = (allSources[aliasSource].alias) ? allSources[aliasSource].alias.name : extensions[aliasSource].title;
-					startTextInput(1, "Set Alias", "Enter the display name for "+extensions[aliasSource].title+".", {placeholders: {text: "Alias"}, text: defaultText}, function(input) {
+					beo.startTextInput(1, "Set Alias", "Enter the display name for "+extensions[aliasSource].title+".", {placeholders: {text: "Alias"}, text: defaultText}, function(input) {
 						if (input && input.text) {
 							setAlias(aliasSource, input.text);
 						} else {
@@ -105,29 +105,27 @@ function showActiveSources() {
 	$(".source-menu-item").addClass("hide-icon-right");
 	// Current, playing source.
 	if (currentSource != null) {
-		icon = null;
-		name = null;
+		sourceIcon = null;
+		sourceName = null;
 		if (allSources[currentSource].alias) {
 			if (allSources[currentSource].alias.icon) {
-				icon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
+				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
 			}
-			name = allSources[currentSource].alias.name;
+			sourceName = allSources[currentSource].alias.name;
 		}
-		if (!icon && 
+		if (!sourceIcon && 
 			extensions[currentSource].icon && 
 			extensions[currentSource].assetPath) {
-				icon = extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon;
+				sourceIcon = extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon;
 		}
-		if (!name) name = extensions[currentSource].title;
-		if (icon) {
-			$(".active-source-icon").each(function() {
-				$(this).css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
-			});
+		if (!sourceName) sourceName = extensions[currentSource].title;
+		if (sourceIcon) {
+			beo.setSymbol(".active-source-icon", sourceIcon);
 			$(".active-source-icon").removeClass("hidden");
 		} else {
 			$(".active-source-icon").addClass("hidden");
 		}
-		$(".active-source-name").text(name);
+		$(".active-source-name").text(sourceName);
 		$('.source-menu-item[data-extension-id="'+currentSource+'"]').removeClass("hide-icon-right");
 		setTimeout(function() {
 			$(".active-source").addClass("visible");
@@ -138,29 +136,27 @@ function showActiveSources() {
 	
 	// Which source is focused.
 	if (focusedSource != null) {
-		icon = null;
-		name = null;
-		if (allSources[currentSource].alias) {
-			if (allSources[currentSource].alias.icon) {
-				icon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
+		sourceIcon = null;
+		sourceName = null;
+		if (allSources[focusedSource].alias) {
+			if (allSources[focusedSource].alias.icon) {
+				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[focusedSource].alias.icon;
 			}
-			name = allSources[currentSource].alias.name;
+			sourceName = allSources[focusedSource].alias.name;
 		}
-		if (!icon && 
+		if (!sourceIcon && 
 			extensions[focusedSource].icon && 
 			extensions[focusedSource].assetPath) {
-				icon = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
+				sourceIcon = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
 		}
-		if (!name) name = extensions[focusedSource].title;
-		if (icon) {
-			$(".focused-source-icon").each(function() {
-				$(this).css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
-			});
+		if (!sourceName) sourceName = extensions[focusedSource].title;
+		if (sourceIcon) {
+			beo.setSymbol(".focused-source-icon", sourceIcon);
 			$(".focused-source-icon").removeClass("hidden");
 		} else {
 			$(".focused-source-icon").addClass("hidden");
 		}
-		$(".focused-source-name").text(name);
+		$(".focused-source-name").text(sourceName);
 		setTimeout(function() {
 			$(".focused-source").addClass("visible");
 		}, 50);
@@ -199,7 +195,7 @@ function updateAliases() {
 		} else {
 			icon = extensions[extension].assetPath+"/symbols-black/"+extensions[extension].icon;
 		}
-		$('.menu-item[data-extension-id="'+extension+'"] .menu-icon:not(.right)').css("-webkit-mask-image", "url("+icon+")").css("mask-image", "url("+icon+")");
+		beo.setSymbol('.menu-item[data-extension-id="'+extension+'"] .menu-icon:not(.right)', icon);
 		if (allSources[extension].alias && allSources[extension].alias.name) {
 			$('.menu-item[data-extension-id="'+extension+'"] .menu-label').text(allSources[extension].alias.name);
 			$("#"+extension+" .source-alias-control .menu-value").text(allSources[extension].alias.name).removeClass("button");
@@ -223,33 +219,33 @@ function showStartableSources() {
 	$(".startable-sources").empty();
 	for (source in startableSources) {
 		
-		$(".startable-sources").append(createMenuItem({
+		$(".startable-sources").append(beo.createMenuItem({
 			label: startableSources[source].origin,
 			//value: $("#"+startableSources[source].extension).attr("data-menu-title"),
 			icon: $("#"+startableSources[source].extension).attr("data-asset-path")+"/symbols-black/"+$("#"+startableSources[source].extension).attr("data-icon"),
 			onclick: "startSource('"+source+"');"
 		}));
 	}
-	ask("startable-sources-prompt");
+	beo.ask("startable-sources-prompt");
 }
 
 function startSource(sourceID) {
-	send({target: "sources", header: "startSource", content: {sourceID: sourceID}});
-	ask();
+	beo.send({target: "sources", header: "startSource", content: {sourceID: sourceID}});
+	beo.ask();
 }
 
 var aliasSource = null;
 function setAlias(extension, alias, defaultAlias) {
 	if (!alias && !defaultAlias) {
 		aliasSource = extension;
-		send({target: "sources", header: "getDefaultAliases"});
+		beo.send({target: "sources", header: "getDefaultAliases"});
 	} else {
 		if (!alias) { // Remove alias.
-			send({target: "sources", header: "setAlias", content: {extension: extension, alias: null}});
+			beo.send({target: "sources", header: "setAlias", content: {extension: extension, alias: null}});
 		} else {
-			send({target: "sources", header: "setAlias", content: {extension: extension, alias: alias, defaultAlias: defaultAlias}});
+			beo.send({target: "sources", header: "setAlias", content: {extension: extension, alias: alias, defaultAlias: defaultAlias}});
 		}
-		ask();
+		beo.ask();
 	}
 }
 

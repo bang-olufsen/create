@@ -19,7 +19,6 @@ SOFTWARE.*/
 
 
 	var debug = beo.debug;
-	var send = beo.sendToUI;
 	
 	var version = require("./package.json").version;
 	
@@ -70,7 +69,7 @@ SOFTWARE.*/
 				if (event.content.focusedSource == focusedSource) {
 					if (playerState != allSources[focusedSource].playerState) {
 						playerState = allSources[focusedSource].playerState;
-						send({target: "now-playing", header: "playerState", content: {state: playerState}});
+						beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
 					}
 				} else {
 					sendMetadata(event.content.focusedSource, true);
@@ -79,7 +78,7 @@ SOFTWARE.*/
 			} else {
 				focusedSource = null;
 				playerState = "stopped";
-				send({target: "now-playing", header: "playerState", content: {state: playerState}});
+				beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
 				sendMetadata();
 			}
 			if (event.content.currentSource) {
@@ -95,7 +94,7 @@ SOFTWARE.*/
 				if (event.content.extension == focusedSource) {
 					if (playerState != event.content.state) {
 						playerState = event.content.state;
-						send({target: "now-playing", header: "playerState", content: {state: playerState}});
+						beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
 					}
 				}
 			}
@@ -162,7 +161,7 @@ SOFTWARE.*/
 			}
 			metadataCacheIndex++;
 			if (metadataCacheIndex > 1000) metadataCacheIndex = 1;
-			send({target: "now-playing", header: "metadata", content: {metadata: sendMetadata, cacheIndex: metadataCacheIndex, extension: event.content.extension}});
+			beo.sendToUI("now-playing", {header: "metadata", content: {metadata: sendMetadata, cacheIndex: metadataCacheIndex, extension: event.content.extension}});
 			
 		}
 		
@@ -175,7 +174,7 @@ SOFTWARE.*/
 						case "playing":
 							playerState = event.content.state;
 							previousPlayedSource = focusedSource;
-							send({target: "now-playing", header: "playerState", content: {state: event.content.state}});
+							beo.sendToUI("now-playing", {header: "playerState", content: {state: event.content.state}});
 							break;
 					}
 				}
@@ -183,7 +182,7 @@ SOFTWARE.*/
 		}
 		
 		if (event.header == "getData") {
-			send({target: "now-playing", header: "playerState", content: {state: playerState}});
+			beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
 			if (focusedSource) {
 				if (event.content.cacheIndex != metadataCacheIndex) {
 					sendMetadata(focusedSource, false, true);
@@ -228,9 +227,9 @@ SOFTWARE.*/
 			if (metadataCacheIndex > 1000) metadataCacheIndex = 1;
 		}
 		if (forSource && allSources[forSource] && allSources[forSource].metadata) {
-			send({target: "now-playing", header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
+			beo.sendToUI("now-playing", {header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
 		} else {
-			send({target: "now-playing", header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
+			beo.sendToUI("now-playing", {header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
 		}
 	}
 	

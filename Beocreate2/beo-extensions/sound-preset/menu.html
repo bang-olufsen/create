@@ -46,7 +46,7 @@
 				<img class="menu-icon" src="€/symbols-black/upload.svg">
 				<div class="menu-label">Import Preset...</div>
 			</div>-->
-			<div class="button pill grey" onclick="uploadFile({title: 'Import Sound Preset', uploadMessage: 'Importing sound preset...', types: ['.json']}, 'sound-preset');">Import Preset…</div>
+			<div class="button pill grey" onclick="beo.uploadFile({title: 'Import Sound Preset', uploadMessage: 'Importing sound preset...', types: ['.json']}, 'sound-preset');">Import Preset…</div>
 			<div class="button-row centre setup-hide hidden">
 				<div class="button pill black">Save…</div>
 				<div class="button pill">Import…</div>
@@ -119,14 +119,14 @@
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="sound_preset.deletePreset();">Remove Preset...</div>
 			<div class="button pill grey disabled" onclick="sound_preset.exportPreset();">Export Preset</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
 	<div class="ask-menu" id="sound-preset-options-readonly-prompt">
 		<div class="ask-buttons">
 			<div class="button pill grey disabled" onclick="sound_preset.exportPreset();">Export Preset</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
@@ -135,7 +135,7 @@
 		<p>This cannot be undone.</p>
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="sound_preset.deletePreset(true);">Remove Preset</div>
-			<div class="button pill black cancel default" onclick="ask();">Don't Remove</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Don't Remove</div>
 		</div>
 	</div>
 </div>

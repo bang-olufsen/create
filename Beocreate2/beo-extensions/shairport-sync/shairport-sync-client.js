@@ -31,7 +31,7 @@ $(document).on("shairport-sync", function(event, data) {
 				shairportSyncEnabled = false;
 				$("#shairport-sync-enabled-toggle").removeClass("on");
 			}
-			notify(false, "shairport-sync");
+			beo.notify(false, "shairport-sync");
 		}
 	}
 
@@ -42,32 +42,32 @@ $(document).on("shairport-sync", function(event, data) {
 function toggleEnabled() {
 	enabled = (!shairportSyncEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning AirPlay 1 on...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning AirPlay 1 on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning AirPlay 1 off...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning AirPlay 1 off...", icon: "attention", timeout: false});
 	}
-	send({target: "shairport-sync", header: "shairportSyncEnabled", content: {enabled: enabled}});
+	beo.send({target: "shairport-sync", header: "shairportSyncEnabled", content: {enabled: enabled}});
 }
 
 function toggleUsePasswordForShairportSync() {
 	if (shairportSyncUsesPassword) {
-		ask("disable-shairport-sync-password-prompt");
+		beo.ask("disable-shairport-sync-password-prompt");
 	} else {
 		setShairportSyncPassword();
 	}
 }
 
 function setShairportSyncPassword() {
-	startTextInput(2, "Set AirPlay Password", "Changing this setting will disconnect active AirPlay sources to restart shairport-sync.", {placeholders: {password: "Password"}, minLength: {text: 3}}, function(input) {
+	beo.startTextInput(2, "Set AirPlay Password", "Changing this setting will disconnect active AirPlay sources to restart shairport-sync.", {placeholders: {password: "Password"}, minLength: {text: 3}}, function(input) {
 		if (input && input.password) {
-			send({target: "shairport-sync", header: "setPassword", content: {password: input.password}});
+			beo.send({target: "shairport-sync", header: "setPassword", content: {password: input.password}});
 		}
 	});
 }
 
 function disableShairportSyncPassword() {
-	ask();
-	send({target: "shairport-sync", header: "setPassword", content: {password: false}});
+	beo.ask();
+	beo.send({target: "shairport-sync", header: "setPassword", content: {password: false}});
 }
 
 return {

@@ -27,7 +27,7 @@ $(document).on("choose-country", function(event, data) {
 				currentHeader = firstLetter;
 			}
 
-			$(".country-list .sticky-group-"+currentHeader).append(createMenuItem({
+			$(".country-list .sticky-group-"+currentHeader).append(beo.createMenuItem({
 				label: data.content.countries[property],
 				onclick: "choose_country.selectCountry('"+property+"');",
 				checkmark: "left",
@@ -53,7 +53,7 @@ $(document).on("choose-country", function(event, data) {
 
 function selectCountry(country) {
 	countrySelectedRecently = true;
-	send({target: "choose-country", header: "setCountry", content: {country: country}});
+	beo.send({target: "choose-country", header: "setCountry", content: {country: country}});
 }
 
 function updateCurrentCountry() {

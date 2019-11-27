@@ -19,12 +19,11 @@
 	<script src='common/scripts/modernizr.js'></script>
 	<script src='common/scripts/fastclick.js'></script>
 	<script src='common/scripts/beo-ui.js'></script>
-	<script src='common/scripts/beo-extensions.js'></script>
 	<script src='common/scripts/beo-comms.js'></script>
 	<script src='common/scripts/beo-dspcalc.js'></script>
 </head>
 <body class="disconnected" style="opacity: 0;">
-	<div class="plexi" id="nav-back-plate" onclick="toggleMainMenu();"></div>
+	<div class="plexi" id="nav-back-plate" onclick="beo.toggleMainMenu();"></div>
 	
 	
 	<nav class="bar top-level">
@@ -44,7 +43,7 @@
 		</div>
 	</nav>
 	
-	<div class="plexi" id="ask-back-plate" onclick="ask();"></div>
+	<div class="plexi" id="ask-back-plate" onclick="beo.ask();"></div>
 	<div class="ask" id="ask">
 		<div class="ask-content">
 			<div class="menu-content ask-menu-content" id="ask-menu-content">
@@ -54,7 +53,7 @@
 	</div>
 	
 	
-	<div class="plexi" id="upload-back-plate" onclick="uploadFile();"></div>
+	<div class="plexi" id="upload-back-plate" onclick="beo.uploadFile();"></div>
 	<div class="ask" id="upload">
 		<div class="ask-content">
 			<div class="menu-content upload-menu-content">
@@ -64,14 +63,14 @@
 					<input id="file-input" type="file" />
 					<label id="file-input-label" class="button pill grey" for="file-input">Choose File...</label>
 				
-					<div class="button pill black cancel" onclick="uploadFile();">Cancel</div>
+					<div class="button pill black cancel" onclick="beo.uploadFile();">Cancel</div>
 				</div>
 			</div>
 		</div>
 	</div>
 	
 	
-	<div class="plexi" id="open-popup-back-plate" onclick="popupBackplateClick('#open-popup', '#open-popup-back-plate', true);"></div>
+	<div class="plexi" id="open-popup-back-plate" onclick="beo.popupBackplateClick('#open-popup', '#open-popup-back-plate', true);"></div>
 	<div id="open-popup" class="popup-view">
 		<div class="popup-content">
 			<!-- Open popup: can be used by extensions to show popup views -->
@@ -79,17 +78,17 @@
 	</div>
 	
 	
-	<div class="plexi" id="text-input-back-plate" onclick="cancelText();"></div>
+	<div class="plexi" id="text-input-back-plate" onclick="beo.cancelText();"></div>
 	<div id="text-input" class="popup-view">
 		<div class="popup-content">
 				<header class="popup">
-					<div class="button symbol left" onclick="cancelText();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+					<div class="button symbol left" onclick="beo.cancelText();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
 					<h1>Title</h1>
-					<div class="button symbol right disabled" id="text-input-submit" onclick="submitText();" style="-webkit-mask-image: url(common/symbols-black/done.svg); mask-image: url(common/symbols-black/done.svg);"></div>
+					<div class="button symbol right disabled" id="text-input-submit" onclick="beo.submitText();" style="-webkit-mask-image: url(common/symbols-black/done.svg); mask-image: url(common/symbols-black/done.svg);"></div>
 				</header>
 				<div class="menu-content">
 					<p id="text-prompt">Text prompt.</p>
-					<form id="text-fields" action="javascript:submitText();">
+					<form id="text-fields" action="javascript:beo.submitText();">
 						<input type="text" name="text-input" value="" id="text-input-plain" autocorrect="off" autocapitalize="off" placeholder="Placeholder">
 						<input type="password" name="password-input" id="text-input-password" placeholder="Password" value="" autocomplete="current-password">
 						<input type="submit" value="Submit" id="submit-text">
@@ -143,7 +142,7 @@
 				<div class="master-volume-slider white" id="player-bar-volume-slider"></div>
 				<img class="symbol" src="common/symbols-white/volume.svg" draggable="false">
 			</div>
-			<img class="button symbol" id="player-bar-menu-button" src="common/symbols-white/menu.svg" alt="Main Menu" onclick="toggleMainMenu();" draggable="false">
+			<img class="button symbol" id="player-bar-menu-button" src="common/symbols-white/menu.svg" alt="Main Menu" onclick="beo.toggleMainMenu();" draggable="false">
 			<div class="reload-button" onclick="window.location.reload();"></div>
 		</div>
 	</div>
@@ -159,23 +158,23 @@
 		- based on extensions included in the UI
 		-->
 		<!--
-		<div id="favourite-0" onclick="showExtension(0);">
+		<div id="favourite-0" onclick="beo.showExtension(0);">
 			<img src="">
 			<span>Favourite 1</span>
 		</div>
-		<div id="favourite-1" onclick="showExtension(1);">
+		<div id="favourite-1" onclick="beo.showExtension(1);">
 			<img src="">
 			<span>Favourite 2</span>
 		</div>
-		<div id="favourite-2" onclick="showExtension(2);">
+		<div id="favourite-2" onclick="beo.showExtension(2);">
 			<img src="">
 			<span>Favourite 3</span>
 		</div>
-		<div id="favourite-3" onclick="showExtension(3);">
+		<div id="favourite-3" onclick="beo.showExtension(3);">
 			<img src="">
 			<span>Favourite 4</span>
 		</div>
-		<div onclick="toggleMainMenu();">
+		<div onclick="beo.toggleMainMenu();">
 			<img src="common/symbols-white/menu.svg">
 			<span>Menu</span>
 		</div>

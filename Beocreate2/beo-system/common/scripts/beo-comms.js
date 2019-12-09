@@ -131,11 +131,20 @@ function send(data) {
 		console.log("Simulated send of data:"+data);
 	}
 }
+
+function sendToProduct(target, data) {
+	data.target = target;
+	send(data);
+}
+
+
 beo.send = send;
+beo.sendToProduct = sendToProduct
 
 return {
 	connectToCurrentProduct: connectToCurrentProduct,
-	send: send
+	send: send,
+	sendToProduct: sendToProduct
 }
 
 })();

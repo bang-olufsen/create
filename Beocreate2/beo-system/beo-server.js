@@ -225,13 +225,13 @@ function getAllSettings() {
 
 // LOAD SYSTEM SETTINGS
 // Contains sound card type, port to use, possibly disabled extensions.
-systemConfiguration = getSettings('system');
-if (systemConfiguration == null) systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
+tempSystemConfiguration = getSettings('system');
+if (tempSystemConfiguration != null) systemConfiguration = Object.assign(systemConfiguration, tempSystemConfiguration);
 
 
 // Load UI settings.
-uiSettings = getSettings('ui');
-if (systemConfiguration == null) uiSettings = JSON.parse(JSON.stringify(defaultUIConfiguration));
+tempUISettings = getSettings('ui');
+if (tempUISettings != null) uiSettings = Object.assign(uiSettings, tempUISettings);
 
 
 

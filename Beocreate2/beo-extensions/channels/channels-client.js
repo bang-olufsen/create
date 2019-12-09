@@ -22,6 +22,12 @@ $(document).on("channels", function(event, data) {
 		} else {
 			showSimpleChannelSelection(null);
 		}
+		
+		if (data.content.daisyChainEnabled) {
+			$("#channels-daisy-chained-message").removeClass("hidden");
+		} else {
+			$("#channels-daisy-chained-message").addClass("hidden");
+		}
 	}
 });
 
@@ -83,7 +89,6 @@ function showCanControlChannels(canControl) {
 		}
 	}
 	if (product_information && product_information.cardType) {
-		console.log(product_information.cardType());
 		if (product_information.cardType() == "DAC+ DSP") {
 				$("#simple-channel-select, #simple-stereo-control").addClass("hidden");
 		}

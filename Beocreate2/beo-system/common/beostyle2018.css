@@ -2066,6 +2066,10 @@ a.button {
 	flex-shrink: 0;
 }
 
+.button.pill.margin-top {
+	margin-top: 20px;
+}
+
 .menu-value.button {
 	margin: 0;
 	padding-right: 0.7em;
@@ -2787,6 +2791,30 @@ a.button {
 
 /* @end */
 
+/* @group Swipe */
+
+.swipe {
+	overflow: hidden;
+	visibility: hidden;
+	position: relative;
+}
+
+.popup-content > .swipe {
+	height: 100%;
+}
+
+.swipe-wrap {
+	overflow: hidden;
+	height: 100%;
+}
+
+.swipe-wrap > div {
+	float: left;
+	position: relative;
+}
+
+/* @end */
+
 /* @group Dialogues */
 
 .plexi {
@@ -2822,9 +2850,19 @@ a.button {
 	/*-webkit-backdrop-filter: blur(20px);*/
 }
 
+.disconnected .plexi.visible {
+	background-color: rgb(200, 200, 200);
+	pointer-events: none;
+}
+
 .dark .plexi.visible {
 	background-color: rgba(34, 34, 34, 0.9);
 }
+
+.dark.disconnected .plexi.visible {
+	background-color: rgba(34, 34, 34, 1);
+}
+
 
 .ask-content,
 .popup-content {

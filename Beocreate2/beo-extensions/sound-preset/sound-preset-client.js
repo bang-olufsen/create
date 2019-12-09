@@ -56,6 +56,14 @@ $(document).on("sound-preset", function(event, data) {
 		
 	}
 	
+	if (data.header == "currentPresetName") {
+		if (data.content.presetName) {
+			$(".current-sound-preset-name").text(data.content.presetName);
+		} else {
+			$(".current-sound-preset-name").text("");
+		}
+	}
+	
 	if (data.header == "presetPreview") {
 		if (data.content.preset) {
 			preset = data.content.preset;

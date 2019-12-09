@@ -192,6 +192,18 @@ $(document).on("dsp-programs", function(event, data) {
 		}
 	}
 	
+	if (data.header == "storeAdjustments") {
+		if (data.content.status == "storing") {
+			beo.notify({title: "Storing sound adjustments...", message: "This will take a moment", icon: "attention", timeout: false});
+		}
+		if (data.content.status == "finish") {
+			beo.notify({title: "Adjustments stored", icon: "common/symbols-black/checkmark-round.svg"});
+		}
+		if (data.content.status == "fail") {
+			beo.notify({title: "Storing sound adjustments failed", message: "Please try again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
+		}
+	}
+	
 	if (data.header == "settings") {
 		if (data.content.muteUnknownPrograms) {
 			muteUnknown = true;
@@ -222,9 +234,14 @@ function closePreview() {
 	beo.hidePopupView("dsp-program-preview-popup");
 }
 
-function reinstallProgram() {
-	beo.hidePopupView("dsp-program-preview-popup");
-	beo.send({target: "dsp-programs", header: "installProgram"});
+function reinstallProgram(confirmed) {
+	if (!confirmed) {
+		beo.ask("reinstall-dsp-program-prompt");
+	} else {
+		beo.ask();
+		beo.hidePopupView("dsp-program-preview-popup");
+		beo.send({target: "dsp-programs", header: "installProgram"});
+	}
 }
 
 function installProgram(confirmed) {
@@ -263,10 +280,20 @@ function toggleAutoUpgrade() {
 	}
 }
 
+function storeAdjustments(confirmed) {
+	if (!confirmed) {
+		beo.ask("store-sound-adjustments-prompt");
+	} else {
+		beo.ask();
+		beo.send({target: "dsp-programs", header: "storeAdjustments"});
+	}
+}
+
 return {
 	jumpToSoundPresets: jumpToSoundPresets,
 	getPreview: getPreview,
 	closePreview: closePreview,
+	storeAdjustments, storeAdjustments,
 	reinstallProgram: reinstallProgram,
 	installProgram: installProgram,
 	toggleMuteUnknown: toggleMuteUnknown,

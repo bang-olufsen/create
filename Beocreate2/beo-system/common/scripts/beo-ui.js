@@ -16,8 +16,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 noExtensions = false;
-
 var extensions = {};
+
+
 
 beo = (function() {
 
@@ -129,17 +130,16 @@ function getWindowDimensions() {
 	windowWidth = window.innerWidth;
 }
 
-window.onresize = function() {
+window.addEventListener('resize', function(){
 	clearTimeout(resizeTimeout);
 	resizeTimeout = setTimeout(function() {
 		getWindowDimensions();
 		updateInterfaceMode();
 		updateSliderWidths();
+		updatePopupHeight();
 		$(document).trigger("ui", {header: "windowResized"});
-		//setQuickLookAlbumNameMargin();
-		//evaluateTextScrolling();
 	}, 200);
-};
+}, true);
 
 document.onkeydown = function(evt) {
     evt = evt || window.event;
@@ -210,7 +210,7 @@ function prepareMenus() {
 						iconName = $(this).attr("data-icon-hifiberry");
 					}
 					menuOptions = {
-						onclick: 'showExtension(\''+$(this).attr("id")+'\');',
+						onclick: 'beo.showExtension(\''+$(this).attr("id")+'\');',
 						icon: $(this).attr("data-asset-path")+"/symbols-"+sidebarContentColour+"/"+iconName,
 						id: $(this).attr("id")+'-menu-item',
 						data: {"data-extension-id": $(this).attr("id")},
@@ -1415,14 +1415,21 @@ function updateSliderWidths() {
 
 // Common popup view with dynamic content.
 var currentPopup = null;
+var currentPopupParent = null;
 var popupCancelAction = null;
 function showPopupView(popupContentID, overridePopup, cancelAction) {
 	popupCancelAction = null;
 	if (popupContentID) {
 		if (!currentPopup || overridePopup == currentPopup) {
+			if (currentPopup) {
+				$("#open-popup .popup-content").addClass("hidden");
+				currentPopupParent.append($("#open-popup .popup-content").detach());
+			}
 			currentPopup = popupContentID;
-			$("#open-popup .popup-content").html($("#"+popupContentID).html());
-			$("#open-popup .popup-content").addClass("active-popup "+popupContentID);
+			currentPopupParent = $("#"+popupContentID).parent();
+			$("#open-popup").append($("#"+popupContentID).detach());
+			$("#open-popup .popup-content").removeClass("hidden");
+			
 			// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
 			showPopupViewInternal("#open-popup", "#open-popup-back-plate");
 			if (cancelAction != undefined) popupCancelAction = cancelAction;
@@ -1438,16 +1445,18 @@ function showPopupViewInternal(view, backplate) {
 	$(view+", "+backplate).addClass("block");
 	setTimeout(function() {
 		$(view+", "+backplate).addClass("visible");
+		updatePopupHeight();
 	}, 100);
 }
 
 function hidePopupViewInternal(view, backplate, universalOverride) {
-	if (view == "#open-popup" && universalOverride) { 
-		$("#open-popup .popup-content").removeClass("active-popup "+currentPopup);
+	if (view == "#open-popup" && universalOverride) {
 		currentPopup = null;
 	}
 	$(view+", "+backplate).removeClass("visible");
 	setTimeout(function() {
+		$("#open-popup .popup-content").addClass("hidden");
+		currentPopupParent.append($("#open-popup .popup-content").detach());
 		$(view+", "+backplate).removeClass("block");
 	}, 500);
 }
@@ -1457,6 +1466,18 @@ function popupBackplateClick(view, backplate, universalOverride) {
 		popupCancelAction();
 	} else {
 		hidePopupViewInternal(view, backplate, universalOverride);
+	}
+}
+
+function updatePopupHeight() {
+	if (interfaceMode == 1) {
+		if ((windowHeight - 100) == $("#open-popup .popup-content").innerHeight()) {
+			$("#open-popup .popup-content").css("height", "100%");
+		} else {
+			$("#open-popup .popup-content").css("height", "");
+		}
+	} else {
+		$("#open-popup .popup-content").css("height", "");
 	}
 }
 
@@ -1666,15 +1687,6 @@ function executeFunction(functionName, args) {
 	return context[func].apply(context, args);
 }
 
-/*function executeFunction(name, args) {
-	namespaces = name.split(".");
-	if (namespaces.length == 1) {
-		window[name](args);
-	} else {
-		window[namespaces[0]][namespaces[1]](args);
-	}
-}*/
-
 function functionExists(funcName) {
 	namespaces = funcName.split(".");
 	if (namespaces.length == 1) {
@@ -1729,7 +1741,8 @@ return {
 	createMenuItem: createMenuItem,
 	createCollectionItem: createCollectionItem,
 	setSymbol: setSymbol,
-	sendToProductView: sendToProductView
+	sendToProductView: sendToProductView,
+	setAppearance: setAppearance
 }
 
 })();

@@ -29,6 +29,10 @@
 			<!--<p>Looking for model-specific sound profiles? They are now <a href="#" onclick="jumpToSoundPresets();">sound presets</a>.</p>-->
 			<h2 class="disclosure" data-disclosure="#dsp-programs-advanced">Advanced</h2>
 			<div id="dsp-programs-advanced" class="hidden">
+				
+				<div class="button margin-top pill grey" onclick="dsp_programs.storeAdjustments();">Stand-Alone Use...</div>
+				<p>Store current sound adjustments in the amplifier memory so that it works without a Raspberry Pi.</p>
+				
 				<div class="menu-item toggle" id="mute-unknown-enabled-toggle" onclick="dsp_programs.toggleMuteUnknown();">
 					<div class="menu-label">Mute Unknown Programs</div>
 					<div class="menu-toggle"></div>
@@ -40,6 +44,7 @@
 					<div class="menu-toggle"></div>
 				</div>
 				<p>Upgrades the program stored in the DSP memory automatically after a system update.</p>
+				
 			</div>
 		</div>
 	</div>
@@ -87,11 +92,31 @@
 	
 	<div class="ask-menu" id="install-dsp-program-prompt">
 		<h2>Install This DSP Program?</h2>
-		<p>The the program currently stored in the DSP memory will be overwritten.</p>
+		<p>The program currently stored in the DSP memory will be overwritten.</p>
 		<div class="ask-buttons">
 			
-			<div class="button pill black default" onclick="dsp_programs.installProgram(true);">Install Program</div>
-			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+			<div class="button pill grey" onclick="dsp_programs.installProgram(true);">Install Program</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="reinstall-dsp-program-prompt">
+		<h2>Reinstall This DSP Program?</h2>
+		<p>Sound adjustments previously stored in the DSP memory will be overwritten.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill grey" onclick="dsp_programs.reinstallProgram(true);">Reinstall Program</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="store-sound-adjustments-prompt">
+		<h2>Store Sound Adjustments?</h2>
+		<p>Adjustments previously stored in the DSP memory will be overwritten.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill grey" onclick="dsp_programs.storeAdjustments(true);">Store Adjustments</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	

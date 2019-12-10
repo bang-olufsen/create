@@ -295,7 +295,7 @@ nav.bar {
 	width: 100%;
 	user-select: none;
 	box-shadow: inset 0 -1px rgba(0, 0, 0, 0.05);
-	transition: background-color 0.5s ease;
+	/*transition: background-color 0.5s ease;*/
 }
 
 .dark nav.bar {
@@ -681,7 +681,7 @@ header {
 	flex-shrink: 0;
 	text-align: center;
 	display: flex;
-	transition: background-color 0.5s ease;
+	/*transition: background-color 0.5s ease;*/
 }
 
 .dark header {
@@ -837,7 +837,7 @@ section.animating {
 
 
 .menu-screen {
-	transition: transform 0.5s cubic-bezier(.18,0,0,1), opacity 0.5s cubic-bezier(.18,0,0,1), filter 0.5s ease, background-color 0.5s ease;
+	transition: transform 0.5s cubic-bezier(.18,0,0,1), opacity 0.5s cubic-bezier(.18,0,0,1), filter 0.5s ease;
 	position: absolute;
 	bottom: 0;
 	top: 0;
@@ -1949,7 +1949,9 @@ p.success {
 
 /* @group Buttons */
 
-.button, .segmented-control, .tabs {
+.button, 
+.segmented-control, 
+.tabs {
 	font-size: 0.7em;
 	text-transform: uppercase;
 	font-weight: 500;
@@ -1972,7 +1974,8 @@ a.button {
 .button:active, 
 .button.symbol:active, 
 .segmented-control > div:active,
-.tabs > div:active {
+.tabs > div:active,
+.popup-button:active {
 	transform: scale(0.95);
 	transition: none;
 }
@@ -2047,6 +2050,33 @@ a.button {
 }
 
 
+.popup-button {
+	position: relative;
+	padding-right: 26px;
+	cursor: default;
+}
+
+.no-touch .popup-button:hover,
+.touch .popup-button:active {
+	opacity: 1;
+}
+
+.popup-button:after {
+	content: "";
+	width: 21px;
+	height: 21px;
+	position: absolute;
+	right: 0;
+	-webkit-mask-image: url(symbols-black/chevron-thin-updown.svg);
+	mask-image: url(symbols-black/chevron-thin-updown.svg);
+	-webkit-mask-size: 21px;
+	mask-size: 21px;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	background-color: currentColor;
+}
 
 .button.pill,
 .menu-value.button {

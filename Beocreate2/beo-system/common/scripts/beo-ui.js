@@ -400,13 +400,36 @@ function updateHeaderIcons() {
 }
 
 
-window.matchMedia("(prefers-color-scheme: dark)").addListener(e => e.matches && setAppearance(true))
-window.matchMedia("(prefers-color-scheme: light)").addListener(e => e.matches && setAppearance(false))
+window.matchMedia("(prefers-color-scheme: dark)").addListener(e => e.matches && setAppearance(true));
+window.matchMedia("(prefers-color-scheme: light)").addListener(e => e.matches && setAppearance(false));
 
-function setAppearance(dark) {
-	if (dark == undefined) {
+function setAppearance(isDark, savePreference) {
+	if (savePreference) {
+		if (isDark == undefined) localStorage.beocreateAppearance = "auto";
+		if (isDark == true) localStorage.beocreateAppearance = "dark";
+		if (isDark == false) localStorage.beocreateAppearance = "light";
+	}
+	$(".ui-appearance-mode .menu-item").removeClass("checked");
+	if (localStorage.beocreateAppearance) {
+		if (localStorage.beocreateAppearance == "dark") {
+			isDark = true;
+			$(".ui-appearance-mode .menu-item#ui-appearance-dark").addClass("checked");
+		}
+		if (localStorage.beocreateAppearance == "light") {
+			isDark = false;
+			$(".ui-appearance-mode .menu-item#ui-appearance-light").addClass("checked");
+		}
+		if (localStorage.beocreateAppearance == "auto") {
+			$(".ui-appearance-mode .menu-item#ui-appearance-auto").addClass("checked");
+		}
+	} else {
+		$(".ui-appearance-mode .menu-item#ui-appearance-auto").addClass("checked");
+	}
+	if (isDark == undefined) {
 		dark = false;
 		dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	} else {
+		dark = isDark;
 	}
 	if (dark == true) {
 		console.log("Setting appearance to dark.");
@@ -417,6 +440,7 @@ function setAppearance(dark) {
 		$("body").removeClass("dark");
 		darkAppearance = false;
 	}
+	
 }
 
 function setSymbol(element, symbolPath) {

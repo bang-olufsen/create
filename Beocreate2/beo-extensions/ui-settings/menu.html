@@ -7,10 +7,32 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
+			<div class="ui-appearance-mode">
+				<h2>Colour Scheme</h2>
+				<p>The choice is specific to this device/browser.</p>
+				<div class="menu-item checkmark left icon" onclick="beo.setAppearance(null, true);" id="ui-appearance-auto">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Automatic</div>
+					</div>
+				</div>
+				<div class="menu-item checkmark left icon" onclick="beo.setAppearance(false, true);" id="ui-appearance-light">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Light</div>
+					</div>
+				</div>
+				<div class="menu-item checkmark left icon" onclick="beo.setAppearance(true, true);" id="ui-appearance-dark">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Dark</div>
+					</div>
+				</div>
+			</div>
 			
 			<div class="external-artwork-settings">
 				<h2>Download Album Cover</h2>
-				<p>Choose when to use album cover from the internet instead of one from the source.</p>
+				<p>Choose when to use album covers from the internet instead of from the source.</p>
 				<div class="menu-item checkmark left icon" onclick="now_playing.setUseExternalArtwork('never');" id="external-artwork-never">
 					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
 					<div class="menu-text-wrap">

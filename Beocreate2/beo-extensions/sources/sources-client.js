@@ -1,6 +1,5 @@
 var sources = (function() {
 
-startableSources = {};
 allSources = {};
 currentSource = null;
 focusedSource = null;
@@ -47,16 +46,7 @@ $(document).on("sources", function(event, data) {
 			updateAliases();
 		}
 	}
-	
-	if (data.header == "startableSources") {
-		
-		if (data.content != undefined) {
-			
-			startableSources = data.content;
-			if (now_playing && now_playing.enableSourceStart) now_playing.enableSourceStart(getStartableSources());
-			
-		}
-	}
+
 	
 	if (data.header == "configuringSystem") {
 		beo.notify({title: "Setting up sources...", icon: "attention", timeout: false, id: "sources"});
@@ -161,7 +151,9 @@ function showActiveSources() {
 			$(".focused-source").addClass("visible");
 		}, 50);
 	} else {
-		$(".focused-source").removeClass("visible");
+		$(".focused-source:not(.source-select)").removeClass("visible");
+		$(".focused-source.source-select .focused-source-name").text("No Source");
+		$(".focused-source.source-select .focused-source-icon").addClass("hidden");
 	}
 }
 
@@ -206,25 +198,31 @@ function updateAliases() {
 	}
 }
 
-function getStartableSources() {
-	if (Object.keys(startableSources).length == 0) {
-		return false;
-	} else {
-		return startableSources;
-	}
-}
 
 
 function showStartableSources() {
 	$(".startable-sources").empty();
-	for (source in startableSources) {
-		
-		$(".startable-sources").append(beo.createMenuItem({
-			label: startableSources[source].origin,
-			//value: $("#"+startableSources[source].extension).attr("data-menu-title"),
-			icon: $("#"+startableSources[source].extension).attr("data-asset-path")+"/symbols-black/"+$("#"+startableSources[source].extension).attr("data-icon"),
-			onclick: "startSource('"+source+"');"
-		}));
+	for (source in allSources) {
+		if (allSources[source].startable) {
+			menuOptions = {
+				label: extensions[source].title,
+				//value: $("#"+startableSources[source].extension).attr("data-menu-title"),
+				icon: extensions[source].assetPath+"/symbols-black/"+extensions[source].icon,
+				onclick: "sources.startSource('"+source+"');"
+			}
+			if (source == focusedSource) {
+				menuOptions.iconRight = "common/symbols-black/volume.svg";
+			} else {
+				//menuOptions.value = "Play";
+				//menuOptions.valueAsButton = true;
+			}
+			if (allSources[source].metadata.title) {
+				trackInfoString = "<strong>"+allSources[source].metadata.title+"</strong>";
+				if (allSources[source].metadata.artist) trackInfoString += " — "+allSources[source].metadata.artist;
+				menuOptions.customMarkup = "<p>"+trackInfoString+"</p>";
+			}
+			$(".startable-sources").append(beo.createMenuItem(menuOptions));
+		}
 	}
 	beo.ask("startable-sources-prompt");
 }
@@ -265,7 +263,7 @@ function testSetActive(extension, active) {
 
 return {
 	showStartableSources: showStartableSources,
-	getStartableSources: getStartableSources,
+	startSource: startSource,
 	setAlias: setAlias,
 	testSetActive: testSetActive
 }

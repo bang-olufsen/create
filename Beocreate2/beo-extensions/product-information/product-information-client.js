@@ -167,7 +167,7 @@ function cycleSystemInformation(updateOnly) {
 }
 
 function changeProductName() {
-	beo.startTextInput(1, "Change Name", "This name is shown to your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(input) {
+	beo.startTextInput(1, "Change Name", "This name is shown on your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(input) {
 		if (input) {
 			beo.send({target: "product-information", header: "setSystemName", content: {newSystemName: input.text}});
 		}

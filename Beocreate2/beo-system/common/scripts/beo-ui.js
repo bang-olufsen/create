@@ -935,7 +935,7 @@ function createMenuItem(options) {
 	if (options.static) options.classes.push("static");
 	if (options.toggle != undefined) options.classes.push("toggle");
 	if (options.toggle) options.classes.push("on");
-	if (options.twoRows || options.description) options.classes.push("two-rows");
+	if (options.twoRows || options.description || options.customMarkup) options.classes.push("two-rows");
 	
 	if (options.checkmark) {
 		options.classes.push("checkmark", options.checkmark);
@@ -970,7 +970,7 @@ function createMenuItem(options) {
 	
 	//menuItem += '><div class="one-row">';
 	menuItem += '>\n';
-	if (options.twoRows || options.description) menuItem += '<div class="first-row">\n';
+	if (options.twoRows || options.description || options.customMarkup) menuItem += '<div class="first-row">\n';
 	
 	// Icon
 	if (options.icon) {
@@ -1026,7 +1026,7 @@ function createMenuItem(options) {
 		menuItem += '<div class="menu-toggle"></div>\n';
 	}
 	
-	if (options.twoRows || options.description) menuItem += '</div>\n'; // close first-row
+	if (options.twoRows || options.description || options.customMarkup) menuItem += '</div>\n'; // close first-row
 	
 	
 	// Description or custom markup (choose one)

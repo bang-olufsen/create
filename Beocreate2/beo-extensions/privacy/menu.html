@@ -1,0 +1,36 @@
+<div class="menu-screen large-title" id="privacy" data-icon="private.svg" data-menu-title="Privacy" data-built-in="1" data-context="general-settings/more">
+	
+	<header>
+		<div class="back-button master setup"></div>
+		<h1>Privacy</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>No data is automatically shared with Bang &amp; Olufsen or HiFiBerry, but some features access third-party services.</p>
+			<div class="menu-item toggle" id="privacy-metadata-toggle" onclick="privacy.toggle('metadata');">
+				<div class="menu-label">Metadata from Internet</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p>Find additional information about the tracks you listen to. <a href="#" onclick="beo.ask('privacy-metadata-prompt');">Learn more.</a></p>
+			<hr>
+			<p class="privacy margin-top">Other features may have their own privacy controls. This icon explains, how your data is used.</p>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="privacy-metadata-prompt">
+		<h2>Metadata from the Internet</h2>
+		<p>When enabled, the system will search third-party services for additional metadata about the current song, such as album covers.</p>
+		<h2>What's shared?</h2>
+		<p>Track title, artist and album. No other information is sent.</p>
+		<h2>Which services are used?</h2>
+		<ul>
+			<li>Last.fm (lookup only)</li>
+			<li>MusicBrainz</li>
+			<li>Cover Art Archive</li>
+		</ul>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Dismiss</div>
+		</div>
+	</div>
+</div>

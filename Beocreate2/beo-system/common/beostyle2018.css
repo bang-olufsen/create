@@ -1330,16 +1330,23 @@ hr.margin-bottom {
 
 .checkmark.right:after {
 	content: "";
-	width: 22px;
-	height: 22px;
+	width: 21px;
+	height: 21px;
 	position: absolute;
-	background-image: url(symbols-black/checkmark.svg);
-	background-repeat: no-repeat;
-	background-position: center;
+	-webkit-mask-size: 21px;
+	mask-size: 21px;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	background-color: currentColor;
+	mask-image: url(symbols-black/checkmark.svg);
+	-webkit-mask-image: url(symbols-black/checkmark.svg);
 	transition: opacity 0.3s ease, transform 0.3s ease;
 	right: 20px;
 	transform: scale(0.5);
 	opacity: 0;
+	top: calc(var(--menu-height) / 2 - 11px);
 }
 
 .menu-item.checkmark.checked.right:after {
@@ -1598,7 +1605,7 @@ a {
 
 p strong, 
 p .bold {
-	font-weight: 600;
+	font-weight: 500;
 }
 
 p .channel-dot {
@@ -1646,20 +1653,23 @@ div.symbol.static {
 
 p.success, 
 p.warning,
-p.loading {
+p.loading,
+p.privacy {
 	margin-left: 35px;
 	position: relative;
 }
 
 .menu-item.icon .menu-custom-markup > p.warning,
 .menu-item.icon .menu-custom-markup > p.success,
-.menu-item.icon .menu-custom-markup > p.loading {
+.menu-item.icon .menu-custom-markup > p.loading,
+.menu-item.icon .menu-custom-markup > p.privacy {
 	margin-left: 0;
 }
 
 p.success:before, 
 p.warning:before,
-p.loading:before {
+p.loading:before,
+p.privacy:before {
 	content: "";
 	width: 21px;
 	height: 21px;
@@ -1690,6 +1700,11 @@ p.warning:before {
 p.loading:before {
 	mask-image: url(symbols-black/wait-star.svg);
 	-webkit-mask-image: url(symbols-black/wait-star.svg);
+}
+
+p.privacy:before {
+	mask-image: url(symbols-black/private.svg);
+	-webkit-mask-image: url(symbols-black/private.svg);
 }
 
 p.warning {
@@ -3095,6 +3110,7 @@ input[type=password] {
 	box-sizing: border-box;
 	border-radius: 0;
 	padding: 0.7em;
+	height: 43px;
 	border: 2px solid var(--ultra-light-grey);
 	/*border: none;*/
 	background-color: var(--ultra-light-grey);
@@ -3136,7 +3152,8 @@ input[type=password]:focus {
 }
 
 input[type=text]::placeholder, 
-input[type=password]::placeholder {
+input[type=password]::placeholder,
+input[type=search]::placeholder {
 	/*color: #ddd;*/
 }
 
@@ -3160,12 +3177,16 @@ input[type=submit] {
 
 input[type=search] {
 	position: relative;
-	padding-left: 35px;
+	padding-left: 38px;
 	border-radius: 30px;
 }
 
 .search-container {
 	position: relative;
+}
+
+input::-webkit-search-decoration {
+  -webkit-appearance: none;
 }
 
 .search-container:before {
@@ -3181,7 +3202,7 @@ input[type=search] {
 	-webkit-mask-image: url(symbols-black/search.svg);
 	height: 21px;
 	position: absolute;
-	left: 15px;
+	left: 13px;
 	z-index: 1;
 	width: 21px;
 	top: 50%;

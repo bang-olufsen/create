@@ -56,6 +56,7 @@ var fs = require("fs");
 		"productImage": "/product-images/beocreate-4ca-mk1.png",
 		"bonjourEnabled": true
 	};
+
 	if (hifiberryOS) {
 		defaultSettings = {
 			"modelID": "hifiberry", 
@@ -69,11 +70,15 @@ var fs = require("fs");
 	var currentProductImage = (!settings.productImage) ? genericProductImage : settings.productImage;
 	
 	var productIdentities = {};
+	var allProductImages = {};
+	var linkedProductImages = [];
 	
 	var imageDirectory = beo.dataDirectory+"/beo-product-images/";
 	var systemImageDirectory = beo.systemDirectory+"/beo-product-images/";
 	if (!fs.existsSync(imageDirectory)) fs.mkdirSync(imageDirectory);
 	if (!fs.existsSync(productIdentityDirectory)) fs.mkdirSync(productIdentityDirectory);
+	
+	listAllProductImages();
 	
 	beo.bus.on('general', function(event) {
 		
@@ -309,6 +314,8 @@ var fs = require("fs");
 	
 	function updateProductIdentities() {
 		// Combines product identities from beo-product-identities and beo-sound-presets directories, from system and user locations.
+		linkedProductImages = [];
+		
 		if (fs.existsSync(systemSoundPresetDirectory)) {
 			presetFiles = fs.readdirSync(systemSoundPresetDirectory);
 			for (var i = 0; i < presetFiles.length; i++) {
@@ -361,6 +368,22 @@ var fs = require("fs");
 				}
 			}
 		}
+		
+		for (image in allProductImages) {
+			// Create generic product identities for any unused product images.
+			imageName = image.substring(image.lastIndexOf('/') + 1);
+			if (linkedProductImages.indexOf(imageName) == -1) {
+				fauxModelID = image.slice(0, image.indexOf(".png"));
+				fauxModelName = (!hifiberryOS) ? "Beocreate" : "HiFiBerry"; 
+				if (debug) console.log("Adding faux product identity: "+fauxModelID+".");
+				fauxIdentity = {
+					modelID: fauxModelID,
+					productImage: image,
+					modelName: fauxModelName
+				};
+				checkAndAddProductIdentity(fauxIdentity, true);
+			}
+		}
 		//beo.bus.emit('product-information', {header: "identitiesReady"});
 	}
 	
@@ -386,6 +409,9 @@ var fs = require("fs");
 			
 			if (data.productImage != undefined) {
 				identity.productImage = getProductImage(data.productImage);
+				if (identity.productImage[2]) {
+					if (linkedProductImages.indexOf(identity.productImage[2]) == -1) linkedProductImages.push(identity.productImage[2]);
+				}
 			} else {
 				identity.productImage = getProductImage(false);
 			}
@@ -433,6 +459,24 @@ var fs = require("fs");
 	}
 	
 	
+	function listAllProductImages() {
+		allProductImages = {};
+		if (fs.existsSync(systemImageDirectory)) {
+			imageFiles = fs.readdirSync(systemImageDirectory);
+			for (var i = 0; i < imageFiles.length; i++) {
+				allProductImages[imageFiles[i]] = systemImageDirectory+imageFiles[i];
+			}
+		}
+		if (fs.existsSync(imageDirectory)) {
+			imageFiles = fs.readdirSync(imageDirectory);
+			for (var i = 0; i < imageFiles.length; i++) {
+				if (!allProductImages[imageFiles[i]]) {
+					allProductImages[imageFiles[i]] = systemImageDirectory+imageFiles[i];
+				}
+			}
+		}
+	}
+	
 	function getProductImage(reference, noDownload) {
 		url = null;
 		imageName = undefined;
@@ -448,16 +492,13 @@ var fs = require("fs");
 			return ["/common/hifiberry-generic.png", "/common/hifiberry-generic.png"];
 		} else if (imageName) {
 			if (imageName.indexOf(".png") == -1) imageName += ".png";
-			if (fs.existsSync(systemImageDirectory+"/"+imageName)) {
+			if (allProductImages[imageName]) {
 				image = imageName;
-				return ["/product-images/"+imageName, "/product-images/"+imageName];
-			} else if (fs.existsSync(imageDirectory+"/"+imageName)) {
-				image = imageName;
-				return ["/product-images/"+imageName, "/product-images/"+imageName];
-			} else {
+				return ["/product-images/"+imageName, "/product-images/"+imageName, imageName];
+			}  else {
 				if (url && !noDownload) {
 					downloadProductImage(url);
-					return ["/product-images/"+imageName, "/product-images/"+imageName];
+					return ["/product-images/"+imageName, "/product-images/"+imageName, imageName];
 				} else {
 					return [false, genericProductImage];
 				}
@@ -490,6 +531,7 @@ var fs = require("fs");
 			} else if (queue == false) {
 				// No more queue items, trigger callback.
 				downloadQueue = [];
+				listAllProductImages();
 				if (callback) callback(downloaded, failed);
 			} else {
 				console.error("No images to download.");

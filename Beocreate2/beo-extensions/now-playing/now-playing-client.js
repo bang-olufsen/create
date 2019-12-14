@@ -199,7 +199,7 @@ $( ".main-artwork" ).draggable({
 	stop: function( event, ui ) {
 		$("#now-playing").removeClass("no-animation");
 		$(".now-playing-artwork-wrap").css("transform", "");
-		$("#now-playing-control-area").css("transform", "");
+		//$("#now-playing-control-area").css("transform", "");
 		offset = ui.position.top - artworkDragStartPosition.top;
 		if (offset > 40) hideNowPlaying();
 		artworkDragStartPosition = null;
@@ -215,7 +215,7 @@ $( ".main-artwork" ).draggable({
 				visibleOffset = 25+(offset-50)/4;
 			}
 			$(".now-playing-artwork-wrap").css("transform", "translateY("+visibleOffset+"px)");
-			$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
+			//$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
 		} else {
 			artworkDragStartPosition = ui.position;
 		}

@@ -1,9 +1,9 @@
 {
 	"sound-preset": {
-		"presetName": "Basic Amplifier",
+		"presetName": "Other Speaker",
 		"presetVersion": 1,
 		"readOnly": true,
-		"productIdentity": "beocreate-4ca-mk1",
+		"productIdentity": "small-speaker",
 		"description": "A basic preset with four full-range channels. Suitable for use as a normal, standalone amplifier.",
 		"fallbackDSP": "beocreate-universal"
 	},

@@ -3,5 +3,5 @@ product-information
 sound
 sources
 network
-system-settings
+general-settings
 -

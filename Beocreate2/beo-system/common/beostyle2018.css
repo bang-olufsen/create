@@ -3183,6 +3183,8 @@ input[type=search] {
 
 .search-container {
 	position: relative;
+	margin-right: -2px;
+	margin-left: -2px;
 }
 
 input::-webkit-search-decoration {

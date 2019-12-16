@@ -435,7 +435,13 @@ function assembleBeoUI() {
 		extensionsNames = fs.readdirSync(userExtensionsPath);
 		for (var i = 0; i < extensionsNames.length; i++) {
 			if (extensionsNames[i].charAt(0) != ".") {
-				if (!masterList[extensionsNames[i]]) masterList[extensionsNames[i]] = {path: userExtensionsPath+"/"+extensionsNames[i], basePath: userExtensionsPath};
+				if (!masterList[extensionsNames[i]] || systemConfiguration.preferUserExtensions) {
+					if (masterList[extensionsNames[i]]) {
+						if (debugMode) console.log("Loading user extension '"+extensionsNames[i]+"' instead of equivalent system extension.")
+					}
+					// If user extensions are preferred, extensions in the user directory will replace system extensions with the same name.
+					masterList[extensionsNames[i]] = {path: userExtensionsPath+"/"+extensionsNames[i], basePath: userExtensionsPath};
+				}
 			}
 		}
 	}

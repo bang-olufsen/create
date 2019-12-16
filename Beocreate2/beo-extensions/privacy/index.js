@@ -38,9 +38,11 @@ var fs = require("fs");
 			if (audioControl) {
 				configuration = audioControl.getSettings();
 				if (configuration.privacy) {
-					settings.externalMetadata = (configuration.privacy.external_metadata &&
-						!configuration.privacy.external_metadata.comment &&
-						configuration.privacy.external_metadata.value == "1") ? true : false;
+					settings.externalMetadata = (!configuration.privacy.external_metadata ||
+						(!configuration.privacy.external_metadata.comment &&
+						configuration.privacy.external_metadata.value == "1")) ? true : false;
+				} else {
+					settings.externalMetadata = true;
 				}
 			} 
 		}

@@ -3,15 +3,27 @@ var ssh = (function() {
 sshEnabled = false;
 sshPasswordChanged = false;
 
+$(document).on("general", function(event, data) {
+	
+	if (data.header == "activatedExtension") {
+		if (data.content.extension == "ssh") {
+			$("#ssh-example-address").text(document.domain);
+		}
+	}
+	
+});
+
 $(document).on("ssh", function(event, data) {
 	if (data.header == "sshSettings") {
 		
 		if (data.content.sshEnabled) {
 			sshEnabled = true;
 			$("#ssh-enabled-toggle").addClass("on");
+			$("#ssh-connect-instructions").removeClass("hidden");
 		} else {
 			sshEnabled = false;
 			$("#ssh-enabled-toggle").removeClass("on");
+			$("#ssh-connect-instructions").addClass("hidden");
 		}
 		
 		if (data.content.sshPasswordChanged) {

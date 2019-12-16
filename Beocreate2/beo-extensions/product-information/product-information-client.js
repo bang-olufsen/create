@@ -2,6 +2,7 @@ var product_information = (function() {
 
 
 var systemName = "";
+var staticName = "";
 var modelName = "";
 var modelID = "";
 var systemID = "";
@@ -62,6 +63,8 @@ $(document).on("product-information", function(event, data) {
 	if (data.header == "basicProductInformation") {
 		systemName = data.content.systemName;
 		$(".system-name").text(systemName);
+		staticName = data.content.staticName;
+		$(".system-name-static").text(staticName.toLowerCase());
 		systemVersion = data.content.systemVersion;
 		systemID = data.content.systemID;
 		beo.sendToProductView({header: "systemName", content: {name: systemName}});
@@ -84,6 +87,8 @@ $(document).on("product-information", function(event, data) {
 	if (data.header == "showSystemName") {
 		systemName = data.content.systemName;
 		$(".system-name").text(systemName);
+		staticName = data.content.staticName;
+		$(".system-name-static").text(staticName.toLowerCase());
 		beo.sendToProductView({header: "systemName", content: {name: systemName}});
 		document.title = systemName;
 		if (data.content.staticName) {
@@ -254,6 +259,7 @@ function jumpToSoundAdjustments() {
 return {
 	systemID: function() {return systemID},
 	systemName: function() {return systemName},
+	staticName: function() {return staticName},
 	systemVersion: function() {return systemVersion},
 	modelName: function() {return modelName},
 	modelID: function() {return modelID},

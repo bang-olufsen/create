@@ -191,7 +191,7 @@ var fs = require("fs");
 		
 		if (event.header == "getBasicProductInformation") {
 			if (systemName.ui) {
-				beo.bus.emit("ui", {target: "product-information", header: "basicProductInformation", content: {systemName: systemName.ui, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: beo.systemConfiguration}});
+				beo.bus.emit("ui", {target: "product-information", header: "basicProductInformation", content: {systemName: systemName.ui, staticName: systemName.static, systemVersion: systemVersion, hifiberryVersion: hifiberryVersion, systemID: systemID, hifiberryOS: hifiberryOS, systemConfiguration: beo.systemConfiguration}});
 				systemNameSent = true;
 			}
 		}

@@ -98,6 +98,7 @@ function readAudioControlConfiguration() {
 			audioControlConfigModified = modified;
 			audioControlConfig = fs.readFileSync("/etc/audiocontrol2.conf", "utf8").split('\n');
 			section = null;
+			commentCounter = 0;
 			for (var i = 0; i < audioControlConfig.length; i++) {
 				// Find settings sections.
 				if (audioControlConfig[i].indexOf("[") != -1 && audioControlConfig[i].indexOf("]") != -1) {
@@ -115,6 +116,9 @@ function readAudioControlConfiguration() {
 						if (lineItems.length == 2) {
 							value = lineItems[1].trim();
 							configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+						} else if (comment) {
+							configuration["comment-"+commentCounter] = {text: line, comment: true};
+							commentCounter++;
 						}
 					}
 				}
@@ -133,7 +137,11 @@ function writeAudioControlConfiguration() {
 			audioControlConfig.push(sectionStart);
 			for (option in configuration[section]) {
 				if (configuration[section][option].comment) {
-					line = "#"+option+" = "+configuration[section][option].value;
+					if (configuration[section][option].text) {
+						line = configuration[section][option].text;
+					} else {
+						line = "#"+option+" = "+configuration[section][option].value;
+					}
 				} else {
 					line = option+" = "+configuration[section][option].value;
 				}

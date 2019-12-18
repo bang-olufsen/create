@@ -48,6 +48,8 @@ $(document).on("now-playing", function(event, data) {
 				$(".now-playing-artist").text(data.content.metadata.artist);
 			}*/
 			
+			allSources[data.content.extension].metadata = data.content.metadata;
+			
 			if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
 			
 			if (data.content.metadata.album) {

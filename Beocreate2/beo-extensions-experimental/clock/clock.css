@@ -1,0 +1,41 @@
+/* @override 
+	http://beocreate-core.local/extensions/clock/clock.css */
+	
+#clock #main-clock {
+	font-size: 100px;
+	text-align: center;
+	margin-top: 5%;
+	position: relative;
+}
+
+
+#main-clock.show-extras {
+	margin-bottom: 0.5em;
+}
+
+#main-clock.show-extras:after {
+	content: attr(data-extras);	
+	font-size: 0.8rem;
+	font-weight: 500;
+	position: absolute;
+	width: 100px;
+	left: 50%;
+	margin-left: -50px;
+	bottom: -1em;
+	box-sizing: border-box;
+	letter-spacing: var(--uppercase-spacing);
+	padding-left: var(--uppercase-spacing);
+}
+
+#main-date {
+	line-height: 1.3;
+}
+
+@media only screen and (max-width: 620px) {
+	
+	#clock #main-clock {
+		font-size: 80px;
+		margin-top: 15%;
+	}
+	
+}

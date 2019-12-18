@@ -103,7 +103,7 @@ beo.bus.on('daisy-chain', function(event) {
 					settings.daisyChainDisabledReason = null;
 					settings.daisyChainEnabled = true;
 					beo.saveSettings("daisy-chain", settings);
-					beo.bus.emit("general", {header: "requestShutdown", content: {extension: "daisy-chain"}});
+					beo.bus.emit("general", {header: "requestShutdown", content: {extension: "daisy-chain", overrideUIActions: true}});
 				}
 				break;
 			case 4:

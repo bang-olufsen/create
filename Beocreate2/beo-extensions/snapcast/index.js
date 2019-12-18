@@ -55,13 +55,13 @@ var fs = require("fs");
 			}
 			
 			readSnapcastConfiguration();
-			if (configuration.server && configuration.server != "0.0.0.0") {
-				settings.serverAddress = configuration.server;
+			if (configuration.server && configuration.server.value != "0.0.0.0") {
+				settings.serverAddress = configuration.server.value;
 			} else {
 				settings.serverAddress = null;
 			}
 			
-			if (configuration.autostart && configuration.autostart == "1") {
+			if (configuration.autostart && configuration.autostart.value == "1") {
 				settings.autoJoin = true;
 			} else {
 				settings.autoJoin = false;

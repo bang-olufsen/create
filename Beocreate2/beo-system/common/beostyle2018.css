@@ -1,6 +1,5 @@
 /* @override 
 	http://beocreate-core.local/common/beostyle2018.css
-	http://hifiberry.local:81/common/beostyle2018.css
 	http://olohuone.local/common/beostyle2018.css */
 /* 
 
@@ -205,7 +204,7 @@ nav.full {
 
 nav.full .menu-item {
 	padding-left: 25px;
-	color: #888;
+	color: #999;
 }
 
 nav.full .menu-item .menu-label {
@@ -3967,7 +3966,7 @@ p.first, h2.first {
 
 @media only screen and (min-width: 621px) and (max-width: 799px) {
 	
-	.menu-screen .menu-content, 
+	.menu-screen:not(.full-width) .menu-content, 
 	.popup-view:not(#text-input) .menu-content {
 		width: 320px;
 		margin-left: auto;

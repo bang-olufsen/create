@@ -34,7 +34,7 @@ To create more useful extensions, a few more ingredients are needed. A typical, 
 
 **Required.** Describes the user interface of the extension. It also contains vital information about the extension, such as its human-readable name and preferred position in the menu system, if applicable. At this time, the file name is required to be *menu.html*.
 
-The composition of this file is described in more detail here.
+The composition of this file is described in more detail [here].
 
 ### package.json
 
@@ -45,7 +45,7 @@ A file describing the Node.js module for NPM. It is strongly recommended to have
 
 The main Node.js (server-side) code for the extension that the system will attempt to load. Server-side code is not a technical requirement, but in most cases vital to implement any functionality. At this time, the file name is requried to be *index.js*.
 
-Server-side code is described in more detail here.
+Server-side code is described in more detail [here](ExtensionsServer.md).
 
 ### my-extension-client.js
 

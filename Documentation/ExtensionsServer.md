@@ -1,8 +1,10 @@
 # Implementing Server-Side Code
 
-Beocreate 2 extensions consist of server-side and client-side code. On the server side, the code for an extension is essentially a standard Node.js module, and you have great flexibility in what and how you build. 
+Beocreate 2 extensions consist of server-side and client-side code. On the server side, the code for an extension is essentially a standard Node.js module, and you have great flexibility in what and how you build.
 
 However, there are a few specialties that you need to consider, and those will be outlined in this document.
+
+See here for user interface-related documentation.
 
 ## The *beo* object
 
@@ -24,8 +26,8 @@ Beocreate 2 exposes several features that may be useful to your extension. These
 - **saveSettings(extensionID, settings)**: Save settings for the specified extension.
 - **requestShutdownTime(extensionID)**: If the extension needs to do "housekeeping" before the system shuts down or reboots, you can request up to 5 seconds of additional shutdown time at any point during runtime.
 - **shutdownComplete(extensionID)**: If the extension has requested shutdown time and has completed any necessary shutdown activities, this will allow the system to continue shutdown.
-- **download(url, destinationDirectory, destinationFilename, callback)**: Downloads a file from the internet into the specified path.
-- **downloadJSON(url, callback)**: Downloads and parses a JSON file, returning it as an object. Callback gets *true* if download was successful.
+- **download(url, destinationDirectory, destinationFilename, callback)**: Downloads a file from the internet into the specified path. Callback gets *true* if download was successful.
+- **downloadJSON(url, callback)**: Downloads and parses a JSON file, returning it as an object.
 - **addDownloadRoute(extensionID, urlPath, filePath, permanent)**: Allows assigning a download URL to a file on the file system. Returns the download URL. The URL will be along the lines of *http://system-address.local/extensionID/download/urlPath*.
 - **removeDownloadRoute(extensionID, urlPath)**: Close a previously opened file download route.
 
@@ -70,7 +72,7 @@ For communication specific to your extensions, listen to a channel with the iden
 
 ### Restricted Channels
 
-There are some channels that are used by the system and built-in extensions. You are welcome to listen in on the events, but we recommend not sending anything on these channels:
+There are some channels that are used by the system and built-in extensions. You are welcome to listen in on the events, but it is recommended to not send anything on these channels:
 
 #### 'general' channel
 

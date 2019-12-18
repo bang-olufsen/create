@@ -1,4 +1,5 @@
 product-information
+clock
 -
 sound
 sources

@@ -134,10 +134,16 @@ beoBus.on('general', function(event) {
 			if (event.content.extension) completeShutdownForExtension(event.content.extension);
 			break;
 		case "requestReboot":
-			if (event.content.extension) rebootSystem(event.content.extension);
+			if (event.content.extension) {
+				overrideUIActions = (event.content.overrideUIActions) ? true : false;
+				rebootSystem(event.content.extension, overrideUIActions);
+			}
 			break;
 		case "requestShutdown":
-			if (event.content.extension) shutdownSystem(event.content.extension);
+			if (event.content.extension) {
+				overrideUIActions = (event.content.overrideUIActions) ? true : false;
+				shutdownSystem(event.content.extension, overrideUIActions);
+			}
 			break;
 		case "requestServerRestart":
 			if (event.content.extension) restartServer(event.content.extension);
@@ -860,11 +866,11 @@ process.once('SIGTERM', function() {
 	}
 });
 
-function rebootSystem(extension) {
+function rebootSystem(extension, overrideUIActions) {
 	if (extension) {
 		if (debugMode) console.log("Reboot requested by '"+extension+"'.");
 		powerCommand = "reboot";
-		beoCom.send({header: "powerStatus", target: "general", content: {status: "rebooting"}});
+		beoCom.send({header: "powerStatus", target: "general", content: {status: "rebooting", overrideUIActions: overrideUIActions}});
 		startShutdown();
 	}
 }
@@ -883,11 +889,11 @@ function restartServer(extension) {
 	}
 }
 
-function shutdownSystem(extension) {
+function shutdownSystem(extension, overrideUIActions) {
 	if (extension) {
 		if (debugMode) console.log("Shutdown requested by '"+extension+"'.");
 		powerCommand = "shutdown";
-		beoCom.send({header: "powerStatus", target: "general", content: {status: "shuttingDown"}});
+		beoCom.send({header: "powerStatus", target: "general", content: {status: "shuttingDown", overrideUIActions: overrideUIActions}});
 		startShutdown();
 	}
 }

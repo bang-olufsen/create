@@ -18,8 +18,6 @@ SOFTWARE.*/
 noExtensions = false;
 var extensions = {};
 
-
-
 beo = (function() {
 
 stateRestored = false;
@@ -96,9 +94,9 @@ function sendToProductView(data) {
 $(document).on("general", function(event, data) {
 	
 	
-	if (data.header == "powerStatus") {
+	if (data.header == "powerStatus" && !data.content.overrideUIActions) {
 		if (product_information && product_information.systemID && product_information.systemName) {
-			if (data.content.status == "shuttingDown") {
+			if (data.content.status == "shuttingDown" && !overrideShutdownInUI) {
 				sendToProductView({header: "powerStatus", content: {status: "shuttingDown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				notify({title: "Shutting down product…", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", icon: "common/symbols-black/power.svg", timeout: false});
 				noConnectionNotifications = true;

@@ -332,6 +332,19 @@ function generateMetadataForBlock(block) {
 		case "SPDIFDetect":
 			metadata["sensitivitySPDIFRegister"] = {value: block.paramAddress[2]};
 			break;
+		case "SPDIF-TX-Enable":
+			metadata["enableSPDIFTransmitterRegister"] = {value: block.paramAddress[0]};
+			break;
+		case "CanBeDaisyChained":
+			metadata["canBecomeDaisyChainSlaveRegister"] = {value: block.paramAddress[0]};
+			break;
+		case "Daisy-Chain On Read":
+			metadata["readIsDaisyChainSlaveRegister"] = {value: block.paramAddress[0]};
+			break;
+		case "TuningFork":
+			metadata["tuningForkPitchRegister"] = {value: block.paramAddress[0]};
+			metadata["tuningForkOnRegister"] = {value: block.paramAddress[1]};
+			break;
 		case "IIR_L":
 			metadata["customFilterRegisterBankLeft"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length};
 			break;

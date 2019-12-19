@@ -68,23 +68,28 @@ if (Gpio) {
 					getCurrentChecksumAndMetadata(function(metadata, fromDSP) {
 						currentMetadata = metadata;
 						
-						shouldUpgrade = checkForDSPUpgrades();
-						
-						if (!shouldUpgrade) {
-							if (metadata) {
-								if (debug == 2) {
-									console.dir(metadata);
-								} else if (debug) {
-									console.log("Received metadata from DSP.");
+						shouldAutoInstall = checkIfShouldAutoInstall();
+						if (!shouldAutoInstall) {
+							shouldUpgrade = checkForDSPUpgrades();
+							if (!shouldUpgrade) {
+								if (metadata) {
+									if (debug == 2) {
+										console.dir(metadata);
+									} else if (debug) {
+										console.log("Received metadata from DSP.");
+									}
+									beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+								} else {
+									if (debug) console.log("No metadata found for current DSP program.");
+									beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
 								}
-								beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
 							} else {
-								if (debug) console.log("No metadata found for current DSP program.");
-								beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
+								if (debug) console.log("'"+shouldUpgrade+"' is an upgrade to the current DSP program. Upgrading...");
+								installDSPProgram(shouldUpgrade);
 							}
 						} else {
-							if (debug) console.log("'"+shouldUpgrade+"' is an upgrade to the current DSP program. Upgrading...");
-							installDSPProgram(shouldUpgrade);
+							if (debug) console.log("DSP program '"+shouldAutoInstall+"' is set to be auto-installed. Installing...");
+							installDSPProgram(shouldAutoInstall);
 						}
 						
 					}, true);
@@ -109,13 +114,8 @@ if (Gpio) {
 				programs = {};
 				active = 0;
 				for (program in dspPrograms) {
-					programs[program] = {name: dspPrograms[program].name, checksum: dspPrograms[program].checksum, version: dspPrograms[program].version};
-					if (programs[program].checksum == currentChecksum) {
-						active++;
-						programs[program].active = true;
-					} else {
-						programs[program].active = false;
-					}
+					programs[program] = {name: dspPrograms[program].name, checksum: dspPrograms[program].checksum, version: dspPrograms[program].version, active: dspPrograms[program].active};
+					if (programs[program].active) active++;
 				}
 				beo.bus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active, dspUpgrade: dspUpgrade}});
 				beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
@@ -195,6 +195,10 @@ if (Gpio) {
 			if (program) {
 				installDSPProgram(program);
 			}
+		}
+		
+		if (event.header == "storeAdjustments") {
+			storeAdjustments();
 		}
 		
 		if (event.header == "loadMetadataProto") {
@@ -278,8 +282,10 @@ if (Gpio) {
 						metadataFromDSP = false;
 						programMatch = null;
 						for (program in dspPrograms) {
+							dspPrograms[program].active = false;
 							if (dspPrograms[program].checksum == currentChecksum) {
 								programMatch = program;
+								dspPrograms[program].active = true;
 								break;
 							}
 						}
@@ -423,6 +429,10 @@ if (Gpio) {
 						dspUpgrade = false;
 						beo.bus.emit("ui", {target: "dsp-programs", header: "dspUpgrade", content: {dspUpgrade: false}});
 					}
+					if (settings.autoInstall) {
+						delete settings.autoInstall;
+						beo.saveSettings("dsp-programs", settings);
+					}
 					
 					if (metadata) {
 						if (debug == 2) {
@@ -467,6 +477,7 @@ if (Gpio) {
 					if (result == true) {
 						// Flashing complete, run EEPROM check.
 						beo.bus.emit("ui", {target: "dsp-programs", header: "checkEEPROM", content: {status: "checking"}});
+						beo.bus.emit("daisy-chain", {header: "disableDaisyChaining", content: {reason: "dspInstalled"}});
 						if (debug) console.log("Program write complete, checking EEPROM...");
 						beoDSP.checkEEPROM(function(matches) {
 							if (matches) {
@@ -495,6 +506,25 @@ if (Gpio) {
 			callback(404);
 		}
 		
+	}
+	
+	function storeAdjustments(callback) {
+		beo.sendToUI("dsp-programs", {header: "storeAdjustments", content: {status: "storing"}});
+		if (debug) console.log("Storing sound adjustments in DSP EEPROM...");
+		beoDSP.storeAdjustments(function(success, error) {
+			if (success) {
+				beo.sendToUI("dsp-programs", {header: "storeAdjustments", content: {status: "finish"}});
+				if (debug) console.log("Sound adjustments stored in EEPROM.");
+			} else {
+				if (error) {
+					console.error("Storing sound adjustments failed, error:", error);
+				} else {
+					console.error("Storing sound adjustments failed, reason unknown.");
+				}
+				beo.sendToUI("dsp-programs", {header: "storeAdjustments", content: {status: "fail"}});
+			}
+			if (callback) callback(success);
+		});
 	}
 	
 	function readAllDSPPrograms() {
@@ -552,7 +582,7 @@ if (Gpio) {
 					dspPrograms[program].metadata && 
 					dspPrograms[program].metadata.programID) {
 					if (dspPrograms[program].metadata.programID.value[0] == currentMetadata.programID.value[0]) {
-						if (dspPrograms[program].metadata.profileVersion &&
+						if (dspPrograms[program].metadata.profileVersion && currentMetadata.metadata &&
 							currentMetadata.metadata.profileVersion) {
 							if (dspPrograms[program].metadata.profileVersion.value[0] > currentMetadata.metadata.profileVersion.value[0] &&
 								dspPrograms[program].metadata.profileVersion.value[0] > matchVersion) {
@@ -593,6 +623,40 @@ if (Gpio) {
 		}
 	}
 	
+	function checkIfShouldAutoInstall() {
+		if (settings.autoInstall) {
+			if (dspPrograms[settings.autoInstall] &&
+			 	!dspPrograms[settings.autoInstall].active) {
+				// Check that this program exists and that it isn't the active one.
+				return settings.autoInstall;
+			} else {
+				delete settings.autoInstall;
+				beo.saveSettings("dsp-programs", settings);
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	function setAutoInstallProgram(program) {
+		if (!program) {
+			// Current program.
+			for (prog in dspPrograms) {
+				if (dspPrograms[prog].active) {
+					settings.autoInstall = prog;
+					beo.saveSettings("dsp-programs", settings);
+					break;
+				}
+			}
+		} else {
+			if (dspPrograms[program]) {
+				settings.autoInstall = program;
+				beo.saveSettings("dsp-programs", settings);
+			}
+		}
+	}
+	
 	function amplifierMute(mute) {
 		if (mute) {
 			execSync("gpio mode 2 out");
@@ -609,6 +673,8 @@ if (Gpio) {
 module.exports = {
 	getCurrentProgramInfo: getCurrentProgramInfo,
 	installDSPProgram: installDSPProgram,
+	setAutoInstallProgram: setAutoInstallProgram,
+	storeAdjustments: storeAdjustments,
 	version: version
 };
 

@@ -1,7 +1,8 @@
 product-information
+clock
 -
 sound
 sources
 network
-system-settings
+general-settings
 -

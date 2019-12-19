@@ -1,3 +1,6 @@
+tone_controls = (function() {
+
+
 $(document).on("tone-controls", function(event, data) {
 	if (data.header == "toneControlSettings") {
 		if (data.content.settings.toneTouchXY) {
@@ -94,7 +97,7 @@ $( "#tone-touch-dot" ).draggable({
 			clearTimeout(toneTouchSendTimeout);
 			toneTouchSendTimeout = null;
 			
-			send({target: "tone-controls", header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
+			beo.send({target: "tone-controls", header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
 			setToneTouchFieldColours(toneTouchXY[0], toneTouchXY[1]);
 			
 			if (toneTouchDotDiameter == defaultToneTouchDotDiameter) {
@@ -128,7 +131,7 @@ $( "#tone-touch-dot" ).draggable({
 			if (!toneTouchSendTimeout) {
 				toneTouchSendTimeout = setTimeout(function() {
 					setToneTouchFieldColours(toneTouchXY[0], toneTouchXY[1]);
-					send({target: "tone-controls", header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
+					beo.send({target: "tone-controls", header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
 					toneTouchSendTimeout = null;
 				}, 100);
 			}
@@ -271,6 +274,8 @@ $(".loudness-slider").slider({
 				$(".loudness-slider span").attr("data-content", ui.value);
 			}
 			
-			send({target: "tone-controls", header: "loudness", content: {loudness: ui.value}});
+			beo.send({target: "tone-controls", header: "loudness", content: {loudness: ui.value}});
 		}
 });
+
+})();

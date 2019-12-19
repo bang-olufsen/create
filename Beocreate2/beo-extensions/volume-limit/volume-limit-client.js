@@ -1,3 +1,5 @@
+volume_limit = (function() {
+
 canControlVolumeLimit = {};
 volumeLimitdBRange = 60;
 
@@ -85,7 +87,7 @@ $(".volume-limit-slider").slider({
 				adjustment = "volumeLimitI2S2";
 			}
 			
-			send({target: "volume-limit", header: "setVolumeLimit", content: {adjustment: adjustment, limit: ui.value}});
+			beo.send({target: "volume-limit", header: "setVolumeLimit", content: {adjustment: adjustment, limit: ui.value}});
 			
 			$(".volume-limit-slider."+targetSlider+" span").attr("data-content", volumeLimitPercentageToSliderText(ui.value));
 			
@@ -104,3 +106,5 @@ function volumeLimitPercentageToSliderText(value) {
 	}
 	return sliderText;
 }
+
+})();

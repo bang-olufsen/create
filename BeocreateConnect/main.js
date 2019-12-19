@@ -47,10 +47,10 @@ const template = [
 	label: 'Develop',
     submenu: [
       { label: 'Reload Product View',
-      click () { win.webContents.send('reloadProductView') }},
+      click () { win.webContents.send('reloadProductView') }, accelerator: "CmdOrCtrl+R"},
 	  { type: 'separator' },
-      { role: 'reload' },
-      { role: 'forcereload' },
+      { role: 'reload', accelerator: false },
+      { role: 'forcereload', accelerator: false },
       { role: 'toggledevtools' }
     ]
   },
@@ -261,6 +261,7 @@ if (process.platform == "darwin") {
 	systemPreferences.subscribeNotification(
 	  'AppleInterfaceThemeChangedNotification',
 	  function theThemeHasChanged () {
+	  	console.log(systemPreferences.isDarkMode());
 		win.webContents.send('colourSchemeIsDark', systemPreferences.isDarkMode());
 	  }
 	)

@@ -13,7 +13,7 @@ $(document).on("alsaloop", function(event, data) {
 			loopEnabled = false;
 			$("#alsaloop-enabled-toggle").removeClass("on");
 		}
-		notify(false, "alsaloop");
+		beo.notify(false, "alsaloop");
 	}
 });
 
@@ -21,11 +21,11 @@ $(document).on("alsaloop", function(event, data) {
 function toggleEnabled() {
 	enabled = (!loopEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning analogue input on...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning analogue input on...", icon: "attention", timeout: false});
 	} else {
-		notify({title: "Turning analogue input off...", icon: "attention", timeout: false});
+		beo.notify({title: "Turning analogue input off...", icon: "attention", timeout: false});
 	}
-	send({target: "alsaloop", header: "loopEnabled", content: {enabled: enabled}});
+	beo.send({target: "alsaloop", header: "loopEnabled", content: {enabled: enabled}});
 }
 
 

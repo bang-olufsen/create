@@ -45,9 +45,9 @@ beo.bus.on('general', function(event) {
 		
 		if (event.content == "system-settings") {
 			if (newVersion) {
-				beo.sendToUI({target: "software-update", header: "badge", content: {badge: 1}});
+				beo.sendToUI("software-update", {header: "badge", content: {badge: 1}});
 			} else {
-				beo.sendToUI({target: "software-update", header: "badge"});
+				beo.sendToUI("software-update", {header: "badge"});
 			}
 		}
 	}
@@ -78,19 +78,19 @@ function checkForUpdate(forceCheck) {
 				if (debug) console.log("Software update is available – release "+newVersion+".");
 				updateLines.splice(0, 1);
 				releaseNotes = updateLines.join("\n").trim();
-				beo.sendToUI({target: "software-update", header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
+				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 			} else {
 				newVersion = null;
 				if (debug) console.log("Product appears to be up to date.");
-				beo.sendToUI({target: "software-update", header: "upToDate"});
+				beo.sendToUI("software-update", {header: "upToDate"});
 			}
 		});
 	} else {
 		if (debug) console.log("Checked for update less than 5 minutes ago, sending cached info.");
 		if (newVersion) {
-			beo.sendToUI({target: "software-update", header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
+			beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 		} else {
-			beo.sendToUI({target: "software-update", header: "upToDate"});
+			beo.sendToUI("software-update", {header: "upToDate"});
 		}
 	}
 }
@@ -123,52 +123,52 @@ function installUpdate() {
 				case 1:
 					if (data.indexOf("Could not download updater") != -1) {
 						updatePhase = 0;
-						beo.sendToUI({target: "software-update", header: "updateError", content: {reason: "downloadError"}});
+						beo.sendToUI("software-update", {header: "updateError", content: {reason: "downloadError"}});
 						console.error("Update download was unsuccessful.");
 					}
 					if (data.indexOf("unmounting") != -1) {
 						updatePhase = 2;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 50, phase: "extractingFirmware"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 50, phase: "extractingFirmware"}});
 						if (debug) console.log("Extracting firmware...");
 					}
 					break;
 				case 2:
 					if (data.indexOf("mounting") != -1) {
 						updatePhase = 3;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 70, phase: "resizing"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 70, phase: "resizing"}});
 						if (debug) console.log("Resizing file system...");
 					}
 					break;
 				case 3:
 					if (data.indexOf("extracting new kernel") != -1) {
 						updatePhase = 4;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 75, phase: "extractingKernel"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 75, phase: "extractingKernel"}});
 						if (debug) console.log("Extracting new kernel...");
 					}
 					break;
 				case 4:
 					if (data.indexOf("migrating") != -1) {
 						updatePhase = 5;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 85, phase: "copyingFiles"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 85, phase: "copyingFiles"}});
 						if (debug) console.log("Copying files from current installation to new installation...");
 					}
 					break;
 				case 5:
 					if (data.indexOf("switching root file system") != -1) {
 						updatePhase = 6;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 95, phase: "finalising"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 95, phase: "finalising"}});
 						if (debug) console.log("Switching root file system...");
 					}
 					if (data.indexOf("not switching to new version") != -1) {
 						updatePhase = 0;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 100, phase: "doneSimulation"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 100, phase: "doneSimulation"}});
 						if (debug) console.log("Update simulation complete.");
 					}
 					break;
 				case 6:
 					if (data.indexOf("removing") != -1) {
 						updatePhase = 0;
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: 100, phase: "done"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: 100, phase: "done"}});
 						if (debug) console.log("Removing updater and restarting...");
 					}
 					break;
@@ -182,7 +182,7 @@ function installUpdate() {
 				if (progressIndex != -1) { 
 					percentage = parseFloat(data.substr(progressIndex-5, 5));
 					if (percentage - previousProgress >= 5) {
-						beo.sendToUI({target: "software-update", header: "updating", content: {progress: Math.round(percentage/2), phase: "download"}});
+						beo.sendToUI("software-update", {header: "updating", content: {progress: Math.round(percentage/2), phase: "download"}});
 						previousProgress = percentage;
 					}
 				}

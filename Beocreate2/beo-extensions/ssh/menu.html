@@ -1,4 +1,4 @@
-<div class="menu-screen" id="ssh" data-icon="terminal.svg" data-menu-title="Remote Login" data-context="system-settings/services">
+<div class="menu-screen" id="ssh" data-icon="terminal.svg" data-menu-title="Remote Login" data-context="general-settings/services">
 	
 	<header>
 		<div class="back-button master"></div>
@@ -14,7 +14,13 @@
 			</div>
 			<hr>
 			<div class="button pill grey" id="ssh-change-password-button" onclick="ssh.changePassword(0);">Change Password...</div>
-			<p class="warning margin-top" id="ssh-password-change-notice">Password has not been changed. Change it to protect your sound system.</p>
+			<p class="warning margin-top" id="ssh-password-change-notice">Password has not been changed. Change it to protect your sound system. Default password is <strong>hifiberry</strong>.</p>
+			
+			<div id="ssh-connect-instructions" class="hidden">
+				<h2>How to connect</h2>
+				<p>Use your SSH application of choice. Connect with hostname (<span class="system-name-static">hostname</span>.local) or <a href="#" onclick="beo.showExtension('network');">IP address</a> and user name <strong>root</strong>.</p>
+				<p>Example: ssh root@<span id="ssh-example-address">address</span></p>
+			</div>
 		</div>
 	</div>
 

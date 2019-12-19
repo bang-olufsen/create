@@ -19,7 +19,7 @@
 		<div class="tab visible" data-tab-id="network-wireless" data-tab-callback="network.showingWifiTab">
 		<div class="menu-content">
 			<p class="setup-prompt">Connect to a network to stream music and control the sound system.</p>
-			<!--<div class="menu-item icon setup-only" onclick="showMenuTab('network-wired');">
+			<!--<div class="menu-item icon setup-only" onclick="beo.showMenuTab('network-wired');">
 				<img class="menu-icon" src="€/symbols-black/wired-network.svg">
 				<div class="menu-label">Set Up Wired...</div>
 			</div>-->
@@ -100,7 +100,7 @@
 		<p>Open networks can be insecure. If you control this network, please protect it with a password.</p>
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="network.addNetwork(true);">Add Anyway</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
@@ -110,7 +110,7 @@
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="network.updatePassword();">Update Password</div>
 			<div class="button pill grey" onclick="network.forgetNetwork();">Forget Network</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
@@ -120,7 +120,7 @@
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="network.updatePassword();">Add Password</div>
 			<div class="button pill grey" onclick="network.forgetNetwork();">Forget Network</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
@@ -129,7 +129,7 @@
 		<p>The product will no longer connect to this network.</p>
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="network.forgetNetwork(true);">Forget</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	
@@ -138,7 +138,7 @@
 		<p>The product may temporarily lose connection to the network.</p>
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="network.applyIPSettings(true);">Apply Settings</div>
-			<div class="button pill black cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 	

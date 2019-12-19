@@ -47,14 +47,14 @@ Beocreate Connect is based on Electron, and you can run it using the following i
 
 ## Documentation
 
-We're working to expand the documentation for Beocreate 2 to make it easier to tap into its customisation capabilities.
+We're working to add documentation for Beocreate 2 to make it easier to tap into its expandability.
 
 ### Extensions
 
 Design and develop extensions to expand the functionality of the system.
 
-- Introduction to Extensions
-- Implementing Server-side Code
+- [Introduction to Extensions](Documentation/ExtensionsIntroduction.md)
+- [Implementing Server-side Code](Documentation/ExtensionsServer.md)
 - Implementing User Interface
 
 ### Sound & Customisation
@@ -67,7 +67,7 @@ Create sound presets, DSP programs and product identities to customise the sound
 
 ### Design
 
-Guidelines and best practices for user interfaces and graphic design within Beocreate 2 ecosystem.
+Guidelines and best practices for design within Beocreate 2 ecosystem.
 
 - [Beocreate 2 Design Guidelines](Documentation/DesignGuidelines.md)
 

@@ -609,7 +609,7 @@ function assistantFlow(step) {
 					assistantButtons("Previous Step", "Next Step");
 					enableAssistantButtons(true, false);
 					showScreen('wait-for-discovery', direction);
-					ipc.send("refreshProducts");
+					//ipc.send("refreshProducts");
 					break;
 			}
 			break;

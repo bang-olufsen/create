@@ -40,7 +40,7 @@ $(document).on("software-update", function(event, data) {
 		$(".no-update-available").addClass("hidden");
 		$(".software-update-available").removeClass("hidden");
 		$("#update-available-container").empty();
-		$("#update-available-container").append(createMenuItem(menuOptions));
+		$("#update-available-container").append(beo.createMenuItem(menuOptions));
 		
 		$("#update-release-notes").empty();
 		if (data.content.releaseNotes) {
@@ -108,7 +108,7 @@ $(document).on("software-update", function(event, data) {
 			case "done":
 				notifyOptions.title = "Product updated";
 				notifyOptions.message = "The product has been updated and it will now restart to finish the process. This may take some time, please wait.";
-				sendToProductView({header: "autoReconnect", content: {status: "updateComplete", systemID: product_information.systemID(), systemName: product_information.systemName()}});
+				beo.sendToProductView({header: "autoReconnect", content: {status: "updateComplete", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				noConnectionNotifications = true;
 				maxConnectionAttempts = 30;
 				break;
@@ -120,7 +120,7 @@ $(document).on("software-update", function(event, data) {
 				notifyOptions.icon = null;
 				break;
 		}
-		notify(notifyOptions, "software-update");
+		beo.notify(notifyOptions, "software-update");
 	}
 	
 	if (data.header == "updateError") {
@@ -132,13 +132,13 @@ $(document).on("software-update", function(event, data) {
 					break;
 			}
 		}
-		notify(notifyOptions, "software-update");
+		beo.notify(notifyOptions, "software-update");
 	}
 });
 
 
 function install() {
-	send({target: "software-update", header: "install"});
+	beo.send({target: "software-update", header: "install"});
 }
 
 

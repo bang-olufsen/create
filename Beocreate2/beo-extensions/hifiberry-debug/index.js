@@ -27,6 +27,8 @@ var collecting = false;
 var archive = null;
 var archiveDownloadTimeout;
 
+var hifiberryState = {};
+
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
@@ -39,13 +41,28 @@ beo.bus.on('general', function(event) {
 			
 			if (!collecting) {
 				if (archive) {
-					beo.sendToUI({target: "hifiberry-debug", header: "archive", content: {archiveURL: archive}});
+					beo.sendToUI("hifiberry-debug", {header: "archive", content: {archiveURL: archive}});
 				} else {
-					beo.sendToUI({target: "hifiberry-debug", header: "archive"});
+					beo.sendToUI("hifiberry-debug", {header: "archive"});
 				}
 			} else {
-				beo.sendToUI({target: "hifiberry-debug", header: "collecting"});
+				beo.sendToUI("hifiberry-debug", {header: "collecting"});
 			}
+			
+			readState();
+			if (hifiberryState.CURRENT_EXCLUSIVE && hifiberryState.CURRENT_EXCLUSIVE == "1") {
+				exclusiveAudio = true;
+			} else {
+				exclusiveAudio = false;
+			}
+			
+			if (hifiberryState.CURRENT_SAMPLERATE) {
+				resamplingRate = parseFloat(hifiberryState.CURRENT_SAMPLERATE);
+			} else {
+				resamplingRate = 0;
+			}
+			
+			beo.sendToUI("hifiberry-debug", {header: "state", content: {exclusiveAudio: exclusiveAudio, resamplingRate: resamplingRate}});
 		}
 		
 		
@@ -56,7 +73,7 @@ beo.bus.on('general', function(event) {
 beo.bus.on('hifiberry-debug', function(event) {
 	
 	if (event.header == "collect") {
-		beo.sendToUI({target: "hifiberry-debug", header: "collecting"});
+		beo.sendToUI("hifiberry-debug", {header: "collecting"});
 		collecting = true;
 		clearTimeout(archiveDownloadTimeout);
 		beo.removeDownloadRoute("hifiberry-debug", "archive.zip");
@@ -66,22 +83,22 @@ beo.bus.on('hifiberry-debug', function(event) {
 			if (!error) {
 				if (fs.existsSync("/tmp/hifiberry-debug.zip")) {
 					archive = beo.addDownloadRoute("hifiberry-debug", "archive.zip", "/tmp/hifiberry-debug.zip", true);
-					beo.sendToUI({target: "hifiberry-debug", header: "finished"});
-					beo.sendToUI({target: "hifiberry-debug", header: "archive", content: {archiveURL: archive}});
+					beo.sendToUI("hifiberry-debug", {header: "finished"});
+					beo.sendToUI("hifiberry-debug", {header: "archive", content: {archiveURL: archive}});
 					archiveDownloadTimeout = setTimeout(function() {
 						// Time out the archive after 5 minutes so that the data is guaranteed to be fairly fresh.
-						beo.sendToUI({target: "hifiberry-debug", header: "archive"});
+						beo.sendToUI("hifiberry-debug", {header: "archive"});
 						beo.removeDownloadRoute("hifiberry-debug", "archive.zip");
 						archive = null;
 						if (debug) console.log("Diagnostic information archive has timed out.");
 					}, 300000);
 					if (debug) console.log("Diagnostic information archive is now available to download for 5 minutes.");
 				} else {
-					beo.sendToUI({target: "hifiberry-debug", header: "error"});
+					beo.sendToUI("hifiberry-debug", {header: "error"});
 					if (debug) console.log("Unknown error creating diagnostic information archive.");
 				}
 			} else {
-				beo.sendToUI({target: "hifiberry-debug", header: "error"});
+				beo.sendToUI("hifiberry-debug", {header: "error"});
 				if (debug) console.log("Error creating diagnostic information archive:", error);
 			}
 		});
@@ -89,6 +106,27 @@ beo.bus.on('hifiberry-debug', function(event) {
 	
 	
 });
+
+hifiberryStateModified = 0;
+function readState() {
+	if (fs.existsSync("/etc/hifiberry.state")) {
+		modified = fs.statSync("/etc/hifiberry.state").mtimeMs;
+		if (modified != hifiberryStateModified) {
+			// Reads configuration into a JavaScript object for easy access.
+			hifiberryStateModified = modified;
+			state = fs.readFileSync("/etc/hifiberry.state", "utf8").split('\n');
+			for (var i = 0; i < state.length; i++) {
+				
+				line = state[i].trim();
+				lineItems = line.split("=");
+				if (lineItems.length == 2) {
+					hifiberryState[lineItems[0].trim()] = lineItems[1].trim();
+				}
+			}
+		}
+		return hifiberryState;
+	}
+}
 
 
 

@@ -20,6 +20,7 @@ SOFTWARE.*/
 
 // FILTER CALCULATION FUNCTIONS
 
+beoDSP = (function() {
 // Cache Pi
 var mathPI = Math.PI;
 
@@ -229,3 +230,5 @@ function logCoefficients(range) {
 	}
 	return [a, b];
 }
+
+})();

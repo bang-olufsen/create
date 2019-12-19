@@ -67,6 +67,20 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				
 				
 			}
+			
+			if (event.content == "sound") {
+				
+				if (settings.selectedSoundPreset) {
+					if (compactPresetList[settings.selectedSoundPreset]) {
+						name = compactPresetList[settings.selectedSoundPreset].presetName;
+					} else {
+						name = null;
+					}
+				} else {
+					name = null;
+				}
+				beo.sendToUI("sound-preset", {header: "currentPresetName", content: {presetName: name}});
+			}
 		}
 		
 	});
@@ -154,6 +168,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				settings.selectedSoundPreset = event.content.presetID;
 				
 				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "sound-preset", settings: settings}});
+				
 				if (event.content.installFallback && fullPresetList[presetID]["sound-preset"].fallbackDSP) {
 					if (extensions["dsp-programs"] && extensions["dsp-programs"].installDSPProgram) {
 						extensions["dsp-programs"].installDSPProgram(fullPresetList[presetID]["sound-preset"].fallbackDSP, function(result) {
@@ -166,6 +181,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 						});
 					}
 				} else {
+					beo.bus.emit("daisy-chain", {header: "disableDaisyChaining", content: {reason: "soundPresetSelected"}});
 					beo.bus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
 				}
 			}

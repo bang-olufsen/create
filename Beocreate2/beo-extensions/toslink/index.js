@@ -127,11 +127,6 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				settings.toslinkEnabled = event.content.enabled;
 				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
 				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
-				if (sources) {
-					sources.setSourceOptions("toslink", {
-						enabled: settings.toslinkEnabled
-					});
-				}
 				applyToslinkEnabledFromSettings();
 			}
 		}
@@ -169,6 +164,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	function applyToslinkEnabledFromSettings() {
 		if (canControlToslink.enabled) {
 			if (settings.toslinkEnabled) {
+				if (sources) sources.setSourceOptions("toslink", {enabled: true});
 				beoDSP.writeDSP(metadata.enableSPDIFRegister.value[0], 1, false);
 				if (toslinkSignal == true) {
 					toslinkActive = true;
@@ -180,6 +176,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					toslinkActive = false;
 					if (sources) sources.sourceDeactivated("toslink", "stopped");
 				}
+				if (sources) sources.setSourceOptions("toslink", {enabled: false});
 			}
 		}
 	}

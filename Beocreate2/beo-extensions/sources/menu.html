@@ -27,9 +27,21 @@
 		<div class="startable-sources">
 		
 		</div>
-		<p class="margin-top">If the source is not listed, it can't be started remotely.</p>
+		<!--<p class="margin-top">If the source is not listed, it can't be started remotely.</p>-->
 		<div class="ask-buttons">
-			<div class="button pill grey cancel default" onclick="ask();">Cancel</div>
+			<div class="button pill grey cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="set-source-alias-prompt">
+		<h2>Set Alias for <span class="ask-dynamic-0">Source</span></h2>
+		<div class="default-aliases">
+		
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Custom Alias...</div>
+			<div class="button pill grey remove-source-alias" onclick="beo.askOption(1);">No Alias</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 </div>

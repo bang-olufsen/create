@@ -2,6 +2,7 @@ var product_information = (function() {
 
 
 var systemName = "";
+var staticName = "";
 var modelName = "";
 var modelID = "";
 var systemID = "";
@@ -17,7 +18,7 @@ var productIdentities = {};
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			send({target: "product-information", header: "getBasicProductInformation"});
+			beo.send({target: "product-information", header: "getBasicProductInformation"});
 		}
 	}
 	
@@ -45,7 +46,7 @@ $(document).on("product-information", function(event, data) {
 		$(".model-name").text(modelName);
 	
 		document.title = systemName;
-		sendToProductView({header: "systemName", content: {name: systemName}});
+		beo.sendToProductView({header: "systemName", content: {name: systemName}});
 	}
 	
 	if (data.header == "showProductModel") {
@@ -62,9 +63,11 @@ $(document).on("product-information", function(event, data) {
 	if (data.header == "basicProductInformation") {
 		systemName = data.content.systemName;
 		$(".system-name").text(systemName);
+		staticName = data.content.staticName;
+		$(".system-name-static").text(staticName.toLowerCase());
 		systemVersion = data.content.systemVersion;
 		systemID = data.content.systemID;
-		sendToProductView({header: "systemName", content: {name: systemName}});
+		beo.sendToProductView({header: "systemName", content: {name: systemName}});
 		document.title = systemName;
 		if (data.content.systemVersion) {
 			systemVersion = data.content.systemVersion;
@@ -84,7 +87,9 @@ $(document).on("product-information", function(event, data) {
 	if (data.header == "showSystemName") {
 		systemName = data.content.systemName;
 		$(".system-name").text(systemName);
-		sendToProductView({header: "systemName", content: {name: systemName}});
+		staticName = data.content.staticName;
+		$(".system-name-static").text(staticName.toLowerCase());
+		beo.sendToProductView({header: "systemName", content: {name: systemName}});
 		document.title = systemName;
 		if (data.content.staticName) {
 			if (document.domain.indexOf(".local") != -1) {
@@ -118,13 +123,13 @@ $(document).on("product-information", function(event, data) {
 			};
 			if (modelID == identity) identityItemOptions.checked = true;
 			if (identityItemOptions.label.toLowerCase() == "beocreate 4-channel amplifier") identityItemOptions.label = "Beocreate";
-			identityItem = createCollectionItem(identityItemOptions);
+			identityItem = beo.createCollectionItem(identityItemOptions);
 			$(".product-identity-collection").append(identityItem);
 		}
 	}
 	
 	if (data.header == "askToRestartAfterSystemNameChange") {
-		ask("product-name-restart-prompt");
+		beo.ask("product-name-restart-prompt");
 	}
 	
 });
@@ -167,22 +172,27 @@ function cycleSystemInformation(updateOnly) {
 }
 
 function changeProductName() {
-	startTextInput(1, "Change Name", "This name is shown to your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(input) {
+	beo.startTextInput(1, "Change Name", "This name is shown on your other devices and music services.", {autocapitalise: "words", placeholders: {text: "Name"}, text: systemName, minLength: {text: 3}}, function(input) {
 		if (input) {
-			send({target: "product-information", header: "setSystemName", content: {newSystemName: input.text}});
+			beo.send({target: "product-information", header: "setSystemName", content: {newSystemName: input.text}});
 		}
 	});
 }
 
 function setProductModel(theModelID) {
-	send({target: "product-information", header: "setProductModel", content: {modelID: theModelID}});
+	beo.send({target: "product-information", header: "setProductModel", content: {modelID: theModelID}});
+	$(".product-overview-image").removeClass("visible");
+	setTimeout(function() {
+		$(".product-overview-image").addClass("visible");
+	}, 200);
+		
 }
 
 function generateSettingsPreview(identity, presetName) {
 	if (!identity) identity = {};
 	infoString = "";
 	if (identity.designer) {
-		infoString = translatedString("Designed by", "designedBy", "product-information") + " " + identity.designer;
+		infoString = beo.translatedString("Designed by", "designedBy", "product-information") + " " + identity.designer;
 	}
 	if (identity.produced) {
 		if (!Array.isArray(identity.produced)) {
@@ -191,9 +201,9 @@ function generateSettingsPreview(identity, presetName) {
 			produced = identity.produced[0] + "–" + identity.produced[1];
 		}
 		if (infoString != "") {
-			infoString += ", " + translatedString("Manufactured", "manufactured", "product-information").toLowerCase() + " " + produced;
+			infoString += ", " + beo.translatedString("Manufactured", "manufactured", "product-information").toLowerCase() + " " + produced;
 		} else {
-			infoString += translatedString("Manufactured", "manufactured", "product-information") + " " + produced;
+			infoString += beo.translatedString("Manufactured", "manufactured", "product-information") + " " + produced;
 		}
 	}
 	$(".sound-preset-information p.product").text(infoString);
@@ -211,7 +221,7 @@ function generateSettingsPreview(identity, presetName) {
 	if (identity.manufacturer) previewString += identity.manufacturer+" ";
 	if (identity.modelName) previewString += identity.modelName;
 	
-	return [translatedString("Icon & Model Name", "iconAndModelName", "product-information"), "<p>"+previewString+"</p>"];
+	return [beo.translatedString("Icon & Model Name", "iconAndModelName", "product-information"), "<p>"+previewString+"</p>"];
 }
 
 function clearPresetPreview() {
@@ -222,33 +232,34 @@ function clearPresetPreview() {
 
 
 function startCustomisation() {
-	send({target: "product-information", header: "getProductIdentities"});
-	showPopupView("customise-product-popup", null, finishCustomisation);
+	beo.send({target: "product-information", header: "getProductIdentities"});
+	beo.showPopupView("customise-product-popup", null, finishCustomisation);
 }
 
 function finishCustomisation() {
-	hidePopupView("customise-product-popup");
+	beo.hidePopupView("customise-product-popup");
 }
 
 function restartProduct() {
-	ask();
-	send({target: "product-information", header: "restartProduct"});
+	beo.ask();
+	beo.send({target: "product-information", header: "restartProduct"});
 }
 
 function shutdownProduct() {
-	ask();
-	send({target: "product-information", header: "shutdownProduct"});
+	beo.ask();
+	beo.send({target: "product-information", header: "shutdownProduct"});
 }
 
 function jumpToSoundAdjustments() {
-	hidePopupView("customise-product-popup");
-	showExtension("sound");
+	beo.hidePopupView("customise-product-popup");
+	beo.showExtension("sound");
 	console.log(systemID);
 }
 
 return {
 	systemID: function() {return systemID},
 	systemName: function() {return systemName},
+	staticName: function() {return staticName},
 	systemVersion: function() {return systemVersion},
 	modelName: function() {return modelName},
 	modelID: function() {return modelID},

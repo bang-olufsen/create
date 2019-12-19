@@ -103,7 +103,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		if (event.header == "settings") {
 			
 			if (event.content.settings) {
-				settings = event.content.settings;
+				settings = Object.assign(settings, event.content.settings);
 			}
 			
 		}

@@ -30,7 +30,7 @@ $(document).on("dsp-programs", function(event, data) {
 					value: metadata[item].value[0],
 					static: true
 				};
-				$(".dsp-program-metadata").append(createMenuItem(menuOptions));
+				$(".dsp-program-metadata").append(beo.createMenuItem(menuOptions));
 				
 			}
 			
@@ -65,12 +65,12 @@ $(document).on("dsp-programs", function(event, data) {
 			$(".dsp-program-information h1").text("Unknown Program");
 		}
 		if (data.content.version) {
-			$(".dsp-program-information p").text(translatedString("Version", "version", "dsp-programs")+" "+data.content.version);
+			$(".dsp-program-information p").text(beo.translatedString("Version", "version", "dsp-programs")+" "+data.content.version);
 		} else {
 			$(".dsp-program-information p").text("");
 		}
 		
-		showPopupView("dsp-program-preview-popup");
+		beo.showPopupView("dsp-program-preview-popup");
 	}
 	
 	if (data.header == "showCurrent") {
@@ -166,29 +166,41 @@ $(document).on("dsp-programs", function(event, data) {
 						menuOptions.value = "Upgrade";
 						menuOptions.valueAsButton = true;
 					}
-					$(".dsp-program-list").append(createMenuItem(menuOptions));
+					$(".dsp-program-list").append(beo.createMenuItem(menuOptions));
 			}
 		}
 	}
 	
 	if (data.header == "flashEEPROM") {
 		if (data.content.status == "flashing") {
-			notify({title: "Installing DSP program...", message: "Writing to memory...", icon: "attention", timeout: false});
+			beo.notify({title: "Installing DSP program...", message: "Writing to memory...", icon: "attention", timeout: false});
 		}
 		if (data.content.status == "fail") {
-			notify({title: "DSP program installation failed", message: "Please try again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
+			beo.notify({title: "DSP program installation failed", message: "Please try again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
 		}
 	}
 	
 	if (data.header == "checkEEPROM") {
 		if (data.content.status == "checking") {
-			notify({title: "Installing DSP program...", message: "Checking memory...", icon: "attention", timeout: false});
+			beo.notify({title: "Installing DSP program...", message: "Checking memory...", icon: "attention", timeout: false});
 		}
 		if (data.content.status == "success") {
-			notify({title: "DSP program installed", icon: "common/symbols-black/checkmark-round.svg"});
+			beo.notify({title: "DSP program installed", icon: "common/symbols-black/checkmark-round.svg"});
 		}
 		if (data.content.status == "fail") {
-			notify({title: "DSP program installation failed", message: "Program was succesfully written, but didn't persist in memory. Please try installing the program again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
+			beo.notify({title: "DSP program installation failed", message: "Program was succesfully written, but didn't persist in memory. Please try installing the program again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
+		}
+	}
+	
+	if (data.header == "storeAdjustments") {
+		if (data.content.status == "storing") {
+			beo.notify({title: "Storing sound adjustments...", message: "This will take a moment", icon: "attention", timeout: false});
+		}
+		if (data.content.status == "finish") {
+			beo.notify({title: "Adjustments stored", icon: "common/symbols-black/checkmark-round.svg"});
+		}
+		if (data.content.status == "fail") {
+			beo.notify({title: "Storing sound adjustments failed", message: "Please try again. If the problem persists, contact support.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
 		}
 	}
 	
@@ -215,51 +227,65 @@ $(document).on("dsp-programs", function(event, data) {
 
 function getPreview(program) {
 	if (!program) program = null;
-	send({target: "dsp-programs", header: "getProgramPreview", content: {program: program}});
+	beo.send({target: "dsp-programs", header: "getProgramPreview", content: {program: program}});
 }
 
 function closePreview() {
-	hidePopupView("dsp-program-preview-popup");
+	beo.hidePopupView("dsp-program-preview-popup");
 }
 
-function reinstallProgram() {
-	hidePopupView("dsp-program-preview-popup");
-	send({target: "dsp-programs", header: "installProgram"});
+function reinstallProgram(confirmed) {
+	if (!confirmed) {
+		beo.ask("reinstall-dsp-program-prompt");
+	} else {
+		beo.ask();
+		beo.hidePopupView("dsp-program-preview-popup");
+		beo.send({target: "dsp-programs", header: "installProgram"});
+	}
 }
 
 function installProgram(confirmed) {
 	if (!confirmed) {
-		ask("install-dsp-program-prompt");
+		beo.ask("install-dsp-program-prompt");
 	} else {
-		ask();
-		hidePopupView("dsp-program-preview-popup");
-		send({target: "dsp-programs", header: "installProgram", content: {program: previewedDSPProgram}});
+		beo.ask();
+		beo.hidePopupView("dsp-program-preview-popup");
+		beo.send({target: "dsp-programs", header: "installProgram", content: {program: previewedDSPProgram}});
 	}
 }
 
 function jumpToSoundPresets() {
-	showExtension("sound-preset");
+	beo.showExtension("sound-preset");
 }
 
 function toggleMuteUnknown(confirmed) {
 	if (muteUnknown) {
 		if (!confirmed) {
-			ask("disable-mute-unknown-programs-prompt");
+			beo.ask("disable-mute-unknown-programs-prompt");
 		} else {
-			ask();
-			send({target: "dsp-programs", header: "muteUnknown", content: {muteUnknown: false}});
+			beo.ask();
+			beo.send({target: "dsp-programs", header: "muteUnknown", content: {muteUnknown: false}});
 		}
 	} else {
 		// When enabling, just do it.
-		send({target: "dsp-programs", header: "muteUnknown", content: {muteUnknown: true}});
+		beo.send({target: "dsp-programs", header: "muteUnknown", content: {muteUnknown: true}});
 	}
 }
 
 function toggleAutoUpgrade() {
 	if (autoUpgrade) {
-		send({target: "dsp-programs", header: "autoUpgrade", content: {autoUpgrade: false}});
+		beo.send({target: "dsp-programs", header: "autoUpgrade", content: {autoUpgrade: false}});
 	} else {
-		send({target: "dsp-programs", header: "autoUpgrade", content: {autoUpgrade: true}});
+		beo.send({target: "dsp-programs", header: "autoUpgrade", content: {autoUpgrade: true}});
+	}
+}
+
+function storeAdjustments(confirmed) {
+	if (!confirmed) {
+		beo.ask("store-sound-adjustments-prompt");
+	} else {
+		beo.ask();
+		beo.send({target: "dsp-programs", header: "storeAdjustments"});
 	}
 }
 
@@ -267,6 +293,7 @@ return {
 	jumpToSoundPresets: jumpToSoundPresets,
 	getPreview: getPreview,
 	closePreview: closePreview,
+	storeAdjustments, storeAdjustments,
 	reinstallProgram: reinstallProgram,
 	installProgram: installProgram,
 	toggleMuteUnknown: toggleMuteUnknown,

@@ -86,29 +86,6 @@ if (cmdArgs.indexOf("beosounds") != -1) forceBeosounds = true;
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
 if (developerMode) console.log("Developer mode, user interface will not be cached.");
 
-// LOAD SYSTEM SETTINGS
-// Contains sound card type, port to use, possibly disabled extensions.
-if (fs.existsSync(dataDirectory+"/system.json")) {
-	try {
-		systemConfiguration = Object.assign(systemConfiguration, JSON.parse(fs.readFileSync(dataDirectory+"/system.json")));
-		console.log("System settings loaded.");
-	} catch (error) {
-		console.error("Error loading system.json for system settings:", error);
-		systemConfiguration = JSON.parse(JSON.stringify(defaultsystemConfiguration));
-	}
-}
-
-// Load UI settings.
-if (fs.existsSync(dataDirectory+"/ui.json")) {
-	try {
-		uiSettings = Object.assign(uiSettings, JSON.parse(fs.readFileSync(dataDirectory+"/ui.json")));
-		console.log("User interface settings loaded.");
-	} catch (error) {
-		console.error("Error loading system.json for system settings:", error);
-		var uiSettings = JSON.parse(JSON.stringify(defaultUISettings));
-	}
-}
-
 
 // BEOBUS
 
@@ -139,12 +116,12 @@ beoBus.on("ui", function(event) {
 	}
 });
 
-function sendToUI(event) {
+function sendToUI(target, event) {
 	// A direct "send to UI" method without going through BeoBus.
-	if (event.header && event.target && event.content) {
-		beoCom.send({header: event.header, target: event.target, content: event.content});
-	} else if (event.header && event.target) {
-		beoCom.send({header: event.header, target: event.target});
+	if (target && event.header && event.content) {
+		beoCom.send({header: event.header, target: target, content: event.content});
+	} else if (target && event.header) {
+		beoCom.send({header: event.header, target: target});
 	}
 }
 
@@ -157,10 +134,16 @@ beoBus.on('general', function(event) {
 			if (event.content.extension) completeShutdownForExtension(event.content.extension);
 			break;
 		case "requestReboot":
-			if (event.content.extension) rebootSystem(event.content.extension);
+			if (event.content.extension) {
+				overrideUIActions = (event.content.overrideUIActions) ? true : false;
+				rebootSystem(event.content.extension, overrideUIActions);
+			}
 			break;
 		case "requestShutdown":
-			if (event.content.extension) shutdownSystem(event.content.extension);
+			if (event.content.extension) {
+				overrideUIActions = (event.content.overrideUIActions) ? true : false;
+				shutdownSystem(event.content.extension, overrideUIActions);
+			}
 			break;
 		case "requestServerRestart":
 			if (event.content.extension) restartServer(event.content.extension);
@@ -178,17 +161,7 @@ beoBus.on("settings", function(event) {
 	// Handles the saving and retrieval of configuration files for extensions.
 	if (event.header == "getSettings") {
 		if (event.content.extension) {
-			if (fs.existsSync(dataDirectory+"/"+event.content.extension+".json")) { 
-				settings = JSON.parse( // Read settings file.
-					fs.readFileSync(dataDirectory+"/"+event.content.extension+".json")
-				);
-				// Return the parsed JSON.
-				beoBus.emit(event.content.extension, {header: "settings", content: {settings: settings}});
-				if (debugMode >= 2) console.log("Settings loaded for '"+event.content.extension+"'.");
-			} else {
-				// If the settings file doesn't exist, return null.
-				beoBus.emit(event.content.extension, {header: "settings", content: {settings: null}});
-			}
+			beoBus.emit(event.content.extension, {header: "settings", content: {settings: getSettings(event.content.extension)}});
 		}
 	} else if (event.header == "saveSettings") {
 		// Two ways to save settings: either immediately or collectively 10 seconds after the last request.
@@ -199,6 +172,26 @@ beoBus.on("settings", function(event) {
 		}
 	}
 });
+
+function getSettings(extension) {
+	if (extension) {
+		if (fs.existsSync(dataDirectory+"/"+extension+".json")) { 
+			try {
+				settings = JSON.parse( // Read settings file.
+					fs.readFileSync(dataDirectory+"/"+extension+".json")
+				);
+				// Return the parsed JSON.
+				if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
+			} catch (error) {
+				console.error("Error loading settings for '"+extension+"':", error);
+			}
+		} else {
+			// If the settings file doesn't exist, return null.
+			settings = null;
+		}
+	}
+	return settings;
+}
 
 function saveSettings(extension, settings, immediately) {
 	if (immediately) { // Save immediately.
@@ -227,23 +220,25 @@ function getAllSettings() {
 	if (fs.existsSync(dataDirectory)) {
 		for (extension in extensions) {
 			if (fs.existsSync(dataDirectory+"/"+extension+".json")) { // Check if settings exist for this extension.
-				try {
-					settings = JSON.parse( // Read settings file.
-						fs.readFileSync(dataDirectory+"/"+extension+".json")
-					);
-					
-					// Return the parsed JSON.
-					beoBus.emit(extension, {header: "settings", content: {settings: settings}});
-					console.log("Settings loaded for '"+extension+"'.");
-				} catch (error) {
-					console.error("Error loading settings for '"+extension+"':", error);
-				}
+				beoBus.emit(extension, {header: "settings", content: {settings: getSettings(extension)}});
 			}
 		}
 	} else {
 		fs.mkdirSync(dataDirectory);
 	}
 }
+
+
+// LOAD SYSTEM SETTINGS
+// Contains sound card type, port to use, possibly disabled extensions.
+tempSystemConfiguration = getSettings('system');
+if (tempSystemConfiguration != null) systemConfiguration = Object.assign(systemConfiguration, tempSystemConfiguration);
+
+
+// Load UI settings.
+tempUISettings = getSettings('ui');
+if (tempUISettings != null) uiSettings = Object.assign(uiSettings, tempUISettings);
+
 
 
 // LOAD EXTENSIONS, ASSEMBLE UI AND START SERVERS
@@ -254,9 +249,14 @@ global.beo = {
 	bus: beoBus,
 	systemDirectory: systemDirectory+"/..",
 	dataDirectory: dataDirectory,
+	systemVersion: systemVersion,
 	systemConfiguration: systemConfiguration,
 	extensions: extensions,
 	extensionsList: extensionsList,
+	saveSettings: saveSettings,
+	getSettings: getSettings,
+	requestShutdownTime: requestShutdownTimeForExtension,
+	completeShutdown: completeShutdownForExtension,
 	setup: false,
 	selectedExtension: selectedExtension, 
 	debug: debugMode,
@@ -282,6 +282,7 @@ expressServer.use("/common", express.static(systemDirectory+"/common", {etag: et
 expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: etags})); // Prefer product images from system directory.
 expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For user product images.
 expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For extensions.
+expressServer.use("/extensions", express.static(dataDirectory+"/beo-extensions", {etag: etags})); // For user extensions.
 expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
 	if (beoUI != false) {
@@ -398,7 +399,7 @@ beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});
 
 getAllSettings();
 
-beoBus.emit('general', {header: "startup", content: {debug: debugMode, systemVersion: systemVersion, extensions: extensionsList}});
+beoBus.emit('general', {header: "startup", content: {debug: debugMode, systemVersion: systemVersion}});
 
 if (systemConfiguration.runAtStart) {
 	try {
@@ -419,37 +420,60 @@ if (!quietMode) {
 	}
 }
 
+if (!fs.existsSync(dataDirectory+"/beo-extensions")) fs.mkdirSync(dataDirectory+"/beo-extensions");
 
 function assembleBeoUI() {
 	extensionsPath = systemDirectory+"/../beo-extensions";
+	userExtensionsPath = dataDirectory+"/beo-extensions";
 	menus = [];
+	masterList = {};
+	
 	if (fs.existsSync(extensionsPath)) {
+		extensionsNames = fs.readdirSync(extensionsPath);
+		for (var i = 0; i < extensionsNames.length; i++) {
+			if (extensionsNames[i].charAt(0) != ".") {
+				masterList[extensionsNames[i]] = {path: extensionsPath+"/"+extensionsNames[i], basePath: extensionsPath};
+			}
+		}
+	}
+	
+	if (fs.existsSync(userExtensionsPath)) {
+		extensionsNames = fs.readdirSync(userExtensionsPath);
+		for (var i = 0; i < extensionsNames.length; i++) {
+			if (extensionsNames[i].charAt(0) != ".") {
+				if (!masterList[extensionsNames[i]] || systemConfiguration.preferUserExtensions) {
+					if (masterList[extensionsNames[i]]) {
+						if (debugMode) console.log("Loading user extension '"+extensionsNames[i]+"' instead of equivalent system extension.")
+					}
+					// If user extensions are preferred, extensions in the user directory will replace system extensions with the same name.
+					masterList[extensionsNames[i]] = {path: userExtensionsPath+"/"+extensionsNames[i], basePath: userExtensionsPath};
+				}
+			}
+		}
+	}
+	
+	if (systemConfiguration.enabledExtensions && systemConfiguration.enabledExtensions.length > 0) {
+		for (extension in masterList) {
+			if (enabledExtensions.indexOf(extension) == -1) {
+				delete masterList[extension];
+				if (debugMode) console.log("Extension '"+extension+"' is listed to be loaded, excluding unlisted extensions.");
+			}
+		}
+	} else if (systemConfiguration.disabledExtensions && systemConfiguration.disabledExtensions.length > 0) {
+		for (extension in masterList) {
+			if (disabledExtensions.indexOf(extension) == -1) {
+				delete masterList[extension];
+				if (debugMode) console.log("Extension '"+extensionsNames[e]+"' is disabled and won't be loaded.");
+			}
+		}
+	}
+		
+	if (Object.keys(masterList).length > 0) {
+		
 		if (fs.existsSync(__dirname+'/navigation.txt')) {
 			navigationItems = fs.readFileSync(__dirname+'/navigation.txt', "utf8").split("\n");
 		} else {
 			navigationItems = [];
-		}
-		extensionsNames = fs.readdirSync(extensionsPath);
-		if (systemConfiguration.enabledExtensions && systemConfiguration.enabledExtensions.length > 0) {
-			tempExtensionsNames = [];
-			for (var e = 0; e < extensionsNames.length; e++) {
-				if (enabledExtensions.indexOf(extensionsNames[e]) != -1) {
-					tempExtensionsNames.push(extensionsNames[e]);
-				} else {
-					if (debugMode) console.log("Extension '"+extensionsNames[e]+"' is listed to be loaded, excluding unlisted extensions.");
-				}
-			}
-			extensionsNames = tempExtensionsNames;
-		} else if (systemConfiguration.disabledExtensions && systemConfiguration.disabledExtensions.length > 0) {
-			tempExtensionsNames = [];
-			for (var e = 0; e < extensionsNames.length; e++) {
-				if (disabledExtensions.indexOf(extensionsNames[e]) == -1) {
-					tempExtensionsNames.push(extensionsNames[e]);
-				} else {
-					if (debugMode) console.log("Extension '"+extensionsNames[e]+"' is disabled and won't be loaded.");
-				}
-			}
-			extensionsNames = tempExtensionsNames;
 		}
 		
 		allExtensions = {};
@@ -461,7 +485,7 @@ function assembleBeoUI() {
 			// Add top-level navigation to the menu structure.
 			if (navigationItems[i].trim() != "-") {
 				// Navigation item.
-				if (extensionsNames.indexOf(navigationItems[i]) != -1) {
+				if (masterList[navigationItems[i]]) {
 					// Check that this extension exists.
 					menuStructure.push({kind: "menu", menu: navigationItems[i], submenus: []});
 				}
@@ -472,25 +496,16 @@ function assembleBeoUI() {
 		}
 		
 		// Load all extensions.
-		for (var e = 0; e < extensionsNames.length; e++) {
-			if (extensionsNames[e].charAt(0) != ".") {
-				if (debugMode == 2) console.log("Loading extension '"+extensionsNames[e]+"'...");
-				extension = loadExtensionWithPath(extensionsNames[e], extensionsPath+"/"+extensionsNames[e], "extensions", false);
-				if (extension != null) {
-					allExtensions[extensionsNames[e]] = extension;
-					/*if (extensionsNames[e] == "sources") {
-						// Load sources too.
-						sources = fs.readdirSync(__dirname+'/sources');
-						for (var so = 0; so < sources.length; so++) {
-							allExtensions[sources[so]] = loadExtensionWithPath(sources[so], __dirname+"/sources/"+sources[so], "sources", true);
-						}
-					}*/
-				} else {
-					for (var i = 0; i < menuStructure.length; i++) {
-						if (menuStructure[i].menu == extensionsNames[e]) {
-							menuStructure.splice(i, 1);
-							break;
-						}
+		for (extensionName in masterList) {
+			if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
+			extension = loadExtensionWithPath(extensionName, masterList[extensionName].path, "extensions");
+			if (extension != null) {
+				allExtensions[extensionName] = extension;
+			} else {
+				for (var i = 0; i < menuStructure.length; i++) {
+					if (menuStructure[i].menu == extensionName) {
+						menuStructure.splice(i, 1);
+						break;
 					}
 				}
 			}
@@ -578,8 +593,9 @@ function assembleBeoUI() {
 		
 		extensionsLoaded = true;
 	} else {
-		menus.push("<script>\n\n// NO EXTENSIONS\n\n notify({title: 'Extensions folder missing', message: 'If you did not deliberately remove the folder from the product\'s file system, contact Bang & Olufsen Create support team.', id: 'noExtensions'});\nnoExtensions = true;\n\n</script>");
+		menus.push("<script>\n\n// NO EXTENSIONS\n\n beo.notify({title: 'Extensions folder missing', message: 'If you did not deliberately disable extensions, contact Bang & Olufsen Create support team.', id: 'noExtensions'});\nnoExtensions = true;\n\n</script>");
 		translations = "";
+		scripts = "";
 	}
 	
 	if (fs.existsSync(__dirname+'/common/index.html')) {
@@ -850,11 +866,11 @@ process.once('SIGTERM', function() {
 	}
 });
 
-function rebootSystem(extension) {
+function rebootSystem(extension, overrideUIActions) {
 	if (extension) {
 		if (debugMode) console.log("Reboot requested by '"+extension+"'.");
 		powerCommand = "reboot";
-		beoCom.send({header: "powerStatus", target: "general", content: {status: "rebooting"}});
+		beoCom.send({header: "powerStatus", target: "general", content: {status: "rebooting", overrideUIActions: overrideUIActions}});
 		startShutdown();
 	}
 }
@@ -873,11 +889,11 @@ function restartServer(extension) {
 	}
 }
 
-function shutdownSystem(extension) {
+function shutdownSystem(extension, overrideUIActions) {
 	if (extension) {
 		if (debugMode) console.log("Shutdown requested by '"+extension+"'.");
 		powerCommand = "shutdown";
-		beoCom.send({header: "powerStatus", target: "general", content: {status: "shuttingDown"}});
+		beoCom.send({header: "powerStatus", target: "general", content: {status: "shuttingDown", overrideUIActions: overrideUIActions}});
 		startShutdown();
 	}
 }

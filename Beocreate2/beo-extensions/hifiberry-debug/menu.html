@@ -1,4 +1,4 @@
-<div class="menu-screen" id="hifiberry-debug" data-icon="diagnose.svg" data-menu-title="Diagnostics" data-context="system-settings/more">
+<div class="menu-screen" id="hifiberry-debug" data-icon="diagnose.svg" data-menu-title="Diagnostics" data-context="general-settings/more">
 	
 	<header>
 		<div class="back-button master"></div>
@@ -13,6 +13,22 @@
 			<div id="diagnostic-archive" class="hidden">
 				<div class="button pill black" onclick="hifiberry_debug.download();" id="diagnostic-download-button">Download Archive</div>
 				<p>No personal information is included in the archive.</p>
+			</div>
+			<hr>
+			<h2 class="disclosure" data-disclosure="#debug-sound-technical">Resampling &amp; Mixing</h2>
+			<div id="debug-sound-technical" class="hidden">
+				<div class="menu-item static">
+					<div class="menu-label">Direct to hardware</div>
+					<div class="menu-value" id="exclusive-audio-status">Yes</div>
+				</div>
+				<p id="exclusive-audio-on-explanation">Sources can output directly to the sound device one at a time, without going through software resampling and mixing.</p>
+				<p id="exclusive-audio-off-explanation">Sound from different sources is resampled and mixed together in software before being sent to the sound device.</p>
+				
+				<div class="menu-item static" id="software-resampling-menu-item">
+					<div class="menu-label">Software resampling</div>
+					<div class="menu-value" id="resampling-rate">192 kHz</div>
+				</div>
+				<p>This may be different from the sampling rate of the sound device.</p>
 			</div>
 		</div>
 	</div>

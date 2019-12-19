@@ -15,28 +15,28 @@ $(document).on("last-fm", function(event, data) {
 			$("#lastfm-logged-out-section").removeClass("hidden");
 			$(".lastfm-username").text("");
 		}
-		notify(false, "last-fm");
+		beo.notify(false, "last-fm");
 	}
 	
 	if (data.header == "logInError") {
-		//ask("spotifyd-login-error-prompt");
-		notify({title: "Error logging in", message: "The user name or password may be incorrect.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+		//beo.ask("spotifyd-login-error-prompt");
+		beo.notify({title: "Error logging in", message: "The user name or password may be incorrect.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 	}
 });
 
 
 function logIn() {
-	startTextInput(3, "Log In with Last.fm", "Enter your Last.fm user name and password.", {placeholders: {password: "Password", text: "User name"}, minLength: {text: 2, password: 3}}, function(input) {
+	beo.startTextInput(3, "Log In with Last.fm", "Enter your Last.fm user name and password.", {placeholders: {password: "Password", text: "User name"}, minLength: {text: 2, password: 3}}, function(input) {
 		if (input) {
-			send({target: "last-fm", header: "logIn", content: {username: input.text, password: input.password}});
-			notify({title: "Updating settings...", icon: "attention", timeout: false, id: "last-fm"});
+			beo.send({target: "last-fm", header: "logIn", content: {username: input.text, password: input.password}});
+			beo.notify({title: "Updating settings...", icon: "attention", timeout: false, id: "last-fm"});
 		}
 	});
 }
 
 function logOut() {
-	send({target: "last-fm", header: "logOut"});
-	notify({title: "Updating settings...", icon: "attention", timeout: false, id: "last-fm"});
+	beo.send({target: "last-fm", header: "logOut"});
+	beo.notify({title: "Updating settings...", icon: "attention", timeout: false, id: "last-fm"});
 }
 
 

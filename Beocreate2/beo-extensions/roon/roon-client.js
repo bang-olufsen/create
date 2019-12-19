@@ -13,7 +13,7 @@ $(document).on("roon", function(event, data) {
 			roonEnabled = false;
 			$("#roon-enabled-toggle").removeClass("on");
 		}
-		notify(false, "roon");
+		beo.notify(false, "roon");
 	}
 });
 
@@ -21,11 +21,11 @@ $(document).on("roon", function(event, data) {
 function toggleEnabled() {
 	enabled = (!roonEnabled) ? true : false;
 	if (enabled) {
-		notify({title: "Turning Roon on...", icon: "attention", timeout: false, id: "roon"});
+		beo.notify({title: "Turning Roon on...", icon: "attention", timeout: false, id: "roon"});
 	} else {
-		notify({title: "Turning Roon off...", icon: "attention", timeout: false, id: "roon"});
+		beo.notify({title: "Turning Roon off...", icon: "attention", timeout: false, id: "roon"});
 	}
-	send({target: "roon", header: "roonEnabled", content: {enabled: enabled}});
+	beo.send({target: "roon", header: "roonEnabled", content: {enabled: enabled}});
 }
 
 

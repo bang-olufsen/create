@@ -28,11 +28,32 @@ $(document).on("hifiberry-debug", function(event, data) {
 			$("#diagnostic-collect-button").removeClass("grey").addClass("black");
 		}
 	}
+	
+	if (data.header == "state") {
+		if (data.content.exclusiveAudio) {
+			$("#exclusive-audio-status").text("Yes");
+			$("#exclusive-audio-on-explanation").removeClass("hidden");
+			$("#exclusive-audio-off-explanation").addClass("hidden");
+			$("#software-resampling-menu-item").addClass("disabled");
+		} else {
+			$("#exclusive-audio-status").text("No");
+			$("#exclusive-audio-on-explanation").addClass("hidden");
+			$("#exclusive-audio-off-explanation").removeClass("hidden");
+			$("#software-resampling-menu-item").removeClass("disabled");
+			
+		}
+		
+		if (data.content.resamplingRate) {
+			$("#resampling-rate").text(data.content.resamplingRate/1000+" kHz");
+		} else {
+			$("#resampling-rate").text("Unknown");
+		}
+	}
 });
 
 
 function collect() {
-	send({target: "hifiberry-debug", header: "collect"});
+	beo.send({target: "hifiberry-debug", header: "collect"});
 }
 
 function download() {

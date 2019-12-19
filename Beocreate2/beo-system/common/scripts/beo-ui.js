@@ -16,6 +16,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 noExtensions = false;
+var extensions = {};
+
+beo = (function() {
+
 stateRestored = false;
 uiSettings = {
 	disclosure: {}
@@ -38,7 +42,7 @@ $( document ).ready(function() {
 	prepareTextInput();
 	updateInterfaceMode();
 	setAppearance();
-	connectToCurrentProduct();
+	beoCom.connectToCurrentProduct();
 	
 	$("body").css("opacity", "1");
 	
@@ -90,9 +94,9 @@ function sendToProductView(data) {
 $(document).on("general", function(event, data) {
 	
 	
-	if (data.header == "powerStatus") {
+	if (data.header == "powerStatus" && !data.content.overrideUIActions) {
 		if (product_information && product_information.systemID && product_information.systemName) {
-			if (data.content.status == "shuttingDown") {
+			if (data.content.status == "shuttingDown" && !overrideShutdownInUI) {
 				sendToProductView({header: "powerStatus", content: {status: "shuttingDown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				notify({title: "Shutting down product…", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", icon: "common/symbols-black/power.svg", timeout: false});
 				noConnectionNotifications = true;
@@ -124,17 +128,16 @@ function getWindowDimensions() {
 	windowWidth = window.innerWidth;
 }
 
-window.onresize = function() {
+window.addEventListener('resize', function(){
 	clearTimeout(resizeTimeout);
 	resizeTimeout = setTimeout(function() {
 		getWindowDimensions();
 		updateInterfaceMode();
 		updateSliderWidths();
+		updatePopupHeight();
 		$(document).trigger("ui", {header: "windowResized"});
-		//setQuickLookAlbumNameMargin();
-		//evaluateTextScrolling();
 	}, 200);
-};
+}, true);
 
 document.onkeydown = function(evt) {
     evt = evt || window.event;
@@ -155,7 +158,7 @@ document.onkeydown = function(evt) {
     }
 };
 
-var extensions = {};
+
 var interfaceMode = 1; // 1 = normal, 2 = compact
 
 function prepareMenus() {
@@ -205,7 +208,7 @@ function prepareMenus() {
 						iconName = $(this).attr("data-icon-hifiberry");
 					}
 					menuOptions = {
-						onclick: 'showExtension(\''+$(this).attr("id")+'\');',
+						onclick: 'beo.showExtension(\''+$(this).attr("id")+'\');',
 						icon: $(this).attr("data-asset-path")+"/symbols-"+sidebarContentColour+"/"+iconName,
 						id: $(this).attr("id")+'-menu-item',
 						data: {"data-extension-id": $(this).attr("id")},
@@ -220,7 +223,7 @@ function prepareMenus() {
 						
 					if (!$(this).attr("data-hidden")) {
 						$("nav.full .nav-content").append(createMenuItem(menuOptions));
-						$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="showExtension(\''+$(this).attr("id")+'\');">'+menuOptions.label+'</div>');
+						$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="beo.showExtension(\''+$(this).attr("id")+'\');">'+menuOptions.label+'</div>');
 					}
 					
 					$(thisSection).attr("data-top-level-menu-id", $(this).attr("id"));
@@ -247,7 +250,7 @@ function prepareMenus() {
 						}
 						menuOptions = {
 							label: $(this).attr("data-menu-title"),
-							onclick: 'showExtension(\''+$(this).attr("id")+'\');',
+							onclick: 'beo.showExtension(\''+$(this).attr("id")+'\');',
 							icon: $(this).attr("data-asset-path")+"/symbols-black/"+iconName, // Still not quite sure if it looks better with or without icons.
 							id: $(this).attr("id")+'-menu-item',
 							chevron: true,
@@ -395,13 +398,36 @@ function updateHeaderIcons() {
 }
 
 
-window.matchMedia("(prefers-color-scheme: dark)").addListener(e => e.matches && setAppearance(true))
-window.matchMedia("(prefers-color-scheme: light)").addListener(e => e.matches && setAppearance(false))
+window.matchMedia("(prefers-color-scheme: dark)").addListener(e => e.matches && setAppearance(true));
+window.matchMedia("(prefers-color-scheme: light)").addListener(e => e.matches && setAppearance(false));
 
-function setAppearance(dark) {
-	if (dark == undefined) {
+function setAppearance(isDark, savePreference) {
+	if (savePreference) {
+		if (isDark == undefined) localStorage.beocreateAppearance = "auto";
+		if (isDark == true) localStorage.beocreateAppearance = "dark";
+		if (isDark == false) localStorage.beocreateAppearance = "light";
+	}
+	$(".ui-appearance-mode .menu-item").removeClass("checked");
+	if (localStorage.beocreateAppearance) {
+		if (localStorage.beocreateAppearance == "dark") {
+			isDark = true;
+			$(".ui-appearance-mode .menu-item#ui-appearance-dark").addClass("checked");
+		}
+		if (localStorage.beocreateAppearance == "light") {
+			isDark = false;
+			$(".ui-appearance-mode .menu-item#ui-appearance-light").addClass("checked");
+		}
+		if (localStorage.beocreateAppearance == "auto") {
+			$(".ui-appearance-mode .menu-item#ui-appearance-auto").addClass("checked");
+		}
+	} else {
+		$(".ui-appearance-mode .menu-item#ui-appearance-auto").addClass("checked");
+	}
+	if (isDark == undefined) {
 		dark = false;
 		dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	} else {
+		dark = isDark;
 	}
 	if (dark == true) {
 		console.log("Setting appearance to dark.");
@@ -412,6 +438,7 @@ function setAppearance(dark) {
 		$("body").removeClass("dark");
 		darkAppearance = false;
 	}
+	
 }
 
 function setSymbol(element, symbolPath) {
@@ -736,71 +763,77 @@ function showExtensionWithHistory(extensionHistory, extension) {
 }
 
 var deepMenuState = {};
+var deepNavigating = false;
 function showDeepMenu(menuID, overrideWithExtension, hideNew) {
-	extension = (overrideWithExtension) ? overrideWithExtension : selectedExtension;
-	if (extensions[extension].deepMenu.indexOf(menuID) == -1) {
-		// First make sure the extension containing this deep menu is selected.
-		for (ext in extensions) {
-			if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
-				showExtension(ext);
-				break;
+	if (!deepNavigating) {
+		deepNavigating = true;
+		extension = (overrideWithExtension) ? overrideWithExtension : selectedExtension;
+		if (extensions[extension].deepMenu.indexOf(menuID) == -1) {
+			// First make sure the extension containing this deep menu is selected.
+			for (ext in extensions) {
+				if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
+					showExtension(ext);
+					break;
+				}
 			}
 		}
-	}
-	newMenu = menuID;
-	back = false;
-	if (!deepMenuState[extension]) deepMenuState[extension] = [];
-	console.log(deepMenuState[extension], newMenu, selectedExtension, overrideWithExtension);
-	if (deepMenuState[extension].length == 0) {
-		// This extension currently has no deep menus open.
-		oldMenu = extension;
-		deepMenuState[extension] = [newMenu];
-	} else {
-		newMenuIndex = deepMenuState[extension].indexOf(newMenu); // Check if the new menu is in the deep menu hierarachy.
-		oldMenu = deepMenuState[extension][deepMenuState[extension].length-1];
-		if (newMenu == extension) {
-			deepMenuState[extension] = [];
-			back = true;
-		} else if (deepMenuState[extension].length == 1 && newMenu == extension) { // Returning to the main menu of the extension.
-			deepMenuState[extension] = [];
-			back = true;
+		newMenu = menuID;
+		back = false;
+		if (!deepMenuState[extension]) deepMenuState[extension] = [];
+		if (deepMenuState[extension].length == 0) {
+			// This extension currently has no deep menus open.
+			oldMenu = extension;
+			deepMenuState[extension] = [newMenu];
 		} else {
-			if (newMenuIndex == -1) { // Going forwards.
-				deepMenuState[extension].push(newMenu);
-			} else { // Going backwards.
-				deepMenuState[extension].length = newMenuIndex+1;
+			newMenuIndex = deepMenuState[extension].indexOf(newMenu); // Check if the new menu is in the deep menu hierarachy.
+			oldMenu = deepMenuState[extension][deepMenuState[extension].length-1];
+			if (newMenu == extension) {
+				deepMenuState[extension] = [];
 				back = true;
+			} else if (deepMenuState[extension].length == 1 && newMenu == extension) { // Returning to the main menu of the extension.
+				deepMenuState[extension] = [];
+				back = true;
+			} else {
+				if (newMenuIndex == -1) { // Going forwards.
+					deepMenuState[extension].push(newMenu);
+				} else { // Going backwards.
+					deepMenuState[extension].length = newMenuIndex+1;
+					back = true;
+				}
 			}
 		}
-	}
-	if (oldMenu != newMenu) {
-		if (back) {
-			if (!hideNew) {
-				$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
+		if (oldMenu != newMenu) {
+			if (back) {
+				if (!hideNew) {
+					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
+				} else {
+					$("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+				}
 			} else {
-				$("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+				if (!hideNew) $("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
+			}
+			if (!hideNew) $("#" + newMenu).addClass("block new");
+			setTimeout(function() {
+				if (!hideNew) $("#" + newMenu).removeClass("hidden-right hidden-left");
+				if (back) {
+					$("#" + oldMenu).addClass("hidden-right");
+				} else {
+					$("#" + oldMenu).addClass("hidden-left");
+					if (!hideNew) $("#" + newMenu).attr("data-edge-swipe-previous-deep", oldMenu);
+				}
+			}, 50);
+			setTimeout(function() {
+				$("#" + oldMenu).removeClass("block");
+				if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
+				deepNavigating = false;
+			}, 600);
+			backTitle = $("#"+oldMenu).attr("data-menu-title");
+			if (!back && !hideNew) {
+				$("#"+newMenu+" .back-button.master").addClass("visible");
+				$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
 			}
 		} else {
-			if (!hideNew) $("#" + newMenu).addClass("hidden-right").removeClass("hidden-left");
-		}
-		if (!hideNew) $("#" + newMenu).addClass("block new");
-		setTimeout(function() {
-			if (!hideNew) $("#" + newMenu).removeClass("hidden-right hidden-left");
-			if (back) {
-				$("#" + oldMenu).addClass("hidden-right");
-			} else {
-				$("#" + oldMenu).addClass("hidden-left");
-				if (!hideNew) $("#" + newMenu).attr("data-edge-swipe-previous-deep", oldMenu);
-			}
-		}, 50);
-		setTimeout(function() {
-			$("#" + oldMenu).removeClass("block");
-			if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
-		}, 600);
-		backTitle = $("#"+oldMenu).attr("data-menu-title");
-		if (!back && !hideNew) {
-			$("#"+newMenu+" .back-button.master").addClass("visible");
-			$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
+			deepNavigating = false;
 		}
 	}
 }
@@ -830,7 +863,7 @@ function activatedExtension(extensionID) {
 	}, 20);
 	selectedExtension = extensionID;
 	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID}});
-	send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
+	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
 	sendToProductView(extensionID);
 	
 	// Save state, so that the UI returns to the same menu when reloaded.
@@ -861,7 +894,7 @@ function restoreState(theMenu) {
 		} else {
 			showExtension(theMenu);
 		}
-		send({target: "ui", header: "getUISettings"});
+		beoCom.send({target: "ui", header: "getUISettings"});
 		stateRestored = true;
 	} else {
 		// If state has already been restored (i.e. this is a reconnection), only indicate the currently selected extension to the product.
@@ -900,7 +933,7 @@ function createMenuItem(options) {
 	if (options.static) options.classes.push("static");
 	if (options.toggle != undefined) options.classes.push("toggle");
 	if (options.toggle) options.classes.push("on");
-	if (options.twoRows || options.description) options.classes.push("two-rows");
+	if (options.twoRows || options.description || options.customMarkup) options.classes.push("two-rows");
 	
 	if (options.checkmark) {
 		options.classes.push("checkmark", options.checkmark);
@@ -935,7 +968,7 @@ function createMenuItem(options) {
 	
 	//menuItem += '><div class="one-row">';
 	menuItem += '>\n';
-	if (options.twoRows || options.description) menuItem += '<div class="first-row">\n';
+	if (options.twoRows || options.description || options.customMarkup) menuItem += '<div class="first-row">\n';
 	
 	// Icon
 	if (options.icon) {
@@ -991,7 +1024,7 @@ function createMenuItem(options) {
 		menuItem += '<div class="menu-toggle"></div>\n';
 	}
 	
-	if (options.twoRows || options.description) menuItem += '</div>\n'; // close first-row
+	if (options.twoRows || options.description || options.customMarkup) menuItem += '</div>\n'; // close first-row
 	
 	
 	// Description or custom markup (choose one)
@@ -1251,7 +1284,7 @@ $(document).on("click", ".disclosure", function() {
 			isOn = true;
 		}
 		if (!$(this).attr("data-disclosure-volatile")) {
-			send({target: "ui", header: "disclosure", content: {element: element, isOn: isOn}});
+			beoCom.send({target: "ui", header: "disclosure", content: {element: element, isOn: isOn}});
 		}
 	}
 });
@@ -1343,15 +1376,17 @@ function commaAndList(list, andWord, translationID, extensionID) {
 
 var askOpen = false;
 var askCallbacks = null;
-function ask(menuID, dynamicContent, callbacks, cancelAction) {
+var askCancelCallback = null;
+function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 	if (menuID) {
 		askOpen = true;
 		if (callbacks) askCallbacks = callbacks;
-		if (cancelAction) {
+		if (cancelCallback) askCancelCallback = cancelCallback;
+		/*if (cancelAction) {
 			$("#ask-back-plate").attr("onclick", cancelAction);
 		} else {
 			$("#ask-back-plate").attr("onclick", "ask();");
-		}
+		}*/
 		$("#ask-menu-content").html($("#"+menuID).html());
 		if (dynamicContent) {
 			for (var i = 0; i < dynamicContent.length; i++) {
@@ -1363,20 +1398,27 @@ function ask(menuID, dynamicContent, callbacks, cancelAction) {
 			$("#ask, #ask-back-plate").addClass("visible");
 		}, 150);
 	} else {
+		if (askCancelCallback) askCancelCallback();
 		$("#ask, #ask-back-plate").removeClass("visible");
 		setTimeout(function() {
 			$("#ask, #ask-back-plate").removeClass("block");
 		}, 500);
 		askCallbacks = null;
+		askCancelCallback = null;
 		askOpen = false;
 	}
 }
 
 function askOption(callbackIndex) {
+	$("#ask, #ask-back-plate").removeClass("visible");
+	setTimeout(function() {
+		$("#ask, #ask-back-plate").removeClass("block");
+	}, 500);
 	if (askCallbacks) {
 		askCallbacks[callbackIndex]();
 	}
-	ask();
+	askCallbacks = null;
+	askOpen = false;
 }
 
 
@@ -1395,14 +1437,21 @@ function updateSliderWidths() {
 
 // Common popup view with dynamic content.
 var currentPopup = null;
+var currentPopupParent = null;
 var popupCancelAction = null;
 function showPopupView(popupContentID, overridePopup, cancelAction) {
 	popupCancelAction = null;
 	if (popupContentID) {
 		if (!currentPopup || overridePopup == currentPopup) {
+			if (currentPopup) {
+				$("#open-popup .popup-content").addClass("hidden");
+				currentPopupParent.append($("#open-popup .popup-content").detach());
+			}
 			currentPopup = popupContentID;
-			$("#open-popup .popup-content").html($("#"+popupContentID).html());
-			$("#open-popup .popup-content").addClass("active-popup "+popupContentID);
+			currentPopupParent = $("#"+popupContentID).parent();
+			$("#open-popup").append($("#"+popupContentID).detach());
+			$("#open-popup .popup-content").removeClass("hidden");
+			
 			// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
 			showPopupViewInternal("#open-popup", "#open-popup-back-plate");
 			if (cancelAction != undefined) popupCancelAction = cancelAction;
@@ -1418,16 +1467,18 @@ function showPopupViewInternal(view, backplate) {
 	$(view+", "+backplate).addClass("block");
 	setTimeout(function() {
 		$(view+", "+backplate).addClass("visible");
+		updatePopupHeight();
 	}, 100);
 }
 
 function hidePopupViewInternal(view, backplate, universalOverride) {
-	if (view == "#open-popup" && universalOverride) { 
-		$("#open-popup .popup-content").removeClass("active-popup "+currentPopup);
+	if (view == "#open-popup" && universalOverride) {
 		currentPopup = null;
 	}
 	$(view+", "+backplate).removeClass("visible");
 	setTimeout(function() {
+		$("#open-popup .popup-content").addClass("hidden");
+		currentPopupParent.append($("#open-popup .popup-content").detach());
 		$(view+", "+backplate).removeClass("block");
 	}, 500);
 }
@@ -1437,6 +1488,18 @@ function popupBackplateClick(view, backplate, universalOverride) {
 		popupCancelAction();
 	} else {
 		hidePopupViewInternal(view, backplate, universalOverride);
+	}
+}
+
+function updatePopupHeight() {
+	if (interfaceMode == 1) {
+		if ((windowHeight - 100) == $("#open-popup .popup-content").innerHeight()) {
+			$("#open-popup .popup-content").css("height", "100%");
+		} else {
+			$("#open-popup .popup-content").css("height", "");
+		}
+	} else {
+		$("#open-popup .popup-content").css("height", "");
 	}
 }
 
@@ -1646,19 +1709,10 @@ function executeFunction(functionName, args) {
 	return context[func].apply(context, args);
 }
 
-/*function executeFunction(name, args) {
-	namespaces = name.split(".");
+function functionExists(funcName) {
+	namespaces = funcName.split(".");
 	if (namespaces.length == 1) {
-		window[name](args);
-	} else {
-		window[namespaces[0]][namespaces[1]](args);
-	}
-}*/
-
-function functionExists(name) {
-	namespaces = name.split(".");
-	if (namespaces.length == 1) {
-		if (window[name]) {
+		if (window[funcName]) {
 			return true;
 		} else {
 			return false;
@@ -1680,3 +1734,37 @@ Math.radians = function(degrees) {
 Math.distance = function(x1, y1, x2, y2) {
 	return Math.sqrt((x2 -= x1) * x2 + (y2 -= y1) * y2);
 };
+
+
+return {
+	ask: ask,
+	askOption: askOption,
+	showPopupView: showPopupView,
+	hidePopupView: hidePopupView,
+	popupBackplateClick: popupBackplateClick,
+	startTextInput: startTextInput,
+	submitText: submitText,
+	cancelText: cancelText,
+	uploadFile: uploadFile,
+	executeFunction: executeFunction,
+	functionExists: functionExists,
+	translatedString: translatedString,
+	translatedStringWithFormat: translatedStringWithFormat,
+	capitaliseFirst: capitaliseFirst,
+	commaAndList: commaAndList,
+	showMenuTab: showMenuTab,
+	notify: notify,
+	restoreState: restoreState,
+	setMenuTitle: setMenuTitle,
+	showExtension: showExtension,
+	showExtensionWithHistory: showExtensionWithHistory,
+	showDeepMenu: showDeepMenu,
+	toggleMainMenu: toggleMainMenu,
+	createMenuItem: createMenuItem,
+	createCollectionItem: createCollectionItem,
+	setSymbol: setSymbol,
+	sendToProductView: sendToProductView,
+	setAppearance: setAppearance
+}
+
+})();

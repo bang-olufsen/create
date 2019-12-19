@@ -27,19 +27,17 @@ var dictionary = {}; // Stores the DSP parameter addresses.
 
 var sigmaServerPortNumber = 8086;
 
-var sigmaCommandReadCode = 0x0a;
-var sigmaCommandWriteCode = 0x09;
-var sigmaCommandEEPROMCode = 0xf0;
+const sigmaCommandReadCode = 0x0a;
+const sigmaCommandWriteCode = 0x09;
+const sigmaCommandEEPROMCode = 0xf0;
 
-var hifiberryCommandChecksumCode = 0xf1;
-var hifiberryCommandChecksumResponseCode = 0xf2;
-var hifiberryCommandXMLCode = 0xf4;
-var hifiberryCommandXMLResponseCode = 0xf5;
+const hifiberryCommandChecksumCode = 0xf1;
+const hifiberryCommandChecksumResponseCode = 0xf2;
+const hifiberryCommandXMLCode = 0xf4;
+const hifiberryCommandXMLResponseCode = 0xf5;
 
-var sigmaCommandHeaderSize = 14;
+const sigmaCommandHeaderSize = 14;
 const m_FullScaleIntValue = 16777216;
-var openReadRequests = {};
-var readQueue = [];
 var flashCallback = null;
 var keepAlive = true;
 
@@ -55,8 +53,11 @@ var dsp = module.exports = {
 	getXML: getXML,
 	writeDSP: writeDSP,
 	readDSP: readDSP,
+	writeRegister: writeRegister,
+	readRegister: readRegister,
 	safeloadWrite: safeloadWrite,
 	flashEEPROM: flashEEPROM,
+	storeAdjustments: storeAdjustments,
 	lowPass: lowPass,
 	highPass: highPass,
 	peak: peak,
@@ -396,15 +397,30 @@ function onData(data) {
 			flashCallback = null;
 		} else {*/
 			response = getSigmaReadResponse(data);
-			addr = response.addr
-			if (openReadRequests.addr) { // Find the callback from the list of open requests.
-				openReadRequests.addr(response); // Run the callback, feeding the response into it.
-				delete openReadRequests.addr;
-				
+			addr = response.addr;
+			if (openReadRequests[addr]) { // Find the open read request for this address.
+				if (openReadRequests[addr].multiRead) { // Is this a multi-read?
+					if (multiReads[openReadRequests[addr].multiRead]) {
+						multiReads[openReadRequests[addr].multiRead].responses[response.addr] = response;
+						if (multiReads[openReadRequests[addr].multiRead].addresses.length > 1) {
+							//console.log(multiReads[openReadRequests[addr].multiRead].addresses.length +" reads remaining.");
+							// More reads remaining in this multi-read.
+							addressIndex = multiReads[openReadRequests[addr].multiRead].addresses.indexOf(response.addr);
+							multiReads[openReadRequests[addr].multiRead].addresses.splice(addressIndex, 1);
+						} else {
+							// Last multi-read, run callback with responses.
+							if (multiReads[openReadRequests[addr].multiRead].callback) {
+								multiReads[openReadRequests[addr].multiRead].callback(multiReads[openReadRequests[addr].multiRead].responses);
+							}
+							delete multiReads[openReadRequests[addr].multiRead];
+						}
+					}
+				} else {
+					openReadRequests[addr].callback(response); // Run the callback, feeding the response into it.
+				}
+				delete openReadRequests[addr];
 				if (readQueue.length > 0) {
-					// If there are read requests in the queue, send the next one.
-					readValue(readQueue[0].address, readQueue[0].callback);
-					readQueue.shift();
+					processReadQueue();
 				}
 			} else {
 	
@@ -436,16 +452,51 @@ function writeDSP(address, value, forceDecimal) {
 	writeValue(address, value, forceDecimal);
 }
 
-function readDSP(address, callback) {
+function readDSP(address, callback, length = 4) {
 	if (!dspConnected) return false;
-	if (callback) {
-		if (Object.size(openReadRequests) > 0) {
-			// Read requests are being fulfilled, put this into the queue.
-			readQueue.push({address, callback});
-		} else {
-			// No requests in the queue, read right away.
-			readValue(address, callback);
+	if (typeof address == "object") {
+		// Read multiple registers.
+		id = address.join(""); // Join addresses to form a common id.
+		multiReads[id] = {addresses: address, responses: {}, callback: callback, length: length};
+		myMultiRead = [];
+		for (var i = 0; i < address.length; i++) {
+			myMultiRead.push({address: address[i], callback: null, length: length, multiRead: id});
 		}
+		readQueue = readQueue.concat(myMultiRead);
+		if (Object.size(openReadRequests) == 0) processReadQueue();
+	} else {
+		// Read one one register.
+		if (callback) {
+			if (Object.size(openReadRequests) > 0) {
+				// Read requests are being fulfilled, put this into the queue.
+				readQueue.push({address: address, callback: callback, length: length});
+			} else {
+				// No requests in the queue, read right away.
+				readValue(address, callback, length);
+			}
+		}
+	}
+	
+}
+
+function writeRegister(address, value, forceDecimal) {
+	if (!dspConnected) return false;
+	writeValue(address, value, forceDecimal, 2);
+}
+
+function readRegister(address, callback) {
+	readDSP(address, callback, 2);
+}
+
+var openReadRequests = {};
+var multiReads = {};
+var readQueue = [];
+function processReadQueue() {
+	
+	if (readQueue.length > 0) {
+		// If there are read requests in the queue, send the next one.
+		item = readQueue.shift();
+		readValue(item.address, item.callback, item.length, item.multiRead);
 	}
 }
 
@@ -455,12 +506,6 @@ function safeloadWrite(parameterAddress, values, forceDecimal) {
 	// safeloadDataRegister = 24576; // Temporary data storage address.	
 	// safeloadDataAddressRegister = 24581; // Target address for the data.
 	// safeloadDataNumberRegister = 24582; // Number of words to safeload.
-	
-	/*if (safeloadOptions != undefined) { // Only for very old SigmaStudio projects.
-		if (options.safeloadDataRegister) safeloadDataRegister = options.safeloadDataRegister;
-		if (options.safeloadDataAddressRegister) safeloadDataAddressRegister = options.safeloadDataAddressRegister;
-		if (options.safeloadDataNumberRegister) safeloadDataNumberRegister = options.safeloadDataNumberRegister;
-	}*/
 	
 	if (!forceDecimal) forceDecimal = false;
 	
@@ -499,6 +544,22 @@ function flashEEPROM(filePath, callback) {
 			}
 		}
 	});
+}
+
+function storeAdjustments(callback) {
+	if (callback) {
+		exec("dsptoolkit --timeout 60 store", function(error, stdout, stderr) {
+			if (error) {
+				callback(null, error);
+			} else {
+				if (stdout.indexOf("Stored filter settings") != -1) {
+					callback(true);
+				} else if (stdout.toLowerCase().indexOf("failed") != -1) {
+					callback(false);
+				}
+			}
+		});
+	}
 }
 
 var checksumCallback = null;
@@ -586,24 +647,29 @@ function createHifiberryRequest(commandCode) {
 
 // SIGMADSP FUNCTIONS
 
-function readValue(addr, callback) {
-	openReadRequests.addr = callback; // Store the callback for this request as an open read request.
-	readRequest = Buffer.from(createSigmaReadRequest(addr, 4));
+function readValue(addr, callback, length = 4, multiRead = null) {
+	openReadRequests[addr] = {callback: callback, multiRead: multiRead}; // Store the callback for this request as an open read request.
+	readRequest = Buffer.from(createSigmaReadRequest(addr, length));
 	dspClient.write(readRequest);
 }
 
-function writeValue(addr, value, forceDecimal) {
+function writeValue(addr, value, forceDecimal, length = 4) {
 	if (!Number.isInteger(value) || forceDecimal) {
 		value = ((value * m_FullScaleIntValue) + 0.5);
 	}
 	var memValue = [];
 	//memValue[4] = [0];
-	memValue[0] = (value >> 24);
-	memValue[1] = (value >> 16);
-	memValue[2] = (value >> 8);
-	memValue[3] = value;
+	if (length == 2) {
+		memValue[0] = (value >> 8);
+		memValue[1] = value;
+	} else if (length == 4) {
+		memValue[0] = (value >> 24);
+		memValue[1] = (value >> 16);
+		memValue[2] = (value >> 8);
+		memValue[3] = value;
+	}
 	
-	writeMemory(addr, 4, memValue);
+	writeMemory(addr, length, memValue);
 }
 
 function writeMemory(addr, length, data, safeload) {
@@ -658,19 +724,19 @@ function getSigmaReadResponse(rawDataResponse) {
 	readResponse = {};
 	readResponse.addr = addr;
 	readResponse.length = len;
+	readResponse.raw = rawDataResponse.slice(14, 14+len);
 	readResponse.hex = null;
 	readResponse.int = null;
 	readResponse.dec = null;
 	
 	if (len < 1024) {
 		// Return the data in all different types. The desired type can then be accessed later.
-		rawData = rawDataResponse.slice(14, 14+len);
-		readResponse.hex = rawData.toString('hex');
+		readResponse.hex = readResponse.raw.toString('hex');
 		var resultValInt = 0;
-		resultValInt |= (rawData[0] << 24);
-		resultValInt |= (rawData[1] << 16);
-		resultValInt |= (rawData[2] << 8);
-		resultValInt |= rawData[3];
+		resultValInt |= (readResponse.raw[0] << 24);
+		resultValInt |= (readResponse.raw[1] << 16);
+		resultValInt |= (readResponse.raw[2] << 8);
+		resultValInt |= readResponse.raw[3];
 		readResponse.int = resultValInt;
 		readResponse.dec = resultValInt / m_FullScaleIntValue;
 	}

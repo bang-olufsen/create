@@ -1,0 +1,24 @@
+{
+  "name": "@beocreate/interact",
+  "version": "0.5.0",
+  "description": "Add user interactions to Beocreate sound systems.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "interaction",
+    "beocreate",
+    "button",
+    "sensor"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "dependencies": {
+    "serialport": "^7.1.5"
+  }
+}

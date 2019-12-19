@@ -131,7 +131,6 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				};
 			}
 			
-			beo.bus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: settings}});
 		}
 	});
 	
@@ -360,9 +359,17 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				// No settings for this filter, make it flat.
 				beoDSP.safeloadWrite(register, [0, 0, 1, 0, 0], true);
 			}
-				
+			sendCurrentSettingsToSoundPreset();
 		}
 	}
+	
+var settingsSendTimeout;
+function sendCurrentSettingsToSoundPreset() {
+	clearTimeout(settingsSendTimeout);
+	settingsSendTimeout = setTimeout(function() {
+		beo.bus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: settings}});
+	}, 1000);
+}
 		
 	
 module.exports = {

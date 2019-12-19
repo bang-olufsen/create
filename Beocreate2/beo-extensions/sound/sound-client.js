@@ -38,7 +38,7 @@ $(document).on("ui", function(event, data) {
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			send({target: "sound", header: "getVolume"});
+			beo.send({target: "sound", header: "getVolume"});
 		}
 	}
 });
@@ -67,7 +67,7 @@ function toggleAdvancedSoundAdjustments(enabled) {
 		}
 	}
 	
-	send({target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: enabled}});
+	beo.send({target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: enabled}});
 }
 
 function showAdvancedSoundAdjustmentsEnabled(enabled) {
@@ -91,11 +91,11 @@ function updateSystemVolumeSliders() {
 }
 
 function mute(fade = false) {
-	send({target: "sound", header: "mute", content: {fade: fade}});
+	beo.send({target: "sound", header: "mute", content: {fade: fade}});
 }
 
 function unmute(fade = false) {
-	send({target: "sound", header: "unmute", content: {fade: fade}});
+	beo.send({target: "sound", header: "unmute", content: {fade: fade}});
 }
 
 
@@ -105,7 +105,7 @@ $(".master-volume-slider").slider({
 	max: 100,
 	value: 0,
 	slide: function( event, ui ) {	
-		send({target: "sound", header: "setVolume", content: ui.value});
+		beo.send({target: "sound", header: "setVolume", content: ui.value});
 	},
 	start: function(event, ui) {
 		adjustingSystemVolume = true;

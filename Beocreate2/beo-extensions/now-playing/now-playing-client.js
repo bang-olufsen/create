@@ -15,7 +15,7 @@ $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			//if ($("#now-playing").hasClass("visible")) {
-				send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
+				beo.send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
 			//}
 		}
 	}
@@ -47,6 +47,8 @@ $(document).on("now-playing", function(event, data) {
 			if (data.content.metadata.artist) {
 				$(".now-playing-artist").text(data.content.metadata.artist);
 			}*/
+			
+			allSources[data.content.extension].metadata = data.content.metadata;
 			
 			if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
 			
@@ -169,7 +171,7 @@ function enableSourceStart(startableSources) {
 function showNowPlaying() {
 	$("#now-playing").removeClass("hidden");
 	resizeArtwork();
-	//send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
+	//beo.send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
 	setTimeout(function() {
 		$(".player-bar").addClass("shifted");
 		$("#now-playing").addClass("visible");
@@ -199,7 +201,7 @@ $( ".main-artwork" ).draggable({
 	stop: function( event, ui ) {
 		$("#now-playing").removeClass("no-animation");
 		$(".now-playing-artwork-wrap").css("transform", "");
-		$("#now-playing-control-area").css("transform", "");
+		//$("#now-playing-control-area").css("transform", "");
 		offset = ui.position.top - artworkDragStartPosition.top;
 		if (offset > 40) hideNowPlaying();
 		artworkDragStartPosition = null;
@@ -215,7 +217,7 @@ $( ".main-artwork" ).draggable({
 				visibleOffset = 25+(offset-50)/4;
 			}
 			$(".now-playing-artwork-wrap").css("transform", "translateY("+visibleOffset+"px)");
-			$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
+			//$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
 		} else {
 			artworkDragStartPosition = ui.position;
 		}
@@ -266,14 +268,14 @@ function transport(action) {
 		case "playPause":
 		case "next":
 		case "previous":
-			send({target: "now-playing", header: "transport", content: {action: action}});
+			beo.send({target: "now-playing", header: "transport", content: {action: action}});
 			break;
 	}
 }
 
 
 function toggleLove() {
-	send({target: "now-playing", header: "toggleLove"});
+	beo.send({target: "now-playing", header: "toggleLove"});
 	$("#love-button").addClass("love-in-progress");
 	clearTimeout(loveAnimTimeout);
 	loveAnimTimeout = setTimeout(function() {
@@ -560,7 +562,7 @@ function setUseExternalArtwork(mode, updateOnly) {
 				$(".external-artwork-settings .menu-item#external-artwork-"+mode).addClass("checked");
 				useExternalArtwork = mode;
 			} else {
-				if (!updateOnly) send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
+				if (!updateOnly) beo.send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
 			}
 			break;
 	}

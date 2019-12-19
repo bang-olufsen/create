@@ -1,0 +1,27 @@
+{
+  "name": "@beocreate/hifiberry-audiocontrol",
+  "version": "0.5.0",
+  "description": "Interfaces with AudioControl on HiFiBerryOS systems",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bang-olufsen/create.git"
+  },
+  "keywords": [
+    "beocreate",
+    "audiocontrol",
+	"hifiberry",
+	"hifiberryos",
+	"bang",
+	"olufsen"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bang-olufsen/create/issues"
+  },
+  "homepage": "https://github.com/bang-olufsen/create#readme"
+}

@@ -1,0 +1,28 @@
+<div class="menu-screen source" id="snapcast" data-icon="snapcast.svg" data-menu-title="Snapcast">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Snapcast</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="menu-item toggle" id="snapcast-enabled-toggle" onclick="snapcast.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p>Connect to a <a href="https://github.com/badaix/snapcast" target="_blank">Snapcast</a> multiroom server. Experimental feature.</p>
+			<hr>
+			<div class="menu-item toggle" id="snapcast-server-item" onclick="snapcast.setServerAddress();">
+				<div class="menu-label">Server Address</div>
+				<div class="menu-value button" id="snapcast-server-address">Set...</div>
+			</div>
+			<div class="menu-item toggle" id="snapcast-auto-join-toggle" onclick="snapcast.toggleAutoJoin();">
+				<div class="menu-label">Join Automatically</div>
+				<div class="menu-toggle"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/snapcast-client.js"></script>

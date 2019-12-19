@@ -1,7 +1,7 @@
 {
  "name": "BeocreateConnect",
  "productName": "Beocreate Connect",
- "version": "0.1.0",
+ "version": "0.2.0",
  "description": "Desktop utility for Beocreate-based sound systems",
  "main": "main.js",
  "scripts": {

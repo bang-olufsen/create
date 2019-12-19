@@ -34,9 +34,18 @@ var exec = require("child_process").exec;
 	
 	var focusIndex = 0; // Increment and assign to each source, so that it's known which one activated latest.
 	var defaultSettings = {
-			"port": 81 // HiFiBerry API port.
-		};
+			"port": 81, // HiFiBerry API port.
+			"aliases": {}
+	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
+	var defaultAliases = {
+		cd: {name: "CD", icon: "cd.svg"},
+		phono: {name: "Phono", icon: "beogram.svg"},
+		tape: {name: "Tape", icon: "tape.svg"},
+		tv: {name: "Television", icon: "tv.svg"},
+		computer: {name: "Computer", icon: "computer.svg"}
+	}
 	
 	
 	
@@ -72,6 +81,26 @@ var exec = require("child_process").exec;
 			case "getSources":
 				beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				break;
+			case "getDefaultAliases":
+				beo.bus.emit("ui", {target: "sources", header: "defaultAliases", content: {aliases: defaultAliases}});
+				break;
+			case "setAlias":
+				if (event.content.extension) {
+					if (event.content.alias) {
+						if (event.content.defaultAlias) {
+							if (defaultAliases[event.content.alias]) {
+								setSourceOptions(event.content.extension, {alias: defaultAliases[event.content.alias]});
+							} else {
+								setSourceOptions(event.content.extension, {alias: false});
+							}
+						} else {
+							setSourceOptions(event.content.extension, {alias: {name: event.content.alias, icon: null}});
+						}
+					} else {
+						setSourceOptions(event.content.extension, {alias: false});
+					}
+				}
+				break;
 			case "startableSources":
 				if (event.content.sources && event.content.extension) {
 					for (source in startableSources) {
@@ -88,8 +117,23 @@ var exec = require("child_process").exec;
 				break;
 			case "startSource":
 				if (event.content.sourceID) {
-					if (startableSources[event.content.sourceID] && startableSources[event.content.sourceID].extension) {
-						beo.bus.emit(startableSources[event.content.sourceID].extension, {header: "startSource", content: {sourceID: event.content.sourceID}});
+					extension = event.content.sourceID;
+					if (allSources[extension].startable) {
+						beo.sendToUI("sources", {header: "starting", content: {extension: extension}});
+						if (allSources[extension].usesHifiberryControl) {
+							if (allSources[extension].aka) {
+								sourceName = allSources[extension].aka[0];
+							} else {
+								sourceName = extension;
+							}
+							audioControl("start", sourceName, function(success) {
+								if (!success) {
+									beo.bus.emit(extension, {header: "start"});
+								}
+							});
+						} else {
+							beo.bus.emit(extension, {header: "start"});
+						}
 					}
 				}
 				break;
@@ -109,7 +153,7 @@ var exec = require("child_process").exec;
 			case "transport":
 				if (focusedSource && allSources[focusedSource].transportControls) {
 					if (allSources[focusedSource].usesHifiberryControl) {
-						audioControl(event.content.action, function(success) {
+						audioControl(event.content.action, null, function(success) {
 							if (!success) {
 								switch (event.content.action) {
 									case "playPause":
@@ -145,7 +189,7 @@ var exec = require("child_process").exec;
 					if (allSources[focusedSource].usesHifiberryControl) {
 						action = (love) ? "love" : "unlove";
 						
-						audioControl(action, function(success) {
+						audioControl(action, null, function(success) {
 							if (success) {
 								allSources[focusedSource].metadata.loved = love;
 								beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
@@ -195,7 +239,7 @@ var exec = require("child_process").exec;
 	}
 
 
-	function audioControl(operation, callback) {
+	function audioControl(operation, extra, callback) {
 		switch (operation) {
 			case "playPause":
 			case "play":
@@ -204,6 +248,9 @@ var exec = require("child_process").exec;
 			case "next":
 			case "previous":
 				endpoint = "/api/player/"+operation.toLowerCase();
+				break;
+			case "start":
+				endpoint = "/api/player/activate/"+extra;
 				break;
 			case "love":
 			case "unlove":
@@ -263,6 +310,7 @@ var exec = require("child_process").exec;
 						
 						beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
 						
+						
 						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
 							// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
 							clearTimeout(sourceCheckTimeout);
@@ -270,6 +318,21 @@ var exec = require("child_process").exec;
 								audioControlGet("status");
 							}, 15000);
 						}
+					}
+					
+					if (overview.players[i].supported_commands) {
+						if (overview.players[i].supported_commands.indexOf("play") != -1) {
+							allSources[extension].startable = true;
+						} else {
+							allSources[extension].startable = false;
+						}
+					} else {
+						allSources[extension].startable = false;
+					}
+					
+					if (!allSources[extension].metadata.title) {
+						if (overview.players[i].title) allSources[extension].metadata.title = overview.players[i].title;
+						if (overview.players[i].artist) allSources[extension].metadata.artist = overview.players[i].artist;
 					}
 				}
 			//}
@@ -487,8 +550,9 @@ var exec = require("child_process").exec;
 					transportControls: false,
 					usesHifiberryControl: false,
 					canLove: false,
-					startableSources: [],
-					metadata: {}
+					startable: false,
+					metadata: {},
+					alias: null
 				};
 				if (debug) console.log("Registering source '"+extension+"'...");
 			}
@@ -499,16 +563,28 @@ var exec = require("child_process").exec;
 			if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
 			if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
 			if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
-			if (options.startableSources) allSources[extension].startableSources = options.startableSources; // Add a list of startable sources under the main source (e.g. multiple AirPlay senders).
+			if (options.startable) allSources[extension].startable = options.startable; // Can this source be started from Beocreate 2?
 			if (options.playerState) allSources[extension].playerState = options.playerState;
+			if (options.alias != undefined) { // An alias is an alternate name and icon for the source in Sources and Now Playing. Within the source's own menu the original name is shown for clarity. Alias is read from settings further below.
+				if (options.alias) {
+					allSources[extension].alias = {name: options.alias.name, icon: options.alias.icon};
+					settings.aliases[extension] = {name: options.alias.name, icon: options.alias.icon};
+					if (debug) console.log("Alias for source '"+extension+"' is now "+options.alias.name+".");
+				} else {
+					allSources[extension].alias = null;
+					settings.aliases[extension] = null;
+					if (debug) console.log("Alias for source '"+extension+"' was removed.");
+				}
+				beo.saveSettings("sources", settings);
+			}
 			
 			
 			if (!sourceAdded) { 
-				if (!noUpdate) beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				if (!noUpdate) beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				count = 0;
 				for (source in allSources) {
 					if (allSources[source].usesHifiberryControl) {
-						if (allSources[source].enabled) count ++;
+						if (allSources[source].enabled) count++;
 					}
 				}
 				if (count != enabledHifiberrySources) {
@@ -532,6 +608,11 @@ var exec = require("child_process").exec;
 						});
 					}
 					enabledHifiberrySources = count;
+				}
+			} else {
+				
+				if (settings.aliases[extension]) {
+					allSources[extension].alias = {name: settings.aliases[extension].name, icon: settings.aliases[extension].icon};
 				}
 			}
 			
@@ -579,8 +660,6 @@ var exec = require("child_process").exec;
 			});
 		}
 	}
-	
-	
 	
 	
 module.exports = {

@@ -16,31 +16,149 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 // PAIRING FOR TWO BEOCREATE 4-CHANNEL AMPLIFIERS
-var beoDSP = require('../../beocreate_essentials/dsp');
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	
-	var version = require("./package.json").version;
-	
-	beoBus.on('general', function(event) {
-		
-		if (event.header == "startup") {
-			
-			
-			
-		}
-		
-		if (event.header == "activatedExtension") {
-			if (event.content == "daisy-chain") {
-				
-			}
-		}
-	});
-	
+var beoDSP = require(beo.systemDirectory+'/beocreate_essentials/dsp');
+var version = require("./package.json").version;
+var debug = beo.debug;
 
+var defaultSettings = {
+	"daisyChainEnabled": false,
+	"daisyChainDisabledReason": null
+};
+var settings = JSON.parse(JSON.stringify(defaultSettings));
+var soundAdjustmentsStored = false;
+var skipStoringAdjustments = false;
+
+beo.bus.on('general', function(event) {
 	
-	return {
-		version: version
-	};
+	if (event.header == "startup") {
+		
+		
+	}
+	
+	if (event.header == "activatedExtension") {
+		if (event.content == "daisy-chain") {
+			beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
+		}
+	}
+});
+
+beo.bus.on('dsp', function(event) {
+	
+	if (event.header == "connected" && event.content == true) {
+		
+		applyDaisyChainEnabledFromSettings(true);
+		
+	}
+});
+
+
+beo.bus.on('daisy-chain', function(event) {
+	
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+		}
+	}
+	
+	if (event.header == "setDaisyChainEnabled") {
+		if (event.content.enabled != undefined) {
+			soundAdjustmentsStored = false;
+			settings.daisyChainDisabledReason = null;
+			settings.daisyChainEnabled = event.content.enabled;
+			beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
+			beo.saveSettings("daisy-chain", settings);
+			applyDaisyChainEnabledFromSettings();
+		}
+	}
+	
+	if (event.header == "disableDaisyChaining") {
+		// This may be called by other extensions when making changes to sound that can't be synchronised.
+		settings.daisyChainEnabled = false;
+		if (event.content.reason) {
+			settings.daisyChainDisabledReason = event.content.reason;
+		}
+		beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
+		beo.saveSettings("daisy-chain", settings);
+		applyDaisyChainEnabledFromSettings();
+	}
+	
+	if (event.header == "assistantProgress") {
+		if (event.content.skipStoringAdjustments != undefined) skipStoringAdjustments = event.content.skipStoringAdjustments;
+		switch (event.content.step) {
+			case 1:
+				// Store sound adjustments.
+				if (!skipStoringAdjustments && !soundAdjustmentsStored) {
+					if (beo.extensions["dsp-programs"] && 
+						beo.extensions["dsp-programs"].storeAdjustments) {
+						beo.extensions["dsp-programs"].storeAdjustments(function(success) {
+							if (success) soundAdjustmentsStored = true;
+						});
+					}
+				}
+				break;
+			case 2:
+				// Shut down, switch chaining on.
+				if (!skipStoringAdjustments) {
+					settings.daisyChainDisabledReason = null;
+					settings.daisyChainEnabled = true;
+					beo.saveSettings("daisy-chain", settings);
+					beo.bus.emit("general", {header: "requestShutdown", content: {extension: "daisy-chain", overrideUIActions: true}});
+				}
+				break;
+			case 4:
+				if (skipStoringAdjustments) {
+					settings.daisyChainDisabledReason = null;
+					settings.daisyChainEnabled = true;
+					beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
+					beo.saveSettings("daisy-chain", settings);
+					applyDaisyChainEnabledFromSettings();
+				}
+				break;
+		}
+	}
+	
+	if (event.header == "startAssistant") {
+		skipStoringAdjustments = false;
+		soundAdjustmentsStored = false;
+	}
+	
+});
+
+
+function applyDaisyChainEnabledFromSettings(startup) {
+	// These registers are fixed, so no DSP metadata is required to do daisy-chaining.
+	if (settings.daisyChainEnabled) {
+		beoDSP.writeRegister(63168, 3);
+		beoDSP.writeRegister(63169, 4);
+		beoDSP.writeRegister(63184, 5);
+		beoDSP.writeRegister(63185, 6);
+		beoDSP.writeRegister(63135, 0); // SPDIF user data source
+		beo.bus.emit("daisy-chain", {header: "daisyChainEnabled", content: {enabled: true}}); // Channels extension will listen to this event.
+		if (debug) console.log("Daisy-chaining with another amplifier is on.");
+	} else {
+		beoDSP.writeRegister(63168, 0);
+		beoDSP.writeRegister(63169, 0);
+		beoDSP.writeRegister(63184, 0);
+		beoDSP.writeRegister(63185, 0);
+		beoDSP.writeRegister(63135, 1); // SPDIF user data source
+		beo.bus.emit("daisy-chain", {header: "daisyChainEnabled", content: {enabled: false}});
+		if (debug && !startup) console.log("Daisy-chaining with another amplifier is off.");
+	}
+}
+
+function setChannelRole(channel, role, roleText) {
+	// Assumes that whoever (probably Channels extension) uses this function, knows what the different channel roles are.
+	channelIndex = ("abcd").indexOf(channel.toLowerCase());
+	if (channelIndex != -1 && !isNaN(role)) {
+		start = 63170;
+		if (debug) console.log("Setting channel "+channel.toUpperCase()+" of the chained amplifier to "+role+" ("+roleText+").");
+		beoDSP.writeRegister(start+channelIndex, role);
+	}
+}
+
+
+module.exports = {
+	setChannelRole: setChannelRole,
+	version: version
 };

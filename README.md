@@ -76,7 +76,7 @@ Guidelines and best practices for design within Beocreate 2 ecosystem.
 
 Some issues in the current release that aren't acknowledged in the user interface:
 
-- Formatting of text in Software Update is broken.
+(No current issues)
 
 
 ## Legacy Code

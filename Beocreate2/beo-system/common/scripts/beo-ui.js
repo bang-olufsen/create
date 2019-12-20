@@ -16,11 +16,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 noExtensions = false;
+
 var extensions = {};
+var selectedExtension = null;
+var stateRestored = false;
+var historyConstructed = false;
 
 beo = (function() {
 
-stateRestored = false;
 uiSettings = {
 	disclosure: {}
 };
@@ -96,7 +99,7 @@ $(document).on("general", function(event, data) {
 	
 	if (data.header == "powerStatus" && !data.content.overrideUIActions) {
 		if (product_information && product_information.systemID && product_information.systemName) {
-			if (data.content.status == "shuttingDown" && !overrideShutdownInUI) {
+			if (data.content.status == "shuttingDown") {
 				sendToProductView({header: "powerStatus", content: {status: "shuttingDown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				notify({title: "Shutting down product…", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", icon: "common/symbols-black/power.svg", timeout: false});
 				noConnectionNotifications = true;
@@ -467,11 +470,11 @@ function toggleMainMenu() {
 	
 }
 
-var selectedExtension = null;
+
 var selectedParentMenu = null;
 var menuState = {};
 var navigating = false;
-var historyConstructed = false;
+
 
 function showExtension(extension, direction, fromBackButton, invisibly) {
 	/* Arguments:
@@ -1172,7 +1175,7 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		if (options.buttonAction) {
 			if (options.buttonTitle) $(".hud-notification .button").text(options.buttonTitle);
 			if (options.buttonAction == "close") {
-				$(".hud-notification .button").attr("onclick", "notify(undefined, currentNotificationID);");
+				$(".hud-notification .button").attr("onclick", "beo.notify(undefined, currentNotificationID);");
 			} else {
 				$(".hud-notification .button").attr("onclick", options.buttonAction);
 			}

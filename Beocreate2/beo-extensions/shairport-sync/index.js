@@ -304,11 +304,12 @@ var request = require('request'); // for sending HTTP requests to the DACP serve
 	
 	
 	var streamClosedForShutdown = false;
+	var airPlayMetadataRestartTimeout;
 	function streamMetadata() {
 		streamClosedForShutdown = false;
 		airPlayMetadataStream = fs.createReadStream(airPlayMetadataPath); // read from shairport-sync metadata
 		
-		if (debug) console.log("Reading shairport-sync metadata from: "+airPlayMetadataPath+"...");
+		//if (debug) console.log("Reading shairport-sync metadata from: "+airPlayMetadataPath+"...");
 		airPlayMetadataStream.setEncoding('utf8');
 		
 		airPlayMetadataStream.on('data', processAirPlayMetadata);
@@ -320,10 +321,14 @@ var request = require('request'); // for sending HTTP requests to the DACP serve
 		
 		airPlayMetadataStream.on('close', function(error) {
 			if (!error) {
-				if (debug) console.log("AirPlay metadata stream closed.");
+				//if (debug) console.log("AirPlay metadata stream closed.");
 				airPlayMetadataStream.destroy();
-				if (!streamClosedForShutdown) streamMetadata();
-				
+				if (!streamClosedForShutdown) {
+					clearTimeout(airPlayMetadataRestartTimeout);
+					airPlayMetadataRestartTimeout = setTimeout(function() {
+						streamMetadata();
+					}, 2000);
+				}
 			} else {
 				if (debug) console.log("Error closing shairport-sync metadata stream: "+error);
 			}

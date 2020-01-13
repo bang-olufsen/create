@@ -1,6 +1,6 @@
 {
   "name": "beocreate-2",
-  "version": "2.1.0",
+  "version": "2.1.2",
   "description": "Software for Beocreate sound systems",
   "main": "beo-server.js",
   "scripts": {
@@ -22,6 +22,7 @@
   "dependencies": {
     "aplay": "^1.2.0",
     "eventemitter3": "^3.1.2",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+	"underscore": "^1.9.1"
   }
 }

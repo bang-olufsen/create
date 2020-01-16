@@ -78,7 +78,7 @@ console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen
 cmdArgs = process.argv.slice(2);
 if (cmdArgs.indexOf("v") != -1) debugMode = 1;
 if (cmdArgs.indexOf("vv") != -1) debugMode = 2;
-if (cmdArgs.indexOf("vvv") != -1) debugMode = 2;
+if (cmdArgs.indexOf("vvv") != -1) debugMode = 3;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 if (cmdArgs.indexOf("dev") != -1) developerMode = true;
 if (cmdArgs.indexOf("q") != -1) quietMode = true;

@@ -248,6 +248,11 @@ if (Gpio) {
 			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
 			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
 		}
+		
+		if (event.header == "server-notify") {
+			// Called by the HiFiBerry SigmaDSP server.
+			console.log("Notification from DSP:", event.content);
+		}
 	});
 	
 	function getCurrentChecksumAndMetadata(callback, startup) {

@@ -185,11 +185,14 @@ function getSettings(extension) {
 				if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
 			} catch (error) {
 				console.error("Error loading settings for '"+extension+"':", error);
+				settings = null;
 			}
 		} else {
 			// If the settings file doesn't exist, return null.
 			settings = null;
 		}
+	} else {
+		settings = null;
 	}
 	return settings;
 }

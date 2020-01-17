@@ -27,7 +27,7 @@ var mathPI = Math.PI;
 // BIQUAD FILTER CALCULATION FUNCTIONS
 
 // Peak filter
-function peak(Fs, Fc, dBBoost, Q, gain) {
+function peak(Fs, Fc, dBBoost, Q, gain = 0) {
 	// Equivalent to the "Parametric" 2nd order filter in SigmaStudio
 	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
@@ -50,11 +50,8 @@ function peak(Fs, Fc, dBBoost, Q, gain) {
 
 
 // 2nd order lowpass
-function lowPass(Fs, Fc, gain, Q) {
+function lowPass(Fs, Fc, gain, Q = 1 / Math.sqrt(2)) {
 	// If Q is not defined, calculate filter as Butterworth.
-	if (Q == undefined) {
-		Q = 1 / Math.sqrt(2);
-	}
 	
 	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
@@ -76,11 +73,8 @@ function lowPass(Fs, Fc, gain, Q) {
 
 
 // 2nd order highpass
-function highPass(Fs, Fc, gain, Q) {
+function highPass(Fs, Fc, gain, Q = 1 / Math.sqrt(2)) {
 	// If Q is not defined, calculate filter as Butterworth.
-	if (Q == undefined) {
-		Q = 1 / Math.sqrt(2);
-	}
 	
 	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
@@ -101,7 +95,7 @@ function highPass(Fs, Fc, gain, Q) {
 }
 
 // Low-shelf filter
-function lowShelf(Fs, Fc, dBBoost, slope, gain) {
+function lowShelf(Fs, Fc, dBBoost, slope, gain = 0) {
 	// 2nd-order low-shelf filter
 	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
@@ -123,7 +117,7 @@ function lowShelf(Fs, Fc, dBBoost, slope, gain) {
 }
 
 // High-shelf filter
-function highShelf(Fs, Fc, dBBoost, slope, gain) {
+function highShelf(Fs, Fc, dBBoost, slope, gain = 0) {
 	// 2nd-order high-shelf filter
 	w0 = 2 * mathPI * Fc / Fs;
 	gainLinear = Math.pow(10, (gain / 20));
@@ -229,6 +223,15 @@ function logCoefficients(range) {
 		b = 11.51;
 	}
 	return [a, b];
+}
+
+return {
+	peak: peak,
+	lowPass: lowPass,
+	highPass: highPass,
+	lowShelf: lowShelf,
+	highShelf: highShelf,
+	convertVolume: convertVolume
 }
 
 })();

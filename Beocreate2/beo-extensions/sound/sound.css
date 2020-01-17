@@ -28,3 +28,7 @@ section:not(.advanced-sound-adjustments) h2.advanced-adjustment {
 section.advanced-sound-adjustments .simple-adjustment {
 	/*display: none !important;*/
 }
+
+#sound .advanced-adjustment.no-animation {
+	transition: none;
+}

@@ -11,12 +11,12 @@
 		
 		<div class="tabs-container network-tabs">
 			<div class="tabs">
-				<div class="selected" data-select-tab="network-wireless">Wireless</div>
-				<div data-select-tab="network-wired">Wired</div>
+				<div class="selected" data-select-tab="network-wireless" data-tab-callback="network.showingWifiTab">Wireless</div>
+				<div data-select-tab="network-wired" data-tab-callback="network.showingEthernetTab">Wired</div>
 			</div>
 		</div>
 		
-		<div class="tab visible" data-tab-id="network-wireless" data-tab-callback="network.showingWifiTab">
+		<div class="tab visible" data-tab-id="network-wireless">
 		<div class="menu-content">
 			<p class="setup-prompt">Connect to a network to stream music and control the sound system.</p>
 			<!--<div class="menu-item icon setup-only" onclick="beo.showMenuTab('network-wired');">
@@ -73,7 +73,7 @@
 	
 	
 	
-	<div class="tab" data-tab-id="network-wired" data-tab-callback="network.showingEthernetTab">
+	<div class="tab" data-tab-id="network-wired">
 		<div class="menu-content">
 			<p class="setup-prompt">Connect to a network to stream music and control the sound system.</p>
 			

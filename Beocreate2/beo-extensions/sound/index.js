@@ -156,9 +156,10 @@ var request = require('request');
 				}, 1);
 				break;
 			case "advancedSoundAdjustmentsEnabled":
-				settings.advancedSoundAdjustmentsEnabled = (event.content.enabled) ? true : false;
-				
-				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "sound", settings: settings}});
+				if (event.content && event.content.enabled != undefined) {
+					settings.advancedSoundAdjustmentsEnabled = (event.content.enabled) ? true : false;
+					beo.bus.emit("settings", {header: "saveSettings", content: {extension: "sound", settings: settings}});
+				}
 				beo.bus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
 				break;
 		}

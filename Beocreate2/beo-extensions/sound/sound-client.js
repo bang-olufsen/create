@@ -34,11 +34,17 @@ $(document).on("ui", function(event, data) {
 	}
 });
 
-
+advancedModeChecked = false;
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			beo.send({target: "sound", header: "getVolume"});
+		}
+	}
+	
+	if (data.header == "activatedExtension") {
+		if (extensions[data.content.extension].parentMenu == "sound" || data.content.extension == "sound") {
+			if (!advancedModeChecked) beo.sendToProduct("sound", {header: "advancedSoundAdjustmentsEnabled"});
 		}
 	}
 });
@@ -72,6 +78,13 @@ function toggleAdvancedSoundAdjustments(enabled) {
 
 function showAdvancedSoundAdjustmentsEnabled(enabled) {
 	
+	if (!advancedModeChecked) {
+		$("#sound .advanced-adjustment").addClass("no-animation");
+		advancedModeChecked = true;
+		setTimeout(function() {
+			$("#sound .advanced-adjustment").removeClass("no-animation");
+		}, 500);
+	}
 	if (enabled || alwaysShowAdvancedAdjustments) {
 		advancedSoundAdjustmentsEnabled = true;
 		$('section[data-top-level-menu-id="sound"]').addClass("advanced-sound-adjustments");

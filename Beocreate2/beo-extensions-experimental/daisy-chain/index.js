@@ -74,13 +74,15 @@ beo.bus.on('daisy-chain', function(event) {
 	
 	if (event.header == "disableDaisyChaining") {
 		// This may be called by other extensions when making changes to sound that can't be synchronised.
-		settings.daisyChainEnabled = false;
-		if (event.content.reason) {
-			settings.daisyChainDisabledReason = event.content.reason;
+		if (settings.daisyChainEnabled) {
+			settings.daisyChainEnabled = false;
+			if (event.content.reason) {
+				settings.daisyChainDisabledReason = event.content.reason;
+			}
+			beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
+			beo.saveSettings("daisy-chain", settings);
+			applyDaisyChainEnabledFromSettings();
 		}
-		beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
-		beo.saveSettings("daisy-chain", settings);
-		applyDaisyChainEnabledFromSettings();
 	}
 	
 	if (event.header == "assistantProgress") {
@@ -148,6 +150,7 @@ function applyDaisyChainEnabledFromSettings(startup) {
 }
 
 function setChannelRole(channel, role, roleText) {
+	// Sets channel roles of the connected slave amplifier over SPDIF.
 	// Assumes that whoever (probably Channels extension) uses this function, knows what the different channel roles are.
 	channelIndex = ("abcd").indexOf(channel.toLowerCase());
 	if (channelIndex != -1 && !isNaN(role)) {

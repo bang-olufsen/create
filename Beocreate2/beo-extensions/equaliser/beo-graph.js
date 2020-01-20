@@ -19,11 +19,11 @@
 	self = this;
 	this.container = container;
 	this.graphs = [
-		{data: [], show: true, fill: false, lineWidth: 1.5},
-		{data: [], show: true, fill: false, lineWidth: 1.5},
-		{data: [], show: true, fill: false, lineWidth: 1.5},
-		{data: [], show: true, fill: false, lineWidth: 1.5},
-		{data: [], show: true, fill: false, lineWidth: 1.5}
+		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0}
 	];
 	this.pi = Math.PI;
 	
@@ -73,7 +73,24 @@
 		}, 100);
 	});
 	
-	
+	this.calculateMasterGraph = function(fromGraph, withOffset) {
+		// Sum all subgraphs.
+		master = [];
+		for (var i = 0; i < this.resolution; i++) {
+			plotPoint = 0;
+			plotPhasePoint = 0;
+			plotFreq = null;
+			for (var a = 0; a < this.graphs[fromGraph].data.length; a++) {
+				if (this.graphs[fromGraph].data[a]) {
+					plotFreq = this.graphs[fromGraph].data[a][i][0];
+					plotPoint += this.graphs[fromGraph].data[a][i][1];
+				}
+			}
+			plotPoint += withOffset;
+			master.push([plotFreq, plotPoint]);
+		}
+		return master;
+	}
 }
 
 Beograph.prototype.setOptions = function(options, autoDraw) {
@@ -178,34 +195,29 @@ Beograph.prototype.store = function(target, options, autoDraw) {
 			targetSubgraph = target[i][1];
 			
 		}
+		recalculateMaster = false;
+		if (options.offset != undefined) {
+			if (options.offset != this.graphs[targetGraph].offset) recalculateMaster = true; 
+			this.graphs[targetGraph].offset = options.offset;
+		}
 		
 		if (options.clearData) {
 			this.graphs[targetGraph].data = [];
 			delete this.graphs[targetGraph].master;
 		} else if (points) {
+			recalculateMaster = true;
 			this.graphs[targetGraph].data[targetSubgraph] = points;
 			
-			if (this.graphs[targetGraph].data.length > 1) {
-				// Sum all subgraphs.
-				this.graphs[targetGraph].master = [];
-				for (var i = 0; i < this.resolution; i++) {
-					plotPoint = 0;
-					plotPhasePoint = 0;
-					plotFreq = null;
-					for (var a = 0; a < this.graphs[targetGraph].data.length; a++) {
-						if (this.graphs[targetGraph].data[a]) {
-							plotFreq = this.graphs[targetGraph].data[a][i][0];
-							plotPoint += this.graphs[targetGraph].data[a][i][1];
-						}
-					}
-					this.graphs[targetGraph].master.push([plotFreq, plotPoint]);
-				}
-			} else if (this.graphs[targetGraph].data.length == 1) {
-				this.graphs[targetGraph].master = this.graphs[targetGraph].data[0];
-			} else {
+			if (this.graphs[targetGraph].data.length == 0) {
 				delete this.graphs[targetGraph].master;
+				recalculateMaster = false;
 			}
 		}
+		
+		if (recalculateMaster) {
+			this.graphs[targetGraph].master = this.calculateMasterGraph(targetGraph, this.graphs[targetGraph].offset);
+		}
+		
 		if (options.colour != undefined) {
 			this.graphs[targetGraph].colour = options.colour;
 		}
@@ -267,26 +279,17 @@ Beograph.prototype.copyData = function(source, target, autoDraw) {
 			}
 		}
 		
-		if (this.graphs[targetGraph].data.length > 1) {
-			// Sum all subgraphs.
-			this.graphs[targetGraph].master = [];
-			for (var i = 0; i < this.resolution; i++) {
-				plotPoint = 0;
-				plotPhasePoint = 0;
-				plotFreq = null;
-				for (var a = 0; a < this.graphs[targetGraph].data.length; a++) {
-					if (this.graphs[targetGraph].data[a]) {
-						plotFreq = this.graphs[targetGraph].data[a][i][0];
-						plotPoint += this.graphs[targetGraph].data[a][i][1];
-					}
-				}
-				this.graphs[targetGraph].master.push([plotFreq, plotPoint]);
-			}
-		} else if (this.graphs[targetGraph].data.length == 1) {
-			this.graphs[targetGraph].master = this.graphs[targetGraph].data[0];
-		} else {
+		if (this.graphs[targetGraph].data.length == 0) {
 			delete this.graphs[targetGraph].master;
+			recalculateMaster = false;
+		} else {
+			recalculateMaster = true;
 		}
+		
+		if (recalculateMaster) {
+			this.graphs[targetGraph].master = this.calculateMasterGraph(targetGraph, this.graphs[targetGraph].offset);
+		}
+		
 	}
 	if (autoDraw) this.draw();
 }

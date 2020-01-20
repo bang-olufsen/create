@@ -24,11 +24,12 @@ Keep track of layers in the UI
 8  - Popup views + plexi
 +
 +
-5  - Navigation, both full and compact, now playing
-4  - Navigation plexiglass back, in compact layout
-3  - Setup button
-2  - Headers
-1  - Tabs in menus
+6  - Navigation, both full and compact, now playing
+5  - Navigation plexiglass back, in compact layout
+4  - Setup button
+3  - Headers
+2  - Tabs in menus
+1  - All other content (top)
 0  - All other content
 
 */
@@ -190,7 +191,7 @@ nav.full {
 	overflow-y: scroll;
 	-webkit-overflow-scrolling: touch;
 	padding: 3px 20px 10px;
-	z-index: 5;
+	z-index: 6;
 	-webkit-user-select: none;
 	cursor: default;
 }
@@ -287,7 +288,7 @@ nav.full .nav-content {
 nav.bar {
 	/*outline: 1px solid rgba(0, 0, 0, 0.1);*/
 	position: relative;
-	z-index: 5;
+	z-index: 6;
 	font-size: 18px;
 	/*background: #f5f5f5;*/
 	background-color: #eee;
@@ -454,7 +455,7 @@ nav.favourites {
 	outline: 1px solid rgba(255, 255, 255, 0.2);
 	/*background-color: #eee;
 	outline: 1px solid rgba(0, 0, 0, 0.1);*/
-	z-index: 5;
+	z-index: 6;
 	-webkit-user-select: none;
 	flex-shrink: 0;
 	color: white;
@@ -537,7 +538,7 @@ nav.favourites div:active img {
 	outline: 1px solid rgba(255, 255, 255, 0.1);
 	/*background-color: #eee;
 	outline: 1px solid rgba(0, 0, 0, 0.1);*/
-	z-index: 5;
+	z-index: 6;
 	-webkit-user-select: none;
 	flex-shrink: 0;
 	color: white;
@@ -675,7 +676,7 @@ header {
 	padding-left: 20px;
 	padding-right: 20px;
 	position: relative;
-	z-index: 2;
+	z-index: 3;
 	flex-shrink: 0;
 	text-align: center;
 	display: flex;
@@ -693,7 +694,7 @@ header.large {
 .header-container {
 	/*background-color: var(--ultra-light-grey);*/
 	box-shadow: 0px 1px 0px var(--menu-line);
-	z-index: 2;
+	z-index: 3;
 }
 
 
@@ -848,7 +849,7 @@ section.animating {
 	bottom: 0;
 	left: 0;
 	width: 7px;
-	z-index: 5;
+	z-index: 6;
 }
 
 .touch .menu-screen.hidden-left {
@@ -1330,7 +1331,7 @@ hr.no-margin-top {
 	background-color: transparent;
 	border: 1px solid black;
 	transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-	z-index: 1;
+	z-index: 2;
 	position: relative;
 	overflow: hidden;
 	box-sizing: border-box;
@@ -1432,7 +1433,7 @@ h2.sticky-header {
 	opacity: 1;
 	margin: 0 -20px;
 	padding: 0.5em 20px;
-	z-index: 1;
+	z-index: 2;
 	color: gray;
 	height: 23px;
 	box-shadow: 0 -1px rgba(255, 255, 255, 0.95);
@@ -2206,6 +2207,17 @@ a.button {
 	color: black;
 }
 
+.button.pill.popup-button {
+	justify-content: flex-start;
+	padding-left: 1em;
+}
+
+.button.pill.popup-button:after {
+	margin-top: -11px;
+	top: 50%;
+	right: 0.3em;
+}
+
 .button-row {
 	display: flex;
 	justify-content: space-between;
@@ -2326,7 +2338,7 @@ a.button {
 	position: relative;
 	flex-shrink: 0;
 	margin-bottom: 0;
-	z-index: 1;
+	z-index: 2;
 }
 
 .tabs-container {
@@ -2334,7 +2346,7 @@ a.button {
 	position: -webkit-sticky;
 	top: 0;
 	background-color: var(--main-bg);
-	z-index: 1;
+	z-index: 2;
 	padding-top: 0.1px; /* Dirty hack to prevent margin from collapsing on .tabs */
 }
 
@@ -2492,17 +2504,6 @@ a.button {
 	display: block;
 }
 
-.tabs .channel-dot {
-	background-color: gray;
-	width: 9px;
-	height: 9px;
-	border-radius: 50%;
-	margin-bottom: 0.1em;
-	margin-left: 0.3em;
-	flex-shrink: 0;
-	flex-grow: 0;
-}
-
 /* @end */
 
 /* @group Sliders */
@@ -2516,6 +2517,7 @@ a.button {
 .slider-wrap .symbol {
 	margin: 7px 10px;
 }
+
 
 .slider-wrap.white .symbol,
 .dark .slider-wrap .symbol {
@@ -2662,7 +2664,7 @@ a.button {
 }
 
 .yellow .ui-slider-range,
-.yellow.ui-slider span,
+.yellow.ui-slider span
  {
 	background-color: var(--yellow);
 }
@@ -3358,6 +3360,30 @@ input::-webkit-search-decoration {
 
 /* @group Channel Dots */
 
+.channel-dot {
+	background-color: gray;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.tabs .channel-dot {
+	margin-bottom: 0.1em;
+	margin-left: 0.3em;
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+
+h2 .channel-dot {
+	margin-left: 0.3em;
+}
+
+.menu-item .channel-dot {
+	height: 9px;
+	width: 9px;
+	margin-right: 26px;
+}
 
 .channel-dot.red,
 .channel-dot.a {
@@ -3496,7 +3522,7 @@ input::-webkit-search-decoration {
 .setup-navigation {
 	/*position: absolute;*/
 	padding: 0 20px 20px;
-	z-index: 3;
+	z-index: 4;
 	display: none;
 	/*background-color: rgba(255,255,255,0.3);*/
 	/*box-shadow: 0 -1px var(--menu-line);*/
@@ -3584,7 +3610,7 @@ nav.bar {
 }
 
 #nav-back-plate {
-	z-index: 4;
+	z-index: 5;
 }
 
 
@@ -3695,7 +3721,7 @@ h1.large-title:after {
 	box-shadow: 0px 1px 0px var(--menu-line);
 	position: relative;
 	box-sizing: border-box;
-	z-index: 3;
+	z-index: 4;
 	margin-bottom: 0;
 }
 
@@ -3912,7 +3938,7 @@ h1.large-title {
 	right: 0;
 	height: 60px;
 	width: 100%;
-	z-index: 1;
+	z-index: 2;
 }
 
 .setup .setup-navigation, 

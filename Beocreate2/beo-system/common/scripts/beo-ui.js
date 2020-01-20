@@ -1266,6 +1266,7 @@ function showMenuTab(tabID, noCallback = false) {
 			console.error("Function '"+$(".tabs div[data-select-tab="+tabID+"]").attr("data-tab-callback")+"', triggered by tab change, doesn't exist.");
 		}
 	}
+	updateSliderWidths(); // For some reason, changing tabs affects the appearance of the balance slider.
 }
 
 

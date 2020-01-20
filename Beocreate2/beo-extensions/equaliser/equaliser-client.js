@@ -79,7 +79,6 @@ $(document).on("equaliser", function(event, data) {
 			}
 			selectChannel(); // Will automatically draw filters when ready.
 		}
-		
 		groupChannels(false, true);
 	}
 	

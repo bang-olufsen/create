@@ -3,49 +3,49 @@
 	<beometa>
 		<metadata type="sampleRate">48000</metadata>
 		<metadata type="profileName">Beocreate Universal</metadata>
-		<metadata type="profileVersion">9</metadata>
+		<metadata type="profileVersion">10</metadata>
 		<metadata type="programID">beocreate-universal</metadata>
 		<metadata type="modelName" modelID="beocreate-4ca-mk1">Beocreate 4-Channel Amplifier</metadata>
 		<metadata type="checksum">D511CBD21651C906D598CDC080CA5FDE</metadata>
-		<metadata type="balanceRegister">791</metadata>
+		<metadata type="balanceRegister" storable="yes">791</metadata>
 		<metadata type="readIsDaisyChainSlaveRegister">86</metadata>
 		<metadata type="canBecomeDaisyChainSlaveRegister">4827</metadata>
 		<metadata type="muteRegister">4828</metadata>
-		<metadata type="muteInvertRegister">4849</metadata>
+		<metadata type="muteInvertRegister" storable="yes">4849</metadata>
 		<metadata type="enableSPDIFTransmitterRegister">4829</metadata>
-		<metadata type="sensitivitySPDIFRegister">79</metadata>
-		<metadata type="enableSPDIFRegister">4834</metadata>
+		<metadata type="sensitivitySPDIFRegister" storable="yes">79</metadata>
+		<metadata type="enableSPDIFRegister" storable="yes">4834</metadata>
 		<metadata type="readSPDIFOnRegister">85</metadata>
 		<metadata type="tuningForkPitchRegister">24</metadata>
 		<metadata type="tuningForkOnRegister">25</metadata>
-		<metadata type="customFilterRegisterBankLeft">321/80</metadata>
-		<metadata type="customFilterRegisterBankRight">241/80</metadata>
-		<metadata type="toneControlRightRegisters">100/70</metadata>
-		<metadata type="toneControlLeftRegisters">171/70</metadata>
-		<metadata type="channelSelectDRegister" channels="left,right,mono,side" multiplier="1">4853</metadata>
-		<metadata type="channelSelectCRegister" channels="left,right,mono,side" multiplier="1">4856</metadata>
-		<metadata type="channelSelectBRegister" channels="left,right,mono,side" multiplier="1">4855</metadata>
-		<metadata type="channelSelectARegister" channels="left,right,mono,side" multiplier="1">4854</metadata>
-		<metadata type="invertDRegister">4857</metadata>
-		<metadata type="invertCRegister">4858</metadata>
-		<metadata type="invertBRegister">4859</metadata>
-		<metadata type="invertARegister">4860</metadata>
-		<metadata type="IIR_D">443/80</metadata>
-		<metadata type="IIR_C">523/80</metadata>
-		<metadata type="IIR_B">603/80</metadata>
-		<metadata type="IIR_A">683/80</metadata>
-		<metadata type="levelsARegister">773</metadata>
-		<metadata type="levelsBRegister">770</metadata>
-		<metadata type="levelsCRegister">767</metadata>
-		<metadata type="levelsDRegister">764</metadata>
-		<metadata type="volumeControlRegister">98</metadata>
+		<metadata type="customFilterRegisterBankLeft" storable="yes">321/80</metadata>
+		<metadata type="customFilterRegisterBankRight" storable="yes">241/80</metadata>
+		<metadata type="toneControlRightRegisters" storable="yes">100/70</metadata>
+		<metadata type="toneControlLeftRegisters" storable="yes">171/70</metadata>
+		<metadata type="channelSelectDRegister" channels="left,right,mono,side" multiplier="1" storable="yes">4853</metadata>
+		<metadata type="channelSelectCRegister" channels="left,right,mono,side" multiplier="1" storable="yes">4856</metadata>
+		<metadata type="channelSelectBRegister" channels="left,right,mono,side" multiplier="1" storable="yes">4855</metadata>
+		<metadata type="channelSelectARegister" channels="left,right,mono,side" multiplier="1" storable="yes">4854</metadata>
+		<metadata type="invertDRegister" storable="yes">4857</metadata>
+		<metadata type="invertCRegister" storable="yes">4858</metadata>
+		<metadata type="invertBRegister" storable="yes">4859</metadata>
+		<metadata type="invertARegister" storable="yes">4860</metadata>
+		<metadata type="IIR_D" storable="yes">443/80</metadata>
+		<metadata type="IIR_C" storable="yes">523/80</metadata>
+		<metadata type="IIR_B" storable="yes">603/80</metadata>
+		<metadata type="IIR_A" storable="yes">683/80</metadata>
+		<metadata type="levelsARegister" storable="yes">773</metadata>
+		<metadata type="levelsBRegister" storable="yes">770</metadata>
+		<metadata type="levelsCRegister" storable="yes">767</metadata>
+		<metadata type="levelsDRegister" storable="yes">764</metadata>
+		<metadata type="volumeControlRegister" storable="yes">98</metadata>
 		<metadata type="volumeLimitRegister">67</metadata>
-		<metadata type="volumeLimitPiRegister">67</metadata>
-		<metadata type="volumeLimitSPDIFRegister">70</metadata>
-		<metadata type="delayARegister" maxDelay="2000">778</metadata>
-		<metadata type="delayDRegister" maxDelay="2000">775</metadata>
-		<metadata type="delayCRegister" maxDelay="2000">776</metadata>
-		<metadata type="delayBRegister" maxDelay="2000">777</metadata>
+		<metadata type="volumeLimitPiRegister" storable="yes">67</metadata>
+		<metadata type="volumeLimitSPDIFRegister" storable="yes">70</metadata>
+		<metadata type="delayARegister" maxDelay="2000" storable="yes">778</metadata>
+		<metadata type="delayDRegister" maxDelay="2000" storable="yes">775</metadata>
+		<metadata type="delayCRegister" maxDelay="2000" storable="yes">776</metadata>
+		<metadata type="delayBRegister" maxDelay="2000" storable="yes">777</metadata>
 	</beometa>
   <dateTime>2019-12-02T18:06:59.8034884Z</dateTime>
   <version>4.2.1.1764</version>

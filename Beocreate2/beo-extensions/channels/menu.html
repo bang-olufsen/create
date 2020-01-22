@@ -5,39 +5,125 @@
 	</header>
 	
 	<div class="scroll-area">
-		<div class="menu-content">
-				
-				
-			<div id="simple-channel-select">
-				<h2>Speaker Role</h2>
-				<div class="segmented-control disabled" id="simple-channel-select-control">
-					<div onclick="channels.selectChannelSimple('left');" class="left">Left</div>
-					<div onclick="channels.selectChannelSimple('mono');" class="mono">Mono</div>
-					<div onclick="channels.selectChannelSimple('right');" class="right">Right</div>
-				</div>
-				<div id="simple-stereo-control" class="hidden disabled">
-					<div class="stereo-toggle-wrap">
-						<div>
-							<div class="button pill outline" id="stereo-toggle" onclick="channels.selectChannelSimple('stereo');">Stereo</div>
+		<div class="tabs-container channels-tabs advanced-adjustment">
+			<div class="tabs">
+				<div class="selected" data-select-tab="channels-basics">Basics</div>
+				<div data-select-tab="channels-advanced">Advanced</div>
+			</div>
+		</div>
+		<div class="tab visible" data-tab-id="channels-basics">
+			<div class="menu-content">
+					
+					
+				<div id="simple-channel-select">
+					<h2>Speaker Role</h2>
+					<div class="segmented-control disabled" id="simple-channel-select-control">
+						<div onclick="channels.selectRoleSimple('left');" class="left">Left</div>
+						<div onclick="channels.selectRoleSimple('mono');" class="mono">Mono</div>
+						<div onclick="channels.selectRoleSimple('right');" class="right">Right</div>
+					</div>
+					<div id="simple-stereo-control" class="hidden disabled">
+						<div class="stereo-toggle-wrap">
+							<div>
+								<div class="button pill outline" id="stereo-toggle" onclick="channels.selectRoleSimple('stereo');">Stereo</div>
+							</div>
 						</div>
 					</div>
+					<p id="channels-custom-roles-message" class="hidden">Custom speaker roles have been set. <a href="#" onclick="channels.showAdvancedSettings();">Show advanced settings.</a></p>
+					<p id="channels-daisy-chained-message" class="channels-daisy-chained hidden">Two amplifiers are chained. <a href="#" onclick="beo.showExtension('daisy-chain');">Show settings.</a></p>
 				</div>
-				<p id="channels-daisy-chained-message" class="hidden">Two amplifiers are chained. <a href="#" onclick="beo.showExtension('daisy-chain');">Show settings.</a></p>
-			</div>
-			
-			<div id="simple-balance-control">
-				<h2>Balance</h2>
 				
-				<div class="slider-wrap">
-					<div class="end-text">L</div>
-					<div class="master-balance-slider show-value range-from-centre black" id="balance-slider-simple"></div>
-					<div class="end-text">R</div>
+				<div id="simple-balance-control">
+					<h2>Balance</h2>
+					
+					<div class="slider-wrap">
+						<div class="end-text">L</div>
+						<div class="master-balance-slider show-value range-from-centre black" id="balance-slider-simple"></div>
+						<div class="end-text">R</div>
+					</div>
 				</div>
+				
+				
 			</div>
-			
+		</div>
+		
+		<div class="tab" data-tab-id="channels-advanced">
+			<div class="menu-content">
+				
+				<h2 class="channels-daisy-chained">Master speaker</h2>
+				<div id="channels-advanced-container">
+					<div class="channels-channel-item">
+						<div class="channel-item-upper">
+							<img src="€/drivers/mid-full.png" class="driver-icon disabled" />
+							<div class="channel-letter-and-type">
+								<div class="channel-letter"><span>A</span><div class="channel-dot"></div></div>
+								<p class="channel-type"></p>
+							</div>
+							<div class="segmented-control role-select-control">
+								
+							</div>
+							<div class="button pill popup-button outline selected-role" title="Select channel role">
+								???
+							</div>
+						</div>
+						<div class="channel-item-lower">
+							<div class="channel-level-slider show-value"></div>
+							<div class="symbol-wrap">
+								<div class="symbol-value right">0 dB</div>
+								<div class="symbol button channel-mute" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);" title="Mute or set volume"></div>
+							</div>
+							<!--<div class="symbol-wrap right show-value">
+								<div class="symbol-value">2 ms</div>
+								<div class="symbol button" style="-webkit-mask-image: url(€/symbols-black/clock.svg); mask-image: url(€/symbols-black/clock.svg);" title="Delay"></div>
+							</div>-->
+							<div class="symbol-wrap">
+								<div class="symbol button channel-invert" style="-webkit-mask-image: url(€/symbols-black/invert.svg); mask-image: url(€/symbols-black/invert.svg);" title="Invert polarity"></div>
+							</div>
+						</div>
+						<hr>
+					</div>
+				</div>
+				
+				<div class="channels-daisy-chained">
+					<h2>Slave speaker</h2>
+				
+				
+				</div>
+				<!--<div class="channels-channel-item">
+					<h2>D<div class="channel-dot blue"></div></h2>
+						
+					<div class="segmented-control channel-select-control">
+						<div class="left">Left</div>
+						<div class="mono">Mid</div>
+						<div class="side">Side</div>
+						<div class="right">Right</div>
+					</div>
+					<div class="channel-item-lower">
+						<div class="channel-level-slider channel-level-d blue show-value"></div>
+						<div class="symbol button margin-left" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
+						<div class="symbol button" style="-webkit-mask-image: url(€/symbols-black/invert.svg); mask-image: url(€/symbols-black/invert.svg);"></div>
+					</div>
+				</div>
+				<hr>-->
+			</div>
 			
 		</div>
 		
+	</div>
+	
+	<div class="popup-content hidden" id="advanced-channel-settings-popup">
+		<header class="popup">
+			<div class="button symbol left" onclick="channels.showAdvancedSettingsPopup();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Channel Settings</h1>
+		</header>
+		
+		<div class="scroll-area">
+			<div class="menu-content">
+				
+				
+				
+			</div>
+		</div>
 	</div>
 	
 </div>

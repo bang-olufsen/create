@@ -123,6 +123,7 @@ $( "#tone-touch-dot" ).draggable({
 				toneTouchXY[1] = 100;
 			}
 			
+			setToneTouchFieldColours(toneTouchXY[0], toneTouchXY[1]);
 			sendFilter();
 			//if (toneTouchXY[0] > 45 && toneTouchXY[0] < 55 && toneTouchXY[1] > 45 && toneTouchXY[1] < 55) {
 			$("#tone-touch-dot").css("left", toneTouchXY[0]+"%").css("top", 100-toneTouchXY[1]+"%");

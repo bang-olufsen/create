@@ -27,6 +27,7 @@ var _ = beo.underscore;
 	
 	var metadata = {};
 	var Fs = null;
+	var Pi = Math.PI;
 	
 	var defaultSettings = {
 		"a": [],
@@ -35,8 +36,8 @@ var _ = beo.underscore;
 		"d": [],
 		"ui": {
 			showAllChannels: true,
-			dBScale: 15,
-			displayQ: "oct",
+			dBScale: 20,
+			displayQ: "Q",
 			groupAB: false,
 			groupCD: false
 		}
@@ -52,6 +53,14 @@ var _ = beo.underscore;
 	};
 	// Store the amount of equaliser filter banks available in the DSP here.
 	
+	var filterResponses = {
+		"a": {data: [], master: []},
+		"b": {data: [], master: []},
+		"c": {data: [], master: []},
+		"d": {data: [], master: []}
+	};
+	
+	var driverTypes = {a: {}, b: {}, c: {}, d: {}};
 	
 	beo.bus.on('general', function(event) {
 		// See documentation on how to use beo.bus.
@@ -524,18 +533,24 @@ var _ = beo.underscore;
 				if (coeffs.length == 6) { 
 					// Apply the filter.
 					beoDSP.safeloadWrite(register, [coeffs[5], coeffs[4], coeffs[3], coeffs[2]*-1, coeffs[1]*-1], true);
+					calculateFilterResponse(channel, filterIndex, coeffs);
 				} else {
-					// Filter was probably bypassed, or settings were invalid.
+					// Settings were probably invalid.
 					beoDSP.safeloadWrite(register, [0, 0, 1, 0, 0], true);
+					filterResponses[channel].data[filterIndex] = null;
 				}
 				
 			} else {
 				// No settings for this filter, make it flat.
 				beoDSP.safeloadWrite(register, [0, 0, 1, 0, 0], true);
+				filterResponses[channel].data[filterIndex] = null;
 			}
 			sendCurrentSettingsToSoundPreset();
 		}
 	}
+	
+	
+	
 	groupIDs = [];
 	groupIDIndex = {a: 0, b: 0, c: 0, d: 0};
 	
@@ -668,13 +683,96 @@ var settingsSendTimeout;
 function sendCurrentSettingsToSoundPreset() {
 	clearTimeout(settingsSendTimeout);
 	settingsSendTimeout = setTimeout(function() {
+		for (var i = 0; i < 4; i++) {
+			channel = ("abcd").charAt(i);
+			calculateMasterGraphAndDrivers(channel);
+		}
+		
 		beo.bus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}}});
 	}, 1000);
+}
+
+function calculateFilterResponse(channel, filter, coeffs) {
+	points = [];
+	
+	for (var i = 0; i < 128; i++) {
+		freq = Math.pow(2, Math.log(0.5 / 0.0001) / Math.LN2 * (i / 128)) * 0.0001;
+		z = freq*Fs;
+		w = freq * 2 * Pi;
+		fi = Math.pow(Math.sin(w/2), 2);
+		y = Math.log(Math.pow(coeffs[3]+coeffs[4]+coeffs[5], 2) - 4 * (coeffs[3]*coeffs[4] + 4*coeffs[3]*coeffs[5] + coeffs[4]*coeffs[5]) * fi + 16*coeffs[3]*coeffs[5]*fi*fi) - Math.log(Math.pow(1+coeffs[1]+coeffs[2], 2) - 4 * (coeffs[1] + 4*coeffs[2] + coeffs[1]*coeffs[2])*fi + 16*coeffs[2]*fi*fi);
+		y = y * 10 / Math.LN10;
+		if (isNaN(y)) y = -200;
+		points.push([z, y]);
+	}
+	filterResponses[channel].data[filter] = points;
+}
+
+function calculateMasterGraphAndDrivers(channel) {
+	// Sum all subgraphs.
+	filterResponses[channel].master = [];
+	highestPoint = -35;
+	for (var i = 0; i < 128; i++) {
+		plotPoint = 0;
+		plotPhasePoint = 0;
+		plotFreq = null;
+		for (var a = 0; a < filterResponses[channel].data.length; a++) {
+			if (filterResponses[channel].data[a]) {
+				plotFreq = filterResponses[channel].data[a][i][0];
+				plotPoint += filterResponses[channel].data[a][i][1];
+			}
+		}
+		filterResponses[channel].master.push([plotFreq, plotPoint]);
+		if (plotPoint > highestPoint) highestPoint = plotPoint;
+	}
+	offset = (highestPoint < 0) ? highestPoint : 0;
+	lowCutoff = null;
+	highCutoff = null;
+	for (var i = 0; i < 128; i++) {
+		if (filterResponses[channel].master[i][1] > -6+offset) {
+			// Above -6 dB.
+			if (lowCutoff == null) lowCutoff = filterResponses[channel].master[i][0];
+			highCutoff = null; // Reset high cutoff whenever output is above -6 dB.
+		} else {
+			// Below -6 dB.
+			if (highCutoff == null) highCutoff = filterResponses[channel].master[i][0];
+		}
+	}
+	driverTypes[channel] = {type: getDriverType(lowCutoff, highCutoff), low: lowCutoff, high: highCutoff};
+}
+
+// Determines the type of the loudspeaker driver based on the given frequency range.
+function getDriverType(low, high) {
+	// If nulls are provided (HP/LP off), replace with default values.
+	if (low == null) low = 10;
+	if (high == null) high = 20000;
+	
+	// Look at low-end extension first and then match that with high-end extension.
+	
+	if (low < 200) { // Woofer-like low-end
+		if (high > 3000) {
+			driverType = "full-range";
+		} else if (high > 800) {
+			driverType = "mid-woofer";
+		} else {
+			driverType = "woofer";
+		}
+	} else if (low < 1000) { // Midrange-like low-end
+		if (high > 7000) {
+			driverType = "mid-tweeter";
+		} else {
+			driverType = "midrange";
+		}
+	} else { // Unquestionably this is a tweeter.
+		driverType = "tweeter";
+	}
+	return driverType;
 }
 		
 	
 module.exports = {
 	checkSettings: checkSettings,
+	getDriverTypes: function() {return driverTypes},
 	applySoundPreset: applySoundPreset,
 	version: version
 };

@@ -3588,10 +3588,13 @@ h2 .channel-dot {
 
 /* @group Image Cacher */
 
+.image-cacher {
+	position: absolute;
+	opacity: 0.1;
+}
+
 .image-cacher img {
 	width: 1px;
-	opacity: 0.1;
-	position: absolute;
 }
 
 /* @end */

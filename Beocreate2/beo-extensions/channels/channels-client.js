@@ -7,7 +7,6 @@ var canControl = {};
 
 var channelsUIPrepared = false;
 
-channelItem = $(".channels-channel-item");
 channelColours = ["red", "yellow", "green", "blue"];
 
 
@@ -23,6 +22,7 @@ $(document).on("general", function(event, data) {
 
 $(document).on("channels", function(event, data) {
 	if (data.header == "channelSettings") {
+		prepareChannelsUI();
 		
 		if (data.content.driverTypes != undefined) {
 			driverTypes = data.content.driverTypes;
@@ -48,11 +48,11 @@ $(document).on("channels", function(event, data) {
 			showSimpleRoleSelection(null);
 		}
 		
-		if (data.content.daisyChainEnabled) {
+		/*if (data.content.daisyChainEnabled) {
 			$(".channels-daisy-chained").removeClass("hidden");
 		} else {
 			$(".channels-daisy-chained").addClass("hidden");
-		}
+		}*/ // Handled by the daisy-chain extension.
 	}
 });
 
@@ -81,12 +81,16 @@ function balanceValueToText(value) {
 	return text;
 }
 
-function selectRole(channel, role = null) {
-	$(".channels-channel-item").removeClass("expand-role-selector");
+function selectRole(channel, role = null, isSlave = false) {
+	$(".channels-channel-item, .channels-slave-channel-item").removeClass("expand-role-selector");
 	if (role == null) { // Expand the selector.
-		$(".channel-item-"+channel).addClass("expand-role-selector");
+		if (!isSlave) {
+			$(".channel-item-"+channel).addClass("expand-role-selector");
+		} else {
+			$(".slave-channel-item-"+channel).addClass("expand-role-selector");
+		}
 	} else {
-		beo.send({target: "channels", header: "selectRole", content: {channel: channel, role: role}});
+		beo.send({target: "channels", header: "selectRole", content: {channel: channel, role: role, daisyChainRole: isSlave}});
 	}
 }
 
@@ -109,6 +113,11 @@ function showChannelSettings() {
 				$(".channel-item-"+channel+" .selected-role").text(beo.capitaliseFirst(channelSettings[channel].role));
 				$(".channel-item-"+channel+" .role-select-control > div").removeClass("selected");
 				$(".channel-item-"+channel+" .role-select-control > div."+channelSettings[channel].role).addClass("selected");
+			}
+			if (channelSettings.daisyChainRoles[channel]) {
+				$(".slave-channel-item-"+channel+" .selected-role").text(beo.capitaliseFirst(channelSettings.daisyChainRoles[channel]));
+				$(".slave-channel-item-"+channel+" .role-select-control > div").removeClass("selected");
+				$(".slave-channel-item-"+channel+" .role-select-control > div."+channelSettings.daisyChainRoles[channel]).addClass("selected");
 			}
 			
 			if (driverTypes[channel] && driverTypes[channel].type) {
@@ -173,6 +182,7 @@ function showCanControlChannels() {
 			}
 			for (var i = 0; i < rearrangedRoles.length; i++) {
 				$(".channel-item-"+channel+" .role-select-control").append("<div class=\""+rearrangedRoles[i]+"\" onclick=\"channels.selectRole('"+channel+"', '"+rearrangedRoles[i]+"');\">"+beo.capitaliseFirst(rearrangedRoles[i])+"</div>");
+				$(".slave-channel-item-"+channel+" .role-select-control").append("<div class=\""+rearrangedRoles[i]+"\" onclick=\"channels.selectRole('"+channel+"', '"+rearrangedRoles[i]+"', true);\">"+beo.capitaliseFirst(rearrangedRoles[i])+"</div>");
 			}
 			$("#simple-channel-select-control").removeClass("disabled");
 		}
@@ -236,7 +246,7 @@ function showSimpleRoleSelection(roleSelection) {
 
 function showAdvancedSettings() {
 	beo.sendToProduct("sound", {header: "advancedSoundAdjustmentsEnabled", content: {enabled: true}});
-	beo.showMenuTab("channels-advanced", true);
+	beo.showMenuTab("channels-advanced");
 }
 
 function showAdvancedSettingsPopup(channels) {
@@ -271,9 +281,13 @@ function toggleEnabled(channel) {
 
 function prepareChannelsUI() {
 	if (!channelsUIPrepared) {
+		channelsUIPrepared = true;
 		// Duplicate the advanced channel controls for all channels.
+		channelItem = $(".channels-channel-item");
+		slaveItem = $(".channels-slave-channel-item");
 		for (var i = 0; i < 4; i++) {
 			channel = ("abcd").charAt(i);
+			
 			newItem = channelItem.clone();
 			newItem.addClass("channel-item-"+channel+" "+channelColours[i]);
 			newItem.find(".channel-dot").addClass(channelColours[i]);
@@ -283,14 +297,18 @@ function prepareChannelsUI() {
 			newItem.find(".channel-mute").attr("onclick", "channels.toggleEnabled('"+channel+"');");
 			newItem.find(".channel-invert").attr("onclick", "channels.toggleInvert('"+channel+"');");
 			newItem.appendTo("#channels-advanced-container");
+			
+			newSlaveItem = slaveItem.clone();
+			newSlaveItem.addClass("slave-channel-item-"+channel+" "+channelColours[i]);
+			newSlaveItem.find(".channel-dot").addClass(channelColours[i]);
+			newSlaveItem.find(".channel-letter span").text(channel.toUpperCase());
+			newSlaveItem.find(".selected-role").attr("onclick", "channels.selectRole('"+channel+"', null, true);");
+			newSlaveItem.appendTo("#channels-daisy-chained-container");
 		}
 		channelItem.remove();
+		slaveItem.remove();
 		
 		attachChannelSliders();
-		
-		channelsUIPrepared = true;
-		
-		
 	}
 }
 
@@ -443,6 +461,14 @@ function getSpeakerTypeNameAndIcon(type) {
 	return [newTypeUI, newTypeIcon, hp, lp];
 }
 
+function showingTab(tab) {
+	if (tab == "advanced") {
+		$("#show-channels-connection-guide-button").removeClass("hidden");
+	} else {
+		$("#show-channels-connection-guide-button").addClass("hidden");
+	}
+}
+
 return {
 	generateSettingsPreview: generateSettingsPreview,
 	selectRole: selectRole,
@@ -450,7 +476,9 @@ return {
 	toggleEnabled: toggleEnabled,
 	toggleInvert: toggleInvert,
 	showAdvancedSettings: showAdvancedSettings,
-	showAdvancedSettingsPopup: showAdvancedSettingsPopup
+	showAdvancedSettingsPopup: showAdvancedSettingsPopup,
+	showingAdvancedTab: function() {showingTab('advanced')},
+	showingBasicsTab: function() {showingTab('basics')}
 }
 
 })();

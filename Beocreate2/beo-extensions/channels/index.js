@@ -244,7 +244,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 						//applyChannelLevelFromSettings(channel);
 					}
 					simpleChannelRoleFromSettings();
-					beo.bus.emit("ui", {target: "channels", header: "channelSettings", content: {settings: settings, simpleRoleSelection: simpleRoleSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup, daisyChainEnabled: daisyChainEnabled}});
+					beo.sendToUI("channels", {header: "channelSettings", content: {settings: settings, simpleRoleSelection: simpleRoleSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup, daisyChainEnabled: daisyChainEnabled}});
 					beo.saveSettings("channels", settings);
 				}
 			}
@@ -252,8 +252,24 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 		
 		if (event.header == "selectRole" && event.content.channel && event.content.role) {
+			roleChanged = false;
 			if (canControlChannels[event.content.channel].role.indexOf(event.content.role) != -1) {
-				settings[event.content.channel].role = event.content.role;
+				if (!event.content.daisyChainRole) {
+					// Master speaker.
+					if (settings[event.content.channel].role != event.content.role) {
+						settings[event.content.channel].role = event.content.role;
+						roleChanged = true;
+					}
+				} else {
+					// Slave speaker.
+					if (settings.daisyChainRoles[event.content.channel] != event.content.role) {
+						settings.daisyChainRoles[event.content.channel] = event.content.role;
+						roleChanged = true;
+					}	
+				}
+			}
+			
+			if (roleChanged) {
 				applyChannelRoleFromSettings(event.content.channel);
 				simpleChannelRoleFromSettings();
 				beo.sendToUI("channels", {header: "channelSettings", content: {settings: settings, simpleRoleSelection: simpleRoleSelection, canDoSimpleStereoSetup: canDoSimpleStereoSetup, daisyChainEnabled: daisyChainEnabled}});
@@ -363,6 +379,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				daisyChainEnabled = false;
 			}
 			checkIfCanDoSimpleStereoSetup();
+			simpleChannelRoleFromSettings();
 		}
 	});
 	
@@ -718,7 +735,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				roleArray = [];
 				if (settings.daisyChainRoles) {
 					for (channel in settings.daisyChainRoles) {
-						roleArray.push(settings.daisyChainRoles[channel].role);
+						roleArray.push(settings.daisyChainRoles[channel]);
 					}
 				}
 				if (roleArray.length == 4) {
@@ -726,14 +743,14 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					switch (roles) {
 						case "left-left-left-left":
 							if (simpleRoleSelection == "right") {
-								simpleRoleSelection = "stereo";
+								simpleRoleSelection = "stereo-rev";
 							} else if (simpleRoleSelection != "left") {
 								simpleRoleSelection = null;
 							}
 							break;
 						case "right-right-right-right":
 							if (simpleRoleSelection == "left") {
-								simpleRoleSelection = "stereo-rev";
+								simpleRoleSelection = "stereo";
 							} else if (simpleRoleSelection != "right") {
 								simpleRoleSelection = null;
 							}
@@ -747,6 +764,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 							break;
 						default:
 							simpleRoleSelection = null;
+							break;
 					}
 				} else {
 					simpleRoleSelection = null;

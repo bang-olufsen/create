@@ -2,13 +2,14 @@
 	<header>
 		<div class="back-button master"></div>
 		<h1 data-translation="headerTitle">Channels</h1>
+		<div class="button symbol right hidden" id="show-channels-connection-guide-button" style="-webkit-mask-image: url(/common/symbols-black/help.svg); mask-image: url(/common/symbols-black/help.svg);" onclick="beo.ask('channels-connection-guide');" data-text="Connection Guide"></div>
 	</header>
 	
 	<div class="scroll-area">
 		<div class="tabs-container channels-tabs advanced-adjustment">
 			<div class="tabs">
-				<div class="selected" data-select-tab="channels-basics">Basics</div>
-				<div data-select-tab="channels-advanced">Advanced</div>
+				<div class="selected" data-select-tab="channels-basics" data-tab-callback="channels.showingBasicsTab">Basics</div>
+				<div data-select-tab="channels-advanced" data-tab-callback="channels.showingAdvancedTab">Advanced</div>
 			</div>
 		</div>
 		<div class="tab visible" data-tab-id="channels-basics">
@@ -30,7 +31,7 @@
 						</div>
 					</div>
 					<p id="channels-custom-roles-message" class="hidden">Custom speaker roles have been set. <a href="#" onclick="channels.showAdvancedSettings();">Show advanced settings.</a></p>
-					<p id="channels-daisy-chained-message" class="channels-daisy-chained hidden">Two amplifiers are chained. <a href="#" onclick="beo.showExtension('daisy-chain');">Show settings.</a></p>
+					<p id="channels-daisy-chained-message" class="show-when-daisy-chained hidden">Two amplifiers are chained. <a href="#" onclick="beo.showExtension('daisy-chain');">Show settings.</a></p>
 				</div>
 				
 				<div id="simple-balance-control">
@@ -50,7 +51,7 @@
 		<div class="tab" data-tab-id="channels-advanced">
 			<div class="menu-content">
 				
-				<h2 class="channels-daisy-chained">Master speaker</h2>
+				<h2 class="show-when-daisy-chained">Master speaker</h2>
 				<div id="channels-advanced-container">
 					<div class="channels-channel-item">
 						<div class="channel-item-upper">
@@ -84,27 +85,26 @@
 					</div>
 				</div>
 				
-				<div class="channels-daisy-chained">
+				<div class="show-when-daisy-chained" id="channels-daisy-chained-container">
 					<h2>Slave speaker</h2>
-				
+					<p>Only speaker role can be updated to the slave speaker.</p>
+					<div class="channels-slave-channel-item">
+						<div class="channel-item-upper">
+							<div class="channel-letter-and-type">
+								<div class="channel-letter"><span>A</span><div class="channel-dot"></div></div>
+							</div>
+							<div class="segmented-control role-select-control">
+								
+							</div>
+							<div class="button pill popup-button outline selected-role" title="Select channel role">
+								???
+							</div>
+						</div>
+						<hr>
+					</div>
 				
 				</div>
-				<!--<div class="channels-channel-item">
-					<h2>D<div class="channel-dot blue"></div></h2>
-						
-					<div class="segmented-control channel-select-control">
-						<div class="left">Left</div>
-						<div class="mono">Mid</div>
-						<div class="side">Side</div>
-						<div class="right">Right</div>
-					</div>
-					<div class="channel-item-lower">
-						<div class="channel-level-slider channel-level-d blue show-value"></div>
-						<div class="symbol button margin-left" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
-						<div class="symbol button" style="-webkit-mask-image: url(€/symbols-black/invert.svg); mask-image: url(€/symbols-black/invert.svg);"></div>
-					</div>
-				</div>
-				<hr>-->
+				
 			</div>
 			
 		</div>
@@ -123,6 +123,14 @@
 				
 				
 			</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu no-padding-top" id="channels-connection-guide">
+		<script>beo.insertConnectionGuide();</script>
+		<p>The channel colours and letters correspond to the speaker connectors on Beocreate 4-Channel Amplifier.</p>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Dismiss</div>
 		</div>
 	</div>
 	

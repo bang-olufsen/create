@@ -43,6 +43,10 @@
 	position: relative;
 }
 
+.channels-slave-channel-item .channel-item-upper {
+	height: auto;
+}
+
 .channel-item-upper img {
 	height: 100%;
 	margin-right: 0.7em;
@@ -51,7 +55,8 @@
 }
 
 .channels-channel-item.expand-role-selector img,
-.channels-channel-item.expand-role-selector .channel-letter-and-type {
+.channels-channel-item.expand-role-selector .channel-letter-and-type,
+.channels-slave-channel-item.expand-role-selector .channel-letter-and-type {
 	transform: translateX(-60px);
 	opacity: 0 !important;
 	pointer-events: none;
@@ -88,7 +93,8 @@
 	transform-origin: center;
 }
 
-.channels-channel-item .role-select-control {
+.channels-channel-item .role-select-control,
+.channels-slave-channel-item .role-select-control {
 	position: absolute;
 	margin-top: 0;
 	opacity: 0;
@@ -97,13 +103,15 @@
 	transform-origin: right;
 }
 
-.channels-channel-item.expand-role-selector .role-select-control {
+.channels-channel-item.expand-role-selector .role-select-control,
+.channels-slave-channel-item.expand-role-selector .role-select-control {
 	opacity: 1;
 	pointer-events: all;
 	transform: scaleX(1);
 }
 
-.channels-channel-item.expand-role-selector .selected-role {
+.channels-channel-item.expand-role-selector .selected-role,
+.channels-slave-channel-item.expand-role-selector .selected-role {
 	opacity: 0;
 	transform: scaleX(1.5);
 	pointer-events: none;

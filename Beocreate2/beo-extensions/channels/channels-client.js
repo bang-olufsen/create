@@ -15,6 +15,9 @@ $(document).on("general", function(event, data) {
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "channels") {
 			prepareChannelsUI();
+			if (!$("#sound").parent().hasClass("advanced-sound-adjustments")) {
+				beo.showMenuTab("channels-basics");
+			}
 		}
 	}
 	

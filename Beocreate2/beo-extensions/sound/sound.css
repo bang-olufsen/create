@@ -1,7 +1,7 @@
 /* @override 
 	http://beocreate-core.local/extensions/sound/sound.css */
 	
-section:not(.advanced-sound-adjustments) .advanced-adjustment:not(h2, .menu-item) {
+section:not(.advanced-sound-adjustments) .advanced-adjustment:not(h2):not(.menu-item) {
 	display: none !important;
 }
 

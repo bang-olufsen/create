@@ -3118,6 +3118,35 @@ input[type=file]#file-input {
 
 /* @end */
 
+/* @group Wizards */
+
+.wizard {
+	position: relative;
+}
+
+.wizard .wizard-screen {
+	display: none;
+	transition: transform 0.5s cubic-bezier(.18,0,0,1), opacity 0.5s ease;
+}
+
+.wizard .wizard-screen.block {
+	display: block;
+}
+
+.wizard .wizard-screen.hidden-left {
+	transform: translateX(-100px);
+	transition: transform 0.3s ease-in, opacity 0.3s ease;
+	opacity: 0;
+}
+
+.wizard .wizard-screen.hidden-right {
+	transform: translateX(100px);
+	transition: transform 0.3s ease-in, opacity 0.3s ease;
+	opacity: 0;
+}
+
+/* @end */
+
 /* @group Text Input */
 
 #text-input {
@@ -3413,6 +3442,7 @@ h2 .channel-dot {
 
 /* @end */
 
+
 /* @group Bouncy Ball */
 
 .bouncy-ball {
@@ -3511,6 +3541,57 @@ h2 .channel-dot {
 @keyframes pulse-opacity {
   0%   { opacity: 0.7; }
   100% { opacity: 0.2; }
+}
+
+/* @end */
+
+/* @group Connection Guide */
+
+.connection-guide {
+	position: relative;
+	bottom: 20px;
+}
+
+.connection-guide img {
+	width: calc(100% + 30px);
+	margin-right: -15px;
+	margin-left: -15px;
+	display: block;
+}
+
+.connection-guide-letter {
+	position: absolute;
+	width: 30px;
+	margin-left: -15px;
+	text-align: center;
+	font-size: 0.8em;
+	font-weight: 500;
+}
+
+.connection-guide-letter.letter-a {
+	left: 19.4%;
+}
+
+.connection-guide-letter.letter-b {
+	left: 34.6%;
+}
+
+.connection-guide-letter.letter-c {
+	left: 70.5%;
+}
+
+.connection-guide-letter.letter-d {
+	left: 85.7%;
+}
+
+/* @end */
+
+/* @group Image Cacher */
+
+.image-cacher img {
+	width: 1px;
+	opacity: 0.1;
+	position: absolute;
 }
 
 /* @end */
@@ -4045,6 +4126,10 @@ p.first, h2.first {
 	margin-top: 0;
 }
 
+.ask-menu.menu-content.no-padding-top:before {
+	margin-bottom: 0;
+}
+
 }
 
 
@@ -4068,9 +4153,11 @@ p.first, h2.first {
 	margin-top: calc(5vw - 5px);
 }
 
-.menu-content:not(.no-padding-top):before {
+.menu-content:not(.no-padding-top):before,
+.ask-menu.menu-content.no-padding-top:before {
 	margin-bottom: 0;
 }
+
 
 .menu-spacer.top {
 	display: none;

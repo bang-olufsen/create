@@ -163,6 +163,8 @@ function convertVolume(from, to, value, range) {
 		return percentageToAmplification(value, range);
 	} else if (from == "amplification" && to == "%") {
 		return amplificationToPercentage(value, range);
+	} else if (from == "%" && to == "dB") {
+		return amplificationTodB(percentageToAmplification(value, range));
 	} else {
 		return null;
 	}

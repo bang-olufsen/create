@@ -62,6 +62,10 @@ $( document ).ready(function() {
 	} else {
 		attentionIcon.src = "common/hifiberry-wait-animate.svg";
 	}
+	
+	setTimeout(function() {
+		$("nav.bar .image-cacher").addClass("hidden");
+	}, 2000);
 });
 
 darkAppearance = false;
@@ -1569,6 +1573,67 @@ function updatePopupHeight() {
 }
 
 
+// WIZARD CONTAINER
+
+function wizard(wizardContainer, newScreen = null, buttons = null, noAnimation = false) {
+	if (!newScreen) {
+		// Set up the wizard.
+		$(wizardContainer).addClass("wizard");
+		$(wizardContainer+" > *").addClass("wizard-screen").removeClass("block");
+		$(wizardContainer+" > *").first().addClass("block").removeClass("hidden-left hidden-right");
+		return "Set up '"+wizardContainer+"' as a wizard structure.";
+	} else {
+		if (!$(wizardContainer+" "+newScreen).hasClass("block")) {
+			if (buttons && typeof buttons == "object") buttons = buttons.join(", ");
+			// Find the current screen and its relationship to the new screen.
+			hideScreen = $(wizardContainer+" .block");
+			showScreen = $(wizardContainer+" "+newScreen);
+			hideTo = null;
+			showFrom = null;
+			if (showScreen.prevAll(".block").length) {
+				// Current screen is before the new.
+				hideTo = "left";
+				showFrom = "right";
+			} else if (showScreen.nextAll(".block").length) {
+				hideTo = "right";
+				showFrom = "left";
+			}
+			if (showFrom && hideTo) {
+				hideScreen.addClass("hidden-"+hideTo);
+				showScreen.removeClass("hidden-"+hideTo).addClass("hidden-"+showFrom);
+				
+				if (!noAnimation) {
+					buttonsWereDisabled = false;
+					if (buttons) {
+						buttonsWereDisabled = $(buttons).hasClass("disabled");
+						$(buttons).addClass("disabled");
+					}
+					setTimeout(function() {
+						hideScreen.removeClass("block");
+						showScreen.addClass("block");
+						$(wizardContainer).scrollTop(0);
+						setTimeout(function() {
+							showScreen.removeClass("hidden-"+showFrom);
+						}, 20);
+						if (buttons && !buttonsWereDisabled) {
+							setTimeout(function() {
+								$(buttons).removeClass("disabled");
+							}, 500);
+						}
+					}, 300);
+				} else {
+					showScreen.removeClass("hidden-"+hideTo+" hidden-"+showFrom).addClass("block");
+					hideScreen.removeClass("block");
+					$(wizardContainer).scrollTop(0);
+				}
+			} else {
+				console.error("Screen '"+newScreen+"' doesn't exist in wizard structure '"+wizardContainer+"'.");
+			}
+		}
+	}
+}
+
+
 // TEXT INPUT
 
 var textInputCallback;
@@ -1822,6 +1887,17 @@ document.ontouchend = function(event) {
 	
 }
 
+function insertConnectionGuide() {
+	markup = '<div class="connection-guide">\
+		<img src="common/4ca-connections.png" alt="Beocreate 4-Channel Amplifier connections" />\
+		<div class="connection-guide-letter letter-a">A <div class="channel-dot a"></div></div>\
+		<div class="connection-guide-letter letter-b">B <div class="channel-dot b"></div></div>\
+		<div class="connection-guide-letter letter-c">C <div class="channel-dot c"></div></div>\
+		<div class="connection-guide-letter letter-d">D <div class="channel-dot d"></div></div>\
+	</div>';
+	document.write(markup);
+}
+
 
 // SUPPORT
 
@@ -1893,7 +1969,9 @@ return {
 	setSymbol: setSymbol,
 	sendToProductView: sendToProductView,
 	setAppearance: setAppearance,
-	isDarkAppearance: function() {return darkAppearance}
+	isDarkAppearance: function() {return darkAppearance},
+	insertConnectionGuide: insertConnectionGuide,
+	wizard: wizard
 }
 
 })();

@@ -235,8 +235,8 @@ if (Gpio) {
 			} else {
 				settings.muteUnknownPrograms = false;
 			}
-			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
-			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
+			beo.saveSettings("dsp-programs", settings);
+			beo.sendToUI("dsp-programs", {header: "settings", content: settings});
 		}
 		
 		if (event.header == "autoUpgrade") {
@@ -245,8 +245,8 @@ if (Gpio) {
 			} else {
 				settings.autoUpgrade = false;
 			}
-			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
-			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
+			beo.saveSettings("dsp-programs", settings);
+			beo.sendToUI("dsp-programs", {header: "settings", content: settings});
 		}
 		
 		if (event.header == "server-notify") {
@@ -434,10 +434,6 @@ if (Gpio) {
 						dspUpgrade = false;
 						beo.bus.emit("ui", {target: "dsp-programs", header: "dspUpgrade", content: {dspUpgrade: false}});
 					}
-					if (settings.autoInstall) {
-						delete settings.autoInstall;
-						beo.saveSettings("dsp-programs", settings);
-					}
 					
 					if (metadata) {
 						if (debug == 2) {
@@ -449,6 +445,12 @@ if (Gpio) {
 					} else {
 						if (debug) console.log("No metadata found for current DSP program.");
 						beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
+					}
+					
+					if (settings.autoInstall) {
+						delete settings.autoInstall;
+						beo.saveSettings("dsp-programs", settings);
+						if (extensions.sound && extensions.sound.checkCurrentMixerAndReconfigure) extensions.sound.checkCurrentMixerAndReconfigure();
 					}
 					
 					name = getProgramName(currentMetadata);

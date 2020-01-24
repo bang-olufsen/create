@@ -422,11 +422,34 @@ var request = require('request');
 		});
 	}
 	
+	function checkCurrentMixerAndReconfigure() {
+		if (settings.mixer && settings.mixer == "Softvol" && directDSPVolumeControlAvailable) {
+			console.log("DSP volume control is available but system is configured for software mixer. Calling HiFiBerry reconfiguration script.");
+			beo.sendToUI("sources", {header: "configuringSystem", content: {reason: "mixerChanged"}});
+
+			exec("/opt/hifiberry/bin/reconfigure-players", function(error, stdout, stderr) {
+				if (error) {
+					if (debug) console.error("Reconfiguration failed: "+error);
+				} else {
+					if (debug) console.error("Reconfiguration finished.");
+				}
+				beo.sendToUI("sources", {header: "systemConfigured"});
+				// Get current settings.
+				settings = Object.assign(settings, beo.getSettings("sound"));
+				getALSAMixers(function() {
+					determineVolumeControl();
+					getVolume();
+				});
+			});
+		}
+	}
+	
 	
 module.exports = {
 	version: version,
 	setVolume: setVolume,
 	getVolume: getVolume,
+	checkCurrentMixerAndReconfigure: checkCurrentMixerAndReconfigure,
 	mute: mute
 };
 

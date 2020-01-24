@@ -20,15 +20,21 @@ beoDSP.connectDSP(function(success) {
 						console.log("Register", reg+":", responses[reg].hex);
 					}
 					console.log("Read complete.");
-					console.log("Reading daisy-chain channel assignment bits...");
-					beoDSP.readRegister([63026, 63027, 63028, 63029], function(responses) {
-						for (reg in responses) {
-							console.log("Register", reg+":", responses[reg].hex);
+					daisyChainOn = (cmdArgs[1]) ? parseInt(cmdArgs[1]) : 0;
+					beoDSP.readDSP(daisyChainOn, function(response) {
+						if (response.raw != null) {
+							console.log("Daisy-chain on ("+daisyChainOn+"): "+response.hex);
 						}
-						console.log("Read complete.");
-						beoDSP.disconnectDSP(function() {
-							console.log("DSP was disconnected.");
-							process.exit(0);
+						console.log("Reading daisy-chain channel assignment bits...");
+						beoDSP.readRegister([63026, 63027, 63028, 63029], function(responses) {
+							for (reg in responses) {
+								console.log("Register", reg+":", responses[reg].hex);
+							}
+							console.log("Read complete.");
+							beoDSP.disconnectDSP(function() {
+								console.log("DSP was disconnected.");
+								process.exit(0);
+							});
 						});
 					});
 				});

@@ -29,6 +29,8 @@ var settings = JSON.parse(JSON.stringify(defaultSettings));
 var soundAdjustmentsStored = false;
 var skipStoringAdjustments = false;
 
+var metadata = {};
+
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
@@ -50,6 +52,19 @@ beo.bus.on('dsp', function(event) {
 		applyDaisyChainEnabledFromSettings(true);
 		
 	}
+	
+	if (event.header == "metadata") {
+		
+		if (event.content.metadata) {
+			metadata = event.content.metadata;
+			if (metadata.canBecomeDaisyChainSlaveRegister) {
+				beoDSP.writeDSP(metadata.canBecomeDaisyChainSlaveRegister.value[0], 0, false);
+				// Prevent this amplifier from being in slave mode when connected to the Pi.
+			}
+		} else {
+			metadata = {};
+		}
+	}
 });
 
 
@@ -59,6 +74,10 @@ beo.bus.on('daisy-chain', function(event) {
 		if (event.content.settings) {
 			settings = Object.assign(settings, event.content.settings);
 		}
+	}
+	
+	if (event.header == "getSettings") {
+		beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
 	}
 	
 	if (event.header == "setDaisyChainEnabled") {
@@ -95,6 +114,7 @@ beo.bus.on('daisy-chain', function(event) {
 						beo.extensions["dsp-programs"].storeAdjustments) {
 						beo.extensions["dsp-programs"].storeAdjustments(function(success) {
 							if (success) soundAdjustmentsStored = true;
+							if (beo.extensions["dsp-programs"].setAutoInstallProgram) beo.extensions["dsp-programs"].setAutoInstallProgram();
 						});
 					}
 				}
@@ -104,6 +124,9 @@ beo.bus.on('daisy-chain', function(event) {
 				if (!skipStoringAdjustments) {
 					settings.daisyChainDisabledReason = null;
 					settings.daisyChainEnabled = true;
+					if (beo.extensions["dsp-programs"].setAutoInstallProgram) {
+						beo.extensions["dsp-programs"].setAutoInstallProgram();
+					}
 					beo.saveSettings("daisy-chain", settings);
 					beo.bus.emit("general", {header: "requestShutdown", content: {extension: "daisy-chain", overrideUIActions: true}});
 				}

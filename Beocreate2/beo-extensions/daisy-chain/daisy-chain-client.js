@@ -3,17 +3,18 @@ var daisy_chain = (function() {
 daisyChainEnabled = false;
 skipStoringAdjustments = false;
 soundAdjustmentsStored = false;
-var daisyChainSwipe;
 assistantStep = 0;
 
+var daisyChainModeChecked = false;
 $(document).on("general", function(event, data) {
 
 	
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "daisy-chain") {
-			if (!daisyChainSwipe) {
-				daisyChainSwipe = new Swipe(document.getElementById('daisy-chain-swipe'), {speed: 500});
-			}
+			
+		} else if (extensions[data.content.extension].parentMenu == "sound" || data.content.extension == "sound") {
+			if (!daisyChainModeChecked) beo.sendToProduct("daisy-chain", {header: "getSettings"});
+			daisyChainModeChecked = true;
 		}
 	}
 	
@@ -41,14 +42,16 @@ $(document).on("daisy-chain", function(event, data) {
 	if (data.header == "daisyChainSettings") {
 		if (data.content.daisyChainEnabled) {
 			daisyChainEnabled = true;
-			$("#daisy-chain .chained").removeClass("hidden");
+			$("#daisy-chain .chained, .show-when-daisy-chained").removeClass("hidden");
 			$("#daisy-chain .not-chained").addClass("hidden");
 			$("#daisy-chain-toggle").addClass("on");
+			$(".daisy-chain-status-text").text("On");
 		} else {
 			daisyChainEnabled = false;
-			$("#daisy-chain .chained").addClass("hidden");
+			$("#daisy-chain .chained, .show-when-daisy-chained").addClass("hidden");
 			$("#daisy-chain .not-chained").removeClass("hidden");
 			$("#daisy-chain-toggle").removeClass("on");
+			$(".daisy-chain-status-text").text("");
 		}
 		if (data.content.daisyChainDisabledReason) {
 			$("#daisy-chain-auto-off").removeClass("hidden");
@@ -77,73 +80,12 @@ $(document).on("daisy-chain", function(event, data) {
 
 function toggleEnabled() {
 	if (!daisyChainEnabled) {
+		beo.wizard("#daisy-chain-wizard");
 		beo.showPopupView("daisy-chain-assistant");
-		daisyChainSwipe.setup({
-			startSlide: 0,
-			draggable: true,
-			continuous: false,
-			disableScroll: false,
-			stopPropagation: false,
-			callback: function(index, elem, dir) {
-				$("#daisy-chain-assistant-button").addClass("disabled");
-			},
-			transitionEnd: function(index, elem) {
-				previousAssistantStep = assistantStep;
-				assistantStep = index;
-				switch (assistantStep) {
-					case 0:
-						buttonText = "Set Up This Amplifier";
-						$("#daisy-chain-assistant-button").removeClass("disabled");
-						if (!skipStoringAdjustments && soundAdjustmentsStored) daisyChainSwipe.slide(1);
-						break;
-					case 1:
-						if (!soundAdjustmentsStored) {
-							buttonText = "Shut Down Product";
-						} else {
-							buttonText = "Power Is Unplugged";
-						}
-						if (skipStoringAdjustments) {
-							$("#daisy-chain-assistant .no-preparation").removeClass("hidden");
-							$("#daisy-chain-assistant .preparation").addClass("hidden");
-						} else {
-							soundAdjustmentsStored = true;
-							$("#daisy-chain-assistant .no-preparation").addClass("hidden");
-							$("#daisy-chain-assistant .preparation").removeClass("hidden");
-						}
-						$("#daisy-chain-assistant-button").removeClass("disabled");
-						if (skipStoringAdjustments && previousAssistantStep == 0) daisyChainSwipe.slide(3);
-						break;
-					case 2:
-						beo.sendToProductView({header: "autoReconnect", content: {status: "daisyChainShutdown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
-						beo.notify({title: "Shutting down product…", message: "Wait until the shutdown is complete before unplugging.", icon: "attention", timeout: 20, id: "daisyChain"});
-						noConnectionNotifications = true;
-						
-						buttonText = "Raspberry Pi Moved";
-						$("#daisy-chain-assistant-button").removeClass("disabled");
-						console.log(skipStoringAdjustments, previousAssistantStep);
-						if (skipStoringAdjustments && previousAssistantStep == 3) daisyChainSwipe.slide(0);
-						break;
-					case 3:
-						buttonText = "Optical Cable Connected";
-						$("#daisy-chain-assistant-button").removeClass("disabled");
-						break;
-					case 4:
-						buttonText = "Finish Chaining Setup";
-						// Start connecting here.
-						if (connected) {
-							$("#daisy-chain-assistant-button").removeClass("disabled");
-						} else if (!connecting) {
-							beoCom.connectToCurrentProduct();
-						}
-						break;
-				}
-				$("#daisy-chain-assistant-button").text(buttonText);
-				beo.sendToProduct("daisy-chain", {header: "assistantProgress", content: {step: assistantStep, skipStoringAdjustments: skipStoringAdjustments}});
-			}
-		});
+		showStep(0);
 		skipStoringAdjustments = false;
 		soundAdjustmentsStored = false;
-		daisyChainSwipe.slide(0);
+	
 		beo.sendToProduct("daisy-chain", {header: "startAssistant"});
 	} else {
 		beo.sendToProduct("daisy-chain", {header: "setDaisyChainEnabled", content: {enabled: false}});
@@ -159,13 +101,13 @@ function nextStep(skipAction) {
 		case 0:
 			if (skipAction) {
 				skipStoringAdjustments = true;
-				daisyChainSwipe.slide(3);
+				showStep(3);
 				$("#daisy-chain-assistant .no-preparation").removeClass("hidden");
 				$("#daisy-chain-assistant .preparation").addClass("hidden");
 				$("#daisy-chain-assistant .preparation-light").addClass("fade");
 			} else {
 				skipStoringAdjustments = false;
-				daisyChainSwipe.next();
+				showStep(assistantStep+1);
 				$("#daisy-chain-assistant .no-preparation").addClass("hidden");
 				$("#daisy-chain-assistant .preparation").removeClass("hidden");
 				$("#daisy-chain-assistant .preparation-light").removeClass("fade");
@@ -174,14 +116,68 @@ function nextStep(skipAction) {
 		case 1:
 		case 2:
 		case 3:
-			daisyChainSwipe.next();
+			showStep(assistantStep+1);
 			break;
 		case 4:
 			beo.hidePopupView("daisy-chain-assistant");
-//			beo.showExtension("channels");
 			break;
 	}
-	
+}
+
+function showStep(step = null) {
+	previousStep = assistantStep;
+	if (step != null) assistantStep = step;
+	skipToStep = null;
+	switch (assistantStep) {
+		case 0:
+			buttonText = "Set Up This Amplifier";
+			showScreen = "daisy-chain-start";
+			break;
+		case 1:
+			if (!soundAdjustmentsStored) {
+				buttonText = "Shut Down Product";
+			} else {
+				buttonText = "Power Is Unplugged";
+			}
+			if (skipStoringAdjustments) {
+				$("#daisy-chain-assistant .no-preparation").removeClass("hidden");
+				$("#daisy-chain-assistant .preparation").addClass("hidden");
+			} else {
+				soundAdjustmentsStored = true;
+				$("#daisy-chain-assistant .no-preparation").addClass("hidden");
+				$("#daisy-chain-assistant .preparation").removeClass("hidden");
+			}
+			if (skipStoringAdjustments && previousStep == 0) skipToStep = 3;
+			showScreen = "daisy-chain-stored";
+			break;
+		case 2:
+			buttonText = "Raspberry Pi Moved";
+			beo.sendToProductView({header: "autoReconnect", content: {status: "daisyChainShutdown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
+			beo.notify({title: "Shutting down product…", message: "Wait until the shutdown is complete before unplugging.", icon: "attention", timeout: 20, id: "daisyChain"});
+			noConnectionNotifications = true;
+			showScreen = "daisy-chain-move-pi";
+			break;
+		case 3:
+			buttonText = "Optical Cable Connected";
+			showScreen = "daisy-chain-connect-together";
+			break;
+		case 4:
+			buttonText = "Finish Chaining Setup";
+			showScreen = "daisy-chain-power-up";
+			// Start connecting here.
+			if (!connected) {
+				$("#daisy-chain-assistant-button").addClass("disabled");
+				if (!connecting) beoCom.connectToCurrentProduct();
+			} 
+			break;
+	}
+	beo.sendToProduct("daisy-chain", {header: "assistantProgress", content: {step: assistantStep, skipStoringAdjustments: skipStoringAdjustments}});
+	if (skipToStep == null) {
+		$("#daisy-chain-assistant-button").text(buttonText);
+		beo.wizard("#daisy-chain-wizard", "#"+showScreen, "#daisy-chain-assistant-button");
+	} else {
+		showStep(skipToStep);
+	}
 }
 
 

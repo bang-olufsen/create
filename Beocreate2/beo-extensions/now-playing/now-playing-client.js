@@ -112,12 +112,13 @@ $(document).on("now-playing", function(event, data) {
 	if (data.header == "playerState") {
 		clearTimeout(playButtonSymbolTimeout);
 		playerState = data.content.state;
-		if (data.content.state == "playing") {
+		/*if (data.content.state == "playing") {
+			if (allSources[focusedSource]
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
 		} else {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 			enableSourceStart();
-		}
+		}*/
 	}
 	
 });
@@ -126,15 +127,31 @@ $(document).on("sources", function(event, data) {
 	if (data.header == "sources") {
 		
 		if (data.content.sources != undefined) {
-			
+			$(".play-button, .next-track-button, .previous-track-button").addClass("disabled");
 			if (data.content.focusedSource != undefined) {
 				focusedSource = data.content.focusedSource;
-				if (data.content.sources[focusedSource].transportControls) {
-					$("#now-playing-transport").removeClass("disabled");
+				if (data.content.sources[focusedSource].playerState == "playing") {
+					if (data.content.sources[focusedSource].transportControls) {
+						if (data.content.sources[focusedSource].transportControls.indexOf("pause") != -1) {
+							$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/pause.svg");
+							$(".play-button").removeClass("disabled");
+						} else {
+							$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
+							if (data.content.sources[focusedSource].transportControls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
+						}
+					} else {
+						$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
+					}
 				} else {
-					$("#now-playing-transport").addClass("disabled").removeClass("play-only");
-					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
+					$(".play-button").removeClass("disabled");
 				}
+				
+				if (data.content.sources[focusedSource].transportControls) {
+					if (data.content.sources[focusedSource].transportControls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
+					if (data.content.sources[focusedSource].transportControls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
+				}
+				
 				if (data.content.sources[focusedSource].canLove) {
 					functionRow("love", true);
 				} else {
@@ -142,7 +159,6 @@ $(document).on("sources", function(event, data) {
 				}
 			} else {
 				focusedSource = null;
-				$("#now-playing-transport").addClass("disabled");
 				functionRow("love", false);
 				toggleShowAlbumName(true);
 				enableSourceStart();
@@ -290,12 +306,20 @@ function playButtonPress() {
 		if (playerState == "playing") {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 		} else {
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+			if (allSources[focusedSource].transportControls && allSources[focusedSource].transportControls.indexOf("pause") != -1) {
+				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+			} else {
+				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/stop.svg");
+			}
 		}
 		clearTimeout(playButtonSymbolTimeout);
 		playButtonSymbolTimeout = setTimeout(function() {
 			if (playerState == "playing") {
-				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+				if (allSources[focusedSource].transportControls && allSources[focusedSource].transportControls.indexOf("pause") != -1) {
+					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+				} else {
+					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/stop.svg");
+				}
 			} else {
 				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 			}

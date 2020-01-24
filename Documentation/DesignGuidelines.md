@@ -11,6 +11,7 @@ The key drivers in the design of Beocreate 2 user experience are clarity, simpli
 Maintain the elegant, monochromatic look. The use of colour is reserved for the following instances:
 
 - Speaker channel designations (ABCD, red, yellow, green, blue)
+- Warning labels
 - Album covers and other similar content
 - Product icons
 - Other illustrations that are not interactive elements
@@ -25,7 +26,7 @@ Beocreate 2 comes with several standard interface elements. To ensure consistent
 
 Long text labels will go unread by the user – consider whether they are required in the first place, and what you can do to eliminate the need to include them.
 
-If text is required, deliver just the information that's needed, when it's needed, in the simplest way possible. Don't resort to *adspeak* or sugarcoating – the tone of voice should be matter-of-fact, whilst avoiding technical-sounding words where possible.
+If text is required, deliver just the information that's needed, when it's needed, in the simplest way possible. Don't resort to *adspeak* or sugarcoating – the tone of voice should be matter-of-fact, whilst avoiding technical-sounding words and jargon where possible.
 
 Use title case in interactive elements. Use sentence case everywhere else. Never type in all caps – the interface will automatically transform text to all caps where needed.
 
@@ -35,7 +36,7 @@ Pay attention to grammar and spelling. Beocreate 2 uses *British English* throug
 
 Beocreate 2 uses symbols for various purposes, such as for representing the different extensions in menus. These symbols should follow a consistent style. Examine and be inspired by the built-in symbols!
 
-- Use SVG format with a 23 x 23 pt canvas, but *always treat the last 1 pt around the edges as a non-drawable area*, i.e. the usable drawing area becomes 21 x 21 pt. This is to prevent "bleeding" of the symbol edges on certain platforms, because they are used as a mask and not a direct image.
+- Use SVG format with a 23 x 23 pt canvas, but the art on the canvas **must never exceed 21 x 21 pt.** This is to prevent "bleeding" of the symbol edges on certain platforms, because they are used as a mask and not a direct image.
 - Use 1 pt strokes with round end-caps and joins.
 - Use outlined shapes. Only create solid shapes when absolutely necessary to convey information (for example, the heart in Now Playing is solid when a track is a loved track).
 - Don't create coloured symbols. Beocreate 2 will change the colours of the icons as necessary (such as when switching from light to dark mode). You can save both black and white versions of the icon if needed.
@@ -51,7 +52,7 @@ To create product images for use with Beocreate 2, follow these guidelines.
 - The image should be a flattering, high-quality and detailed representation of the product, in contrast to the various symbols in the user interface.
 - An immaculate, near-photorealistic rendering is preferred to a photograph for an iconic feel.
 - Pay attention to lighting, materials and textures.
-- If the product is self-standing, it should have a subtle shadow. Do not use the shadows from the rendering software, but instead craft the shadow by hand to match the default product images, as the best lighting differs from product to product and can create vastly different shadows.
+- If the product is self-standing, it should have a subtle shadow. Do not use the shadows from the rendering software, but instead craft the shadow by hand to match the default product images, as the best lighting differs from product to product and can create vastly different shadows. The default product icons use two shadows with 2 px and 10 px blur.
 - Within a product family, consider the relative scale of the individual products to convey size difference. If the difference is very large, it is usually better to enlarge the smaller products to fill more of the canvas (a good example is Beovox 3000/5000 family).
 - The entire product and its shadow must fit on the canvas without being cut off in any way.
 - Whilst the product will be primarily presented on light backgrounds, ensure that it works on dark backgrounds too. This is especially important to consider if the product contains translucent or reflective parts.

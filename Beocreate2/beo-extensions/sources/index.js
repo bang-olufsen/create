@@ -152,28 +152,31 @@ var exec = require("child_process").exec;
 				break;
 			case "transport":
 				if (focusedSource && allSources[focusedSource].transportControls) {
+					action = event.content.action;
 					if (allSources[focusedSource].usesHifiberryControl) {
-						audioControl(event.content.action, null, function(success) {
+						audioControl(action, null, function(success) {
 							if (!success) {
-								switch (event.content.action) {
+								switch (action) {
 									case "playPause":
 									case "play":
+									case "pause":
 									case "stop":
 									case "next":
 									case "previous":
-										beo.bus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
+										beo.bus.emit(focusedSource, {header: "transport", content: {action: action}});
 										break;
 								}
 							}
 						});
 					} else {
-						switch (event.content.action) {
+						switch (action) {
 							case "playPause":
 							case "play":
+							case "pause":
 							case "stop":
 							case "next":
 							case "previous":
-								beo.bus.emit(focusedSource, {header: "transport", content: {action: event.content.action}});
+								beo.bus.emit(focusedSource, {header: "transport", content: {action: action}});
 								break;
 						}
 					}
@@ -558,7 +561,15 @@ var exec = require("child_process").exec;
 			}
 			
 			if (options.enabled != undefined) allSources[extension].enabled = (options.enabled) ? true : false;
-			if (options.transportControls != undefined) allSources[extension].transportControls = (options.transportControls) ? true : false;
+			if (options.transportControls != undefined) {
+				if (options.transportControls == true) {
+					allSources[extension].transportControls = ["play", "pause", "next", "previous"];
+				} else if (options.transportControls == false) {
+					allSources[extension].transportControls = false;
+				} else {
+					allSources[extension].transportControls = options.transportControls;
+				}
+			}
 			if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
 			if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
 			if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).

@@ -111,50 +111,49 @@ function loadFiltersForChannel(channel, filtersToLoad, newFilterIndex = null) {
 		for (var i = 0; i < dspFilters[channel].length; i++) {
 			gainAtFc = calculateFilter(channel, i);
 			filter = dspFilters[channel][i];
-			if (!filter.bypass) {
-				if (filter.a1 != undefined &&
-					filter.a2 != undefined &&
-					filter.b0 != undefined &&
-					filter.b1 != undefined &&
-					filter.b2 != undefined) {
-					// We have coefficients. Expects A0 to always be 1.
-					positionUIFilter(true, channel, i, "coeffs", filter, null, newFilterIndex);
-				} else if (filter.type != undefined) {
-					// Parametric filter. Generate coefficients based on filter type.
-					
-					switch (filter.type) {
-						case "peak":
-							if (filter.frequency != undefined &&
-							 	filter.Q != undefined && 
-							 	filter.gain != undefined) {
-								positionUIFilter(true, channel, i, "peak", filter, gainAtFc, newFilterIndex);
-							}
-							break;
-						case "lowShelf":
-							if (filter.frequency != undefined &&
-							 	filter.Q != undefined && 
-							 	filter.gain != undefined) {
-								positionUIFilter(true, channel, i, "lowShelf", filter, gainAtFc, newFilterIndex);
-							}
-							break;
-						case "highShelf":
-							if (filter.frequency != undefined &&
-							 	filter.Q != undefined && 
-							 	filter.gain != undefined) {
-								positionUIFilter(true, channel, i, "highShelf", filter, gainAtFc, newFilterIndex);
-							}
-							break;
-						case "lowPass":
-							if (filter.frequency != undefined) {
-								positionUIFilter(true, channel, i, "lowPass", filter, gainAtFc, newFilterIndex);
-							}
-							break;
-						case "highPass":
-							if (filter.frequency != undefined) {
-								positionUIFilter(true, channel, i, "highPass", filter, gainAtFc, newFilterIndex);
-							}
-							break;
-					}
+			
+			if (filter.a1 != undefined &&
+				filter.a2 != undefined &&
+				filter.b0 != undefined &&
+				filter.b1 != undefined &&
+				filter.b2 != undefined) {
+				// We have coefficients. Expects A0 to always be 1.
+				positionUIFilter(true, channel, i, "coeffs", filter, null, newFilterIndex);
+			} else if (filter.type != undefined) {
+				// Parametric filter. Generate coefficients based on filter type.
+				
+				switch (filter.type) {
+					case "peak":
+						if (filter.frequency != undefined &&
+						 	filter.Q != undefined && 
+						 	filter.gain != undefined) {
+							positionUIFilter(true, channel, i, "peak", filter, gainAtFc, newFilterIndex);
+						}
+						break;
+					case "lowShelf":
+						if (filter.frequency != undefined &&
+						 	filter.Q != undefined && 
+						 	filter.gain != undefined) {
+							positionUIFilter(true, channel, i, "lowShelf", filter, gainAtFc, newFilterIndex);
+						}
+						break;
+					case "highShelf":
+						if (filter.frequency != undefined &&
+						 	filter.Q != undefined && 
+						 	filter.gain != undefined) {
+							positionUIFilter(true, channel, i, "highShelf", filter, gainAtFc, newFilterIndex);
+						}
+						break;
+					case "lowPass":
+						if (filter.frequency != undefined) {
+							positionUIFilter(true, channel, i, "lowPass", filter, gainAtFc, newFilterIndex);
+						}
+						break;
+					case "highPass":
+						if (filter.frequency != undefined) {
+							positionUIFilter(true, channel, i, "highPass", filter, gainAtFc, newFilterIndex);
+						}
+						break;
 				}
 			}
 		}
@@ -451,9 +450,22 @@ function selectFilter(filter = selectedFilter, fromUI) {
 		if (filter == -1) filter = 0;
 	}
 	$('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').addClass(channelColours[selectedChannel]);
+	
+	// Scroll to the selected filter.
+	if ($("#equaliser-collection-scroller").scrollLeft() > $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - 15) {
+		// Content moves ->
+		scrollLeft = Math.floor($('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - 16);
+		if (scrollLeft < 3) scrollLeft = 0;
+		$("#equaliser-collection-scroller").animate({scrollLeft: scrollLeft}, 500);
+	} else if ($("#equaliser-collection-scroller").scrollLeft()+$("#equaliser-collection-scroller").innerWidth() < $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() + 73) {
+		// <- Content moves
+		scrollLeft = $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - $("#equaliser-collection-scroller").innerWidth() + 89;
+		$("#equaliser-collection-scroller").animate({scrollLeft: scrollLeft}, 500);
+	}
+	
+	
 	if (filter == selectedFilter && fromUI) { // Shortcut to toggle bypass.
-		bypass = (uiFilters[selectedChannel][selectedFilter].bypass) ? false : true;
-		setFilter("bypass", bypass);
+		toggleBypass();
 	} else {
 		selectedFilter = filter;
 		chIndex = ("abcd").indexOf(selectedChannel);
@@ -738,6 +750,23 @@ function step(parameter, direction) {
 function toggleBypass(index = null) {
 	if (index == null) index = selectedFilter;
 	bypass = (uiFilters[selectedChannel][index].bypass) ? false : true;
+	if (bypass == false)  {
+		if (typeof uiFilters[selectedChannel][index] == "object")  {
+			if (uiFilters[selectedChannel][index].type == "highPass" ||
+				uiFilters[selectedChannel][index].type == "lowPass") {
+				// Enable one or both filters based on crossover type.
+				switch (uiFilters[selectedChannel][index].crossoverType) {
+					case "BW2":
+					case "custom2":
+						bypass = [false, true];
+						break;
+					default:
+						bypass = [false, false];
+						break;
+				}
+			}
+		}
+	}
 	setFilter("bypass", bypass);
 }
 

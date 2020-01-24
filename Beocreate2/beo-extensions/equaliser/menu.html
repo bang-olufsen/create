@@ -49,6 +49,7 @@
 			</div>-->
 			
 			<!--<h2 class="equaliser-selected-channel"></span></h2>-->
+			<p class="show-when-daisy-chained hidden">Two amplifiers are chained. Filter settings can't be updated to the connected slave amplifier remotely.</p>
 			<div class="menu-item static">
 				<div class="menu-label equaliser-selected-channel"></div>
 				
@@ -59,7 +60,7 @@
 				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="beo.ask('equaliser-options-prompt');" title="More filter options"></div>
 			</div>
 			<hr class="no-margin-top">
-			<div class="collection-row-scroller">
+			<div class="collection-row-scroller" id="equaliser-collection-scroller">
 				<div class="collection-row-wrap">
 					<div id="equaliser-filters" class="collection-row-view">
 						
@@ -188,7 +189,8 @@
 		
 	</div>
 	
-	<div class="ask-menu" id="equaliser-view-options">
+	<div class="ask-menu no-padding-top" id="equaliser-view-options">
+		<script>beo.insertConnectionGuide();</script>
 		<h2>View options</h2>
 		<div class="menu-item toggle" id="equaliser-show-all-channels-toggle" onclick="equaliser.toggleShowAllChannels();">
 			<div class="menu-label">Show All Channels</div>

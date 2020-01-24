@@ -1240,8 +1240,8 @@ hr.no-margin-top {
 	height: 21px !important;
 	flex-shrink: 0;
 	transition: opacity 0.3s ease, background-color 0.5s ease;
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;
@@ -1254,8 +1254,8 @@ hr.no-margin-top {
 }
 
 .menu-icon.right {
-	margin-right: -7px;
-	margin-left: 7px;
+	margin-right: -6px;
+	margin-left: 6px;
 }
 
 .menu-icon.right.button {
@@ -1263,7 +1263,7 @@ hr.no-margin-top {
 }
 
 .menu-icon.left.button {
-	margin-right: 5px;
+	margin-right: 4px;
 }
 
 .menu-item.hide-icon-right .menu-icon.right {
@@ -1300,11 +1300,11 @@ hr.no-margin-top {
 
 .checkmark.right:after {
 	content: "";
-	width: 21px;
-	height: 21px;
+	width: 23px;
+	height: 23px;
 	position: absolute;
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;
@@ -1313,7 +1313,7 @@ hr.no-margin-top {
 	mask-image: url(symbols-black/checkmark.svg);
 	-webkit-mask-image: url(symbols-black/checkmark.svg);
 	transition: opacity 0.3s ease, transform 0.3s ease;
-	right: 20px;
+	right: 19px;
 	transform: scale(0.5);
 	opacity: 0;
 	top: calc(var(--menu-height) / 2 - 11px);
@@ -1363,17 +1363,17 @@ hr.no-margin-top {
 	background-image: url(symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-position: left;
-	background-size: 21px 21px;
+	background-size: 23px 23px;
 	/*background-color: red;*/
 	transition: opacity 0.3s ease, transform 0.3s ease, width 0.5s ease;
 	position: absolute;
 	/*border-radius: 50%;*/
-	height: 21px;
+	height: 23px;
 	opacity: 0;
 	/*transform: scale(0.5);*/
 	width: 2px;
-	top: 4px;
-	left: 3px;
+	top: 3px;
+	left: 2px;
 }
 
 .dark .menu-toggle:after {
@@ -1471,8 +1471,8 @@ h2.disclosure:before {
 	height: 15px;
 	display: inline-block;
 	vertical-align: middle;
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-position: center;
 	mask-position: center;
 	-webkit-mask-repeat: no-repeat;
@@ -1595,15 +1595,15 @@ img.fit {
 }
 
 img.symbol {
-	width: 21px;
-	height: 21px;
+	width: 23px;
+	height: 23px;
 }
 
 div.symbol {
 	width: 21px;
 	height: 21px;
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;
@@ -1648,8 +1648,8 @@ p.privacy:before {
 	/*margin-top: -11px;
 	top: 50%;*/
 	margin-top: -3px;
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;

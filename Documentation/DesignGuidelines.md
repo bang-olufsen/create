@@ -6,7 +6,7 @@ High-quality design is a core value of Beocreate 2. Everything the user sees and
 
 The key drivers in the design of Beocreate 2 user experience are clarity, simplicity and elegance.
 
-### Visual Style
+### Elegant Look
 
 Maintain the elegant, monochromatic look. The use of colour is reserved for the following instances:
 
@@ -17,13 +17,13 @@ Maintain the elegant, monochromatic look. The use of colour is reserved for the 
 
 The interface supports both light and dark colour schemes. Take this into account when designing any visual assets.
 
-### User Interface Elements
+### Use Standard Elements
 
 Beocreate 2 comes with several standard interface elements. To ensure consistent look and feel, you should always use the standard elements. Only create custom elements if a relevant standard element is not available.
 
-### Text & Communication
+### Communicate Fluently & Efficiently
 
-Communicate efficiently. Long text labels will go unread by the user – consider whether they are required in the first place, and what you can do to eliminate the need to include them.
+Long text labels will go unread by the user – consider whether they are required in the first place, and what you can do to eliminate the need to include them.
 
 If text is required, deliver just the information that's needed, when it's needed, in the simplest way possible. Don't resort to *adspeak* or sugarcoating – the tone of voice should be matter-of-fact, whilst avoiding technical-sounding words where possible.
 

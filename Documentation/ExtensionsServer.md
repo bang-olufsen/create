@@ -30,6 +30,7 @@ Beocreate 2 exposes several features that may be useful to your extension. These
 - **downloadJSON(url, callback)**: Downloads and parses a JSON file, returning it as an object.
 - **addDownloadRoute(extensionID, urlPath, filePath, permanent)**: Allows assigning a download URL to a file on the file system. Returns the download URL. The URL will be along the lines of *http://system-address.local/extensionID/download/urlPath*.
 - **removeDownloadRoute(extensionID, urlPath)**: Close a previously opened file download route.
+- **underscore**: the Underscore library is available in this variable. It can come in handy in some situations.
 
 Some of these features are detailed below.
 

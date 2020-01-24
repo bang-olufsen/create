@@ -35,13 +35,13 @@ Pay attention to grammar and spelling. Beocreate 2 uses *British English* throug
 
 Beocreate 2 uses symbols for various purposes, such as for representing the different extensions in menus. These symbols should follow a consistent style. Examine and be inspired by the built-in symbols!
 
-- Use SVG format with a 21 x 21 pt canvas.
+- Use SVG format with a 23 x 23 pt canvas, but *always treat the last 1 pt around the edges as a non-drawable area*, i.e. the usable drawing area becomes 21 x 21 pt. This is to prevent "bleeding" of the symbol edges on certain platforms, because they are used as a mask and not a direct image.
 - Use 1 pt strokes with round end-caps and joins.
 - Use outlined shapes. Only create solid shapes when absolutely necessary to convey information (for example, the heart in Now Playing is solid when a track is a loved track).
 - Don't create coloured symbols. Beocreate 2 will change the colours of the icons as necessary (such as when switching from light to dark mode). You can save both black and white versions of the icon if needed.
 - Aim to present the idea with as few strokes as possible, to maintain a minimal and harmonious look.
 - Align strokes to the pixel grid. Always preview the symbol in both @1x and @2x scales – it should look crisp and sharp on both standard and Retina (HiDPI) displays.
-- Make sure that glyphs are optically aligned and sized. For example, if the main shape is a circle, it should extend all the way to the edges of the canvas. A rectangular shape, on the other hand, should maintain 1 pt distance to the edges. 
+- Make sure that glyphs are optically aligned and sized. For example, if the main shape is a circle, it should extend all the way to the edges of the 21 x 21 pt area. A rectangular shape, should be one pt smaller from all edges. 
 
 
 ## Product Images

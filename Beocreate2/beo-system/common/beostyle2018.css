@@ -1300,8 +1300,8 @@ hr.no-margin-top {
 
 .checkmark.right:after {
 	content: "";
-	width: 23px;
-	height: 23px;
+	width: 21px;
+	height: 21px;
 	position: absolute;
 	-webkit-mask-size: 23px;
 	mask-size: 23px;
@@ -1313,7 +1313,7 @@ hr.no-margin-top {
 	mask-image: url(symbols-black/checkmark.svg);
 	-webkit-mask-image: url(symbols-black/checkmark.svg);
 	transition: opacity 0.3s ease, transform 0.3s ease;
-	right: 19px;
+	right: 20px;
 	transform: scale(0.5);
 	opacity: 0;
 	top: calc(var(--menu-height) / 2 - 11px);
@@ -1368,7 +1368,7 @@ hr.no-margin-top {
 	transition: opacity 0.3s ease, transform 0.3s ease, width 0.5s ease;
 	position: absolute;
 	/*border-radius: 50%;*/
-	height: 23px;
+	height: 21px;
 	opacity: 0;
 	/*transform: scale(0.5);*/
 	width: 2px;
@@ -2050,8 +2050,8 @@ a.button {
 	right: 0;
 	-webkit-mask-image: url(symbols-black/chevron-thin-updown.svg);
 	mask-image: url(symbols-black/chevron-thin-updown.svg);
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;
@@ -3267,8 +3267,8 @@ input::-webkit-search-decoration {
 
 .search-container:before {
 	content: "";
-	-webkit-mask-size: 21px;
-	mask-size: 21px;
+	-webkit-mask-size: 23px;
+	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;

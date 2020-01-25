@@ -452,17 +452,18 @@ function selectFilter(filter = selectedFilter, fromUI) {
 	$('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').addClass(channelColours[selectedChannel]);
 	
 	// Scroll to the selected filter.
-	if ($("#equaliser-collection-scroller").scrollLeft() > $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - 15) {
-		// Content moves ->
-		scrollLeft = Math.floor($('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - 16);
-		if (scrollLeft < 3) scrollLeft = 0;
-		$("#equaliser-collection-scroller").animate({scrollLeft: scrollLeft}, 500);
-	} else if ($("#equaliser-collection-scroller").scrollLeft()+$("#equaliser-collection-scroller").innerWidth() < $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() + 73) {
-		// <- Content moves
-		scrollLeft = $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - $("#equaliser-collection-scroller").innerWidth() + 89;
-		$("#equaliser-collection-scroller").animate({scrollLeft: scrollLeft}, 500);
+	if ($('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').length) {
+		if ($("#equaliser-collection-scroller").scrollLeft() > $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - 15) {
+			// Content moves ->
+			scrollLeft = Math.floor($('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - 16);
+			if (scrollLeft < 3) scrollLeft = 0;
+			$("#equaliser-collection-scroller").animate({scrollLeft: scrollLeft}, 500);
+		} else if ($("#equaliser-collection-scroller").scrollLeft()+$("#equaliser-collection-scroller").innerWidth() < $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() + 73) {
+			// <- Content moves
+			scrollLeft = $('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').position().left + $("#equaliser-collection-scroller").scrollLeft() - $("#equaliser-collection-scroller").innerWidth() + 89;
+			$("#equaliser-collection-scroller").animate({scrollLeft: scrollLeft}, 500);
+		}
 	}
-	
 	
 	if (filter == selectedFilter && fromUI) { // Shortcut to toggle bypass.
 		toggleBypass();

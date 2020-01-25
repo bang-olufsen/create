@@ -31,28 +31,28 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	
 	var defaultSettings = {
 	  "a": {
-	    "role": "mono",
+	    "role": "left",
 		"level": 100,
 		"delay": 0,
 		"enabled": true,
 		"invert": false
 	  },
 	  "b": {
-	    "role": "mono",
+	    "role": "right",
 		"level": 100,
 		"delay": 0,
 		"enabled": true,
 		"invert": false
 	  },
 	  "c": {
-	    "role": "mono",
+	    "role": "left",
 		"level": 100,
 		"delay": 0,
 		"enabled": true,
 		"invert": false
 	  },
 	  "d": {
-	    "role": "mono",
+	    "role": "right",
 		"level": 100,
 		"delay": 0,
 		"enabled": true,
@@ -60,7 +60,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	  },
 	  "balance": 0,
 	  "daisyChainRoles": {
-	  		"a": "mono", "b": "mono", "c": "mono", "d": "mono"
+	  		"a": "left", "b": "right", "c": "left", "d": "right"
 	  	}
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));

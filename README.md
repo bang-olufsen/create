@@ -15,10 +15,12 @@ Beocreate 2 is bundled with [HiFiBerryOS](https://github.com/hifiberry/hifiberry
 - A flexible front-end for Beocreate 4-Channel Amplifier and other HiFiBerry sound cards.
 - Upcycle vintage Bang & Olufsen speakers or build your own, custom sound system.
 - Beautifully crafted, responsive, browser-based user interface that works within the local network. Dark mode is supported.
-- Customise the sound with ToneTouch. More sound adjustment features coming later.
-- Volume and playback controls for active sources (feat. [HiFiBerry AudioControl](https://github.com/hifiberry/audiocontrol2)).
-- Better overview and control of sources.
-- Smarter management of network connections.
+- See what's playing, control playback and volume.
+- Supports multiple sources/streaming protocols that can be set up in one place (powered by [HiFiBerry AudioControl](https://github.com/hifiberry/audiocontrol2)).
+- Sound presets designed by Bang & Olufsen acousticians specifically for select loudspeaker models.
+- Quickly customise the sound with ToneTouch.
+- Parametric equaliser for each output channel – ideal for crossovers and tuning custom loudspeakers.
+- Manage Wi-Fi and Ethernet connections.
 - Extension architecture for easy expandability and future-proofing.
 - Based on Node.js.
 
@@ -43,7 +45,7 @@ Beocreate Connect is based on Electron, and you can run it using the following i
 
 ## Help
 
-- [Find Your Product](Help/FindYourProduct.md)
+[Visit the wiki](https://github.com/bang-olufsen/create/wiki) for help.
 
 ## Documentation
 
@@ -62,7 +64,7 @@ Design and develop extensions to expand the functionality of the system.
 Create sound presets, DSP programs and product identities to customise the sound system.
 
 - [Sound Presets](Documentation/SoundPresets.md)
-- DSP Programs.
+- DSP Programs
 - [Product Identities](Documentation/ProductIdentities.md)
 
 ### Design

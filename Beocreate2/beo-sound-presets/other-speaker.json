@@ -1,7 +1,7 @@
 {
 	"sound-preset": {
 		"presetName": "Other Speaker",
-		"presetVersion": 1,
+		"presetVersion": 2,
 		"readOnly": true,
 		"productIdentity": "small-speaker",
 		"description": "A basic preset with four full-range channels. Suitable for use as a normal, standalone amplifier.",
@@ -17,22 +17,22 @@
 		"a": {
 			"level": 100,
 			"enabled": true,
-			"role": "mono"
+			"role": "left"
 		},
 		"b": {
 			"level": 100,
 			"enabled": true,
-			"role": "mono"
+			"role": "right"
 		},
 		"c": {
 			"level": 100,
 			"enabled": true,
-			"role": "mono"
+			"role": "left"
 		},
 		"d": {
 			"level": 100,
 			"enabled": true,
-			"role": "mono"
+			"role": "right"
 		}
 	}
 }

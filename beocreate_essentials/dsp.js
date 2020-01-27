@@ -584,7 +584,7 @@ function getChecksum(callback) {
 	if (dspConnected) {
 		dspClient.write(checksumRequest);
 	} else {
-		console.log("Couldn't get checksum because of DSP is not connected. Attempting again after connection is opened.");
+		console.log("Couldn't get checksum because DSP is not connected. Attempting again after connection is opened.");
 		sendRequestsAfterConnecting = true;
 	}
 }
@@ -628,9 +628,9 @@ function getXML(callback) {
 			if (xmlCallback) xmlCallback(null);
 			console.log("DSP request for program XML timed out.");
 			xmlCallback = null;
-		}, 2000);
+		}, 10000);
 	} else {
-		console.log("Couldn't get XML because of DSP is not connected. Attempting again after connection is opened.");
+		console.log("Couldn't get XML because DSP is not connected. Attempting again after connection is opened.");
 		sendRequestsAfterConnecting = true;
 	}
 }

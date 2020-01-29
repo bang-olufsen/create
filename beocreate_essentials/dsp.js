@@ -312,9 +312,12 @@ function isConnected() {
 	return dspConnected;
 }
 
-
+// Event listeners.
 dspClient.on('connect', onConnect);
 dspClient.on('error', onError);
+dspClient.on('close', onClose);
+dspClient.on('data', onData);
+dspClient.on('end', onEnd);
 
 dataLength = null;
 currentDataLength = 0;
@@ -327,9 +330,6 @@ function onConnect(error) {
 	if (connectCallback) connectCallback(true);
 	connectCallback = null;
 	connectTimeoutCycle = 0;
-	dspClient.on('close', onClose);
-	dspClient.on('data', onData);
-	dspClient.on('end', onEnd);
 	if (sendRequestsAfterConnecting) {
 		sendRequestsAfterConnecting = false;
 		if (checksumCallback) {

@@ -19,15 +19,22 @@
 	<script src='common/scripts/modernizr.js'></script>
 	<script src='common/scripts/fastclick.min.js'></script>
 	<script src='common/scripts/swipe.min.js'></script>
+	<script src='common/scripts/flotr2.mod.min.js'></script>
 	<script src='common/scripts/beo-ui.js'></script>
 	<script src='common/scripts/beo-comms.js'></script>
 	<script src='common/scripts/beo-dspcalc.js'></script>
+	<script src='common/scripts/beo-graph.js'></script>
 </head>
 <body class="disconnected" style="opacity: 0;">
 	<div class="plexi" id="nav-back-plate" onclick="beo.toggleMainMenu();"></div>
 	
 	
 	<nav class="bar top-level">
+		<div class="image-cacher">
+			<img src="common/create-wait-animate.svg">
+			<img src="common/hifiberry-wait-animate.svg">
+			<img src="common/symbols-black/wait-star.svg">
+		</div>
 		<div class="nav-content">
 			
 		</div>
@@ -46,10 +53,10 @@
 	
 	<div class="plexi" id="ask-back-plate" onclick="beo.ask();"></div>
 	<div class="ask" id="ask">
-		<div class="ask-content">
-			<div class="menu-content ask-menu-content" id="ask-menu-content">
+		<div class="ask-content" id="ask-content">
+			<!--<div class="menu-content ask-menu-content" id="ask-menu-content">
 				
-			</div>
+			</div>-->
 		</div>
 	</div>
 	
@@ -126,10 +133,10 @@
 	
 	<div class="player-bar setup-hide">
 		<div class="player-bar-wrap">
-			<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();"></div>
+			<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();" title="Show Now Playing"></div>
 			<div id="player-bar-info-area">
 				<div class="focused-source">
-					<div class="symbol focused-source-icon hidden" style="-webkit-mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg); mask-image: url(sources/bluetooth/symbols-white/bluetooth.svg);"></div><span class="focused-source-name"></span>
+					<div class="symbol focused-source-icon hidden" style=""></div><span class="focused-source-name"></span>
 				</div>
 				<div class="now-playing-titles logo">
 					<h3 class="first-row">Partir avec moi</h3>

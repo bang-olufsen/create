@@ -33,6 +33,7 @@ var fs = require('fs');
 var exec = require("child_process").exec;
 var EventEmitter = require('eventemitter3');
 var aplay = require('aplay');
+var _ = require('underscore');
 
 // Beocreate Essentials
 var beoCom = require("../beocreate_essentials/communication")();
@@ -77,7 +78,7 @@ console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen
 cmdArgs = process.argv.slice(2);
 if (cmdArgs.indexOf("v") != -1) debugMode = 1;
 if (cmdArgs.indexOf("vv") != -1) debugMode = 2;
-if (cmdArgs.indexOf("vvv") != -1) debugMode = 2;
+if (cmdArgs.indexOf("vvv") != -1) debugMode = 3;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 if (cmdArgs.indexOf("dev") != -1) developerMode = true;
 if (cmdArgs.indexOf("q") != -1) quietMode = true;
@@ -184,11 +185,14 @@ function getSettings(extension) {
 				if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
 			} catch (error) {
 				console.error("Error loading settings for '"+extension+"':", error);
+				settings = null;
 			}
 		} else {
 			// If the settings file doesn't exist, return null.
 			settings = null;
 		}
+	} else {
+		settings = null;
 	}
 	return settings;
 }
@@ -266,7 +270,8 @@ global.beo = {
 	download: download,
 	downloadJSON: downloadJSON,
 	addDownloadRoute: addDownloadRoute,
-	removeDownloadRoute: removeDownloadRoute
+	removeDownloadRoute: removeDownloadRoute,
+	underscore: _
 };
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
@@ -275,7 +280,21 @@ var selectedExtension = null;
 
 // HTTP & EXPRESS SERVERS
 var expressServer = express();
-var beoServer = http.createServer(expressServer).listen(systemConfiguration.port); // Create a HTTP server.
+var beoServer = http.createServer(expressServer);
+beoServer.on("error", function(error) {
+	switch (error.code) {
+		case "EADDRINUSE":
+			console.error("HTTP server port is already in use. Exiting...")
+			startShutdown();
+			break;
+		default:
+			console.error("HTTP server error:", error);
+			break;
+	}
+	
+});
+
+beoServer.listen(systemConfiguration.port); // Create a HTTP server.
 
 etags = (developerMode) ? false : true; // Disable etags (caching) when running with debug.
 expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.

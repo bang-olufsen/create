@@ -2,11 +2,11 @@
 
 Beocreate 2 integrates with *Beocreate 4-Channel Amplifier*, which contains a flexible and powerful *DSP* (digital signal processor) for customising the sound signature of the system.
 
-Sound presets are collections of sound adjustment settings that can be applied at once, instantly. Presets can be imported right in the user interface. In this document we cover how the presets work and how they can be created.
+Sound presets are collections of sound adjustment settings that can be applied at once, instantly. Presets can be imported right in the user interface (Sound > Sound Preset > Import Preset). In this document we cover how the presets work and how they can be created.
 
 ### New in Beocreate 2
 
-In Beocreate 2, sound presets (previously called *sound profiles*) are now separated from DSP programs:
+In Beocreate 2, sound presets (previously called *sound profiles*) are now separated from DSP programs for greater flexibility:
 
 1. A DSP program determines the sound processing flow and which sound adjustment features are available.
 2. A sound preset contains the actual settings that are dynamically applied to the DSP program (equaliser and crossover parameters, levels, delays, ...).
@@ -140,18 +140,18 @@ Leaving channels blank like above will bypass all of the filters on the channels
 
 The following filter types are supported:
 
-- peak
+- peak/dip
 - high/low pass
 - high/low shelf
 - coefficients
 
-You can find in-depth explanations for the different filter types at [link]. They can be mixed and matched in any combination to shape the sound as desired.
+You can find in-depth explanations for the different filter types [here](https://www.tonmeister.ca/wordpress/2018/02/06/bo-tech-a-very-brief-introduction-to-parametric-equalisation/). They can be mixed and matched in any combination to shape the sound as desired.
 
-#### Peak
+#### Peak or Dip
 
 	{"type": "peak", "frequency": 1000, "Q": 0.7, "gain": 2}
 	
-A peaking filter. It either amplifies or attenuates sound at and around the centre frequency.
+A peak or dip filter either amplifies or attenuates sound at and around the centre frequency. *Note:* in both cases, the filter type is specified as *peak*.
 
 - *frequency:* centre frequency of the filter in Hz. **Required.**
 - *Q:* the "sharpness" of the filter – the higher the value, the narrower the bandwidth of the filter. **Required.**
@@ -195,7 +195,9 @@ For advanced, entirely custom filters, the filter coefficients can be defined di
 
 The **required** parameters are the coefficients: *b0, b1, b2, a1, a2*. The system assumes a0 to be 1 and thus it can't be defined.
 
-The coefficients have to be calculated against the *sampling rate* of the DSP program (48 kHz for Beocreate Universal). The sampling rate these filters are intended for need to be defined in the *sound-preset* section (see earlier) **or** with each filter, next to the coefficients (such as here). If neither is defined, the filter will be bypassed.
+The coefficients have to be calculated against the *sampling rate* of the DSP program (48 kHz for Beocreate Universal). The sampling rate these filters are intended for should be indicated in the *sound-preset* section (see earlier) **or** with each filter, next to the coefficients (such as here). 
+
+A missing sampling rate is not fatal, but the filter may sound different than expected. A warning will display in Speaker Equaliser interface.
 
 
 ## channels
@@ -246,7 +248,7 @@ The possible roles are determined by the DSP program. Beocreate Universal suppor
 
 #### Level
 
-Volume of this channel relative to the signal.
+Volume of this channel relative to the input signal.
 
 	"level": -1.3
 	
@@ -281,7 +283,7 @@ For some crossover configurations (such as 2nd-order), it may be necessary to in
 	
 Possible values are: *true* or *false*.
 
-*Tip:* although it is recommended to always ensure proper polarity when wiring up the loudspeakers, this setting can be used to "fix" incorrect polarity of a loudspeaker driver.
+*Tip:* although it is recommended to always ensure proper polarity when wiring up the loudspeakers, this setting can be used to "fix" or test for incorrect polarity of a loudspeaker driver.
 
 
 ## Product Identities

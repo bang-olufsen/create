@@ -1,33 +1,61 @@
 var channels = (function() {
 
+var channelSettings = {};
+var canDoSimpleStereoSetup = false;
+var driverTypes = {};
+var canControl = {};
+
+var channelsUIPrepared = false;
+
+channelColours = ["red", "yellow", "green", "blue"];
+
+
+
+$(document).on("general", function(event, data) {
+	if (data.header == "activatedExtension") {
+		if (data.content.extension == "channels") {
+			prepareChannelsUI();
+			if (!$("#sound").parent().hasClass("advanced-sound-adjustments")) {
+				beo.showMenuTab("channels-basics");
+			}
+		}
+	}
+	
+});
+
 $(document).on("channels", function(event, data) {
 	if (data.header == "channelSettings") {
+		prepareChannelsUI();
 		
-		if (data.content.settings != undefined) {
-			showChannelSettings(data.content.settings);
+		if (data.content.driverTypes != undefined) {
+			driverTypes = data.content.driverTypes;
 		}
 		
 		if (data.content.canControlChannels != undefined) {
-			showCanControlChannels(data.content.canControlChannels);
+			canControl = data.content.canControlChannels;
+			showCanControlChannels();
 		}
 		
 		if (data.content.canDoSimpleStereoSetup != undefined) {
 			showCanDoSimpleStereoSetup(data.content.canDoSimpleStereoSetup);
-		} else {
-			showCanDoSimpleStereoSetup(false);
 		}
 		
-		if (data.content.simpleChannelSelection != undefined) {
-			showSimpleChannelSelection(data.content.simpleChannelSelection);
-		} else {
-			showSimpleChannelSelection(null);
+		if (data.content.settings != undefined) {
+			channelSettings = data.content.settings;
+			showChannelSettings();
 		}
 		
-		if (data.content.daisyChainEnabled) {
-			$("#channels-daisy-chained-message").removeClass("hidden");
+		if (data.content.simpleRoleSelection != undefined) {
+			showSimpleRoleSelection(data.content.simpleRoleSelection);
 		} else {
-			$("#channels-daisy-chained-message").addClass("hidden");
+			showSimpleRoleSelection(null);
 		}
+		
+		/*if (data.content.daisyChainEnabled) {
+			$(".channels-daisy-chained").removeClass("hidden");
+		} else {
+			$(".channels-daisy-chained").addClass("hidden");
+		}*/ // Handled by the daisy-chain extension.
 	}
 });
 
@@ -56,47 +84,136 @@ function balanceValueToText(value) {
 	return text;
 }
 
-function selectChannelSimple(channel) {
-	beo.send({target: "channels", header: "selectChannelSimple", content: {channel: channel}});
-}
-
-
-function showChannelSettings(settings) {
-	
-	if (settings.balance != undefined) {
-		$(".master-balance-slider span").attr("data-content", balanceValueToText(settings.balance));
-		$(".master-balance-slider").slider("value", settings.balance);
+function selectRole(channel, role = null, isSlave = false) {
+	$(".channels-channel-item, .channels-slave-channel-item").removeClass("expand-role-selector");
+	if (role == null) { // Expand the selector.
+		if (!isSlave) {
+			$(".channel-item-"+channel).addClass("expand-role-selector");
+		} else {
+			$(".slave-channel-item-"+channel).addClass("expand-role-selector");
+		}
+	} else {
+		beo.send({target: "channels", header: "selectRole", content: {channel: channel, role: role, daisyChainRole: isSlave}});
 	}
 }
 
-function showCanControlChannels(canControl) {
+function selectRoleSimple(role) {
+	beo.send({target: "channels", header: "selectRoleSimple", content: {role: role}});
+}
+
+
+function showChannelSettings() {
 	
-	$("#simple-channel-select-control, #simple-stereo-control").removeClass("disabled");
-	$("#simple-balance-control").removeClass("hidden");
+	if (channelSettings.balance != undefined) {
+		$(".master-balance-slider span").attr("data-content", balanceValueToText(channelSettings.balance));
+		$(".master-balance-slider").slider("value", channelSettings.balance);
+	}
+	
 	for (var c = 0; c < 4; c++) {
 		channel = "abcd".charAt(c);
-		
-		if (canControl[channel].role == false) {
-			$("#simple-channel-select-control, #simple-stereo-control").addClass("disabled");
+		if (channelSettings[channel]) {
+			if (channelSettings[channel].role) {
+				$(".channel-item-"+channel+" .selected-role").text(beo.capitaliseFirst(channelSettings[channel].role));
+				$(".channel-item-"+channel+" .role-select-control > div").removeClass("selected");
+				$(".channel-item-"+channel+" .role-select-control > div."+channelSettings[channel].role).addClass("selected");
+			}
+			if (channelSettings.daisyChainRoles[channel]) {
+				$(".slave-channel-item-"+channel+" .selected-role").text(beo.capitaliseFirst(channelSettings.daisyChainRoles[channel]));
+				$(".slave-channel-item-"+channel+" .role-select-control > div").removeClass("selected");
+				$(".slave-channel-item-"+channel+" .role-select-control > div."+channelSettings.daisyChainRoles[channel]).addClass("selected");
+			}
+			
+			if (driverTypes[channel] && driverTypes[channel].type) {
+				types = getSpeakerTypeNameAndIcon(driverTypes[channel].type);
+				$(".channel-item-"+channel+" .channel-type").text(types[0]);
+				$(".channel-item-"+channel+" .driver-icon").attr("src", extensions.channels.assetPath+"/drivers/"+types[1]+".png").removeClass("disabled");
+			} else {
+				$(".channel-item-"+channel+" .channel-type").text("");
+				$(".channel-item-"+channel+" .driver-icon").attr("src", extensions.channels.assetPath+"/drivers/mid-full.png").addClass("disabled");
+			}
+			
+			if (channelSettings[channel].invert) {
+				beo.setSymbol(".channel-item-"+channel+" .channel-invert", extensions.channels.assetPath+"/symbols-black/invert-inverted.svg");
+			} else {
+				beo.setSymbol(".channel-item-"+channel+" .channel-invert", extensions.channels.assetPath+"/symbols-black/invert.svg");
+			}
+			
+			if (channelSettings[channel].enabled) {
+				beo.setSymbol(".channel-item-"+channel+" .channel-mute", "common/symbols-black/volume.svg");
+				$(".channel-item-"+channel+" .channel-level-slider").removeClass("disabled");
+			} else {
+				beo.setSymbol(".channel-item-"+channel+" .channel-mute", "common/symbols-black/volume-mute.svg");
+				$(".channel-item-"+channel+" .channel-level-slider").addClass("disabled");
+			}
+			
+			if (channelSettings[channel].level != undefined) {
+				if (channelSettings[channel].level <= 0) {
+					levelValue = channelSettings[channel].level;
+				} else {
+					levelValue = beoDSP.convertVolume("%", "dB", channelSettings[channel].level, 60);
+				}
+				$(".channel-level-"+channel+" span").attr("data-content", Math.round(levelValue*100)/100 + " dB");
+				$(".channel-level-"+channel).slider("value", levelValue*4);
+			}
 		}
+		
+	}
+	
+	
+}
+
+function showCanControlChannels() {
+	$("#simple-channel-select-control, #simple-stereo-control, .channels-channel-item .channel-level-slider, .channels-channel-item .channel-mute, .channels-channel-item .channel-invert").removeClass("disabled");
+	$("#simple-balance-control, .channels-channel-item .selected-role").removeClass("hidden");
+	$(".channels-channel-item .role-select-control").empty();
+	for (var c = 0; c < 4; c++) {
+		channel = "abcd".charAt(c);
+		if (canControl[channel].role == false) {
+			$(".channel-item-"+channel+" .selected-role").addClass("hidden");
+		} else {
+			rearrangedRoles = [];
+			for (var i = 0; i < canControl[channel].role.length; i++) {
+				if (canControl[channel].role[i] == "left") {
+					rearrangedRoles.splice(0, 0, "left");
+				} else if (canControl[channel].role[i] == "right") {
+					rearrangedRoles.splice(rearrangedRoles.length, 0, "right");
+				} else {
+					rightIndex = rearrangedRoles.indexOf("right");
+					newIndex = (rightIndex != -1) ? rightIndex : rearrangedRoles.length;
+					rearrangedRoles.splice(newIndex, 0, canControl[channel].role[i]);
+				}
+			}
+			for (var i = 0; i < rearrangedRoles.length; i++) {
+				$(".channel-item-"+channel+" .role-select-control").append("<div class=\""+rearrangedRoles[i]+"\" onclick=\"channels.selectRole('"+channel+"', '"+rearrangedRoles[i]+"');\">"+beo.capitaliseFirst(rearrangedRoles[i])+"</div>");
+				$(".slave-channel-item-"+channel+" .role-select-control").append("<div class=\""+rearrangedRoles[i]+"\" onclick=\"channels.selectRole('"+channel+"', '"+rearrangedRoles[i]+"', true);\">"+beo.capitaliseFirst(rearrangedRoles[i])+"</div>");
+			}
+			$("#simple-channel-select-control").removeClass("disabled");
+		}
+		
 		
 		if (canControl[channel].level == false) {
-			$("#simple-balance-control").addClass("hidden");
+			$(".channel-item-"+channel+" .channel-level-slider").addClass("disabled");
+			$(".channel-item-"+channel+" .channel-mute").addClass("disabled");
 		}
 		
-		if (canControl[channel].enabled == false) {
-			
+		if (canControl[channel].invert == false) {
+			$(".channel-item-"+channel+" .channel-invert").addClass("disabled");
 		}
 	}
+	
+	if (canControl.balance == false) {
+		$("#simple-balance-control").addClass("hidden");
+	}
+	
 	if (product_information && product_information.cardType) {
 		if (product_information.cardType() == "DAC+ DSP") {
-				$("#simple-channel-select, #simple-stereo-control").addClass("hidden");
+			$("#simple-channel-select, #simple-stereo-control").addClass("hidden");
 		}
 	}
 }
 
 function showCanDoSimpleStereoSetup(canDo) {
-
+	canDoSimpleStereoSetup = canDo;
 	if (canDo) {
 		$("#simple-stereo-control").removeClass("hidden");
 	} else {
@@ -104,13 +221,13 @@ function showCanDoSimpleStereoSetup(canDo) {
 	}
 }
 
-function showSimpleChannelSelection(channelSelection) {
+function showSimpleRoleSelection(roleSelection) {
 	$("#simple-channel-select-control > div").removeClass("selected");
-	switch (channelSelection) {
+	switch (roleSelection) {
 		case "left":
 		case "right":
 		case "mono":
-			$("#simple-channel-select-control > ."+channelSelection).addClass("selected");
+			$("#simple-channel-select-control > ."+roleSelection).addClass("selected");
 			$("#simple-stereo-control .button").text("Stereo").removeClass("selected");
 			break;
 		case "stereo":
@@ -123,15 +240,104 @@ function showSimpleChannelSelection(channelSelection) {
 			$("#simple-stereo-control .button").text("Stereo").removeClass("selected");
 			break;
 	}
+	if (!roleSelection || ((roleSelection == "stereo" || roleSelection == "stereo-rev") && !canDoSimpleStereoSetup)) {
+		$("#channels-custom-roles-message").removeClass("hidden");
+	} else {
+		$("#channels-custom-roles-message").addClass("hidden");
+	}
+}
+
+function showAdvancedSettings() {
+	beo.sendToProduct("sound", {header: "advancedSoundAdjustmentsEnabled", content: {enabled: true}});
+	beo.showMenuTab("channels-advanced");
+}
+
+function showAdvancedSettingsPopup(channels) {
+	if (channels) {
+		// Takes the relevant "channel strips" from the Advanced tab and puts them into a popup view that can be presented anywhere.
+		prepareChannelsUI();
+		$("#advanced-channel-settings-popup .menu-content").empty();
+		for (var i = 0; i < channels.length; i++) {
+			$(".channel-item-"+channels[i]).clone().appendTo("#advanced-channel-settings-popup .menu-content");
+			$("#advanced-channel-settings-popup .channel-level-slider").empty();
+		}
+		beo.showPopupView("advanced-channel-settings-popup");
+		attachChannelSliders("#advanced-channel-settings-popup");
+		beo.sendToProduct("channels", {header: "getSettings"});
+	} else {
+		beo.hidePopupView("advanced-channel-settings-popup");
+	}
 }
 
 function setLevelProto(channels, level) {
 	beo.send({target: "channels", header: "setLevelProto", content: {channel: channels, level: level}});
 }
 
-function setInvertProto(channels, invert) {
-	beo.send({target: "channels", header: "setInvertProto", content: {channel: channels, invert: invert}});
+function toggleInvert(channel) {
+	beo.sendToProduct("channels", {header: "toggleInvert", content: {channel: channel}});
 }
+
+function toggleEnabled(channel) {
+	beo.sendToProduct("channels", {header: "toggleEnabled", content: {channel: channel}});
+}
+
+
+function prepareChannelsUI() {
+	if (!channelsUIPrepared) {
+		channelsUIPrepared = true;
+		// Duplicate the advanced channel controls for all channels.
+		channelItem = $(".channels-channel-item");
+		slaveItem = $(".channels-slave-channel-item");
+		for (var i = 0; i < 4; i++) {
+			channel = ("abcd").charAt(i);
+			
+			newItem = channelItem.clone();
+			newItem.addClass("channel-item-"+channel+" "+channelColours[i]);
+			newItem.find(".channel-dot").addClass(channelColours[i]);
+			newItem.find(".channel-letter span").text(channel.toUpperCase());
+			newItem.find(".channel-level-slider").addClass("channel-level-"+channel+" "+ channelColours[i]);
+			newItem.find(".selected-role").attr("onclick", "channels.selectRole('"+channel+"');");
+			newItem.find(".channel-mute").attr("onclick", "channels.toggleEnabled('"+channel+"');");
+			newItem.find(".channel-invert").attr("onclick", "channels.toggleInvert('"+channel+"');");
+			newItem.appendTo("#channels-advanced-container");
+			
+			newSlaveItem = slaveItem.clone();
+			newSlaveItem.addClass("slave-channel-item-"+channel+" "+channelColours[i]);
+			newSlaveItem.find(".channel-dot").addClass(channelColours[i]);
+			newSlaveItem.find(".channel-letter span").text(channel.toUpperCase());
+			newSlaveItem.find(".selected-role").attr("onclick", "channels.selectRole('"+channel+"', null, true);");
+			newSlaveItem.appendTo("#channels-daisy-chained-container");
+		}
+		channelItem.remove();
+		slaveItem.remove();
+		
+		attachChannelSliders();
+	}
+}
+
+
+function attachChannelSliders(context = null) {
+	context = (context == null) ? "" : context+" "; 
+	$(context+".channel-level-slider").slider({
+		range: "min",
+		min: -80,
+		max: 0,
+		value: 0,
+		slide: function( event, ui ) {
+				if ($(event.target).hasClass("channel-level-a")) channel = "a";
+				if ($(event.target).hasClass("channel-level-b")) channel = "b";
+				if ($(event.target).hasClass("channel-level-c")) channel = "c";
+				if ($(event.target).hasClass("channel-level-d")) channel = "d";
+				
+				levelValue = ui.value/4;
+				
+				$(".channel-level-"+channel+" span").attr("data-content", levelValue + " dB");
+				beo.sendToProduct("channels", {header: "setLevel", content: {channel: channel, level: levelValue}});
+				
+			}
+	});
+}
+
 
 
 
@@ -216,11 +422,66 @@ function generateSettingsPreview(settings) {
 	return [beo.translatedString("Channels", "channelsTitle", "channels"), '<p>'+previewString+'</p>', compatibilityNote];
 }
 
+function getSpeakerTypeNameAndIcon(type) {
+	switch (type) {
+		case "full-range":
+			newTypeUI = "Full-range";
+			newTypeIcon = "mid-full";
+			hp = null;
+			lp = null;
+			break;
+		case "tweeter":
+			newTypeUI = "Tweeter";
+			newTypeIcon = "tweet";
+			hp = 2300;
+			lp = null;
+			break;
+		case "mid-tweeter":
+			newTypeUI = "Mid-tweeter";
+			newTypeIcon = "mid-full";
+			hp = 300;
+			lp = null;
+			break;
+		case "midrange":
+			newTypeUI = "Midrange";
+			newTypeIcon = "mid-full";
+			hp = 300;
+			lp = 2300;
+			break;
+		case "mid-woofer":
+			newTypeUI = "Mid-woofer";
+			newTypeIcon = "woof";
+			hp = null;
+			lp = 2300;
+			break;
+		case "woofer":
+			newTypeUI = "Woofer";
+			newTypeIcon = "woof";
+			hp = null;
+			lp = 300;
+			break;
+	}
+	return [newTypeUI, newTypeIcon, hp, lp];
+}
+
+function showingTab(tab) {
+	if (tab == "advanced") {
+		$("#show-channels-connection-guide-button").removeClass("hidden");
+	} else {
+		$("#show-channels-connection-guide-button").addClass("hidden");
+	}
+}
+
 return {
 	generateSettingsPreview: generateSettingsPreview,
-	selectChannelSimple: selectChannelSimple,
-	setLevelProto: setLevelProto,
-	setInvertProto: setInvertProto
+	selectRole: selectRole,
+	selectRoleSimple: selectRoleSimple,
+	toggleEnabled: toggleEnabled,
+	toggleInvert: toggleInvert,
+	showAdvancedSettings: showAdvancedSettings,
+	showAdvancedSettingsPopup: showAdvancedSettingsPopup,
+	showingAdvancedTab: function() {showingTab('advanced')},
+	showingBasicsTab: function() {showingTab('basics')}
 }
 
 })();

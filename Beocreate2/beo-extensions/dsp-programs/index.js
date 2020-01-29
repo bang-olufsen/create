@@ -235,8 +235,8 @@ if (Gpio) {
 			} else {
 				settings.muteUnknownPrograms = false;
 			}
-			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
-			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
+			beo.saveSettings("dsp-programs", settings);
+			beo.sendToUI("dsp-programs", {header: "settings", content: settings});
 		}
 		
 		if (event.header == "autoUpgrade") {
@@ -245,8 +245,13 @@ if (Gpio) {
 			} else {
 				settings.autoUpgrade = false;
 			}
-			beo.bus.emit("settings", {header: "saveSettings", content: {extension: "dsp-programs", settings: settings}});
-			beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
+			beo.saveSettings("dsp-programs", settings);
+			beo.sendToUI("dsp-programs", {header: "settings", content: settings});
+		}
+		
+		if (event.header == "server-notify") {
+			// Called by the HiFiBerry SigmaDSP server.
+			console.log("Notification from DSP:", event.content);
 		}
 	});
 	
@@ -263,47 +268,50 @@ if (Gpio) {
 				dspResponding = true;
 				clearTimeout(checksumTimeout);
 				currentChecksum = checksum;
-				beoDSP.getXML(function(response) {
-					// Reads the current program from the DSP.
-					metadata = (response != null) ? parseDSPMetadata(response).metadata : null;
-					
-					if (metadata) {
-						if (!metadataFromDSP && !startup) {
-							// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
-							if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
-								beo.extensions.setup.restartWhenComplete("sound-preset", true);
+				setTimeout(function() {
+					beoDSP.getXML(function(response) {
+						// Reads the current program from the DSP.
+						metadata = (response != null) ? parseDSPMetadata(response).metadata : null;
+						
+						if (metadata) {
+							if (!metadataFromDSP && !startup) {
+								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
+								if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
+									beo.extensions.setup.restartWhenComplete("sound-preset", true);
+								}
 							}
-						}
-						metadataFromDSP = true;
-						amplifierMute(false);
-						callback(metadata, true);
-					} else {
-						// If no metadata was received from the DSP, check if any of the stored programs contains the same checksum and use that metadata.
-						metadataFromDSP = false;
-						programMatch = null;
-						for (program in dspPrograms) {
-							dspPrograms[program].active = false;
-							if (dspPrograms[program].checksum == currentChecksum) {
-								programMatch = program;
-								dspPrograms[program].active = true;
-								break;
-							}
-						}
-						if (programMatch) {
-							if (debug) console.log("No XML received from the DSP, but '"+program+"' matches, using its metadata instead.");
+							metadataFromDSP = true;
 							amplifierMute(false);
-							callback(dspPrograms[programMatch].metadata, false);
+							callback(metadata, true);
 						} else {
-							if (!settings.muteUnknownPrograms) {
-								if (debug) console.log("No matching metadata found.");
-								amplifierMute(false);
-							} else {
-								if (debug) console.log("No matching metadata found, keeping amplifier muted.");
+							// If no metadata was received from the DSP, check if any of the stored programs contains the same checksum and use that metadata.
+							metadataFromDSP = false;
+							programMatch = null;
+							for (program in dspPrograms) {
+								dspPrograms[program].active = false;
+								if (dspPrograms[program].checksum == currentChecksum) {
+									programMatch = program;
+									dspPrograms[program].active = true;
+									break;
+								}
 							}
-							callback(null);
+							if (programMatch) {
+								if (debug) console.log("No XML received from the DSP, but '"+program+"' matches, using its metadata instead.");
+								amplifierMute(false);
+								callback(dspPrograms[programMatch].metadata, false);
+							} else {
+								if (!settings.muteUnknownPrograms) {
+									if (debug) console.log("No matching metadata found.");
+									amplifierMute(false);
+								} else {
+									if (debug) console.log("No matching metadata found, keeping amplifier muted.");
+								}
+								callback(null);
+							}
 						}
-					}
-				});
+					});
+				}, 500); // Delay getting XML.
+				
 			});
 		}
 	}
@@ -429,10 +437,6 @@ if (Gpio) {
 						dspUpgrade = false;
 						beo.bus.emit("ui", {target: "dsp-programs", header: "dspUpgrade", content: {dspUpgrade: false}});
 					}
-					if (settings.autoInstall) {
-						delete settings.autoInstall;
-						beo.saveSettings("dsp-programs", settings);
-					}
 					
 					if (metadata) {
 						if (debug == 2) {
@@ -444,6 +448,12 @@ if (Gpio) {
 					} else {
 						if (debug) console.log("No metadata found for current DSP program.");
 						beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
+					}
+					
+					if (settings.autoInstall) {
+						delete settings.autoInstall;
+						beo.saveSettings("dsp-programs", settings);
+						if (extensions.sound && extensions.sound.checkCurrentMixerAndReconfigure) extensions.sound.checkCurrentMixerAndReconfigure();
 					}
 					
 					name = getProgramName(currentMetadata);

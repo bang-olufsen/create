@@ -101,9 +101,10 @@ function connectProduct() {
 				clearTimeout(productConnectionNotificationTimeout);
 				$("body").addClass("disconnected").removeClass("connecting connected");
 				beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: false}});
-				if (maxConnectionAttempts > 0) beo.notify({title: "Product is unreachable", message: "Make sure the product is on and that the product and your device are connected to the same network.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
+				if (maxConnectionAttempts > 0 && !noConnectionNotifications) beo.notify({title: "Product is unreachable", message: "Make sure the product is on and that the product and your device are connected to the same network.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
 				clearTimeout(productConnectionTimeout);
 				connectionAttempts = 0;
+				connecting = false;
 			}
 		}
 	};
@@ -125,7 +126,7 @@ function processReceivedData(data) {
 }
 
 function send(data) {
-	if (productConnection) {
+	if (productConnection && connected) {
 		productConnection.send(JSON.stringify(data));
 	} else if (simulation) {
 		console.log("Simulated send of data:"+data);

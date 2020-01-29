@@ -13,8 +13,9 @@
 	<body class="mac no-dark-ui-animation windowed">
 		<div id="title-bar">
 			<div id="title-bar-drag"></div>
-			<div id="menu-button-wrap">
-				<div class="toolbar-button menu-button disabled" onclick="toggleMenu();" id="menu-button-neue"><div class="button-icon"></div></div>
+			<div id="toolbar-wrap">
+				<div class="toolbar-button disabled visible" id="menu-button" onclick="toggleMenu();"><div class="button-icon"></div></div>
+				<div class="toolbar-button visible" id="refresh-button" onclick="refresh();"><div class="button-icon"></div></div>
 			</div>
 			<!--<div class="toolbar-button test" id="menu-button-neue"><div class="button-icon" id="show-all"></div></div>-->
 			<!--<div id="menu-button" class="menu-open hide" onclick="toggleMenu();">
@@ -127,7 +128,7 @@
 								<!--<h2>Help &amp; Other Resources</h2>-->
 								<ul class="links">
 									
-									<li><a href="https://github.com/bang-olufsen/create/blob/master/Help/FindYourProduct.md" target="_blank">Help finding the product</a></li>
+									<li><a href="https://github.com/bang-olufsen/create/wiki/Find-Your-Product" target="_blank">Help finding the product</a></li>
 									<li><a href="https://www.hifiberry.com/beocreate" target="_blank">Upcycle vintage Bang &amp; Olufsen loudspeakers</a></li>
 									<li><a href="https://www.hifiberry.com/beocreate/beocreate-doc/beocreate-hardware-documentation/" target="_blank">Beocreate 4-Channel Amplifier documentation</a></li>
 									<li><a href="https://support.hifiberry.com/hc/en-us/community/topics/200402012-Software" target="_blank">HiFiBerry support forums</a></li>

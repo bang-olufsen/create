@@ -181,9 +181,9 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 						});
 					}
 				} else {
-					beo.bus.emit("daisy-chain", {header: "disableDaisyChaining", content: {reason: "soundPresetSelected"}});
 					beo.bus.emit("ui", {target: "sound-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
 				}
+				beo.bus.emit("daisy-chain", {header: "disableDaisyChaining", content: {reason: "soundPresetSelected"}});
 			}
 			
 		}

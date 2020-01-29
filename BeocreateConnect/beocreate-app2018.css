@@ -222,7 +222,6 @@ strong {
 	display: block;
 	margin-right: auto;
 	margin-left: auto;
-	
 	/*visibility: hidden;*/
 	pointer-events: none;
 	filter: invert(0);
@@ -231,7 +230,7 @@ strong {
 }
 
 .windows .header-beo {
-	margin-left: 51px;
+	margin-left: 96px;
 	opacity: 1;
 }
 
@@ -250,7 +249,7 @@ strong {
 
 .windows #window-title {
 	text-align: left;
-	left: 60px;
+	left: 104px;
 	opacity: 1;
 }
 
@@ -293,30 +292,46 @@ strong {
 	opacity: 1;
 }
 
-.mac #menu-button-neue {
+.toolbar-button {
+	opacity: 0;
+	transition: opacity 0.5s;
+}
+
+.toolbar-button.visible {
+	opacity: 1;
+}
+
+.mac .toolbar-button {
 	width: 38px;
+	margin-right: 10px;
 }
 
-.windows #menu-button-neue {
+.windows .toolbar-button {
 	width: 46px;
+	/*border-right: 1px solid rgba(0,0,0,0.1);*/
 }
 
-#menu-button-neue .button-icon {
+#menu-button .button-icon {
 	background-image: url(images/symbols-black/show-all.svg);
 }
 
-#menu-button-wrap {
+#refresh-button .button-icon {
+	background-image: url(images/symbols-black/refresh.svg);
+}
+
+#toolbar-wrap {
 	position: absolute;
 	left: 78px;
 	z-index: 1;
 	flex-shrink: 0;
+	display: flex;
 }
 
-.mac.full-screen #menu-button-wrap {
+.mac.full-screen #toolbar-wrap {
 	left: 8px;
 }
 
-.windows #menu-button-wrap {
+.windows #toolbar-wrap {
 	left: 0;
 	height: 100%;
 }

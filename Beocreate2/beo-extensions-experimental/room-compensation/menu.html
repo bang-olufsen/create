@@ -7,9 +7,40 @@
 
 	<div class="scroll-area">
 		<div class="menu-content">
-			<p>Use Room EQ Wizard to measure your listening space and generate correction filters to improve sound performance. <a href="https://www.hifiberry.com/build/guides/implementing-room-acoustics-correction-using-rew/" target="_blank">Learn more.</a></p>
-			
+			<p>Measure your listening room to improve sound.</p>
+			<div class="button pill grey" onclick="room_compensation.startMeasurement();">Measure Room...</div>
 		</div>
+	</div>
+	
+	
+	<div class="popup-content hidden" id="room-compensation-measurement-assistant">
+		<header class="popup">
+			<div class="button symbol left" onclick="room_compensation.cancelMeasurement();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);" id="daisy-chain-close-button"></div>
+			<h1>Room Measurement</h1>
+			
+		</header>
+		<div id="room-compensation-measurement-swipe" class="swipe">
+			<div class="swipe-wrap">
+				
+				<div class="scroll-area">
+					<div class="header-image-wrap">
+						<div class="header-image" style="background-image: url(€/measurement-mic.png); background-size: cover;"></div>
+					</div>
+					<div class="menu-content">
+						<h1>Connect microphone</h1>
+						<p class="margin-top">Connect a measurement microphone to the USB port on the Raspberry Pi.</p>
+						<p class="loading">Waiting for microphone...</p>
+					</div>
+				</div>
+				
+	
+				
+			</div>
+		</div>
+		
+		<footer>
+			<div class="button pill black" id="room-compensation-measurement-assistant-button" onclick="room_compensation.nextStep();">Start Measurement</div>
+		</footer>
 	</div>
 </div>
 

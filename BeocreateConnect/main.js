@@ -13,10 +13,13 @@ var activeWindow = true;
 
 const template = [
   {
-    label: 'File',
+    label: 'Product',
     submenu: [
-      { label: 'Look for Products Again',
-      click () { startDiscovery(); startManualDiscovery(); }}
+      { label: 'Discover Products Again',
+      click () { startDiscovery(); startManualDiscovery(); }},
+	  { type: 'separator' },
+	  { label: 'Reload Product View',
+	  click () { win.webContents.send('reloadProductView') }, accelerator: "CmdOrCtrl+R"}
     ]
   },
   {
@@ -46,9 +49,6 @@ const template = [
   {
 	label: 'Develop',
     submenu: [
-      { label: 'Reload Product View',
-      click () { win.webContents.send('reloadProductView') }, accelerator: "CmdOrCtrl+R"},
-	  { type: 'separator' },
       { role: 'reload', accelerator: false },
       { role: 'forcereload', accelerator: false },
       { role: 'toggledevtools' }
@@ -164,11 +164,14 @@ Menu.setApplicationMenu(menu);
 			win.webContents.send('colourSchemeIsDark', systemPreferences.isDarkMode());
 		}
 		win.webContents.send('styleForWindows', process.platform !== 'darwin');
-		startDiscovery(true);
-		startCheckingIPAddress();
-		startManualDiscovery();
 		setTimeout(function() {
-			win.show();	
+			win.show();
+			setTimeout(function() {
+				startDiscovery();
+				startCheckingIPAddress();
+				startManualDiscovery();
+			}, 500);
+			
 		}, 100);
 	
       //listDrives();
@@ -187,10 +190,10 @@ Menu.setApplicationMenu(menu);
       // Dereference the window object, usually you would store windows
       // in an array if your app supports multi windows, this is the time
       // when you should delete the corresponding element.
+	  win = null;
 	  stopManualDiscovery();
 	  clearInterval(ipCheckInterval);
 	  stopDiscovery();
-      win = null;
     })
     
     win.on('focus', () => {
@@ -285,7 +288,7 @@ function startDiscovery(once) { // Start or restart discovery.
 	  	} else {
 	  		stopDiscovery();
 	  	}
-	  	
+	  	console.log("Starting discovery.");
 		browser.start();
 		bonjourProductCount = 0;
 		startedOnce = true;
@@ -296,11 +299,9 @@ function stopDiscovery() {
 	if (browser) {
 		browser.stop();
 		products = {};
-		try {
-			win.webContents.send('discoveredProducts', products);
-		} catch (error) {
-			
-		}
+		bonjourProductCount = 0;
+		console.log("Stopping discovery.");
+		if (win) win.webContents.send('discoveredProducts', products);
 	}
 }
 

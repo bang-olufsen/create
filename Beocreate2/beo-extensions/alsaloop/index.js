@@ -41,7 +41,8 @@ var exec = require("child_process").exec;
 				getLoopStatus(function(enabled) {
 					sources.setSourceOptions("alsaloop", {
 						enabled: enabled,
-						transportControls: false,
+						transportControls: ["play", "stop"],
+						startable: true,
 						usesHifiberryControl: true
 					});
 				});

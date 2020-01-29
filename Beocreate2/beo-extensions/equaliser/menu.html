@@ -1,38 +1,276 @@
-<div class="menu-screen" id="equaliser" data-icon="filter-peak.svg" data-menu-title="Crossover & Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-hidden="1">
+<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Speaker Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css">
 	
-	<div class="header-container graph">
-		<header>
-			<div class="back-button master"></div>
-			<h1 data-translation="headerTitle">Crossover &amp; EQ</h1>
-			<!--<h1 data-translation="headerTitle" class="fadeout">Equaliser</h1>-->
-		</header>
+	<header class="transparent">
+		<div class="back-button master"></div>
+		<h1 data-translation="headerTitle" class="fadeout">Speaker Equaliser</h1>
+		<!--<h1 data-translation="headerTitle" class="fadeout">Equaliser</h1>-->
+		<div class="button symbol right equaliser-view-options" style="-webkit-mask-image: url(/common/symbols-black/eye.svg); mask-image: url(/common/symbols-black/eye.svg);" onclick="beo.ask('equaliser-view-options');" data-text="View Options" title="Show view options"></div>
+	</header>
 	
-	</div>
-	<!--
-	<div class="tabs">
-		<div>A<div class="channel-dot red"></div></div>
-		<div>B<div class="channel-dot yellow"></div></div>
-		<div class="selected">C<div class="channel-dot green"></div></div>
-		<div>D<div class="channel-dot blue"></div></div>
+	<div id="equaliser-graph-container" class="at-top">
+		
 	</div>
 	
+	<div id="equaliser-graph-divider"></div>
+	
+	<div class="tabs no-top-margin equaliser-tabs">
+		<!--<div data-select-tab="equaliser-ch-all" id="equaliser-tab-all" data-tab-callback="equaliser.selectChannel">All</div>-->
+		<div class="selected" data-select-tab="equaliser-ch-a" id="equaliser-tab-a" data-tab-callback="equaliser.selectChannel">A<div class="channel-dot red"></div></div>
+		<div data-select-tab="equaliser-ch-b" id="equaliser-tab-b" data-tab-callback="equaliser.selectChannel">B<div class="channel-dot yellow" data-tab-callback="equaliser.selectChannel"></div></div>
+		
+		<div class="selected hidden" data-select-tab="equaliser-ch-a" id="equaliser-tab-group-ab"  data-tab-callback="equaliser.selectChannel">A • B<div class="channel-dot red"></div><div class="channel-dot yellow behind"></div></div>
+		<div data-select-tab="equaliser-ch-c" class="hidden" id="equaliser-tab-group-cd" data-tab-callback="equaliser.selectChannel" style="margin-right: 0;">C • D<div class="channel-dot green"></div><div class="channel-dot blue behind"></div></div>
+		
+		<div data-select-tab="equaliser-ch-c" id="equaliser-tab-c" data-tab-callback="equaliser.selectChannel">C<div class="channel-dot green"></div></div>
+		<div data-select-tab="equaliser-ch-d" id="equaliser-tab-d" data-tab-callback="equaliser.selectChannel">D<div class="channel-dot blue"></div></div>
+	</div>
+
 	
 	<div class="scroll-area">
-		<div class="menu-content">
+		<div class="menu-content"><!--no-padding-top-->
+			<!--
+			<div id="equaliser-link">
+				<div id="equaliser-link-a">
+					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('a');"></div>
+					<div class="line"></div>
+				</div>
+				<div id="equaliser-link-b">
+					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('b');"></div>
+					<div class="line"></div>
+				</div>
+				<div id="equaliser-link-c">
+					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('c');"></div>
+					<div class="line"></div>
+				</div>
+				<div id="equaliser-link-d">
+					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('d');"></div>
+					<div class="line"></div>
+				</div>
+			</div>-->
 			
+			<!--<h2 class="equaliser-selected-channel"></span></h2>-->
+			<p class="show-when-daisy-chained hidden">Two amplifiers are chained. Filter settings can't be updated to the connected slave amplifier remotely.</p>
+			<div class="menu-item static">
+				<div class="menu-label equaliser-selected-channel"></div>
+				
+				<div class="menu-icon right button symbol" id="equaliser-group-channels-button" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.groupChannels();" title="Group or ungroup channels"></div>
+				
+				<div class="menu-icon right button symbol" id="equaliser-channel-settings-button" style="-webkit-mask-image: url(extensions/channels/symbols-black/channels.svg); mask-image: url(extensions/channels/symbols-black/channels.svg);" onclick="equaliser.showChannelSettings();" title="Adjust channel level, role and more"></div>
+				
+				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="beo.ask('equaliser-options-prompt');" title="More filter options"></div>
+			</div>
+			<hr class="no-margin-top">
+			<div class="collection-row-scroller" id="equaliser-collection-scroller">
+				<div class="collection-row-wrap">
+					<div id="equaliser-filters" class="collection-row-view">
+						
+						<div class="collection-row-item button pill no-delete outline disabled" id="add-filter-button" onclick="equaliser.addFilter();" title="Add filter"><div class="collection-row-item-content"><div class="symbol" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(common/symbols-black/add.svg);"></div><div class="collection-row-item-text">Add</div></div></div>
+					</div>
+						
+				</div>
+			</div>
 			
+			<h2 id="equaliser-filter-name" class="common-filter-controls hidden">High-Pass</h2>
+			
+			<div id="parametric-controls" class="filter-controls">
+				<div class="control-squares">
+					<div class="control-square horizontal equaliser-fc-control" data-label="Frequency">
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-small-right.svg); mask-image: url(common/symbols-black/chevron-thin-small-right.svg);" onclick="equaliser.step('frequency', true);"></div>
+						<div class="control-square-wrap">
+							<span class="control-value filter-frequency"></span>
+							<span class="control-unit">Hz</span>
+						</div>
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-small-left.svg); mask-image: url(common/symbols-black/chevron-thin-small-left.svg);" onclick="equaliser.step('frequency', false);"></div>
+					</div>
+					
+					<div class="control-square vertical equaliser-gain-control" data-label="Gain">
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/plus-small.svg); mask-image: url(common/symbols-black/plus-small.svg);" onclick="equaliser.step('gain', true);"></div>
+						<div class="control-square-wrap">
+							<span class="control-value filter-gain"></span>
+							<span class="control-unit">dB</span>
+						</div>
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/minus-small.svg); mask-image: url(common/symbols-black/minus-small.svg);" onclick="equaliser.step('gain', false);"></div>
+					</div>
+					
+					<div class="control-square horizontal equaliser-q-control" data-label="Width">
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/resize-wider.svg); mask-image: url(common/symbols-black/resize-wider.svg);" onclick="equaliser.step('Q', true);"></div>
+						<div class="control-square-wrap">
+							<span class="control-unit equaliser-unit-q hidden">Q</span>
+							<span class="control-value filter-bandwidth"></span>
+							<span class="control-unit equaliser-unit-oct">oct</span>
+						</div>
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/resize-narrower.svg); mask-image: url(common/symbols-black/resize-narrower.svg);" onclick="equaliser.step('Q', false);"></div>
+					</div>
+				</div>
+				
+			</div>
+			<div id="crossover-controls" class="filter-controls hidden">
+				<div class="control-squares">
+					<div class="control-square horizontal equaliser-fc-control all-borders" id="crossover-fc-control" data-label="Frequency">
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-small-right.svg); mask-image: url(common/symbols-black/chevron-thin-small-right.svg);" onclick="equaliser.step('frequency', true);"></div>
+						<div class="control-square-wrap">
+							<span class="control-value filter-frequency"></span>
+							<span class="control-unit">Hz</span>
+						</div>
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-small-left.svg); mask-image: url(common/symbols-black/chevron-thin-small-left.svg);" onclick="equaliser.step('frequency', false);"></div>
+					</div>
+					
+					<div class="control-square horizontal equaliser-q-control hidden" id="crossover-q-control" data-label="Corner">
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/resize-wider.svg); mask-image: url(common/symbols-black/resize-wider.svg);" onclick="equaliser.step('Q', true);"></div>
+						<div class="control-square-wrap">
+							<span class="control-unit equaliser-unit-q hidden">Q</span>
+							<span class="control-value filter-bandwidth"></span>
+							<span class="control-unit equaliser-unit-oct">oct</span>
+						</div>
+						<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/resize-narrower.svg); mask-image: url(common/symbols-black/resize-narrower.svg);" onclick="equaliser.step('Q', false);"></div>
+					</div>
+				</div>
+				
+				<div class="menu-item" id="crossover-type" onclick="equaliser.setCrossoverType();">
+					<div class="menu-label">Type</div>
+					<div class="menu-value crossover-type"></div>
+				</div>
+			</div>
+			<div id="coeffs-controls" class="filter-controls hidden">
+				<div class="menu-item disabled" id="coeffs-a0">
+					<div class="menu-label narrow">a<sub>0</sub></div>
+					<input type="text" class="menu-value" autocorrect="off" value="1"/>
+				</div>
+				<div class="menu-item static" id="coeffs-a1">
+					<div class="menu-label narrow">a<sub>1</sub></div>
+					<input type="text" class="menu-value" autocorrect="off" data-value-callback="equaliser.enterCoefficient('a1', text, eventType);" value="0"/>
+				</div>
+				<div class="menu-item static" id="coeffs-a2">
+					<div class="menu-label narrow">a<sub>2</sub></div>
+					<input type="text" class="menu-value" autocorrect="off" data-value-callback="equaliser.enterCoefficient('a2', text, eventType);" value="0"/>
+				</div>
+				<div class="menu-item static" id="coeffs-b0">
+					<div class="menu-label narrow">b<sub>0</sub></div>
+					<input type="text" class="menu-value" autocorrect="off" data-value-callback="equaliser.enterCoefficient('b0', text, eventType);" value="1"/>
+				</div>
+				<div class="menu-item static" id="coeffs-b1">
+					<div class="menu-label narrow">b<sub>1</sub></div>
+					<input type="text" class="menu-value" autocorrect="off" data-value-callback="equaliser.enterCoefficient('b1', text, eventType);" value="0"/>
+				</div>
+				<div class="menu-item static" id="coeffs-b2">
+					<div class="menu-label narrow">b<sub>2</sub></div>
+					<input type="text" class="menu-value" autocorrect="off" data-value-callback="equaliser.enterCoefficient('b2', text, eventType);" value="0"/>
+				</div>
+				<p id="equaliser-coefficient-preview-message" class="hidden">Verify your filter on the graph before saving it.</p>
+				<div class="button-row centre">
+					<div class="button pill grey disabled" id="revert-equaliser-coefficients-button" onclick="equaliser.revertCoefficients();">Revert</div>
+					<div class="button pill black disabled" id="save-equaliser-coefficients-button" onclick="equaliser.saveCoefficients();">Save &amp; Apply</div>
+				</div>
+			</div>
+			<div class="common-filter-controls hidden">
+				<hr>
+				
+				<div class="menu-item toggle on" id="equaliser-filter-enabled" onclick="equaliser.toggleBypass();">
+					<div class="menu-label">Filter Enabled</div>
+					<div class="menu-toggle"></div>
+				</div>
+				<div class="button pill grey" onclick="equaliser.deleteFilter();">Remove Filter...</div>
+			</div>
+			<p id="equaliser-no-filters-message">Add filters to start shaping the sound of this channel.</p>
+			
+			<!--<h2>Channel options</h2>
+			<div class="menu-item toggle" id="equaliser-channel-inverted" onclick="equaliser.toggleInvert();">
+				<div class="menu-label">Invert Signal</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<hr>
+			<div class="menu-item toggle" id="equaliser-channel-grouping" onclick="equaliser.groupChannels();">
+				<div class="menu-label">Group Channels <span>A &amp; B</span></div>
+				<div class="menu-toggle"></div>
+			</div>
+			<div class="button pill grey">Import Filters...</div>-->
+
 		</div>
 		
 	</div>
-	-->
 	
-	<div class="scroll-area">
-		<div class="menu-content full-height centre-content">
-			<div class="bouncy-ball"></div>
-			<p class="centre">This feature is a work in progress. You hear it now, but don't see it just yet.</p>
+	<div class="ask-menu no-padding-top" id="equaliser-view-options">
+		<script>beo.insertConnectionGuide();</script>
+		<h2>View options</h2>
+		<div class="menu-item toggle" id="equaliser-show-all-channels-toggle" onclick="equaliser.toggleShowAllChannels();">
+			<div class="menu-label">Show All Channels</div>
+			<div class="menu-toggle"></div>
+		</div>
+		<div class="menu-item" id="equaliser-db-scale" onclick="equaliser.selectScale();">
+			<div class="menu-label">Scale</div>
+			<div class="menu-value">± 15 dB</div>
+		</div>
+		<div class="menu-item" id="equaliser-q-display" onclick="equaliser.selectQDisplay();">
+			<div class="menu-label">Show Filter Width As</div>
+			<div class="menu-value">Octaves</div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Done</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="equaliser-group-prompt">
+		<h2>Group channels <span class="ask-dynamic-0"></span>?</h2>
+		<p>Channel <span class="ask-dynamic-1"></span> filters will be copied to channel <span class="ask-dynamic-2"></span>, and filters on these channels will change in sync.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="equaliser.groupChannels(true);">Group Channels</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="equaliser-add-filter">
+		<h2>Crossover</h2>
+		<script>
+			
+			document.write(beo.createMenuItem({label: "Pass High Frequencies", icon: "€/symbols-black/filter-high-pass.svg", onclick: "equaliser.addFilter('highPass');", classes: ["add-high-pass-menu-item"]}));
+			document.write(beo.createMenuItem({label: "Pass Low Frequencies", icon: "€/symbols-black/filter-low-pass.svg", onclick: "equaliser.addFilter('lowPass');", classes: ["add-low-pass-menu-item"]}));
+			
+		</script>
+		
+		<h2>Equaliser</h2>
+		<script>
+			
+			document.write(beo.createMenuItem({label: "Peak or Dip", icon: "€/symbols-black/filter-peak.svg", onclick: "equaliser.addFilter('peak');"}));
+			document.write(beo.createMenuItem({label: "High Shelf", icon: "€/symbols-black/filter-high-shelf.svg", onclick: "equaliser.addFilter('highShelf');"}));
+			document.write(beo.createMenuItem({label: "Low Shelf", icon: "€/symbols-black/filter-low-shelf.svg", onclick: "equaliser.addFilter('lowShelf');"}));
+			
+		</script>
+		
+		<h2>Advanced</h2>
+		
+		<script>
+			
+			document.write(beo.createMenuItem({label: "Custom Coefficients", icon: "€/symbols-black/filter-coeffs.svg", onclick: "equaliser.addFilter('coeffs');"}));
+			
+		</script>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 		
+		<div class="ask-menu" id="equaliser-delete-prompt">
+			<h2>Remove this filter?</h2>
+			<div class="ask-buttons">
+				<div class="button pill grey" onclick="equaliser.deleteFilter(true);">Remove Filter</div>
+				<div class="button pill black cancel default" onclick="beo.ask();">Don't Remove</div>
+			</div>
+		</div>
+		
+		<div class="ask-menu" id="equaliser-delete-all-prompt">
+			<h2>Remove all filters on <span class="equaliser-selected-channel"></span>?</h2>
+			<div class="ask-buttons">
+				<div class="button pill grey" onclick="equaliser.deleteAllFilters(true);">Remove All Filters</div>
+				<div class="button pill black cancel default" onclick="beo.ask();">Don't Remove</div>
+			</div>
+		</div>
+		
+		<div class="ask-menu" id="equaliser-options-prompt">
+			<h2 class="equaliser-selected-channel"></h2>
+			<div class="ask-buttons">
+				<div class="button pill grey disabled" onclick="equaliser.importFilters();">Import Filters...</div>
+				<div class="button pill grey" onclick="equaliser.deleteAllFilters();">Remove All Filters...</div>
+				<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+			</div>
+		</div>
 	</div>
 </div>
-
 <script type="text/javascript" charset="utf-8" src="€/equaliser-client.js"></script>

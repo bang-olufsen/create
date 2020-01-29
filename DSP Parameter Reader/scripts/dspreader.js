@@ -321,10 +321,10 @@ function generateMetadataForBlock(block) {
 			metadata["muteRegister"] = {value: block.paramAddress[0]};
 			break;
 		case "MuteInvert":
-			metadata["muteInvertRegister"] = {value: block.paramAddress[0]};
+			metadata["muteInvertRegister"] = {value: block.paramAddress[0], storable: "yes"};
 			break;
 		case "SPDIFOn":
-			metadata["enableSPDIFRegister"] = {value: block.paramAddress[0]};
+			metadata["enableSPDIFRegister"] = {value: block.paramAddress[0], storable: "yes"};
 			break;
 		case "SPDIF on read":
 			metadata["readSPDIFOnRegister"] = {value: block.paramAddress[0]};
@@ -346,59 +346,59 @@ function generateMetadataForBlock(block) {
 			metadata["tuningForkOnRegister"] = {value: block.paramAddress[1]};
 			break;
 		case "IIR_L":
-			metadata["customFilterRegisterBankLeft"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length};
+			metadata["customFilterRegisterBankLeft"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length, storable: "yes"};
 			break;
 		case "IIR_R":
-			metadata["customFilterRegisterBankRight"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length};
+			metadata["customFilterRegisterBankRight"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length, storable: "yes"};
 			break;
 		case "ToneControl_L":
-			metadata["toneControlLeftRegisters"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length};
+			metadata["toneControlLeftRegisters"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length, storable: "yes"};
 			break;
 		case "ToneControl_R":
-			metadata["toneControlRightRegisters"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length};
+			metadata["toneControlRightRegisters"] = {value: block.paramAddress[0]+"/"+block.paramAddress.length, storable: "yes"};
 			break;
 		case "IIR_A":
 		case "IIR_B":
 		case "IIR_C":
 		case "IIR_D":
-			metadata[block.title] = {value: block.paramAddress[0]+"/"+block.paramAddress.length};
+			metadata[block.title] = {value: block.paramAddress[0]+"/"+block.paramAddress.length, storable: "yes"};
 			break;
 		case "Invert_A":
 		case "Invert_B":
 		case "Invert_C":
 		case "Invert_D":
-			metadata["invert"+block.title.charAt(7)+"Register"] = {value: block.paramAddress[0]};
+			metadata["invert"+block.title.charAt(7)+"Register"] = {value: block.paramAddress[0], storable: "yes"};
 			break;
 		case "Ch_A":
 		case "Ch_B":
 		case "Ch_C":
 		case "Ch_D":
-			metadata["channelSelect"+block.title.charAt(3)+"Register"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1};
+			metadata["channelSelect"+block.title.charAt(3)+"Register"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1, storable: "yes"};
 			break;
 		case "Delay_A":
 		case "Delay_B":
 		case "Delay_C":
 		case "Delay_D":
-			metadata["delay"+block.title.charAt(6)+"Register"] = {value: block.paramAddress[0], maxDelay: 2000};
+			metadata["delay"+block.title.charAt(6)+"Register"] = {value: block.paramAddress[0], maxDelay: 2000, storable: "yes"};
 			break;
 		case "Ch_Toslink_L":
-			metadata["channelSelectSPDIFLeftRegister"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1};
+			metadata["channelSelectSPDIFLeftRegister"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1, storable: "yes"};
 			break;
 		case "Ch_Toslink_R":
-			metadata["channelSelectSPDIFRightRegister"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1};
+			metadata["channelSelectSPDIFRightRegister"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1, storable: "yes"};
 			break;
 		case "Balance":
-			metadata["balanceRegister"] = {value: block.paramAddress[0]};
+			metadata["balanceRegister"] = {value: block.paramAddress[0], storable: "yes"};
 			break;
 		case "MasterVol":
-			metadata["volumeControlRegister"] = {value: getRelevantParamAddress(block).address};
+			metadata["volumeControlRegister"] = {value: getRelevantParamAddress(block).address, storable: "yes"};
 			break;
 		case "Levels":
 			registers = getRelevantParamAddress(block).relevantAddresses;
-			metadata["levelsARegister"] = {value: registers[3]};
-			metadata["levelsBRegister"] = {value: registers[2]};
-			metadata["levelsCRegister"] = {value: registers[1]};
-			metadata["levelsDRegister"] = {value: registers[0]};
+			metadata["levelsARegister"] = {value: registers[3], storable: "yes"};
+			metadata["levelsBRegister"] = {value: registers[2], storable: "yes"};
+			metadata["levelsCRegister"] = {value: registers[1], storable: "yes"};
+			metadata["levelsDRegister"] = {value: registers[0], storable: "yes"};
 			break;
 		case "VolumeLimits":
 			registers = getRelevantParamAddress(block).relevantAddresses;
@@ -406,13 +406,13 @@ function generateMetadataForBlock(block) {
 				switch (i) {
 					case 0:
 						metadata["volumeLimitRegister"] = {value: registers[0]};
-						metadata["volumeLimitPiRegister"] = {value: registers[0]};
+						metadata["volumeLimitPiRegister"] = {value: registers[0], storable: "yes"};
 						break;
 					case 1:
-						metadata["volumeLimitSPDIFRegister"] = {value: registers[1]};
+						metadata["volumeLimitSPDIFRegister"] = {value: registers[1], storable: "yes"};
 						break;
 					case 2:
-						metadata["volumeLimitI2S2Register"] = {value: registers[2]};
+						metadata["volumeLimitI2S2Register"] = {value: registers[2], storable: "yes"};
 						break;
 				}
 			}

@@ -575,7 +575,7 @@ p {
 	padding: 20px;
 	height: 100%;
 	white-space: pre;
-	font-family: "SF Mono", monospace;
+	font-family: Menlo, monospace;
 	font-size: 0.8em;
 	tab-size: 4;
 	line-height: 1.5;

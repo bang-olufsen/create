@@ -8,14 +8,10 @@
 	display: flex;
 	justify-content: center;
 	width: 66.6%;
-}
-
-.dark .stereo-toggle-wrap {
-	border-color: var(--menu-line-dark);
+	height: 27px;
 }
 
 .stereo-toggle-wrap > div {
-	margin-bottom: -18px;
 	width: 50%;
 }
 
@@ -30,15 +26,132 @@
 	height: 21px;
 }
 
-.popup-content .daisy-chain-header-image-wrap {
-	background-color: var(--ultra-light-grey);
-}
-
-.dark .popup-content .daisy-chain-header-image-wrap {
-	background-color: var(--ultra-light-grey-dark);
-}
-
 .popup-content .daisy-chain-header-image-wrap > .popup-header-image {
 	bottom: 10px;
 	top: 10px;
+}
+
+.channels-channel-item {
+	
+}
+
+
+.channel-item-upper {
+	display: flex;
+	align-items: center;
+	height: 80px;
+	position: relative;
+}
+
+.channels-slave-channel-item .channel-item-upper {
+	height: auto;
+}
+
+.channel-item-upper img {
+	height: 100%;
+	margin-right: 0.7em;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+	margin-left: -3px;
+}
+
+.channels-channel-item.expand-role-selector img,
+.channels-channel-item.expand-role-selector .channel-letter-and-type,
+.channels-slave-channel-item.expand-role-selector .channel-letter-and-type {
+	transform: translateX(-60px);
+	opacity: 0 !important;
+	pointer-events: none;
+}
+
+.channel-letter-and-type {
+	margin-right: auto;
+	padding-right: 1em;
+	transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.channel-letter-and-type .channel-letter {
+	font-weight: 500;
+	font-size: 0.9em;
+}
+
+.channel-letter-and-type .channel-dot {
+	margin-left: 0.3em;
+	margin-bottom: 0.1em;
+}
+
+.channel-letter-and-type p {
+	margin-bottom: 0;
+}
+
+.channel-item-upper .button.selected-role {
+	width: 100px;
+	margin-right: 0;
+	margin-left: 0;
+	transform-origin: right;
+}
+
+.channel-item-upper .button.selected-role:active {
+	transform-origin: center;
+}
+
+.channels-channel-item .role-select-control,
+.channels-slave-channel-item .role-select-control {
+	position: absolute;
+	margin-top: 0;
+	opacity: 0;
+	pointer-events: none;
+	transform: scaleX(0.5);
+	transform-origin: right;
+}
+
+.channels-channel-item.expand-role-selector .role-select-control,
+.channels-slave-channel-item.expand-role-selector .role-select-control {
+	opacity: 1;
+	pointer-events: all;
+	transform: scaleX(1);
+}
+
+.channels-channel-item.expand-role-selector .selected-role,
+.channels-slave-channel-item.expand-role-selector .selected-role {
+	opacity: 0;
+	transform: scaleX(1.5);
+	pointer-events: none;
+}
+
+.channel-item-lower {
+	display: flex;
+	align-items: flex-end;
+}
+
+.symbol-wrap {
+	position: relative;
+	margin-left: 20px;
+	margin-bottom: 8px;
+}
+
+.symbol-wrap .symbol-value {
+	position: absolute;
+	opacity: 0;
+	font-size: 0.8em;
+	text-align: center;
+	right: -17px;
+	left: -17px;
+	top: -21px;
+	transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.no-touch .symbol-wrap .symbol-value {
+	top: -18px;
+}
+
+.symbol-wrap.right .symbol-value {
+	transform: translateX(-20px);
+}
+
+.symbol-wrap.show-value .symbol-value {
+	opacity: 0.3;
+	transform: translateX(0);
+}
+
+#advanced-channel-settings-popup .channels-channel-item:last-child hr {
+	display: none;
 }

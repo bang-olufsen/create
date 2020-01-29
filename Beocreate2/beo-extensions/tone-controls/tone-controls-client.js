@@ -75,7 +75,6 @@ var toneTouchAreaDimensions = [];
 var previousToneTouchXY = [];
 var toneTouchOffLabelTimeout = null;
 
-var toneTouchSendTimeout = null;
 
 $( "#tone-touch-dot" ).draggable({
 //	cursorAt: { top: 0, left: 0 },
@@ -94,10 +93,6 @@ $( "#tone-touch-dot" ).draggable({
 			$("#tone-touch-dot").css("left", "50%").css("top", "50%");
 			toneTouchXY = [50,50];
 			
-			clearTimeout(toneTouchSendTimeout);
-			toneTouchSendTimeout = null;
-			
-			beo.send({target: "tone-controls", header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
 			setToneTouchFieldColours(toneTouchXY[0], toneTouchXY[1]);
 			
 			if (toneTouchDotDiameter == defaultToneTouchDotDiameter) {
@@ -128,13 +123,8 @@ $( "#tone-touch-dot" ).draggable({
 				toneTouchXY[1] = 100;
 			}
 			
-			if (!toneTouchSendTimeout) {
-				toneTouchSendTimeout = setTimeout(function() {
-					setToneTouchFieldColours(toneTouchXY[0], toneTouchXY[1]);
-					beo.send({target: "tone-controls", header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
-					toneTouchSendTimeout = null;
-				}, 100);
-			}
+			setToneTouchFieldColours(toneTouchXY[0], toneTouchXY[1]);
+			sendFilter();
 			//if (toneTouchXY[0] > 45 && toneTouchXY[0] < 55 && toneTouchXY[1] > 45 && toneTouchXY[1] < 55) {
 			$("#tone-touch-dot").css("left", toneTouchXY[0]+"%").css("top", 100-toneTouchXY[1]+"%");
 			
@@ -149,6 +139,23 @@ $( "#tone-touch-dot" ).draggable({
 		
 	}
 });
+
+var filterSendTimeout = null;
+var filterLastSent = 0;
+function sendFilter() {
+
+	timestamp = new Date().getTime();
+	if (timestamp - filterLastSent < 100) { // Allow sending 10 times per second.
+		clearTimeout(filterSendTimeout);
+		filterSendTimeout = setTimeout(function() {
+			beo.sendToProduct("tone-controls", {header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
+			filterLastSent = new Date().getTime();
+		}, 100 - (timestamp - filterLastSent));
+	} else {
+		beo.sendToProduct("tone-controls", {header: "toneTouchSettings", content: {toneTouchXY: toneTouchXY}});
+		filterLastSent = timestamp;
+	}
+}
 
 
 var toneTouchFieldDefaultOpacity = [0.1, 0.12, 

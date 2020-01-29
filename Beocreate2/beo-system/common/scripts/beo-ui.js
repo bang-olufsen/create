@@ -42,7 +42,7 @@ $( document ).ready(function() {
 	sendToProductView({header: "isShownInBeoApp"});
 	prepareMenus();
 	prepareTabBar();
-	prepareTextInput();
+	//prepareTextInput();
 	updateInterfaceMode();
 	setAppearance();
 	beoCom.connectToCurrentProduct();
@@ -62,6 +62,10 @@ $( document ).ready(function() {
 	} else {
 		attentionIcon.src = "common/hifiberry-wait-animate.svg";
 	}
+	
+	setTimeout(function() {
+		$("nav.bar .image-cacher").addClass("hidden");
+	}, 2000);
 });
 
 darkAppearance = false;
@@ -1254,18 +1258,19 @@ $(document).on("click", ".tabs div", function() {
 	}
 });
 
-function showMenuTab(tabID) {
+function showMenuTab(tabID, noCallback = false) {
 	$(".tabs div[data-select-tab="+tabID+"]").siblings().removeClass("selected");
 	$(".tabs div[data-select-tab="+tabID+"]").addClass("selected");
 	$(".tab[data-tab-id="+tabID+"]").siblings(".tab").removeClass("visible");
 	$(".tab[data-tab-id="+tabID+"]").addClass("visible");
-	if ($(".tab[data-tab-id="+tabID+"]").attr("data-tab-callback")) {
-		if (functionExists($(".tab[data-tab-id="+tabID+"]").attr("data-tab-callback"))) {
-			executeFunction($(".tab[data-tab-id="+tabID+"]").attr("data-tab-callback"));
+	if ($(".tabs div[data-select-tab="+tabID+"]").attr("data-tab-callback") && !noCallback) {
+		if (functionExists($(".tabs div[data-select-tab="+tabID+"]").attr("data-tab-callback"))) {
+			executeFunction($(".tabs div[data-select-tab="+tabID+"]").attr("data-tab-callback"), [tabID]);
 		} else {
-			console.error("Function '"+$(".tab[data-tab-id="+tabID+"]").attr("data-tab-callback")+"', triggered by tab change, doesn't exist.");
+			console.error("Function '"+$(".tabs div[data-select-tab="+tabID+"]").attr("data-tab-callback")+"', triggered by tab change, doesn't exist.");
 		}
 	}
+	updateSliderWidths(); // For some reason, changing tabs affects the appearance of the balance slider.
 }
 
 
@@ -1380,8 +1385,10 @@ function commaAndList(list, andWord, translationID, extensionID) {
 var askOpen = false;
 var askCallbacks = null;
 var askCancelCallback = null;
+var askParent = null;
 function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 	if (menuID) {
+		if (askOpen) returnAsk();
 		askOpen = true;
 		if (callbacks) askCallbacks = callbacks;
 		if (cancelCallback) askCancelCallback = cancelCallback;
@@ -1390,10 +1397,12 @@ function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 		} else {
 			$("#ask-back-plate").attr("onclick", "ask();");
 		}*/
-		$("#ask-menu-content").html($("#"+menuID).html());
+		askParent = $("#"+menuID).parent();
+		$("#ask-content").append($("#"+menuID).detach());
+		$("#ask-content > *").addClass("menu-content ask-menu-content");
 		if (dynamicContent) {
 			for (var i = 0; i < dynamicContent.length; i++) {
-				$(".ask-dynamic-"+i).text(dynamicContent[i]);
+				$("#ask-content .ask-dynamic-"+i).text(dynamicContent[i]);
 			}
 		}
 		$("#ask, #ask-back-plate").addClass("block");
@@ -1405,6 +1414,7 @@ function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 		$("#ask, #ask-back-plate").removeClass("visible");
 		setTimeout(function() {
 			$("#ask, #ask-back-plate").removeClass("block");
+			returnAsk();
 		}, 500);
 		askCallbacks = null;
 		askCancelCallback = null;
@@ -1416,6 +1426,7 @@ function askOption(callbackIndex) {
 	$("#ask, #ask-back-plate").removeClass("visible");
 	setTimeout(function() {
 		$("#ask, #ask-back-plate").removeClass("block");
+		returnAsk();
 	}, 500);
 	if (askCallbacks) {
 		askCallbacks[callbackIndex]();
@@ -1423,6 +1434,61 @@ function askOption(callbackIndex) {
 	askCallbacks = null;
 	askOpen = false;
 }
+
+function returnAsk() {
+	$(askParent).append($("#ask-content > *").detach());
+}
+
+
+// HOLD DOWN ON ELEMENTS
+
+var holdActionActivated = false;
+var holdTarget = null;
+var holdPosition = [];
+var holdTimeout = null;
+var clickHandler = null;
+
+// Drag detector cancels the appearance of the contextual menu in case the user moves away from the target whilst holding down.
+$(document).on("mouseout mouseup", ".hold", function(event) {
+	endHold();
+});
+
+$(document).on("mousedown", ".hold", function(event) {
+	startHold(this, event);
+});
+
+
+function startHold(target, event) {
+	clickHandler = null;
+	holdTarget = target;
+	if (event.targetTouches) {
+		holdPosition = [event.targetTouches[0].pageX, event.targetTouches[0].pageY];
+	} else {
+		holdPosition = [event.pageX, event.pageY];
+	}
+	holdTimeout = setTimeout(function() {
+		if (!event.targetTouches) {
+			if ($(holdTarget).attr('onclick')) {
+				clickHandler = $(holdTarget).attr('onclick');
+				$(holdTarget).removeAttr('onclick');
+			}
+		}
+		holdAction = new Function('holdPosition', 'holdTarget', $(holdTarget).attr("data-hold"));
+		holdAction(holdPosition, holdTarget);
+	}, 500);
+}
+
+function endHold() {
+	clearTimeout(holdTimeout);
+	holdTimeout = null;
+	if (clickHandler && this == holdTarget) {
+		setTimeout(function() {
+			$(holdTarget).attr('onclick', clickHandler);
+			clickHandler = null;
+		}, 20);
+	}
+}
+
 
 
 // SLIDER WIDTH
@@ -1503,6 +1569,67 @@ function updatePopupHeight() {
 		}
 	} else {
 		$("#open-popup .popup-content").css("height", "");
+	}
+}
+
+
+// WIZARD CONTAINER
+
+function wizard(wizardContainer, newScreen = null, buttons = null, noAnimation = false) {
+	if (!newScreen) {
+		// Set up the wizard.
+		$(wizardContainer).addClass("wizard");
+		$(wizardContainer+" > *").addClass("wizard-screen").removeClass("block");
+		$(wizardContainer+" > *").first().addClass("block").removeClass("hidden-left hidden-right");
+		return "Set up '"+wizardContainer+"' as a wizard structure.";
+	} else {
+		if (!$(wizardContainer+" "+newScreen).hasClass("block")) {
+			if (buttons && typeof buttons == "object") buttons = buttons.join(", ");
+			// Find the current screen and its relationship to the new screen.
+			hideScreen = $(wizardContainer+" .block");
+			showScreen = $(wizardContainer+" "+newScreen);
+			hideTo = null;
+			showFrom = null;
+			if (showScreen.prevAll(".block").length) {
+				// Current screen is before the new.
+				hideTo = "left";
+				showFrom = "right";
+			} else if (showScreen.nextAll(".block").length) {
+				hideTo = "right";
+				showFrom = "left";
+			}
+			if (showFrom && hideTo) {
+				hideScreen.addClass("hidden-"+hideTo);
+				showScreen.removeClass("hidden-"+hideTo).addClass("hidden-"+showFrom);
+				
+				if (!noAnimation) {
+					buttonsWereDisabled = false;
+					if (buttons) {
+						buttonsWereDisabled = $(buttons).hasClass("disabled");
+						$(buttons).addClass("disabled");
+					}
+					setTimeout(function() {
+						hideScreen.removeClass("block");
+						showScreen.addClass("block");
+						$(wizardContainer).scrollTop(0);
+						setTimeout(function() {
+							showScreen.removeClass("hidden-"+showFrom);
+						}, 20);
+						if (buttons && !buttonsWereDisabled) {
+							setTimeout(function() {
+								$(buttons).removeClass("disabled");
+							}, 500);
+						}
+					}, 300);
+				} else {
+					showScreen.removeClass("hidden-"+hideTo+" hidden-"+showFrom).addClass("block");
+					hideScreen.removeClass("block");
+					$(wizardContainer).scrollTop(0);
+				}
+			} else {
+				console.error("Screen '"+newScreen+"' doesn't exist in wizard structure '"+wizardContainer+"'.");
+			}
+		}
 	}
 }
 
@@ -1626,12 +1753,24 @@ function cancelText(hideOnly) {
 	textInputOpen = false;
 }
 
-function prepareTextInput() {
-	$('input').bind('input propertychange', function() {
-	    if ($(this).attr("id") == "text-input-plain") validateTextInput();
-		if ($(this).attr("id") == "text-input-password") validateTextInput();
-	});
-}
+//function prepareTextInput() {
+$(document).on('input blur', "input", function(event) {
+	eventType = event.type;
+	if (eventType == "focusout") eventType = "blur";
+    if ($(this).attr("id") == "text-input-plain" && eventType == "input") {
+		validateTextInput();
+	} else if ($(this).attr("id") == "text-input-password" && eventType == "input") {
+		validateTextInput();
+	} else {
+		if ($(this).attr("data-value-callback")) {
+			if (!$(this).attr("data-send-value-on") || eventType == $(this).attr("data-send-value-on")) {
+				typeAction = new Function('text', "eventType", $(this).attr("data-value-callback"));
+				typeAction($(this).val(), eventType);
+			}
+		}
+	}
+});
+//}
 
 
 // UPLOAD FILES
@@ -1695,6 +1834,68 @@ function uploadFile(options, extension, file) {
 		clearTimeout(uploadNotifyTimeout);
 		notify(false, "uploadFile");
 	}
+}
+
+
+// MULTI-TOUCH EVENTS
+
+document.ontouchstart = function(event) {
+
+	// Edge swipes.
+	if (event.target.id.indexOf("-edge-swipe") > -1) {
+		if (event.targetTouches) {
+			var touch = event.targetTouches[0];
+			//edgeSwipe(0, touch.pageX, event.target.id);
+			event.preventDefault();
+		}
+	}
+	
+	if (event.target.className.indexOf("hold") != -1) {
+		startHold(event.target, event);
+	}
+}
+
+document.ontouchmove = function(event) {
+
+	// Edge swipes.
+	if (event.target.id.indexOf("-edge-swipe") > -1) {
+		if (event.targetTouches) {
+			var touch = event.targetTouches[0];
+			//edgeSwipe(1, touch.pageX, event.target.id);
+			event.preventDefault();
+		}
+	}
+	
+	
+	if (event.target.className.indexOf("hold") != -1) {
+		endHold();
+	}
+}
+
+document.ontouchend = function(event) {
+
+	// Edge swipes.
+	if (event.target.id.indexOf("-edge-swipe") > -1) {
+		//edgeSwipe(2);
+	}
+	
+	
+	if (event.target.className.indexOf("hold") != -1) {
+		event.preventDefault();
+		endHold();
+	}
+	
+}
+
+function insertConnectionGuide() {
+	markup = '<div class="connection-guide">\
+		<img src="common/4ca-connections.png" alt="Beocreate 4-Channel Amplifier connections" />\
+		<div class="connection-guide-letter letter-a">A <div class="channel-dot a"></div></div>\
+		<div class="connection-guide-letter letter-b">B <div class="channel-dot b"></div></div>\
+		<div class="connection-guide-letter letter-c">C <div class="channel-dot c"></div></div>\
+		<div class="connection-guide-letter letter-d">D <div class="channel-dot d"></div></div>\
+	</div>';
+	document.write(markup);
 }
 
 
@@ -1767,7 +1968,10 @@ return {
 	createCollectionItem: createCollectionItem,
 	setSymbol: setSymbol,
 	sendToProductView: sendToProductView,
-	setAppearance: setAppearance
+	setAppearance: setAppearance,
+	isDarkAppearance: function() {return darkAppearance},
+	insertConnectionGuide: insertConnectionGuide,
+	wizard: wizard
 }
 
 })();

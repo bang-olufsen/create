@@ -112,12 +112,13 @@ $(document).on("now-playing", function(event, data) {
 	if (data.header == "playerState") {
 		clearTimeout(playButtonSymbolTimeout);
 		playerState = data.content.state;
-		if (data.content.state == "playing") {
+		/*if (data.content.state == "playing") {
+			if (allSources[focusedSource]
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
 		} else {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 			enableSourceStart();
-		}
+		}*/
 	}
 	
 });
@@ -126,15 +127,31 @@ $(document).on("sources", function(event, data) {
 	if (data.header == "sources") {
 		
 		if (data.content.sources != undefined) {
-			
+			$(".play-button, .next-track-button, .previous-track-button").addClass("disabled");
 			if (data.content.focusedSource != undefined) {
 				focusedSource = data.content.focusedSource;
-				if (data.content.sources[focusedSource].transportControls) {
-					$("#now-playing-transport").removeClass("disabled");
+				if (data.content.sources[focusedSource].playerState == "playing") {
+					if (data.content.sources[focusedSource].transportControls) {
+						if (data.content.sources[focusedSource].transportControls.indexOf("pause") != -1) {
+							$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/pause.svg");
+							$(".play-button").removeClass("disabled");
+						} else {
+							$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
+							if (data.content.sources[focusedSource].transportControls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
+						}
+					} else {
+						$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
+					}
 				} else {
-					$("#now-playing-transport").addClass("disabled").removeClass("play-only");
-					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
+					$(".play-button").removeClass("disabled");
 				}
+				
+				if (data.content.sources[focusedSource].transportControls) {
+					if (data.content.sources[focusedSource].transportControls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
+					if (data.content.sources[focusedSource].transportControls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
+				}
+				
 				if (data.content.sources[focusedSource].canLove) {
 					functionRow("love", true);
 				} else {
@@ -142,7 +159,6 @@ $(document).on("sources", function(event, data) {
 				}
 			} else {
 				focusedSource = null;
-				$("#now-playing-transport").addClass("disabled");
 				functionRow("love", false);
 				toggleShowAlbumName(true);
 				enableSourceStart();
@@ -201,7 +217,7 @@ $( ".main-artwork" ).draggable({
 	stop: function( event, ui ) {
 		$("#now-playing").removeClass("no-animation");
 		$(".now-playing-artwork-wrap").css("transform", "");
-		//$("#now-playing-control-area").css("transform", "");
+		$("#now-playing-control-area").css("transform", "");
 		offset = ui.position.top - artworkDragStartPosition.top;
 		if (offset > 40) hideNowPlaying();
 		artworkDragStartPosition = null;
@@ -217,7 +233,7 @@ $( ".main-artwork" ).draggable({
 				visibleOffset = 25+(offset-50)/4;
 			}
 			$(".now-playing-artwork-wrap").css("transform", "translateY("+visibleOffset+"px)");
-			//$("#now-playing-control-area").css("transform", "translateY("+visibleOffset+"px)");
+			$("#now-playing-control-area").css("transform", "translateY("+visibleOffset/2+"px)");
 		} else {
 			artworkDragStartPosition = ui.position;
 		}
@@ -290,12 +306,20 @@ function playButtonPress() {
 		if (playerState == "playing") {
 			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 		} else {
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+			if (allSources[focusedSource].transportControls && allSources[focusedSource].transportControls.indexOf("pause") != -1) {
+				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+			} else {
+				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/stop.svg");
+			}
 		}
 		clearTimeout(playButtonSymbolTimeout);
 		playButtonSymbolTimeout = setTimeout(function() {
 			if (playerState == "playing") {
-				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+				if (allSources[focusedSource].transportControls && allSources[focusedSource].transportControls.indexOf("pause") != -1) {
+					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
+				} else {
+					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/stop.svg");
+				}
 			} else {
 				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
 			}
@@ -322,6 +346,7 @@ var hiddenArtworkView = "b";
 
 function loadArtwork(url, port, testExternal) {
 	evaluateExternalArtwork = false;
+	sourcePlaceholder = false;
 	if (!url || url.indexOf("file:///") == -1) {
 		if (url) {
 			if (url.indexOf("http") == 0) {
@@ -337,15 +362,25 @@ function loadArtwork(url, port, testExternal) {
 			src = imageURL;
 			if (!testExternal) hasPicture = true;
 		} else {
-			// Load appropriately branded placeholder artwork.
-			if ($("body").hasClass("hifiberry-os")) {
-				src = $("#now-playing").attr("data-asset-path")+"/placeholder-hifiberry.png";
+			// Load appropriately branded placeholder artwork or source icon, if available.
+			if (focusedSource && 
+				extensions[focusedSource] && 
+				extensions[focusedSource].assetPath && 
+				extensions[focusedSource].icon) {
+				beo.setSymbol("#artwork-placeholder-"+hiddenArtworkView, extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon);
+				$("#artwork-wrap-inner-"+hiddenArtworkView).addClass("source-placeholder");
+				src = "common/square-helper.png";
+				sourcePlaceholder = true;
 			} else {
-				src = $("#now-playing").attr("data-asset-path")+"/placeholder.png";
+				if ($("body").hasClass("hifiberry-os")) {
+					src = $("#now-playing").attr("data-asset-path")+"/placeholder-hifiberry.png";
+				} else {
+					src = $("#now-playing").attr("data-asset-path")+"/placeholder.png";
+				}
 			}
 			hasPicture = false;
 		}
-		if (src != currentPicture) {
+		if (src != currentPicture || sourcePlaceholder) {
 			clearTimeout(artworkChangeTimeout);
 			if (!testExternal) currentPicture = src;
 			pictureInTargetView = $(".artwork-img-"+hiddenArtworkView).attr("src");
@@ -355,6 +390,8 @@ function loadArtwork(url, port, testExternal) {
 			} else {
 				console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
 			}
+			
+			if (!sourcePlaceholder) $("#artwork-wrap-inner-"+hiddenArtworkView).removeClass("source-placeholder");
 			if (!url) {
 				$(".artwork-img-"+hiddenArtworkView).addClass("placeholder");
 				$(".artwork-bg-"+hiddenArtworkView).css("background-image", "none");
@@ -362,7 +399,7 @@ function loadArtwork(url, port, testExternal) {
 				$(".artwork-img-"+hiddenArtworkView).removeClass("placeholder");
 				$(".artwork-bg"+hiddenArtworkView).css("background-image", "url(" + src + ")");
 			}
-			if (pictureInTargetView == currentPicture) artworkLoaded(hiddenArtworkView);
+			if (pictureInTargetView == currentPicture || sourcePlaceholder) artworkLoaded(hiddenArtworkView);
 		}
 	} else {
 		// In case of a file URL, wait for one second for the actual artwork. Otherwise load default artwork.
@@ -433,6 +470,7 @@ function switchArtwork(view) {
 	$("#now-playing-artwork-wrap-"+hide).removeClass("visible").addClass("outgoing");
 	setTimeout(function() {
 		$(".now-playing-artwork-wrap").removeClass("incoming outgoing");
+		$("#artwork-wrap-inner-"+hide).removeClass("source-placeholder");
 	}, 500);
 	previousSrc = $(".artwork-img-"+show).attr("src");
 	currentArtworkView = show;
@@ -445,19 +483,22 @@ function testArtworkSwap() {
 	return view;
 }
 
-function artworkLoaded(view) {
+function artworkLoaded(view, forceAspectRatio) {
 	shouldSwitch = true;
 	noAnimation = false;
 	if (view == "a") {
 		artworkDimensionsA[0] = $("#main-artwork-a").get(0).naturalWidth;
 		artworkDimensionsA[1] = $("#main-artwork-a").get(0).naturalHeight;
 		artworkAspectRatioA = $("#main-artwork-a").get(0).naturalWidth / $("#main-artwork-a").get(0).naturalHeight;
+		if (forceAspectRatio) artworkAspectRatioA = forceAspectRatio;
 	} else {
 		artworkDimensionsB[0] = $("#main-artwork-b").get(0).naturalWidth;
 		artworkDimensionsB[1] = $("#main-artwork-b").get(0).naturalHeight;
 		artworkAspectRatioB = $("#main-artwork-b").get(0).naturalWidth / $("#main-artwork-b").get(0).naturalHeight;
+		if (forceAspectRatio) artworkAspectRatioB = forceAspectRatio;
 	}
 	resizeArtwork();
+	
 	if (evaluateExternalArtwork == view) {
 		// If the downloaded image is equal size or smaller than the current one, don't switch them.
 		hiddenViewDimension = (view == "a") ? artworkDimensionsA[0] : artworkViewDimensionsB[0];
@@ -471,7 +512,11 @@ function artworkLoaded(view) {
 		}
 		evaluateExternalArtwork = false;
 	}
-	if (shouldSwitch) switchArtwork(view, noAnimation);
+	if (shouldSwitch) {
+		setTimeout(function() {
+			switchArtwork(view, noAnimation);
+		}, 100);
+	}
 }
 
 $("#main-artwork-a").on('load', function() {
@@ -497,6 +542,10 @@ $("#main-artwork-b").on('error', function() {
 
 function loadSmallSampleArtwork() {
 	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
+}
+
+function loadPlaceholderArtwork() {
+	loadArtwork();
 }
 
 artworkCycle = 0;
@@ -528,8 +577,10 @@ var artworkAspectRatioA = 1; // wide > 1 < tall
 var artworkAspectRatioB = 1;
 var artworkDimensionsA = [0,0];
 var artworkDimensionsB = [0,0];
+var containerDimensions = [0,0];
 function resizeArtwork() {
-	containerAspectRatio = $(".artwork-wrap-inner").innerWidth() / $(".artwork-wrap-inner").innerHeight();
+	containerDimensions = [$(".artwork-wrap-inner").innerWidth(), $(".artwork-wrap-inner").innerHeight()];
+	containerAspectRatio = containerDimensions[0] / containerDimensions[1];
 	
 	if (containerAspectRatio >= artworkAspectRatioA) { // Container is wider
 		$("#main-artwork-a").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
@@ -754,7 +805,8 @@ return {
 	toggleLove: toggleLove,
 	functionRow: functionRow,
 	setUseExternalArtwork: setUseExternalArtwork,
-	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable}
+	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable},
+	loadPlaceholderArtwork: loadPlaceholderArtwork
 }
 
 })();

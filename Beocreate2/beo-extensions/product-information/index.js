@@ -105,7 +105,7 @@ var fs = require("fs");
 					if (!err) systemName = response;
 					if (systemName.ui) {
 						if (!systemNameSent) {
-							beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+							beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion, staticName: systemName.static}});
 							systemNameSent = true;
 						}
 						beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
@@ -127,7 +127,7 @@ var fs = require("fs");
 								systemName = response;
 								if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");
 								if (!systemNameSent) {
-									beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion}});
+									beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion, staticName: systemName.static}});
 									systemNameSent = true;
 								}
 								beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});

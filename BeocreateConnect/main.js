@@ -13,10 +13,13 @@ var activeWindow = true;
 
 const template = [
   {
-    label: 'File',
+    label: 'Product',
     submenu: [
-      { label: 'Look for Products Again',
-      click () { startDiscovery(); startManualDiscovery(); }}
+      { label: 'Discover Products Again',
+      click () { startDiscovery(); startManualDiscovery(); }},
+	  { type: 'separator' },
+	  { label: 'Reload Product View',
+	  click () { win.webContents.send('reloadProductView') }, accelerator: "CmdOrCtrl+R"}
     ]
   },
   {
@@ -46,9 +49,6 @@ const template = [
   {
 	label: 'Develop',
     submenu: [
-      { label: 'Reload Product View',
-      click () { win.webContents.send('reloadProductView') }, accelerator: "CmdOrCtrl+R"},
-	  { type: 'separator' },
       { role: 'reload', accelerator: false },
       { role: 'forcereload', accelerator: false },
       { role: 'toggledevtools' }

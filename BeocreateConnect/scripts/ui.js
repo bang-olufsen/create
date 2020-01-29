@@ -201,6 +201,7 @@ var menuColourThemes = [
 
 var menuOpen = true;
 var menuTimeout;
+var shouldEnableRefreshButton = false;
 function toggleMenu(force) {
 	clearTimeout(menuTimeout);
 	if (force != undefined) {
@@ -219,7 +220,8 @@ function toggleMenu(force) {
 				$("body").removeClass("animating-menu");
 			}, 1000);
 		}, 20);
-		$(".menu-button").addClass("menu-open");
+		$("#menu-button").addClass("menu-open");
+		$("#refresh-button").removeClass("disabled");
 		menuOpen = true;
 		showWindowTitle(false);
 		connectOnDiscovery = {identifier: null, productName: null};
@@ -227,11 +229,17 @@ function toggleMenu(force) {
 		//startLoadRowAnimation();
 		connectOnDiscovery = {identifier: null, productName: null};
 		if (currentAssistant) startAssistant();
+		if (shouldEnableRefreshButton) {
+			$("#refresh-button").removeClass("disabled");
+		} else {
+			$("#refresh-button").addClass("disabled");
+		}
 		$("body").addClass("animating-menu");
 		$("body").removeClass("in-menu")
 		$("#main-menu").removeClass("visible");
 		$("#main-menu-back-shadow").removeClass("visible");
-		$(".menu-button").removeClass("menu-open");
+		$("#menu-button").removeClass("menu-open");
+		
 		menuTimeout = setTimeout(function() {
 			$("#main-menu").removeClass("show");
 			$("body").removeClass("first-menu-visit animating-menu").addClass("second-menu-visit");
@@ -251,10 +259,10 @@ function applyColourTheme(theme) {
 
 function showMenuButton(show) {
 	if (show) {
-		$(".menu-button").removeClass("disabled");
+		$("#menu-button").removeClass("disabled");
 		//$("#title-bar-drag").removeClass("menu-button-hide");
 	} else {
-		$(".menu-button").addClass("disabled");
+		$("#menu-button").addClass("disabled");
 		//$("#title-bar-drag").addClass("menu-button-hide");
 	}
 }
@@ -387,6 +395,14 @@ if (ipc) {
 	});
 }
 
+function refresh() {
+	if (menuOpen) {
+		ipc.send("refreshProducts");
+	} else {
+		$("#product-view").attr("src", $("#product-view").attr("src"));
+	}
+}
+
 function updateProductLists() {
 	refreshing = true;
 	$(".found-products .discovered").remove();
@@ -464,6 +480,7 @@ var productConnectionStatus = "disconnected";
 
 function configureProduct(fullname, fromDiscovery) {
 	if (products[fullname]) {
+		shouldEnableRefreshButton = true;
 		endAssistant();
 		setWindowTitle(products[fullname].name);
 		showMenuButton(true);
@@ -492,6 +509,7 @@ function setUpNew() {
 	endAssistant();
 	setWindowTitle("Set Up New");
 	showMenuButton(true);
+	shouldEnableRefreshButton = false;
 	showSection('set-up-new', true, 'set-up-new-start');
 }
 
@@ -517,6 +535,7 @@ if (remote) {
 var currentAssistant = null;
 function startAssistant(assistant) {
 	if (assistant) currentAssistant = assistant;
+	shouldEnableRefreshButton = false;
 	setTimeout(function() {
 		$("#assistant-bar").addClass("show");
 		setTimeout(function() {

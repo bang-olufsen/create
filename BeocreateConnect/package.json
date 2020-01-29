@@ -1,7 +1,7 @@
 {
  "name": "BeocreateConnect",
  "productName": "Beocreate Connect",
- "version": "0.2.0",
+ "version": "0.3.0",
  "description": "Desktop utility for Beocreate-based sound systems",
  "main": "main.js",
  "scripts": {
@@ -28,7 +28,7 @@
  "build": {
   "appId": "dk.bang-olufsen.beocreateconnect",
   "productName": "Beocreate Connect",
-  "copyright": "Copyright 2019 Bang & Olufsen A/S. Licensed under MIT.",
+  "copyright": "Copyright 2018-2020 Bang & Olufsen A/S. Licensed under MIT.",
   "nodeVersion": "current",
   "readonly": false,
   "directories": {
@@ -39,7 +39,7 @@
     "zip",
     "dmg"
    ],
-   "icon": "build/create.icns",
+   "icon": "build/create-speaker.icns",
    "category": "public.app-category.utilities",
    "darkModeSupport": true,
    "identity": null
@@ -49,7 +49,7 @@
    "background": "build/background.tiff"
   },
   "win": {
-   "icon": "build/create.ico",
+   "icon": "build/create-speaker.ico",
    "target": [
     "portable"
    ]

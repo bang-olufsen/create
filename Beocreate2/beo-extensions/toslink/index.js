@@ -39,6 +39,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	var toslinkActive = false;
 	
 	var sources = null;
+	var soundSyncLG = false;
 	
 	beo.bus.on('general', function(event) {
 		
@@ -57,12 +58,24 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					usesHifiberryControl: false
 				});
 			}
+			
+			if (beo.extensions["dsp-programs"] && beo.extensions["dsp-programs"].getSigmaTCPSettings) {
+				configuration = beo.extensions["dsp-programs"].getSigmaTCPSettings();
+				if (configuration.server && 
+					configuration.server.lgsoundsync && 
+					configuration.server.lgsoundsync == 1 &&
+					!configuration.server.lgsoundsync.comment) {
+					soundSyncLG = true
+				} else {
+					soundSyncLG = false;
+				}
+			}
 		}
 		
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "toslink") {
-				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink, canReadToslinkStatus: canReadToslinkStatus, toslinkStatus: toslinkSignal}});
+				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink, canReadToslinkStatus: canReadToslinkStatus, toslinkStatus: toslinkSignal, soundSyncLG: soundSyncLG}});
 			}
 		}
 		
@@ -128,6 +141,19 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
 				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
 				applyToslinkEnabledFromSettings();
+			}
+		}
+		
+		if (event.header == "soundSyncEnabled") {
+			if (event.content.enabled != undefined) {
+				if (beo.extensions["dsp-programs"] && beo.extensions["dsp-programs"].configureSigmaTCP) {
+					soundSyncLG = (event.content.enabled) ? true : false;
+					soundSyncOn = (event.content.enabled) ? "1" : "0";
+					beo.extensions["dsp-programs"].configureSigmaTCP([
+						{section: "server", option: "lgsoundsync", value: soundSyncOn}
+					], true);
+					beo.sendToUI("toslink", {header: "toslinkSettings", content: {soundSyncLG: soundSyncLG}});
+				}
 			}
 		}
 		
@@ -239,6 +265,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 	}
 	
+		
 module.exports = {
 	isEnabled: function(callback) {callback(settings.toslinkEnabled)}
 }

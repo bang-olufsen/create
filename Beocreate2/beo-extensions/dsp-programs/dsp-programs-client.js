@@ -221,6 +221,17 @@ $(document).on("dsp-programs", function(event, data) {
 			$("#auto-upgrade-dsp-toggle").removeClass("on");
 		}
 	}
+	
+	if (data.header == "configuringSigmaTCP") {
+		
+		if (data.content.status) {
+			if (data.content.status == "start") {
+				beo.notify({title: "Configuring system...", icon: "attention", timeout: false});
+			} else if (data.content.status == "finish") {
+				beo.notify();
+			}
+		}
+	}
 
 });
 

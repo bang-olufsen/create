@@ -6,6 +6,7 @@ var toslinkSensitivity = "high";
 var toslinkStopsOtherSources = true;
 var canReadToslinkStatus = false;
 var toslinkStatus = false;
+var soundSyncLG = false;
 
 $(document).on("toslink", function(event, data) {
 	if (data.header == "toslinkSettings") {
@@ -48,6 +49,15 @@ $(document).on("toslink", function(event, data) {
 			toslinkStatus = data.content.toslinkStatus;
 			showToslinkStatus();
 		}
+		
+		if (data.content.soundSyncLG != undefined) {
+			soundSyncLG = data.content.soundSyncLG;
+			if (soundSyncLG) {
+				$("#toslink-soundsync-toggle").addClass("on");
+			} else {
+				$("#toslink-soundsync-toggle").removeClass("on");
+			}
+		}
 	}
 	
 	if (data.header == "toslinkStatus") {
@@ -77,6 +87,13 @@ function setSensitivity(sensitivity) {
 			beo.send({target: "toslink", header: "setSensitivity", content: {sensitivity: sensitivity}});
 			break;
 	}
+}
+
+function toggleSoundSync(enabled) {
+	if (enabled == undefined) {
+		enabled = (soundSyncLG) ? false : true;
+	}
+	beo.sendToProduct("toslink", {header: "soundSyncEnabled", content: {enabled: enabled}});
 }
 
 function toggleStopsOtherSources(stopsOthers) {
@@ -134,7 +151,8 @@ function showToslinkStatus() {
 return {
 	toggleEnabled: toggleEnabled,
 	toggleStopsOtherSources: toggleStopsOtherSources,
-	setSensitivity: setSensitivity
+	setSensitivity: setSensitivity,
+	toggleSoundSync: toggleSoundSync
 }
 
 })();

@@ -20,17 +20,13 @@ SOFTWARE.*/
 var CECMonitor = require("@senzil/cec-monitor").CECMonitor;
 var CEC = require("@senzil/cec-monitor").CEC;
 
-module.exports = function(beoBus, globals) {
-	var beoBus = beoBus;
-	var systemVolume = globals.volume;
-	var debug = globals.debug;
-	var sound = (globals.extensions['sound']) ? globals.extensions['sound'] : null;
-	
-	var version = require("./package.json").version;
+var debug = beo.debug;
+var sound = (beo.extensions['sound']) ? beo.extensions['sound'] : null;
+var version = require("./package.json").version;
 	
 	var monitor = null;
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		// See documentation on how to use BeoBus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
@@ -42,10 +38,10 @@ module.exports = function(beoBus, globals) {
 		
 		if (event.header == "shutdown") {
 			if (monitor) monitor.Stop();
-			beoBus.emit("general", {header: "shutdownComplete", content: {extension: "tv-control"}});
+			beo.bus.emit("general", {header: "shutdownComplete", content: {extension: "tv-control"}});
 		}
 		
-		if (event.header == "activatedElement") {
+		if (event.header == "activatedExtension") {
 			if (event.content == "tv-control") {
 				
 			}
@@ -56,8 +52,8 @@ module.exports = function(beoBus, globals) {
 	var status = CEC.PowerStatus.UNKNOWN;
 	
 	function startCEC(withName) {
-		//if (debug) console.log("Starting CEC...");
-		beoBus.emit("general", {header: "requestShutdownTime", content: {extension: "tv-control"}});
+		if (debug) console.log("Starting CEC...");
+		beo.bus.emit("general", {header: "requestShutdownTime", content: {extension: "tv-control"}});
 		
 		monitor = new CECMonitor(withName, {
 			debug: false,
@@ -78,8 +74,8 @@ module.exports = function(beoBus, globals) {
 				//if (debug) console.log(packet);
 				if (packet.data.str == 'VOLUME_DOWN') {
 					if (sound && sound.setVolume) {
-						sound.setVolume({step: "-1%"}, false, function(systemVolume) {
-							monitor.WriteRawMessage("tx 50:7A:"+systemVolume.percentage.toString(16));
+						sound.setVolume("-1", false, function(systemVolume) {
+							monitor.WriteRawMessage("tx 50:7A:"+systemVolume.toString(16));
 						});
 					}
 					//beoBus.emit("sound", {header: "setVolume", content: {step: "-1%"}});
@@ -87,8 +83,8 @@ module.exports = function(beoBus, globals) {
 				}
 				if (packet.data.str == 'VOLUME_UP') {
 					if (sound && sound.setVolume) {
-						sound.setVolume({step: "+1%"}, false, function(systemVolume) {
-							monitor.WriteRawMessage("tx 50:7A:"+systemVolume.percentage.toString(16));
+						sound.setVolume("+1", false, function(systemVolume) {
+							monitor.WriteRawMessage("tx 50:7A:"+systemVolume.toString(16));
 						});
 					}
 					//beoBus.emit("sound", {header: "setVolume", content: {step: "+1%"}});
@@ -175,11 +171,11 @@ module.exports = function(beoBus, globals) {
 		}
 	}
 	
-	return {
-		version: version
-	};
-};
 
+
+module.exports = {
+	version: version
+}
 
 
 

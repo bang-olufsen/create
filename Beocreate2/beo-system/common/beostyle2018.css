@@ -188,7 +188,7 @@ nav.full {
 	position: relative;
 	box-sizing: border-box;
 	flex-shrink: 0;
-	overflow-y: scroll;
+	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 	padding: 3px 20px 10px;
 	z-index: 6;
@@ -236,7 +236,7 @@ nav.full .menu-item.selected .menu-icon,
 }
 
 .no-touch nav.full .menu-item:hover {
-	background-color: var(--menu-line-dark);
+	background-color: rgba(255,255,255,0.1);
 }
 
 nav.full .menu-item:active {
@@ -1720,18 +1720,9 @@ p.success {
 	position: relative;
 	box-sizing: border-box;
 	margin-bottom: 4%;
-	background-color: var(--ultra-light-grey);
 	/*border: 1px solid var(--menu-line);*/
-	transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
-.no-touch .collection-item:hover {
-	background-color: #eee;
-}
-
-.no-touch .dark .collection-item:hover {
-	background-color: #444;
-}
 
 .collection-item.spacer {
 	margin-bottom: 0;
@@ -1747,6 +1738,16 @@ p.success {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	background-color: var(--ultra-light-grey);
+	transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.no-touch .collection-item-content:hover {
+	background-color: #eee;
+}
+
+.no-touch .dark .collection-item-content:hover {
+	background-color: #444;
 }
 
 .collection-icon {
@@ -1794,7 +1795,7 @@ p.success {
 	font-size: 0.8em;
 }
 
-.collection-item:active {
+.collection-item-content:active {
 	transform: scale(0.95);
 	transition: none;
 }
@@ -1809,7 +1810,7 @@ p.success {
 	background-color: black;
 	background-position: center;
 	border: 1px solid black;
-	background-size: 21px 21px;
+	background-size: 23px 23px;
 	padding: 5px;
 	border-radius: 50%;
 	transition: opacity 0.3s ease, transform 0.3s ease;
@@ -1829,7 +1830,7 @@ p.success {
 	opacity: 1;
 }
 
-.collection-item:after {
+.collection-item-content:after {
 	color: white;
 	background-color: rgba(0,0,0,0.5);
 	display: flex;
@@ -1848,14 +1849,22 @@ p.success {
 	right: 0;
 	left: 0;
 	bottom: 0;
+	pointer-events: none;
 }
 
-.dark .collection-item:after {
+.dark .collection-item-content:after {
 	background-color: rgba(127, 127, 127, 0.8);
 }
 
-.no-touch .collection-item:hover:after {
+.no-touch .collection-item-content:hover:after {
 	opacity: 1;
+}
+
+.collection-item .collection-item-secondary-symbol {
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	z-index: 1;
 }
 
 /* @end */
@@ -1996,7 +2005,7 @@ a.button {
 .button.symbol {
 	padding: 10px;
 	margin: -10px;
-	background-size: 21px;
+	background-size: 23px;
 	background-repeat: no-repeat;
 	background-position: center;
 	display: block;

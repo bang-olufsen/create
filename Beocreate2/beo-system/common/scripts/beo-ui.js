@@ -1058,6 +1058,7 @@ function createCollectionItem(options) {
 	if (options.static) options.classes.push("static");
 	if (options.checkmark) options.classes.push("checkmark");
 	if (options.overlay) options.classes.push("overlay");
+	if (options.onclickSecondary && options.secondarySymbol) options.classes.push("secondary-action");
 	
 	// Custom classes
 	if (options.classes) {
@@ -1077,15 +1078,24 @@ function createCollectionItem(options) {
 		}
 	}
 	
+	
+	collectionItem += '>\n';
+	
+	// Secondary action
+	if (options.onclickSecondary && options.secondarySymbol) {
+		
+		collectionItem += '<div class="button symbol collection-item-secondary-symbol" onclick="'+options.onclickSecondary+'" style="-webkit-mask-image: url('+options.secondarySymbol+'); mask-image: url('+options.secondarySymbol+');"></div>';
+	}
+	
+	// Square helper allows the collection item to maintain aspect ratio
+	collectionItem += '<img class="square-helper" src="common/square-helper.png">\n<div class="collection-item-content"';
+	
 	// Action
 	if (options.onclick) {
 		collectionItem += ' onclick="'+options.onclick+'"';
 	}
 	
 	collectionItem += '>\n';
-	
-	// Square helper allows the collection item to maintain aspect ratio
-	collectionItem += '<img class="square-helper" src="common/square-helper.png">\n<div class="collection-item-content">\n';
 	
 	if (options.icon) collectionItem += '<img class="collection-icon" src="'+options.icon+'">\n';
 	

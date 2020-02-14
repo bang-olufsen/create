@@ -1,8 +1,49 @@
-<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Speaker Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css">
+<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css">
+
+
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Parametric Equaliser</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			
+			<div class="menu-item two-rows" onclick="equaliser.showEqualiser('sound-design');">
+				<div class="first-row">
+					<div class="menu-label">Sound Design</div>
+				</div>
+				<div class="menu-custom-markup">
+					<p>Customise the general tone of the speakers.</p>
+					<div class="equaliser-graph-preview" id="sound-design-preview"></div>
+				</div>
+			</div>
+			
+			
+			
+			<div class="menu-item two-rows" onclick="equaliser.showEqualiser('speaker-equaliser');">
+				<div class="first-row">
+					<div class="menu-label">Speaker Equaliser</div>
+				</div>
+				<div class="menu-custom-markup">
+					<p>Create crossovers and tune the response of each speaker driver.</p>
+					<div class="equaliser-graph-preview" id="speaker-equaliser-preview"></div>
+				</div>
+			</div>
+			
+		</div>
+		
+	</div>
+</div>
+
+
+<div class="menu-screen" id="equaliser-editor" data-parent-extension="equaliser" data-menu-title="Speaker Equaliser">
 	
 	<header class="transparent">
 		<div class="back-button master"></div>
-		<h1 data-translation="headerTitle" class="fadeout">Speaker Equaliser</h1>
+		<h1 data-translation="headerTitle" class="fadeout" id="speaker-equaliser-header">Speaker Equaliser</h1>
+		<h1 data-translation="headerTitleSoundDesign" class="fadeout" id="sound-design-header">Sound Design</h1>
 		<!--<h1 data-translation="headerTitle" class="fadeout">Equaliser</h1>-->
 		<div class="button symbol right equaliser-view-options" style="-webkit-mask-image: url(/common/symbols-black/eye.svg); mask-image: url(/common/symbols-black/eye.svg);" onclick="beo.ask('equaliser-view-options');" data-text="View Options" title="Show view options"></div>
 	</header>
@@ -14,7 +55,12 @@
 	<div id="equaliser-graph-divider"></div>
 	
 	<div class="tabs no-top-margin equaliser-tabs">
-		<!--<div data-select-tab="equaliser-ch-all" id="equaliser-tab-all" data-tab-callback="equaliser.selectChannel">All</div>-->
+		<!-- Left & Right channels for sound design. -->
+		<div class="selected" data-select-tab="equaliser-ch-l" id="equaliser-tab-l" data-tab-callback="equaliser.selectChannel">Left<div class="channel-dot grey"></div></div>
+		<div data-select-tab="equaliser-ch-r" id="equaliser-tab-r" data-tab-callback="equaliser.selectChannel" style="margin-right: 0;">Right<div class="channel-dot red" data-tab-callback="equaliser.selectChannel"></div></div>
+		<div data-select-tab="equaliser-ch-l" class="selected hidden" id="equaliser-tab-group-lr" data-tab-callback="equaliser.selectChannel" style="margin-right: 0;">Left • Right<div class="channel-dot grey"></div><div class="channel-dot red behind"></div></div>
+		
+		<!-- ABCD channels for speaker equaliser. -->
 		<div class="selected" data-select-tab="equaliser-ch-a" id="equaliser-tab-a" data-tab-callback="equaliser.selectChannel">A<div class="channel-dot red"></div></div>
 		<div data-select-tab="equaliser-ch-b" id="equaliser-tab-b" data-tab-callback="equaliser.selectChannel">B<div class="channel-dot yellow" data-tab-callback="equaliser.selectChannel"></div></div>
 		
@@ -171,7 +217,7 @@
 				</div>
 				<div class="button pill grey" onclick="equaliser.deleteFilter();">Remove Filter...</div>
 			</div>
-			<p id="equaliser-no-filters-message">Add filters to start shaping the sound of this channel.</p>
+			<p id="equaliser-no-filters-message">Add filters to start shaping the sound.</p>
 			
 			<!--<h2>Channel options</h2>
 			<div class="menu-item toggle" id="equaliser-channel-inverted" onclick="equaliser.toggleInvert();">
@@ -219,14 +265,15 @@
 	</div>
 	
 	<div class="ask-menu" id="equaliser-add-filter">
-		<h2>Crossover</h2>
-		<script>
-			
-			document.write(beo.createMenuItem({label: "Pass High Frequencies", icon: "€/symbols-black/filter-high-pass.svg", onclick: "equaliser.addFilter('highPass');", classes: ["add-high-pass-menu-item"]}));
-			document.write(beo.createMenuItem({label: "Pass Low Frequencies", icon: "€/symbols-black/filter-low-pass.svg", onclick: "equaliser.addFilter('lowPass');", classes: ["add-low-pass-menu-item"]}));
-			
-		</script>
-		
+		<div id="equaliser-add-filter-crossover-group">
+			<h2>Crossover</h2>
+			<script>
+				
+				document.write(beo.createMenuItem({label: "Pass High Frequencies", icon: "€/symbols-black/filter-high-pass.svg", onclick: "equaliser.addFilter('highPass');", classes: ["add-high-pass-menu-item"]}));
+				document.write(beo.createMenuItem({label: "Pass Low Frequencies", icon: "€/symbols-black/filter-low-pass.svg", onclick: "equaliser.addFilter('lowPass');", classes: ["add-low-pass-menu-item"]}));
+				
+			</script>
+		</div>
 		<h2>Equaliser</h2>
 		<script>
 			

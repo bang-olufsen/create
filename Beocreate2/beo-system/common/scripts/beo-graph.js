@@ -65,13 +65,11 @@
 	
 	this.setOptions(options);
 	
-	var resizeTimeout;
-	window.addEventListener("resize", function(event) {
-		clearTimeout(resizeTimeout);
-		resizeTimeout = setTimeout(function() {
-			self.draw();
-		}, 100);
-	});
+	
+	this.onResize = function(event) {
+		this.draw();
+	}
+	window.addEventListener("resize", this.onResize.bind(this), false);
 	
 	this.calculateMasterGraph = function(fromGraph, withOffset) {
 		// Sum all subgraphs.

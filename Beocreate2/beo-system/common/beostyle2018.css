@@ -1492,6 +1492,8 @@ p, ul, ol {
 	line-height: 1.2em;
 	margin-top: 0.5em;
 	color: rgb(128,128,128);
+	user-select: auto;
+	-webkit-user-select: auto;
 }
 
 .dark p, .dark ul, .dark ol {
@@ -2135,46 +2137,6 @@ a.button {
 }
 
 
-.button.pill.red {
-	background-color: var(--carnation);
-	color: white;
-}
-
-.button.pill.yellow {
-	background-color: var(--yellow);
-	color: white;
-}
-
-.button.pill.green {
-	background-color: var(--turquoise);
-	color: white;
-}
-
-.button.pill.blue {
-	background-color: var(--mariner);
-	color: white;
-}
-
-.no-touch .button.pill.red:hover,
-.button.pill.red:active {
-	background-color: var(--carnation-dark);
-}
-
-.no-touch .button.pill.yellow:hover,
-.button.pill.yellow:active {
-	background-color: var(--yellow-dark);
-}
-
-.no-touch .button.pill.green:hover,
-.button.pill.green:active {
-	background-color: var(--turquoise-dark);
-}
-
-.no-touch .button.pill.blue:hover,
-.button.pill.blue:active {
-	background-color: var(--mariner-dark);
-}
-
 .button.pill.outline {
 	background-color: var(--main-bg);
 	color: currentColor;
@@ -2214,6 +2176,50 @@ a.button {
 .no-touch .dark .button.pill.selected:hover, .dark .button.pill.selected:active {
 	background-color: white;
 	color: black;
+}
+
+.button.pill.red,
+.button.pill.red.selected {
+	background-color: var(--carnation);
+	color: white;
+}
+
+.button.pill.yellow,
+.button.pill.yellow.selected {
+	background-color: var(--yellow);
+	color: white;
+}
+
+.button.pill.green,
+.button.pill.green.selected {
+	background-color: var(--turquoise);
+	color: white;
+}
+
+.button.pill.blue,
+.button.pill.blue.selected {
+	background-color: var(--mariner);
+	color: white;
+}
+
+.no-touch .button.pill.red:hover,
+.button.pill.red:active {
+	background-color: var(--carnation-dark);
+}
+
+.no-touch .button.pill.yellow:hover,
+.button.pill.yellow:active {
+	background-color: var(--yellow-dark);
+}
+
+.no-touch .button.pill.green:hover,
+.button.pill.green:active {
+	background-color: var(--turquoise-dark);
+}
+
+.no-touch .button.pill.blue:hover,
+.button.pill.blue:active {
+	background-color: var(--mariner-dark);
 }
 
 .button.pill.popup-button {
@@ -3085,11 +3091,13 @@ div:not(.ask-content) > .ask-menu {
 .header-image-wrap {
 	width: 100%;
 	height: 40vh;
-	display: block;
+	display: flex;
 	margin-right: auto;
 	margin-left: auto;
 	position: relative;
 	background-color: var(--ultra-light-grey);
+	justify-content: center;
+	align-items: center;
 }
 
 .header-image {
@@ -3375,26 +3383,29 @@ input::-webkit-search-decoration {
 	pointer-events: all;
 }
 
-#hud-progress {
+/* @end */
+
+/* @group Miscellaneous */
+
+/* @group Progress Bar */
+
+.progress {
 	width: 280px;
-	height: 2px;
+	height: 4px;
 	background-color: var(--menu-line);
 	position: relative;
 	margin-bottom: 0.5em;
+	overflow: hidden;
 }
 
-#hud-progress-fill {
+.progress-fill {
 	height: 100%;
-	width: 30%;
+	width: 0;
 	transition: width 0.3s ease;
 	background-color: currentColor;
 }
 
 /* @end */
-
-/* @group Miscellaneous */
-
-
 
 /* @group Channel Dots */
 
@@ -3424,7 +3435,8 @@ h2 .channel-dot {
 }
 
 .channel-dot.red,
-.channel-dot.a {
+.channel-dot.a,
+.channel-dot.r {
 	background-color: var(--carnation);
 }
 
@@ -3441,6 +3453,11 @@ h2 .channel-dot {
 .channel-dot.blue,
 .channel-dot.d {
 	background-color: var(--mariner);
+}
+
+.channel-dot.grey,
+.channel-dot.l {
+	background-color: #999999;
 }
 
 .channel-dot.behind {

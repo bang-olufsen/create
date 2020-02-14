@@ -247,6 +247,7 @@ function prepareMenus() {
 						title: $(this).attr("data-menu-title"),
 						deepMenu: []
 					};
+					if ($(this).attr("data-menu-title-short")) extensions[menuID].shortTitle = $(this).attr("data-menu-title-short");
 					$(".scroll-area", this).first().prepend('<h1 class="large-title">'+$("header h1", this).first().text()+'</h1>'); // Duplicate title for views that use a large title.					
 				} else {
 					// SUBMENUS
@@ -311,6 +312,7 @@ function prepareMenus() {
 							title: $(this).attr("data-menu-title"),
 							deepMenu: []
 						};
+						if ($(this).attr("data-menu-title-short")) extensions[$(this).attr("id")].shortTitle = $(this).attr("data-menu-title-short");
 					} else { // Add deep menu to the list
 						extensions[$(this).attr("data-parent-extension")].deepMenu.push($(this).attr("id"));
 					}
@@ -580,11 +582,19 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 			if (!invisibly) activatedExtension(newExtension);
 			
 			if (selectedExtension && direction) {
-				backTitle = $("#"+selectedExtension).attr("data-menu-title");
+				if (extensions[selectedExtension].shortTitle) {
+					backTitle = extensions[selectedExtension].shortTitle;
+				} else {
+					backTitle = extensions[selectedExtension].title;
+				}
 				backTarget = selectedExtension;
 			} else if (selectedParentMenu) {
 				backTarget = selectedParentMenu;
-				backTitle = extensions[selectedParentMenu].title;
+				if (extensions[selectedParentMenu].shortTitle) {
+					backTitle = extensions[selectedParentMenu].shortTitle;
+				} else {
+					backTitle = extensions[selectedParentMenu].title;
+				}
 			}
 			
 			if (!direction) {
@@ -634,7 +644,11 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		 	- If the parent menu is already selected and a submenu is open, close it.
 		*/
 			if (selectedExtension && direction) {
-				backTitle = $("#"+selectedExtension).attr("data-menu-title");
+				if (extensions[selectedExtension].shortTitle) {
+					backTitle = extensions[selectedExtension].shortTitle;
+				} else {
+					backTitle = extensions[selectedExtension].title;
+				}
 				backTarget = selectedExtension;
 			}
 			if (selectedParentMenu != newExtension) {
@@ -810,6 +824,7 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 			}
 		}
 		if (oldMenu != newMenu) {
+			activatedExtension(selectedExtension);
 			if (back) {
 				if (!hideNew) {
 					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
@@ -834,7 +849,11 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 				if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
 				deepNavigating = false;
 			}, 600);
-			backTitle = $("#"+oldMenu).attr("data-menu-title");
+			if ($("#"+oldMenu).attr("data-menu-title-short")) {
+				backTitle = $("#"+oldMenu).attr("data-menu-title-short");
+			} else {
+				backTitle = $("#"+oldMenu).attr("data-menu-title");
+			}
 			if (!back && !hideNew) {
 				$("#"+newMenu+" .back-button.master").addClass("visible");
 				$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
@@ -869,8 +888,14 @@ function activatedExtension(extensionID) {
 		updateSliderWidths();
 	}, 20);
 	selectedExtension = extensionID;
-	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID}});
-	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
+	if (deepMenuState[selectedExtension] && deepMenuState[selectedExtension].length > 0) {
+		deepMenu = deepMenuState[selectedExtension][deepMenuState[selectedExtension].length-1];
+	} else {
+		deepMenu = null;
+	}
+	console.log(extensionID, deepMenu);
+	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
+	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
 	sendToProductView(extensionID);
 	
 	// Save state, so that the UI returns to the same menu when reloaded.

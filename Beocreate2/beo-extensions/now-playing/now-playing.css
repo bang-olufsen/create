@@ -421,6 +421,7 @@
 	bottom: 25%;
 	left: 25%;
 	right: 25%;
+	pointer-events: none;
 }
 
 

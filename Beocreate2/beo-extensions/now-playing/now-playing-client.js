@@ -6,6 +6,7 @@ var canStartSources = false;
 var focusedSource = null;
 var cacheIndex = 0;
 var playerState = "stopped";
+var metadata = {};
 
 var useExternalArtwork = null;
 var disableInternalArtwork = false;
@@ -15,7 +16,7 @@ $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
 			//if ($("#now-playing").hasClass("visible")) {
-				beo.send({target: "now-playing", header: "getData", content: {cacheIndex: cacheIndex}});
+				beo.send({target: "now-playing", header: "useExternalArtwork"});
 			//}
 		}
 	}
@@ -26,100 +27,12 @@ var loveAnimTimeout;
 $(document).on("now-playing", function(event, data) {
 	
 	if (data.header == "useExternalArtwork") {
-		if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
-	}
-	
-	if (data.header == "metadata") {
-		if (data.content.metadata != undefined && Object.keys(data.content.metadata).length > 0) {
-			/*
-			Contents:
-			content.cacheIndex = a number that increments every time metadata changes on the sound system, used to check if metadata needs to be sent.
-			content.metadata.picture = URL or base64-encoded image data. 
-				- false: remove picture
-				- true: use previous picture
-			content.metadata.artist
-			content.metadata.album
-			content.metadata.title
-			*/
-			/*if (data.content.metadata.title) {
-				$(".now-playing-title").text(data.content.metadata.title);
-			}
-			if (data.content.metadata.artist) {
-				$(".now-playing-artist").text(data.content.metadata.artist);
-			}*/
-			
-			allSources[data.content.extension].metadata = data.content.metadata;
-			
-			if (data.content.useExternalArtwork) setUseExternalArtwork(data.content.useExternalArtwork, true);
-			
-			if (data.content.metadata.album) {
-				$(".artwork-img").attr("alt", data.content.metadata.album);
-				$("#artwork-wrap-inner").attr("data-album", data.content.metadata.album);
-			} else {
-				
-			}
-			if (data.content.metadata.title != undefined) {
-				artistAlbum = false;
-				if (data.content.metadata.artist) {
-					artistAlbum = data.content.metadata.artist;
-					if (data.content.metadata.album) {
-						//artistAlbum += " — "+data.content.metadata.album;
-					} else {
-						toggleShowAlbumName(true);
-					}
-				}
-				setNowPlayingTitles(data.content.metadata.title, artistAlbum);
-			}
-			
-			// Album covers.
-			port = data.content.metadata.picturePort;
-			if (data.content.metadata.picture && !disableInternalArtwork) {
-				internalURL = data.content.metadata.picture;
-			} else {
-				internalURL = null;
-			}
-			
-			if (data.content.metadata.externalPicture) {
-				externalURL = data.content.metadata.externalPicture;
-			} else {
-				externalURL = null;
-			}
-			determineArtworkToShow(internalURL, externalURL, port);
-			
-			clearTimeout(loveAnimTimeout);
-			$("#love-button").removeClass("love-in-progress");
-			if (data.content.metadata.loved) {
-				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart-filled.svg");
-				$("#love-button").addClass("beat-anim");
-				/*loveAnimTimeout = setTimeout(function() {
-					$("#love-button").removeClass("beat-anim");
-				}, 1000);*/
-			} else {
-				$("#love-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/heart.svg");
-				$("#love-button").removeClass("beat-anim");
-				//clearTimeout(loveAnimTimeout);
-			}
-			if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
-		} else {
-			setNowPlayingTitles(false, false);
-			toggleShowAlbumName(true);
-			loadArtwork();
-			$(".artwork-img").attr("alt", "").attr("data-album", "");
-			$("#artwork-wrap-inner").attr("data-album", "");
+		if (data.content.useExternalArtwork) {
+			setUseExternalArtwork(data.content.useExternalArtwork, true);
+			updateMetadata();
 		}
 	}
-	
-	if (data.header == "playerState") {
-		clearTimeout(playButtonSymbolTimeout);
-		playerState = data.content.state;
-		/*if (data.content.state == "playing") {
-			if (allSources[focusedSource]
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
-		} else {
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
-			enableSourceStart();
-		}*/
-	}
+
 	
 });
 
@@ -127,47 +40,144 @@ $(document).on("sources", function(event, data) {
 	if (data.header == "sources") {
 		
 		if (data.content.sources != undefined) {
-			$(".play-button, .next-track-button, .previous-track-button").addClass("disabled");
 			if (data.content.focusedSource != undefined) {
 				focusedSource = data.content.focusedSource;
-				if (data.content.sources[focusedSource].playerState == "playing") {
-					if (data.content.sources[focusedSource].transportControls) {
-						if (data.content.sources[focusedSource].transportControls.indexOf("pause") != -1) {
-							$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/pause.svg");
-							$(".play-button").removeClass("disabled");
-						} else {
-							$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
-							if (data.content.sources[focusedSource].transportControls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
-						}
-					} else {
-						$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
-					}
-				} else {
-					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
-					$(".play-button").removeClass("disabled");
-				}
-				
-				if (data.content.sources[focusedSource].transportControls) {
-					if (data.content.sources[focusedSource].transportControls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
-					if (data.content.sources[focusedSource].transportControls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
-				}
+				playerState = data.content.sources[focusedSource].playerState;
 				
 				if (data.content.sources[focusedSource].canLove) {
 					functionRow("love", true);
 				} else {
 					functionRow("love", false);
 				}
+				
+				if (data.content.sources[focusedSource].metadata != undefined && Object.keys(data.content.sources[focusedSource].metadata).length > 0) {
+					if (!_.isEqual(data.content.sources[focusedSource].metadata, metadata)) {
+						metadata = data.content.sources[focusedSource].metadata;
+						updateMetadata();
+					}
+				} else {
+					metadata = {};
+					setNowPlayingTitles(false, false);
+					toggleShowAlbumName(true);
+					loadArtwork();
+					$(".artwork-img").attr("alt", "").attr("data-album", "");
+					$("#artwork-wrap-inner").attr("data-album", "");
+				}
 			} else {
 				focusedSource = null;
 				functionRow("love", false);
 				toggleShowAlbumName(true);
 				enableSourceStart();
+				loadArtwork();
+				playerState = "stopped";
 			}
+			updateTransportControls();
 		}
 	}
 
 	
 });
+
+function updateTransportControls() {
+	$(".play-button, .next-track-button, .previous-track-button").addClass("disabled");
+	if (allSources[focusedSource]) {
+		if (playerState == "playing") {
+			if (allSources[focusedSource].transportControls) {
+				if (allSources[focusedSource].transportControls.indexOf("pause") != -1) {
+					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/pause.svg");
+					$(".play-button").removeClass("disabled");
+				} else {
+					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
+					if (allSources[focusedSource].transportControls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
+				}
+			} else {
+				$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
+			}
+		} else {
+			$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
+			$(".play-button").removeClass("disabled");
+		}
+		
+		if (allSources[focusedSource].transportControls) {
+			if (allSources[focusedSource].transportControls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
+			if (allSources[focusedSource].transportControls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
+		}
+	} else {
+		$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
+	}
+}
+
+function updateMetadata() {
+	/*
+	Contents:
+	content.cacheIndex = a number that increments every time metadata changes on the sound system, used to check if metadata needs to be sent.
+	content.metadata.picture = URL or base64-encoded image data. 
+		- false: remove picture
+		- true: use previous picture
+	content.metadata.artist
+	content.metadata.album
+	content.metadata.title
+	*/
+	/*if (data.content.metadata.title) {
+		$(".now-playing-title").text(data.content.metadata.title);
+	}
+	if (data.content.metadata.artist) {
+		$(".now-playing-artist").text(data.content.metadata.artist);
+	}*/
+	
+	//allSources[data.content.extension].metadata = data.content.metadata;
+	
+	
+	
+	if (metadata.album) {
+		$(".artwork-img").attr("alt", metadata.album);
+		$("#artwork-wrap-inner").attr("data-album", metadata.album);
+	} else {
+		
+	}
+	if (metadata.title != undefined) {
+		artistAlbum = false;
+		if (metadata.artist) {
+			artistAlbum = metadata.artist;
+			if (metadata.album) {
+				//artistAlbum += " — "+data.content.metadata.album;
+			} else {
+				toggleShowAlbumName(true);
+			}
+		}
+		setNowPlayingTitles(metadata.title, artistAlbum);
+	}
+	
+	// Album covers.
+	port = metadata.picturePort;
+	if (metadata.picture && !disableInternalArtwork) {
+		internalURL = metadata.picture;
+	} else {
+		internalURL = null;
+	}
+	
+	if (metadata.externalPicture) {
+		externalURL = metadata.externalPicture;
+	} else {
+		externalURL = null;
+	}
+	determineArtworkToShow(internalURL, externalURL, port);
+	
+	clearTimeout(loveAnimTimeout);
+	$("#love-button").removeClass("love-in-progress");
+	if (metadata.loved) {
+		beo.setSymbol("#love-button", extensions["now-playing"].assetPath+"/symbols-black/heart-filled.svg");
+		$("#love-button").addClass("beat-anim");
+		/*loveAnimTimeout = setTimeout(function() {
+			$("#love-button").removeClass("beat-anim");
+		}, 1000);*/
+	} else {
+		beo.setSymbol("#love-button", extensions["now-playing"].assetPath+"/symbols-black/heart.svg");
+		$("#love-button").removeClass("beat-anim");
+		//clearTimeout(loveAnimTimeout);
+	}
+	//if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
+}
 
 function enableSourceStart(startableSources) {
 	if (startableSources != undefined) canStartSources = (startableSources != false) ? true : false;

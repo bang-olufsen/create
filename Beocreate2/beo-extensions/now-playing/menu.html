@@ -43,9 +43,9 @@
 			</div>
 			<div id="now-playing-control-area-wrap">
 				<div id="now-playing-transport">
-					<img src="€/symbols-white/previous-track.svg" onclick="now_playing.transport('previous');" class="previous-track-button button symbol" alt="Previous Track" draggable="false" />
-					<img src="€/symbols-white/play.svg" onclick="now_playing.playButtonPress();" alt="Play or Pause" class="play-button button symbol" draggable="false" />
-					<img src="€/symbols-white/next-track.svg" onclick="now_playing.transport('next');" class="next-track-button button symbol" alt="Next Track" draggable="false" />
+					<img src="€/symbols-white/previous-track.svg" onclick="now_playing.transport('previous');" class="previous-track-button button symbol disabled" alt="Previous Track" draggable="false" />
+					<img src="€/symbols-white/play.svg" onclick="now_playing.playButtonPress();" alt="Play or Pause" class="play-button button symbol disabled" draggable="false" />
+					<img src="€/symbols-white/next-track.svg" onclick="now_playing.transport('next');" class="next-track-button button symbol disabled" alt="Next Track" draggable="false" />
 					
 				</div>
 				
@@ -56,7 +56,7 @@
 				</div>
 				
 				<div id="now-playing-function-row">
-					<img id="love-button" src="€/symbols-white/heart.svg" onclick="now_playing.toggleLove();" class="button symbol function-item-love love-button" alt="Love or Unlove Track" draggable="false" />
+					<div id="love-button" onclick="now_playing.toggleLove();" class="button symbol function-item-love love-button" title="Love or unlove track" style="-webkit-mask-image: url(€/symbols-black/heart.svg); mask-image: url(€/symbols-black/heart.svg);"></div>
 				</div>
 			</div>
 		</div>

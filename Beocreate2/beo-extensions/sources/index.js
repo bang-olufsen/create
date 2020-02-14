@@ -62,7 +62,7 @@ var exec = require("child_process").exec;
 		
 		if (event.header == "activatedExtension") {
 			if (event.content == "sources") {
-				checkEnabled();
+				if (!checkingEnabled) checkEnabled();
 			}
 		}
 	});
@@ -324,6 +324,7 @@ var exec = require("child_process").exec;
 					}
 					
 					if (overview.players[i].supported_commands) {
+						allSources[extension].transportControls = overview.players[i].supported_commands;
 						if (overview.players[i].supported_commands.indexOf("play") != -1) {
 							allSources[extension].startable = true;
 						} else {
@@ -350,18 +351,10 @@ var exec = require("child_process").exec;
 		if (extension) {
 			if (metadata.playerState == "unknown") metadata.playerState = "stopped";
 			
-			if (metadata.playerState != allSources[extension].playerState) {
-				// Player state updated _for this source_.
-				allSources[extension].playerState = metadata.playerState;
-
-				if (metadata.playerState == "playing") {
-					sourceActivated(extension);
-				} else {
-					sourceDeactivated(extension);
-				}
-				
-				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
-			}
+			if (!focusedSource) focusedSource = extension;
+			
+			metadataChanged = false;
+			playerStateChanged = false;
 			
 			if (metadata.title != allSources[extension].metadata.title ||
 				metadata.artist != allSources[extension].metadata.artist ||
@@ -376,11 +369,31 @@ var exec = require("child_process").exec;
 				allSources[extension].metadata.picture = metadata.artUrl;
 				allSources[extension].metadata.externalPicture = metadata.externalArtUrl;
 				allSources[extension].metadata.picturePort = settings.port;
-				beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
+				//beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
+				metadataChanged = true;
 				// "Love track" support.
 				if (allSources[extension].canLove != metadata.loveSupported) {
 					setSourceOptions(extension, {canLove: metadata.loveSupported});
 				}
+			}
+			
+			if (metadata.playerState != allSources[extension].playerState) {
+				// Player state updated _for this source_.
+				allSources[extension].playerState = metadata.playerState;
+
+				if (metadata.playerState == "playing") {
+					sourceActivated(extension);
+				} else {
+					sourceDeactivated(extension);
+				}
+				
+				//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+				playerStateChanged = true;
+			}
+			
+			if (metadataChanged && !playerStateChanged) { // If player state has changed, this info will be sent by the function that keeps track of active sources. If only metadata changes, send it here.
+				beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 			}
 			
 			if (extension != currentAudioControlSource) {
@@ -451,13 +464,14 @@ var exec = require("child_process").exec;
 					}
 				}
 			}
-			determineCurrentSource();
-			if (debug) console.log("Source '"+extension+"' has activated (index "+focusIndex+").");
-			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
+				//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
+			
+			determineCurrentSource();
+			if (debug) console.log("Source '"+extension+"' has activated (index "+focusIndex+").");
+	
 		}
 	}
 	
@@ -476,13 +490,15 @@ var exec = require("child_process").exec;
 					}
 				}
 			}
-			determineCurrentSource();
-			if (debug) console.log("Source '"+extension+"' has deactivated.");
 			
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
+				//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
+			
+			determineCurrentSource();
+			if (debug) console.log("Source '"+extension+"' has deactivated.");
+		
 		}
 	}
 	
@@ -515,7 +531,7 @@ var exec = require("child_process").exec;
 		}
 		
 		beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
-		beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+		beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 		logSourceStatus();
 	}
 	
@@ -647,7 +663,9 @@ var exec = require("child_process").exec;
 		}
 	}
 	
+	var checkingEnabled = false;
 	function checkEnabled(queue) {
+		checkingEnabled = true;
 		if (!queue) {
 			if (debug) console.log("Checking enabled status for all sources...");
 			queue = [];
@@ -665,9 +683,13 @@ var exec = require("child_process").exec;
 						readableStatus = (enabled) ? "enabled" : "disabled";
 						if (debug) console.log("Source '"+source+"' is now "+readableStatus+".");
 					}
-					setSourceOptions(source, {enabled: enabled});
+					setSourceOptions(source, {enabled: enabled}, queue.length > 0); // Sends update to UI if this is the last extension to check.
 				}
-				if (queue.length > 0) checkEnabled(queue);
+				if (queue.length > 0) {
+					checkEnabled(queue);
+				} else {
+					checkingEnabled = false;
+				}
 			});
 		}
 	}

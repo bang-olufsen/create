@@ -27,14 +27,16 @@ var version = require("./package.json").version;
 
 var settings = {
 	autoUpdate: false,
-	autoCheck: false
+	autoCheck: true
 };
 
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
 		
-		
+		if (settings.autoCheck) {
+			startAutoCheckTimeout();
+		}
 
 	}
 	
@@ -43,12 +45,18 @@ beo.bus.on('general', function(event) {
 			checkForUpdate();
 		}
 		
-		if (event.content == "system-settings") {
+		if (event.content == "general-settings") {
 			if (newVersion) {
 				beo.sendToUI("software-update", {header: "badge", content: {badge: 1}});
 			} else {
 				beo.sendToUI("software-update", {header: "badge"});
 			}
+		}
+	}
+	
+	if (event.header == "connected") {
+		if (newVersion) {
+			beo.sendToUI("software-update", {header: "badge", content: {badge: 1}});
 		}
 	}
 });
@@ -81,6 +89,7 @@ function checkForUpdate(forceCheck) {
 				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 			} else {
 				newVersion = null;
+				releaseNotes = "";
 				if (debug) console.log("Product appears to be up to date.");
 				beo.sendToUI("software-update", {header: "upToDate"});
 			}
@@ -93,6 +102,7 @@ function checkForUpdate(forceCheck) {
 			beo.sendToUI("software-update", {header: "upToDate"});
 		}
 	}
+	if (settings.autoCheck) startAutoCheckTimeout();
 }
 
 var updateInProgress = false;
@@ -195,6 +205,14 @@ function installUpdate() {
 			console.log('Software updater process exited (code '+code.toString()+").");
 		});
 	}
+}
+
+var autoCheckTimeout;
+function startAutoCheckTimeout() {
+	clearTimeout(autoCheckTimeout);
+	autoCheckTimeout = setTimeout(function() {
+		checkForUpdate();
+	}, 86400000) // Check once per day.
 }
 
 

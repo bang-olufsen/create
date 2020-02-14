@@ -435,7 +435,7 @@ if (!quietMode) {
 		
 		setTimeout(function() {
 			playProductSound("startup");
-		}, 1000);
+		}, 1500);
 	}
 }
 
@@ -713,7 +713,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 
 beoCom.on("open", function(connectionID, protocol) {
 	// Connection opens. Nothing actually needs to be done here. The client will request setup status, which will get processed by the "setup" extension.
-	
+	beoBus.emit('general', {header: "connected"});
 });
 
 

@@ -108,8 +108,8 @@
 			<div id="hud-notification-icon"></div>
 			<h1></h1>
 			<p></p>
-			<div id="hud-progress" class="hidden">
-				<div id="hud-progress-fill"></div>
+			<div id="hud-progress" class="hidden progress">
+				<div id="hud-progress-fill" class="progress-fill"></div>
 			</div>
 			<div class="button pill black hidden">Action</div>
 		</div>
@@ -148,7 +148,7 @@
 				<div class="master-volume-slider white" id="player-bar-volume-slider"></div>
 				<img class="symbol" src="common/symbols-white/volume.svg" draggable="false">
 			</div>
-			<img class="button symbol" id="player-bar-menu-button" src="common/symbols-white/menu.svg" alt="Main Menu" onclick="beo.toggleMainMenu();" draggable="false">
+			<div id="player-bar-menu-button" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/menu.svg); mask-image: url(common/symbols-white/menu.svg);" onclick="beo.toggleMainMenu();" title="Main menu"></div>
 			<div class="reload-button" onclick="window.location.reload();"></div>
 		</div>
 	</div>

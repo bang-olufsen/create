@@ -19,6 +19,7 @@ SOFTWARE.*/
 // Mainly handles volume control.
 
 var exec = require('child_process').exec;
+var execFile = require('child_process').execFile;
 var beoDSP = require('../../beocreate_essentials/dsp');
 var request = require('request');
 
@@ -128,7 +129,7 @@ var request = require('request');
 				}
 				break;
 			case "setVolume":
-				if (debug >= 2) console.log("Volume change event from UI: "+event.content+" %.");
+				if (debug >= 2) console.log("Volume change event: "+event.content+" %.");
 				setVolume(event.content);
 				break;
 			case "setVolumeAudioControl":
@@ -147,7 +148,7 @@ var request = require('request');
 				//mute(false, fade);
 				break;
 			case "toggleMute":
-				fade = (event.content.fade) ? true : false;
+				//fade = (event.content.fade) ? true : false;
 				//mute(undefined, fade);
 				break;
 			case "getVolume":
@@ -394,14 +395,18 @@ var request = require('request');
 
 	
 	function setVolumeViaALSA(volume, callback) {
-		if (isNaN(volume)) {
-			if (volume.charAt(0) == "+") volume = volume.slice(1) + "%+";
-			if (volume.charAt(0) == "-") volume = volume.slice(1) + "%-";
+		if (typeof volume == "string") {
+			if (volume.charAt(0) == "+") {
+				volume = volume.slice(1) + "%+";
+			} else if (volume.charAt(0) == "-") {
+				volume = volume.slice(1) + "%-";
+			}
 		} else {
 			volume = volume + "%";
 		}
-		exec("amixer set "+alsaMixer+" "+volume, function(error, stdout, stderr) {
+		execFile("amixer", ["set", alsaMixer, volume], function(error, stdout, stderr) {
 			if (error) {
+				console.error("Error setting volume via ALSA:", error);
 				if (callback) callback(null, error);
 			} else {
 				newVolume = parseFloat(stdout.match(/\[(.*?)\]/)[0].slice(1, -2));

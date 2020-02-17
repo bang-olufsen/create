@@ -1168,7 +1168,7 @@ var currentNotificationID = false;
 var notificationIcon = "";
 var attentionIcon = new Image();
 
-function notify(options, dismissWithID) { // Display a standard HUD notification
+function notify(options, dismissWithID = currentNotificationID) { // Display a standard HUD notification
 	
 	/* Possible options:
 	no options = dismiss notification.
@@ -1214,7 +1214,7 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		if (options.buttonAction) {
 			if (options.buttonTitle) $(".hud-notification .button").text(options.buttonTitle);
 			if (options.buttonAction == "close") {
-				$(".hud-notification .button").attr("onclick", "beo.notify(undefined, currentNotificationID);");
+				$(".hud-notification .button").attr("onclick", "beo.notify(undefined);");
 			} else {
 				$(".hud-notification .button").attr("onclick", options.buttonAction);
 			}
@@ -1737,7 +1737,13 @@ function validateTextInput() {
 	txt = $("#text-input input[type=text]").val();
 	passwd = $("#text-input input[type=password]").val();
 	if (textInputMode == 1 || textInputMode == 3) {
-		if (!txt) textInputValid = false;
+		if (!txt) {
+			if (textInputOptions.optional && textInputOptions.optional.text) {
+				textInputValid = true;
+			} else {
+				textInputValid = false;
+			}
+		} 
 		if (textInputOptions.minLength && textInputOptions.minLength.text) {
 			if (txt.length < textInputOptions.minLength.text) textInputValid = false;
 		}

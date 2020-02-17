@@ -115,6 +115,12 @@ var fs = require("fs");
 				configureSnapcast([{option: "server", value: settings.serverAddress}], relaunch, function(success) {
 					beo.bus.emit("ui", {target: "snapcast", header: "snapcastSettings", content: settings});
 				});
+			} else {
+				settings.serverAddress = null;
+				relaunch = settings.snapcastEnabled;
+				configureSnapcast([{option: "server", remove: true}], relaunch, function(success) {
+					beo.bus.emit("ui", {target: "snapcast", header: "snapcastSettings", content: settings});
+				});
 			}
 		
 		}

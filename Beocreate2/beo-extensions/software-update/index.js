@@ -25,10 +25,11 @@ var debug = beo.debug;
 var version = require("./package.json").version;
 
 
-var settings = {
+var defaultSettings = {
 	autoUpdate: false,
 	autoCheck: true
 };
+var settings = JSON.parse(JSON.stringify(defaultSettings));
 
 beo.bus.on('general', function(event) {
 	
@@ -63,6 +64,12 @@ beo.bus.on('general', function(event) {
 
 
 beo.bus.on('software-update', function(event) {
+	
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+		}
+	}
 	
 	if (event.header == "install") {
 		installUpdate();

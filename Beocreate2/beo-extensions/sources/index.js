@@ -695,6 +695,21 @@ var exec = require("child_process").exec;
 	}
 	
 	
+	function stopAllSources() {
+		// Stop currently active sources, if the source demands it.
+		execSync = require("child_process").execSync;
+		execSync("/opt/hifiberry/bin/pause-all");
+		for (source in allSources) {
+			if (allSources[source].active) {
+				if (!allSources[source].usesHifiberryControl) {
+					// Stop all other non-AudioControl sources.
+					beo.bus.emit(source, {header: "stop", content: {reason: "stopAll"}});
+				}
+			}
+		}
+	}
+	
+	
 module.exports = {
 	version: version,
 	setSourceOptions: setSourceOptions,
@@ -702,7 +717,8 @@ module.exports = {
 	sourceActivated: sourceActivated,
 	sourceDeactivated: sourceDeactivated,
 	allSources: allSources,
-	settings: settings
+	settings: settings,
+	stopAllSources: stopAllSources
 };
 
 

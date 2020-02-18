@@ -300,8 +300,8 @@ etags = (developerMode) ? false : true; // Disable etags (caching) when running 
 expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.
 expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: etags})); // Prefer product images from system directory.
 expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For user product images.
-expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For extensions.
 expressServer.use("/extensions", express.static(dataDirectory+"/beo-extensions", {etag: etags})); // For user extensions.
+expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For system extensions.
 expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
 	if (beoUI != false) {

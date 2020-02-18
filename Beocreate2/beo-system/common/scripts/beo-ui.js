@@ -893,7 +893,6 @@ function activatedExtension(extensionID) {
 	} else {
 		deepMenu = null;
 	}
-	console.log(extensionID, deepMenu);
 	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
 	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
 	sendToProductView(extensionID);
@@ -1544,21 +1543,23 @@ var currentPopup = null;
 var currentPopupParent = null;
 var popupCancelAction = null;
 function showPopupView(popupContentID, overridePopup, cancelAction) {
-	popupCancelAction = null;
-	if (popupContentID) {
-		if (!currentPopup || overridePopup == currentPopup) {
-			if (currentPopup) {
-				$("#open-popup .popup-content").addClass("hidden");
-				currentPopupParent.append($("#open-popup .popup-content").detach());
+	if (!currentPopup) {
+		popupCancelAction = null;
+		if (popupContentID) {
+			if (!currentPopup || overridePopup == currentPopup) {
+				if (currentPopup) {
+					$("#open-popup .popup-content").addClass("hidden");
+					currentPopupParent.append($("#open-popup .popup-content").detach());
+				}
+				currentPopup = popupContentID;
+				currentPopupParent = $("#"+popupContentID).parent();
+				$("#open-popup").append($("#"+popupContentID).detach());
+				$("#open-popup .popup-content").removeClass("hidden");
+				
+				// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
+				showPopupViewInternal("#open-popup", "#open-popup-back-plate");
+				if (cancelAction != undefined) popupCancelAction = cancelAction;
 			}
-			currentPopup = popupContentID;
-			currentPopupParent = $("#"+popupContentID).parent();
-			$("#open-popup").append($("#"+popupContentID).detach());
-			$("#open-popup .popup-content").removeClass("hidden");
-			
-			// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
-			showPopupViewInternal("#open-popup", "#open-popup-back-plate");
-			if (cancelAction != undefined) popupCancelAction = cancelAction;
 		}
 	}
 }

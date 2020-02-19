@@ -1626,7 +1626,8 @@ div.symbol.static {
 p.success, 
 p.warning,
 p.loading,
-p.privacy {
+p.privacy,
+p.experiment {
 	margin-left: 35px;
 	position: relative;
 }
@@ -1634,14 +1635,16 @@ p.privacy {
 .menu-item.icon .menu-custom-markup > p.warning,
 .menu-item.icon .menu-custom-markup > p.success,
 .menu-item.icon .menu-custom-markup > p.loading,
-.menu-item.icon .menu-custom-markup > p.privacy {
+.menu-item.icon .menu-custom-markup > p.privacy,
+.menu-item.icon .menu-custom-markup > p.experiment {
 	margin-left: 0;
 }
 
 p.success:before, 
 p.warning:before,
 p.loading:before,
-p.privacy:before {
+p.privacy:before,
+p.experiment:before {
 	content: "";
 	width: 21px;
 	height: 21px;
@@ -1677,6 +1680,11 @@ p.loading:before {
 p.privacy:before {
 	mask-image: url(symbols-black/private.svg);
 	-webkit-mask-image: url(symbols-black/private.svg);
+}
+
+p.experiment:before {
+	mask-image: url(symbols-black/experiment.svg);
+	-webkit-mask-image: url(symbols-black/experiment.svg);
 }
 
 p.warning {

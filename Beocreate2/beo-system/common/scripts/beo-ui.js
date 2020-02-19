@@ -105,7 +105,12 @@ $(document).on("general", function(event, data) {
 		if (product_information && product_information.systemID && product_information.systemName) {
 			if (data.content.status == "shuttingDown") {
 				sendToProductView({header: "powerStatus", content: {status: "shuttingDown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
-				notify({title: "Shutting down product…", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", icon: "common/symbols-black/power.svg", timeout: false});
+				notify({title: "Shutting down product…", icon: "attention", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", timeout: false});
+				setTimeout(function() {
+					beo.notify({title: "Shutdown complete", message: "You may now unplug the product from power.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Connect Again", timeout: false});
+					noConnectionNotifications = false;
+					maxConnectionAttempts = 5;
+				}, 20000);
 				noConnectionNotifications = true;
 				maxConnectionAttempts = 0;
 			} else if (data.content.status == "rebooting") {

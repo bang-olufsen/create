@@ -578,9 +578,6 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 				}
 			}
 			
-			menuState[selectedParentMenu].submenu = newExtension;
-			if (!invisibly) activatedExtension(newExtension);
-			
 			if (selectedExtension && direction) {
 				if (extensions[selectedExtension].shortTitle) {
 					backTitle = extensions[selectedExtension].shortTitle;
@@ -596,6 +593,9 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 					backTitle = extensions[selectedParentMenu].title;
 				}
 			}
+			
+			menuState[selectedParentMenu].submenu = newExtension;
+			activatedExtension(newExtension, invisibly);
 			
 			if (!direction) {
 				if (!invisibly) {
@@ -666,11 +666,11 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 						$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right").removeClass("block");
 						
 					}
-					if (!invisibly) activatedExtension(newExtension);
+					activatedExtension(newExtension, invisibly);
 				} else if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu) {
-					if (!invisibly) activatedExtension(menuState[selectedParentMenu].submenu);
+					activatedExtension(menuState[selectedParentMenu].submenu, invisibly);
 				} else {
-					if (!invisibly) activatedExtension(newExtension);
+					activatedExtension(newExtension, invisibly);
 				}
 			} else {
 				// This is the same top level menu as previously.
@@ -681,7 +681,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 					if (deepMenuState[menuState[selectedParentMenu].submenu] && deepMenuState[menuState[selectedParentMenu].submenu].length > 0) {
 						showDeepMenu(menuState[selectedParentMenu].submenu, menuState[selectedParentMenu].submenu, true);
 					}
-					if (!invisibly) activatedExtension(selectedParentMenu);
+					activatedExtension(selectedParentMenu, invisibly);
 					if (!direction) {
 						if (!invisibly) {
 							$("#" + selectedParentMenu).addClass("block new");
@@ -728,7 +728,6 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 				}
 			}
 		}
-		
 		
 		if (backTarget) {
 			if (!fromBackButton) {
@@ -882,23 +881,25 @@ $(document).on("click", ".back-button.master", function() {
 
 
 
-function activatedExtension(extensionID) {
+function activatedExtension(extensionID, invisibly = false) {
 	// Trigger the same event in both the UI and on the product.
-	setTimeout(function() {
-		updateSliderWidths();
-	}, 20);
 	selectedExtension = extensionID;
-	if (deepMenuState[selectedExtension] && deepMenuState[selectedExtension].length > 0) {
-		deepMenu = deepMenuState[selectedExtension][deepMenuState[selectedExtension].length-1];
-	} else {
-		deepMenu = null;
+	if (!invisibly) {
+		setTimeout(function() {
+			updateSliderWidths();
+		}, 20);
+		if (deepMenuState[selectedExtension] && deepMenuState[selectedExtension].length > 0) {
+			deepMenu = deepMenuState[selectedExtension][deepMenuState[selectedExtension].length-1];
+		} else {
+			deepMenu = null;
+		}
+		$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
+		beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
+		sendToProductView(extensionID);
+		
+		// Save state, so that the UI returns to the same menu when reloaded.
+		localStorage.beoCreateSelectedExtension = extensionID;
 	}
-	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
-	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
-	sendToProductView(extensionID);
-	
-	// Save state, so that the UI returns to the same menu when reloaded.
-	localStorage.beoCreateSelectedExtension = extensionID;
 }
 
 

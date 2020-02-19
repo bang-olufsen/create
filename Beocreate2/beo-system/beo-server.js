@@ -87,6 +87,10 @@ if (cmdArgs.indexOf("beosounds") != -1) forceBeosounds = true;
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
 if (developerMode) console.log("Developer mode, user interface will not be cached.");
 
+if (!fs.existsSync(dataDirectory)) {
+	fs.mkdirSync(dataDirectory);
+	console.log("Created user data directory '"+dataDirectory+"'.");
+}
 
 // BEOBUS
 
@@ -231,8 +235,6 @@ function getAllSettings() {
 				beoBus.emit(extension, {header: "settings", content: {settings: getSettings(extension)}});
 			}
 		}
-	} else {
-		fs.mkdirSync(dataDirectory);
 	}
 }
 

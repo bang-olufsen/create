@@ -315,25 +315,27 @@ function generateFilename(name) {
 }
 
 function readMeasurements() {
-	measurementFiles = fs.readdirSync(arcDirectory);
-	for (var i = 0; i < measurementFiles.length; i++) {
-		if (measurementFiles[i].substr(-4) == "json") {
-			try {
-				measurement = JSON.parse(fs.readFileSync(arcDirectory+"/"+measurementFiles[i], "utf8"));
-				measurementID = path.basename(arcDirectory+"/"+measurementFiles[i], path.extname(arcDirectory+"/"+measurementFiles[i]));
-				if (measurement.magData &&
-				 	measurement.phaseData && 
-				 	measurement.name) {
-					measurements[measurementID] = measurement;
-					compactMeasurementList[measurementID] = measurement.name;
-					if (debug >= 2) console.log("Loaded room compensation measurement '"+measurement.name+"'.");
-				} else {
-					console.error("Data or name for room compensation measurement '"+measurementID+"' is missing. Skipping.");
+	if (fs.existsSync(arcDirectory)) {
+		measurementFiles = fs.readdirSync(arcDirectory);
+		for (var i = 0; i < measurementFiles.length; i++) {
+			if (measurementFiles[i].substr(-4) == "json") {
+				try {
+					measurement = JSON.parse(fs.readFileSync(arcDirectory+"/"+measurementFiles[i], "utf8"));
+					measurementID = path.basename(arcDirectory+"/"+measurementFiles[i], path.extname(arcDirectory+"/"+measurementFiles[i]));
+					if (measurement.magData &&
+					 	measurement.phaseData && 
+					 	measurement.name) {
+						measurements[measurementID] = measurement;
+						compactMeasurementList[measurementID] = measurement.name;
+						if (debug >= 2) console.log("Loaded room compensation measurement '"+measurement.name+"'.");
+					} else {
+						console.error("Data or name for room compensation measurement '"+measurementID+"' is missing. Skipping.");
+					}
+				} catch (error) {
+					console.error("Error reading room compensation measurement:", error);
 				}
-			} catch (error) {
-				console.error("Error reading room compensation measurement:", error);
+				
 			}
-			
 		}
 	}
 }

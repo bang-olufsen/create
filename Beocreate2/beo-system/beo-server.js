@@ -178,11 +178,15 @@ function getSettings(extension) {
 	if (extension) {
 		if (fs.existsSync(dataDirectory+"/"+extension+".json")) { 
 			try {
-				settings = JSON.parse( // Read settings file.
-					fs.readFileSync(dataDirectory+"/"+extension+".json")
-				);
-				// Return the parsed JSON.
-				if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
+				file = fs.readFileSync(dataDirectory+"/"+extension+".json", "utf8").trim();
+					if (file) {
+					settings = JSON.parse(file);
+					// Return the parsed JSON.
+					if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
+				} else {
+					if (debugMode >= 2) console.log("Settings file for '"+extension+"' is empty.");
+					settings = null;
+				}
 			} catch (error) {
 				console.error("Error loading settings for '"+extension+"':", error);
 				settings = null;
@@ -516,7 +520,6 @@ function assembleBeoUI() {
 		
 		// Load all extensions.
 		for (extensionName in masterList) {
-			if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
 			extension = loadExtensionWithPath(extensionName, masterList[extensionName].path, "extensions");
 			if (extension != null) {
 				allExtensions[extensionName] = extension;
@@ -635,6 +638,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 	
 	isSource = false;
 	if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() && fs.existsSync(fullPath+'/menu.html')) { 
+		if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
 		// A directory is a menu and its menu.html exists.
 		menu = fs.readFileSync(fullPath+'/menu.html', "utf8"); // Read the menu from file.
 		
@@ -698,6 +702,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 			return null;
 		}
 	} else {
+		console.error("'"+extensionName+"' is not a Beocreate 2 extension. Skipping.");
 		return null;
 	}
 	

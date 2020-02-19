@@ -64,8 +64,10 @@ $(document).on("sources", function(event, data) {
 					$("#artwork-wrap-inner").attr("data-album", "");
 				}
 			} else {
+				metadata = {};
 				focusedSource = null;
 				functionRow("love", false);
+				setNowPlayingTitles(false, false);
 				toggleShowAlbumName(true);
 				enableSourceStart();
 				loadArtwork();

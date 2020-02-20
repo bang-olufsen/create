@@ -1767,7 +1767,11 @@ p.success {
 	margin-right: auto;
 	margin-left: auto;
 	flex-shrink: 1;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 }
+
 
 .collection-item-text {
 	display: flex;

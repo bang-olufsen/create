@@ -356,18 +356,17 @@ function populateFilterBar() {
 		if (uiFilters[selectedChannel][f].separateRight) {
 			$("#equaliser-filters > #add-filter-button").before('<div class="separator"></div>');
 		} 
-		
-		if (hasLowPass) {
-			$(".add-low-pass-menu-item").addClass("disabled");
-		} else {
-			$(".add-low-pass-menu-item").removeClass("disabled");
-		}
-		
-		if (hasHighPass) {
-			$(".add-high-pass-menu-item").addClass("disabled");
-		} else {
-			$(".add-high-pass-menu-item").removeClass("disabled");
-		}
+	}
+	if (hasLowPass) {
+		$(".add-low-pass-menu-item").addClass("disabled");
+	} else {
+		$(".add-low-pass-menu-item").removeClass("disabled");
+	}
+	
+	if (hasHighPass) {
+		$(".add-high-pass-menu-item").addClass("disabled");
+	} else {
+		$(".add-high-pass-menu-item").removeClass("disabled");
 	}
 	selectFilter();
 }

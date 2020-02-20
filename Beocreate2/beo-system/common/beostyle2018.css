@@ -1772,6 +1772,10 @@ p.success {
 	background-position: center;
 }
 
+.collection-icon.small {
+	height: 60%; /* 70% to fit upper label */
+	margin-top: 10%;
+}
 
 .collection-item-text {
 	display: flex;

@@ -1128,7 +1128,8 @@ function createCollectionItem(options) {
 	collectionItem += '>\n';
 	
 	//if (options.icon) collectionItem += '<img class="collection-icon" src="'+options.icon+'">\n';
-	if (options.icon) collectionItem += '<img class="collection-icon" src="common/square-helper.png" style="background-image: url('+options.icon+');">\n';
+	iconSize = (options.iconSize) ? options.iconSize : "";
+	if (options.icon) collectionItem += '<img class="collection-icon '+iconSize+'" src="common/square-helper.png" style="background-image: url('+options.icon+');">\n';
 	
 	if (options.labelUpper || options.label) {
 		collectionItem += '<div class="collection-item-text">\n';

@@ -2836,6 +2836,7 @@ a.button {
 	transition-delay: 1s;
 	border-top: 1px solid rgba(0,0,0,0.3);
 	pointer-events: none;
+	padding-top: 0.1em;
 }
 
 .dark .graph-labels-x {
@@ -2848,11 +2849,11 @@ a.button {
 }
 
 .graph-labels-y {
-	left: 1%;
-	right: 1%;
+	left: 0.3em;
+	right: 0.3em;
 	opacity: 0.3;
-	top: 1%;
-	bottom: 1%;
+	top: 0.3em;
+	bottom: 0.3em;
 	pointer-events: none;
 }
 
@@ -2863,7 +2864,7 @@ a.button {
 }
 
 .graph-labels-x .x-0 {
-	margin-left: 1%;
+	margin-left: 0.3em;
 }
 
 .graph-labels-x .x-1 {
@@ -3106,6 +3107,7 @@ div:not(.ask-content) > .ask-menu {
 	background-color: var(--ultra-light-grey);
 	justify-content: center;
 	align-items: center;
+	box-shadow: inset 0px -1px 0px var(--menu-line);
 }
 
 .header-image {

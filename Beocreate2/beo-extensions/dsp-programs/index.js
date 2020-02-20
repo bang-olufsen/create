@@ -23,11 +23,7 @@ var execSync = require("child_process").execSync;
 var exec = require("child_process").exec;
 var fs = require("fs");
 var _ = require('underscore');
-Gpio = null;
-//const Gpio = require('onoff').Gpio;
-if (Gpio) {
-	const mutePin = new Gpio(2, 'out');
-}
+
 
 	var debug = beo.debug;
 	
@@ -48,7 +44,8 @@ if (Gpio) {
 	
 	var defaultSettings = {
 		"muteUnknownPrograms": true,
-		"autoUpgrade": true
+		"autoUpgrade": true,
+		"noGPIOMute": false
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
@@ -132,6 +129,12 @@ if (Gpio) {
 	});
 	
 	beo.bus.on('dsp-programs', function(event) {
+		
+		if (event.header == "settings") {
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+		}
 		
 		if (event.header == "getProgramPreview") {
 			
@@ -222,14 +225,6 @@ if (Gpio) {
 				beo.bus.emit("ui", {target: "dsp-programs", header: "metadataLoaded"});
 				
 			});
-		}
-		
-		if (event.header == "gpioMuteTest" && Gpio) {
-			if (event.content.mute) {
-				mutePin.writeSync(true);
-			} else {
-				mutePin.writeSync(false);
-			}
 		}
 		
 		if (event.header == "muteUnknown") {
@@ -671,14 +666,16 @@ if (Gpio) {
 	}
 	
 	function amplifierMute(mute) {
-		if (mute) {
-			execSync("gpio mode 2 out");
-			execSync("gpio write 2 1");
-			if (debug) console.log("Muted amplifier through GPIO.");
-		} else {
-			execSync("gpio write 2 0");
-			execSync("gpio mode 2 in");
-			if (debug) console.log("Unmuted amplifier through GPIO.");
+		if (!settings.noGPIOMute) {
+			if (mute) {
+				execSync("gpio mode 2 out");
+				execSync("gpio write 2 1");
+				if (debug) console.log("Muted amplifier through GPIO.");
+			} else {
+				execSync("gpio write 2 0");
+				execSync("gpio mode 2 in");
+				if (debug) console.log("Unmuted amplifier through GPIO.");
+			}
 		}
 	}
 	

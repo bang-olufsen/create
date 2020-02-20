@@ -58,6 +58,15 @@ var _ = beo.underscore;
 	};
 	// Store the amount of equaliser filter banks available in the DSP here.
 	
+	var disabledTemporarily = {
+	  "a": false,
+	  "b": false,
+	  "c": false,
+	  "d": false,
+	  "l": false,
+	  "r": false
+	};
+	
 	var filterResponses = {
 		"a": {data: [], master: []},
 		"b": {data: [], master: []},
@@ -66,6 +75,8 @@ var _ = beo.underscore;
 		"l": {data: [], master: []},
 		"r": {data: [], master: []}
 	};
+	
+	
 	
 	var driverTypes = {a: {}, b: {}, c: {}, d: {}};
 	
@@ -576,7 +587,7 @@ var _ = beo.underscore;
 					}
 				}
 					
-				if (filter.bypass) coeffs = [1,0,0,1,0,0];
+				if (filter.bypass || disabledTemporarily[channel] == true) coeffs = [1,0,0,1,0,0];
 				
 				if (coeffs.length == 6) { 
 					// Apply the filter.
@@ -597,6 +608,22 @@ var _ = beo.underscore;
 		}
 	}
 	
+	function tempDisable(disable, channels = []) {
+		for (var c = 0; c < channels.length; c++) {
+			if (("abcdlr").indexOf(channels[c]) != -1) {
+				if (disable && disabledTemporarily[channels[c]] == false) {
+					if (debug) console.log("Disabling parametric equaliser temporarily for channel "+channels[c].toUpperCase()+".");
+					disabledTemporarily[channels[c]] = true;
+					applyAllFiltersFromSettings(channels[c]);
+				}
+				if (!disable && disabledTemporarily[channels[c]] == true) {
+					if (debug) console.log("Re-enabling parametric equaliser for channel "+channels[c].toUpperCase()+".");
+					disabledTemporarily[channels[c]] = false;
+					applyAllFiltersFromSettings(channels[c]);
+				}
+			}
+		}
+	}
 	
 	
 	groupIDs = [];
@@ -831,6 +858,7 @@ module.exports = {
 	checkSettings: checkSettings,
 	getDriverTypes: function() {return driverTypes},
 	applySoundPreset: applySoundPreset,
+	tempDisable: tempDisable,
 	version: version
 };
 

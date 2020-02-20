@@ -37,6 +37,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		"toneControls": 0
 	};
 	
+	var disabledTemporarily = false;
+	
 	beo.bus.on('general', function(event) {
 		if (event.header == "startup") {
 			
@@ -139,9 +141,14 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			trebleGain = (settings.toneTouchXY[0] - 50) / 50 * maxGainTreble;
 			bassGain = (settings.toneTouchXY[1] - 50) / 50 * maxGainBass;
 			
-			// Calculate shelving filters.
-			trebleCoeffs = beoDSP.highShelf(Fs, trebleFc, trebleGain, trebleQ, 0);
-			bassCoeffs = beoDSP.lowShelf(Fs, bassFc, bassGain, bassQ, 0);
+			if (!disabledTemporarily) {
+				// Calculate shelving filters.
+				trebleCoeffs = beoDSP.highShelf(Fs, trebleFc, trebleGain, trebleQ, 0);
+				bassCoeffs = beoDSP.lowShelf(Fs, bassFc, bassGain, bassQ, 0);
+			} else {
+				trebleCoeffs = [1,0,0,1,0,0];
+				bassCoeffs = [1,0,0,1,0,0];
+			}
 			
 			// Apply treble to both channels.
 			beoDSP.safeloadWrite(parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[0]), [trebleCoeffs[5], trebleCoeffs[4], trebleCoeffs[3], trebleCoeffs[2]*-1, trebleCoeffs[1]*-1], true);
@@ -161,6 +168,20 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	}
 	
 	
+	function tempDisable(disable) {
+		if (disable && !disabledTemporarily) {
+			disabledTemporarily = true;
+			if (debug) console.log("Disabling tone controls temporarily.");
+			applyToneTouchFromSettings(false);
+		} else if (!disable && disabledTemporarily) {
+			disabledTemporarily = false;
+			if (debug) console.log("Re-enabling tone controls.");
+			applyToneTouchFromSettings(true);
+		}
+	}
+	
+	
 module.exports = {
-	version: version
+	version: version,
+	tempDisable: tempDisable
 };

@@ -28,7 +28,9 @@ var newMeasurementName = null;
 var debug = beo.debug;
 
 var defaultSettings = {
-	sampleCount: 4
+	sampleCount: 4,
+	noiseType: "white",
+	measureWithSoundDesign: false
 }
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
@@ -79,15 +81,12 @@ beo.bus.on('room-compensation', function(event) {
 	
 	if (event.header == "stopMeasurement") {
 		measureLevel("stop");
+		setOrRestoreVolume("restore");
 		measureRoom("stop");
 	}
 	
 	if (event.header == "ping") {
 		ping(event.content.stop);
-	}
-	
-	if (event.header == "saveMeasurementProto") {
-		convertAndSaveMeasurement("/tmp/fftdB_vbw.csv", "Sofa centre");
 	}
 	
 	if (event.header == "getMeasurement") {
@@ -134,23 +133,7 @@ function detectMicrophone(stage) {
 						beo.sendToUI("room-compensation", {header: "microphoneDetected"});
 						runMicrophoneDetection = false;
 					} else {
-						exec("/opt/hifiberry/bin/audio-inputs | awk -F: '{print $1}'", function(error, stdout, stderr) {
-							if (!error) {
-								if (stderr) {
-									console.error("Microphone detection failed:", stderr);
-								} else if (stdout.trim() != "") {
-									if (debug) console.log("Audio input "+stdout.trim()+" detected.");
-									microphone = parseInt(stdout.trim());
-									beo.sendToUI("room-compensation", {header: "microphoneDetected"});
-									runMicrophoneDetection = false;
-								} else {
-									if (runMicrophoneDetection) detectMicrophone("start");
-								}
-							} else {
-								console.error("Microphone detection failed:", error);
-								runMicrophoneDetection = false;
-							}
-						});
+						if (runMicrophoneDetection) detectMicrophone("start");
 					}
 				} else {
 					console.error("Microphone detection failed:", error);
@@ -167,7 +150,6 @@ function detectMicrophone(stage) {
 
 var runLevelMeter = false;
 var testTone;
-var noiseType = "pink";
 var levelHistory = [];
 var averageLevel = 0;
 
@@ -175,10 +157,10 @@ function measureLevel(stage) {
 	if (stage == "start" && microphone != null) {
 		if (!runLevelMeter) {
 			stopAllSources();
-			if (debug) console.log("Starting level measurement with "+noiseType+" noise...");
+			if (debug) console.log("Starting level measurement with "+settings.noiseType+" noise...");
 			beo.sendToUI("room-compensation", {header: "measuringLevel"});
-			if (beo.extensions.sound && beo.extensions.sound.setVolume) beo.extensions.sound.setVolume(30);
-			testTone = spawn("play", ["-q", "-n", "synth", noiseType+"noise"]);
+			setOrRestoreVolume("set");
+			testTone = spawn("play", ["-q", "-n", "synth", settings.noiseType+"noise"]);
 			runLevelMeter = true;
 			levelHistory = [];
 		}
@@ -232,6 +214,11 @@ function measureRoom(stage) {
 		if (debug) console.log("Starting measurement...");
 		errors = 0;
 		beo.sendToUI("room-compensation", {header: "measuringRoom", content: {phase: "starting"}});
+		if (!settings.measureWithSoundDesign) {
+			// Temporarily disable sound design and tone controls.
+			if (beo.extensions["tone-controls"] && beo.extensions["tone-controls"].tempDisable) beo.extensions["tone-controls"].tempDisable(true);
+			if (beo.extensions.equaliser && beo.extensions.equaliser.tempDisable) beo.extensions.equaliser.tempDisable(true, ['l','r']);
+		}
 		measurementPhase = 0;
 		currentSample = -1;
 		setTimeout(function() {
@@ -248,6 +235,12 @@ function measureRoom(stage) {
 					if (debug) console.log("Recording sample "+(currentSample+1)+" of "+settings.sampleCount+"...");
 					beo.sendToUI("room-compensation", {header: "measuringRoom", content: {phase: "recording", sample: currentSample, totalSamples: settings.sampleCount}});
 				} else if (data.indexOf("Recording finished") != -1) {
+					setOrRestoreVolume("restore");
+					if (!settings.measureWithSoundDesign) {
+						// Restore sound design and tone controls.
+						if (beo.extensions["tone-controls"] && beo.extensions["tone-controls"].tempDisable) beo.extensions["tone-controls"].tempDisable(false);
+						if (beo.extensions.equaliser && beo.extensions.equaliser.tempDisable) beo.extensions.equaliser.tempDisable(false, ['l','r']);
+					}
 					if (debug) console.log("Recording finished, analysing samples...");
 					if (!errors) beo.sendToUI("room-compensation", {header: "measuringRoom", content: {phase: "processing"}});
 				}
@@ -273,6 +266,30 @@ function measureRoom(stage) {
 	if (stage == "stop") {
 		if (roomMeasurementProcess) roomMeasurementProcess.kill("SIGINT");
 		runRoomMeasurement = false;
+	}
+}
+
+var volumeBeforeMeasurements = null;
+function setOrRestoreVolume(stage) {
+	if (beo.extensions.sound &&
+		beo.extensions.sound.getVolume &&
+		beo.extensions.sound.setVolume) {
+		if (stage == "set") { // Lower before starting measurements, saving previous level.
+			beo.extensions.sound.getVolume(function(volume) {
+				volumeBeforeMeasurements = volume;
+				if (debug) console.log("Saved current volume level ("+volumeBeforeMeasurements+" %).");
+				if (volumeBeforeMeasurements > 30) {
+					beo.extensions.sound.setVolume(30);
+				}
+			});
+		}
+		if (stage == "restore" && volumeBeforeMeasurements != null) { // Restore volume to the saved level.
+			if (debug) console.log("Restoring volume to "+volumeBeforeMeasurements+" %.");
+			beo.extensions.sound.setVolume(volumeBeforeMeasurements);
+			volumeBeforeMeasurements = null;
+		}
+	} else {
+		volumeBeforeMeasurements = null;
 	}
 }
 

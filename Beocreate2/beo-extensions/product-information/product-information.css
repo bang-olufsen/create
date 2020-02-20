@@ -22,7 +22,7 @@
 }
 
 
-.product-identity-collection .collection-item:after {
+.product-identity-collection .collection-item-content:after {
 	content: "Select";
 }
 

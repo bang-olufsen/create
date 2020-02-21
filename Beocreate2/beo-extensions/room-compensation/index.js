@@ -123,14 +123,15 @@ function detectMicrophone(stage) {
 			if (debug) console.log("Looking for microphone for room measurements...");
 		}
 		setTimeout(function() {
-			exec("/opt/hifiberry/bin/audio-inputs | grep -i usb | awk -F: '{print $1}'", function(error, stdout, stderr) {
+			exec("/opt/hifiberry/bin/supported-mics", function(error, stdout, stderr) {
 				if (!error) {
 					if (stderr) {
 						console.error("Microphone detection failed:", stderr);
 					} else if (stdout.trim() != "") {
-						if (debug) console.log("USB microphone detected as audio input "+stdout.trim()+".");
-						microphone = parseInt(stdout.trim());
-						beo.sendToUI("room-compensation", {header: "microphoneDetected"});
+						micItems = stdout.trim().split(":");
+						microphone = {index: parseInt(micItems[0]), name: micItems[1]};
+						if (debug) console.log(microphone.name+" detected as audio input "+microphone.index+".");
+						beo.sendToUI("room-compensation", {header: "microphoneDetected", content: {microphoneName: microphone.name}});
 						runMicrophoneDetection = false;
 					} else {
 						if (runMicrophoneDetection) detectMicrophone("start");
@@ -164,7 +165,7 @@ function measureLevel(stage) {
 			runLevelMeter = true;
 			levelHistory = [];
 		}
-		exec("/opt/hifiberry/bin/input-level --card=hw:"+microphone+",0", function(error, stdout, stderr) {
+		exec("/opt/hifiberry/bin/input-level --card=hw:"+microphone.index+",0", function(error, stdout, stderr) {
 			if (!error) {
 				if (stdout) {
 					level = parseFloat(stdout);
@@ -222,7 +223,7 @@ function measureRoom(stage) {
 		measurementPhase = 0;
 		currentSample = -1;
 		setTimeout(function() {
-			roomMeasurementProcess = spawn("/opt/hifiberry/bin/room-measure", ["hw:"+microphone+",0", "both", settings.sampleCount.toString()], {cwd: arcDirectory, shell: true});
+			roomMeasurementProcess = spawn("/opt/hifiberry/bin/room-measure", ["hw:"+microphone.index+",0", "both", settings.sampleCount.toString()], {cwd: arcDirectory, shell: true});
 			
 			roomMeasurementProcess.stdout.on('data', function (data) {
 				data = data.toString();

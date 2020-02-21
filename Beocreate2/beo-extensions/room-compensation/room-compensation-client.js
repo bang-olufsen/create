@@ -64,6 +64,7 @@ $(document).on("room-compensation", function(event, data) {
 	if (data.header == "microphoneDetected") {
 		beo.wizard("#room-measurement-wizard", "#room-measurement-position-microphone", "#room-compensation-measurement-assistant-button");
 		$("#room-compensation-measurement-assistant-button").text("Microphone Positioned").removeClass("disabled");
+		if (data.content && data.content.microphoneName) $(".connected-microphone").text(data.content.microphoneName);
 		measureStep = 1;
 	}
 	

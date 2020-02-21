@@ -66,7 +66,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "spotifyd") {
+			if (event.content.extension == "spotifyd") {
 				beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
 			}
 		}

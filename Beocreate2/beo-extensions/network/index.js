@@ -59,7 +59,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "network") {
+			if (event.content.extension == "network") {
 				checkLocalConnection(function(status) {
 					if (status == true) {
 						setConnectionMode({mode: "connected"});

@@ -269,6 +269,7 @@ global.beo = {
 	completeShutdown: completeShutdownForExtension,
 	setup: false,
 	selectedExtension: selectedExtension, 
+	selectedDeepMenu: selectedDeepMenu,
 	debug: debugMode,
 	developerMode: developerMode,
 	daemon: daemonMode,
@@ -282,6 +283,7 @@ global.beo = {
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
 var selectedExtension = null;
+var selectedDeepMenu = null;
 
 
 // HTTP & EXPRESS SERVERS
@@ -738,9 +740,10 @@ beoCom.on("data", function(data, connection) {
 		case "general":
 			if (data.header == "activatedExtension") {
 				selectedExtension = data.content.extension;
+				selectedDeepMenu = data.content.deepMenu;
 				eventType = "general";
 				eventHeader = "activatedExtension";
-				eventContent = data.content.extension;
+				eventContent = {extension: data.content.extension, deepMenu: data.content.deepMenu};
 			}
 			break;
 		case "test":

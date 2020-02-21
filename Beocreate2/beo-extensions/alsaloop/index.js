@@ -52,7 +52,7 @@ var exec = require("child_process").exec;
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "alsaloop") {
+			if (event.content.extension == "alsaloop") {
 				beo.bus.emit("ui", {target: "alsaloop", header: "alsaloopSettings", content: {loopEnabled: loopEnabled}});
 			}
 		}

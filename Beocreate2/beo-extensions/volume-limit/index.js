@@ -42,7 +42,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "volume-limit") {
+			if (event.content.extension == "volume-limit") {
 				
 				beo.bus.emit("ui", {target: "volume-limit", header: "canControlVolumeLimit", content: {canControlVolumeLimit: canControlVolumeLimit, range: 60}});
 				

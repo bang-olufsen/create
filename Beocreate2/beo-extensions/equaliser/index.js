@@ -91,7 +91,7 @@ var _ = beo.underscore;
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "equaliser") {
+			if (event.content.extension == "equaliser") {
 				
 				//beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}, canControl: canControlEqualiser, Fs: Fs}});
 			}

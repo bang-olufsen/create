@@ -53,7 +53,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "bluetooth") {
+			if (event.content.extension == "bluetooth") {
 				beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {bluetoothEnabled: bluetoothEnabled}});
 			}
 		}

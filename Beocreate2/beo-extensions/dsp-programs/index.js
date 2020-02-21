@@ -105,7 +105,7 @@ var _ = require('underscore');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "dsp-programs") {
+			if (event.content.extension == "dsp-programs") {
 				
 				info = getCurrentProgramInfo();
 				beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: info});

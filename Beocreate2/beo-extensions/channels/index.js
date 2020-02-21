@@ -111,7 +111,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "channels") {
+			if (event.content.extension == "channels") {
 				if (extensions.equaliser && extensions.equaliser.getDriverTypes) {
 					driverTypes = extensions.equaliser.getDriverTypes();
 				} else {

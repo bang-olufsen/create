@@ -46,7 +46,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "tone-controls") {
+			if (event.content.extension == "tone-controls") {
 				beo.bus.emit("ui", {target: "tone-controls", header: "toneControlSettings", content: {settings: settings}});
 				beo.bus.emit("ui", {target: "tone-controls", header: "canDoToneControl", content: {canDoToneControl: canDoToneControl}});
 			}

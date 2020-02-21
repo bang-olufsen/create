@@ -42,7 +42,7 @@ beo.bus.on('general', function(event) {
 	}
 	
 	if (event.header == "activatedExtension") {
-		if (event.content == "software-update") {
+		if (event.content.extension == "software-update") {
 			checkForUpdate();
 		}
 		

@@ -52,7 +52,7 @@ var exec = require("child_process").exec;
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "mpd") {
+			if (event.content.extension == "mpd") {
 				beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
 			}
 		}

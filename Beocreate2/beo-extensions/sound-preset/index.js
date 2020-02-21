@@ -59,7 +59,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "sound-preset") {
+			if (event.content.extension == "sound-preset") {
 				
 				checkIdentities();
 				

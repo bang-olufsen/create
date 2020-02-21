@@ -46,7 +46,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "last-fm") {
+			if (event.content.extension == "last-fm") {
 				beo.bus.emit("ui", {target: "last-fm", header: "lastFMSettings", content: settings});
 			}
 		}

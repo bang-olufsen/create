@@ -45,7 +45,7 @@ beo.bus.on('general', function(event) {
 	
 	
 	if (event.header == "activatedExtension") {
-		if (event.content == "room-compensation") {
+		if (event.content.extension == "room-compensation") {
 			
 			beo.sendToUI("room-compensation", {header: "measurements", content: {measurements: compactMeasurementList}});
 		}

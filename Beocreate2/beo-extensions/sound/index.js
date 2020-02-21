@@ -74,7 +74,7 @@ var request = require('request');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "sound") {
+			if (event.content.extension == "sound") {
 				
 				beo.bus.emit("ui", {target: "sound", header: "advancedSoundAdjustmentsEnabled", content: {enabled: settings.advancedSoundAdjustmentsEnabled}});
 				

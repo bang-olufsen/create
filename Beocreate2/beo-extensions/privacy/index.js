@@ -48,7 +48,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "privacy") {
+			if (event.content.extension == "privacy") {
 				beo.sendToUI("privacy", {header: "privacySettings", content: settings});
 			}
 		}

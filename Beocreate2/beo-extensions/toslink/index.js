@@ -74,7 +74,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "toslink") {
+			if (event.content.extension == "toslink") {
 				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink, canReadToslinkStatus: canReadToslinkStatus, toslinkStatus: toslinkSignal, soundSyncLG: soundSyncLG}});
 			}
 		}

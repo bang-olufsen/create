@@ -69,7 +69,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "snapcast") {
+			if (event.content.extension == "snapcast") {
 				beo.bus.emit("ui", {target: "snapcast", header: "snapcastSettings", content: settings});
 			}
 		}

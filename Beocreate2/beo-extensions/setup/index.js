@@ -31,7 +31,7 @@ SOFTWARE.*/
 	beo.bus.on('general', function(event) {
 		
 		if (event.header == "activatedExtension") {
-			selectedExtension = event.content;
+			selectedExtension = event.content.extension;
 			if (setupFlow.length > 2) {
 				checkIfMoreSteps(true);
 				beo.bus.emit("ui", {target: "setup", header: "extensionChanged", content: {selectedExtension: selectedExtension}});

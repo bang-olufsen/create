@@ -39,7 +39,7 @@ SOFTWARE.*/
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "now-playing") {
+			if (event.content.extension == "now-playing") {
 				
 			}
 			

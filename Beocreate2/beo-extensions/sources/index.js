@@ -61,7 +61,7 @@ var exec = require("child_process").exec;
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "sources") {
+			if (event.content.extension == "sources") {
 				if (!checkingEnabled) checkEnabled();
 			}
 		}

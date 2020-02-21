@@ -39,7 +39,7 @@ beo.bus.on('general', function(event) {
 	}
 	
 	if (event.header == "activatedExtension") {
-		if (event.content == "daisy-chain") {
+		if (event.content.extension == "daisy-chain") {
 			beo.sendToUI("daisy-chain", {header: "daisyChainSettings", content: settings});
 		}
 	}

@@ -81,6 +81,9 @@ This channel broadcasts general system events with following headers:
 
 - **startup**: broadcast when all extensions have been loaded and settings have been delivered. This is a good cue to start doing work in your extension.
 - **shutdown**: broadcast when system shutdown has been requested for any reason.
+- **activatedExtension**: broadcast when menus are accessed in the user interface. Its *content* object includes:
+	- *extension:* the name of the extension that activated
+	- *deepMenu:* the name of the deep menu (a menu within a menu), if any – returns `null` if the menu being accessed is the main menu of the extension.
 
 #### 'dsp' channel
 
@@ -111,7 +114,7 @@ When data is received from the user interface for your extension, it will be bro
 
 Sometimes you need to call functions (or access variables) from other extensions. Which functions are available depends on the extension. You can publish functions for other extensions to use in **module.exports**, just like with normal Node modules.
 
-Because you should not assume which extensions and functions are available, always check for the existence of both the extension and the function before calling it, implementing a fallback in case it is not.
+Because you should not assume which extensions and functions are available, always check for the existence of both the extension and the function before calling it, implementing a fallback (if needed) in case it is not.
 
 The public functions for each extension are in **beo.extensions**:
 
@@ -128,7 +131,7 @@ The public functions for each extension are in **beo.extensions**:
 
 Where possible, avoid having settings for your extension. Make reasonable choices on the user's behalf, using any other relevant information available on the system. Using Beocreate 2 should be an experience that doesn't burden the user with configuring the tiniest possible details.
 
-When you need to save and load settings, Beocreate 2 abstracts this process for you.
+When you need to save and load settings, Beocreate 2 makes this easy for you.
 
 ### Settings Format and Storage
 
@@ -146,6 +149,8 @@ Even if your extension has configurable settings, always make sure it works with
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
+The last line clones the *defaultSettings* object into *settings* in such a way that the defaults will not be altered when settings are changed at runtime. 
+
 Include this somewhere near the top of your extension code.
 
 ### Loading Settings
@@ -177,3 +182,5 @@ If you have changed your settings, remember to save them. Do this as follows:
 	beo.saveSettings("my-extension", settings);
 	
 - **settings** should be your settings object. Do not convert it to JSON yourself.
+
+Beocreate 2 will queue settings before writing them to disk. This ensures that changing settings in rapid succession (such as when adjusting an equaliser) doesn't result in unnecessary disk activity. After 10 seconds of no *saveSettings* calls from any extension, Beocreate 2 will write the latest queued settings from each extension to disk at once.

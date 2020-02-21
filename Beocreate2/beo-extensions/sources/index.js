@@ -616,24 +616,6 @@ var exec = require("child_process").exec;
 				}
 				if (count != enabledHifiberrySources) {
 					if (debug) console.log(count+" HiFiBerry-controlled sources are now enabled.");
-					configure = false;
-					if (enabledHifiberrySources == 1 && count != 0) {
-						configure = true;
-					} else if (count == 1) {
-						configure = true;
-					}
-					if (configure) {
-						beo.bus.emit("ui", {target: "sources", header: "configuringSystem", content: {reason: "hfiberryExclusive"}});
-						if (debug) console.log("Calling HiFiBerry player reconfiguration...");
-						exec("/opt/hifiberry/bin/reconfigure-players", function(error, stdout, stderr) {
-							if (error) {
-								if (debug) console.error("Reconfiguration failed: "+error);
-							} else {
-								if (debug) console.error("Reconfiguration finished.");
-							}
-							beo.bus.emit("ui", {target: "sources", header: "systemConfigured"});
-						});
-					}
 					enabledHifiberrySources = count;
 				}
 			} else {
@@ -664,7 +646,8 @@ var exec = require("child_process").exec;
 	}
 	
 	var checkingEnabled = false;
-	function checkEnabled(queue) {
+	var enabledChanged = false;
+	function checkEnabled(queue, callback) {
 		checkingEnabled = true;
 		if (!queue) {
 			if (debug) console.log("Checking enabled status for all sources...");
@@ -678,17 +661,22 @@ var exec = require("child_process").exec;
 		if (queue.length > 0) {
 			source = queue.shift();
 			beo.extensions[source].isEnabled(function(enabled) {
-				 if (allSources[source].enabled != enabled) {
+				if (allSources[source].enabled != enabled) {
+					enabledChanged = true;
 					if (debug) {
 						readableStatus = (enabled) ? "enabled" : "disabled";
 						if (debug) console.log("Source '"+source+"' is now "+readableStatus+".");
 					}
 					setSourceOptions(source, {enabled: enabled}, queue.length > 0); // Sends update to UI if this is the last extension to check.
+				} else if (queue.length == 0 && enabledChanged) {
+					// If the last source to check has not changed but another has, just send update.
+					beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 				}
 				if (queue.length > 0) {
-					checkEnabled(queue);
+					checkEnabled(queue, callback);
 				} else {
 					checkingEnabled = false;
+					if (callback) callback();
 				}
 			});
 		}

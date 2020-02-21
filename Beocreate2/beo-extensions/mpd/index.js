@@ -40,9 +40,15 @@ var exec = require("child_process").exec;
 			
 			if (sources) {
 				getMPDStatus(function(enabled) {
-					sources.setSourceOptions("mpd", {
+					/*sources.setSourceOptions("mpd", {
 						enabled: enabled,
 						transportControls: true,
+						usesHifiberryControl: true
+					});*/
+					sources.setSourceOptions("radio", {
+						enabled: enabled,
+						aka: ["mpd"],
+						transportControls: ["play", "stop"],
 						usesHifiberryControl: true
 					});
 				});
@@ -65,9 +71,13 @@ var exec = require("child_process").exec;
 			if (event.content.enabled != undefined) {
 				setMPDStatus(event.content.enabled, function(newStatus, error) {
 					beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: newStatus}});
-					if (sources) sources.setSourceOptions("mpd", {enabled: newStatus});
+					if (sources) {
+						//sources.setSourceOptions("mpd", {enabled: newStatus});
+						sources.setSourceOptions("radio", {enabled: newStatus});
+					}
 					if (newStatus == false) {
-						if (sources) sources.sourceDeactivated("mpd");
+						//if (sources) sources.sourceDeactivated("mpd");
+						if (sources) sources.sourceDeactivated("radio");
 					}
 					if (error) {
 						beo.bus.emit("ui", {target: "mpd", header: "errorTogglingMPD", content: {}});

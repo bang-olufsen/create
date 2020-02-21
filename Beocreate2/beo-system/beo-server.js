@@ -71,7 +71,7 @@ var developerMode = false;
 var quietMode = false;
 var forceBeosounds = false;
 
-console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen");
+console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2020 Bang & Olufsen");
 
 
 // CHECK COMMAND LINE ARGUMENTS

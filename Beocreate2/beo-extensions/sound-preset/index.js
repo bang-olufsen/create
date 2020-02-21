@@ -68,7 +68,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				
 			}
 			
-			if (event.content == "sound") {
+			if (event.content.extension == "sound") {
 				
 				if (settings.selectedSoundPreset) {
 					if (compactPresetList[settings.selectedSoundPreset]) {

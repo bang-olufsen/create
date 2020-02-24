@@ -92,10 +92,10 @@ function setHostname(productName, callback) {
 										hostsFile = fs.readFileSync("/etc/hosts", "utf8").split('\n');
 										for (var i = 0; i < hostsFile.length; i++) {
 											if (hostsFile[i].indexOf(names.static) != -1) {
-												hostsFile[i].replace(names.static, staticName);
+												hostsFile[i] = hostsFile[i].replace(names.static, staticName);
 											}
 											if (hostsFile[i].indexOf("hifiberry") != -1) {
-												hostsFile[i].replace("hifiberry", staticName);
+												hostsFile[i] = hostsFile[i].replace("hifiberry", staticName);
 											}
 										}
 										hostsText = hostsFile.join("\n");

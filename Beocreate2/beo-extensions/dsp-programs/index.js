@@ -20,13 +20,10 @@ SOFTWARE.*/
 var beoDSP = require('../../beocreate_essentials/dsp');
 var xmlJS = require('xml-js');
 var execSync = require("child_process").execSync;
-var fs = require('fs');
+var exec = require("child_process").exec;
+var fs = require("fs");
 var _ = require('underscore');
-Gpio = null;
-//const Gpio = require('onoff').Gpio;
-if (Gpio) {
-	const mutePin = new Gpio(2, 'out');
-}
+
 
 	var debug = beo.debug;
 	
@@ -47,11 +44,14 @@ if (Gpio) {
 	
 	var defaultSettings = {
 		"muteUnknownPrograms": true,
-		"autoUpgrade": true
+		"autoUpgrade": true,
+		"noGPIOMute": false
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
 	if (!fs.existsSync(dspDirectory)) fs.mkdirSync(dspDirectory);
+	
+	var configuration = {}; // /etc/sigmatcp.conf
 	
 	beo.bus.on('general', function(event) {
 		
@@ -105,7 +105,7 @@ if (Gpio) {
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "dsp-programs") {
+			if (event.content.extension == "dsp-programs") {
 				
 				info = getCurrentProgramInfo();
 				beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: info});
@@ -129,6 +129,12 @@ if (Gpio) {
 	});
 	
 	beo.bus.on('dsp-programs', function(event) {
+		
+		if (event.header == "settings") {
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+		}
 		
 		if (event.header == "getProgramPreview") {
 			
@@ -219,14 +225,6 @@ if (Gpio) {
 				beo.bus.emit("ui", {target: "dsp-programs", header: "metadataLoaded"});
 				
 			});
-		}
-		
-		if (event.header == "gpioMuteTest" && Gpio) {
-			if (event.content.mute) {
-				mutePin.writeSync(true);
-			} else {
-				mutePin.writeSync(false);
-			}
 		}
 		
 		if (event.header == "muteUnknown") {
@@ -668,16 +666,124 @@ if (Gpio) {
 	}
 	
 	function amplifierMute(mute) {
-		if (mute) {
-			execSync("gpio mode 2 out");
-			execSync("gpio write 2 1");
-			if (debug) console.log("Muted amplifier through GPIO.");
-		} else {
-			execSync("gpio write 2 0");
-			execSync("gpio mode 2 in");
-			if (debug) console.log("Unmuted amplifier through GPIO.");
+		if (!settings.noGPIOMute) {
+			if (mute) {
+				execSync("gpio mode 2 out");
+				execSync("gpio write 2 1");
+				if (debug) console.log("Muted amplifier through GPIO.");
+			} else {
+				execSync("gpio write 2 0");
+				execSync("gpio mode 2 in");
+				if (debug) console.log("Unmuted amplifier through GPIO.");
+			}
 		}
 	}
+	
+	
+	
+
+	function configure(options, relaunch, callback) {
+		readConfiguration();
+		if (Object.keys(configuration).length != 0) {
+			if (typeof options == "object" && !Array.isArray(options)) {
+				options = [options];
+			}
+			for (var i = 0; i < options.length; i++) {
+				if (options[i].section && options[i].option) {
+					if (!configuration[options[i].section]) configuration[options[i].section] = {};
+					if (options[i].value) {
+						if (debug) console.log("Configuring SigmaTCPServer (setting "+options[i].option+" in "+options[i].section+")...")
+						configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
+					} else {
+						if (configuration[options[i].section][options[i].option]) {
+							if (options[i].remove) {
+								if (debug) console.log("Configuring SigmaTCPServer (removing "+options[i].option+" in "+options[i].section+")...")
+								delete configuration[options[i].section][options[i].option];
+							} else {
+								if (debug) console.log("Configuring SigmaTCPServer (commenting out "+options[i].option+" in "+options[i].section+")...")
+								configuration[options[i].section][options[i].option].comment = true;
+							}
+						}
+					}
+				}
+			}
+			writeConfiguration();
+			if (relaunch) {
+				beo.sendToUI("dsp-programs", {header: "configuringSigmaTCP", content: {status: "start"}});
+				exec("systemctl restart sigmatcp.service", function(error, stdout, stderr) {
+					if (error) {
+						if (debug) console.error("Relaunching SigmaTCPServer failed: "+error);
+						if (callback) callback(false, error);
+					} else {
+						if (debug) console.error("SigmaTCPServer was relaunched.");
+						if (callback) callback(true);
+					}
+					beo.sendToUI("dsp-programs", {header: "configuringSigmaTCP", content: {status: "finish"}});
+				});
+			} else {
+				if (callback) callback(true);
+			}
+		} else {
+			if (callback) callback(false);
+		}
+	}
+	
+	configModified = 0;
+	function readConfiguration() {
+		if (fs.existsSync("/etc/sigmatcp.conf")) {
+			modified = fs.statSync("/etc/sigmatcp.conf").mtimeMs;
+			if (modified != configModified) {
+				// Reads configuration into a JavaScript object for easy access.
+				configModified = modified;
+				config = fs.readFileSync("/etc/sigmatcp.conf", "utf8").split('\n');
+				section = null;
+				for (var i = 0; i < config.length; i++) {
+					// Find settings sections.
+					if (config[i].indexOf("[") != -1 && config[i].indexOf("]") != -1) {
+						section = config[i].trim().slice(1, -1);
+						configuration[section] = {};
+					} else {
+						if (section != null) {
+							line = config[i].trim();
+							comment = (line.charAt(0) == "#") ? true : false;
+							if (comment) {
+								lineItems = line.slice(1).split("=");
+							} else {
+								lineItems = line.split("=");
+							}
+							if (lineItems.length == 2) {
+								value = lineItems[1].trim();
+								configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+							}
+						}
+					}
+				}
+			}
+			return configuration;
+		}
+	}
+	
+	function writeConfiguration() {
+		// Saves current configuration back into the file.
+		if (fs.existsSync("/etc/sigmatcp.conf")) {
+			config = [];
+			for (section in configuration) {
+				sectionStart = (config.length != 0) ? "\n["+section+"]" : "["+section+"]";
+				config.push(sectionStart);
+				for (option in configuration[section]) {
+					if (configuration[section][option].comment) {
+						line = "#"+option+" = "+configuration[section][option].value;
+					} else {
+						line = option+" = "+configuration[section][option].value;
+					}
+					config.push(line);
+				}
+			}
+			fs.writeFileSync("/etc/sigmatcp.conf", config.join("\n"));
+			configModified = fs.statSync("/etc/sigmatcp.conf").mtimeMs;
+		}
+	}
+	
 
 	
 module.exports = {
@@ -685,6 +791,8 @@ module.exports = {
 	installDSPProgram: installDSPProgram,
 	setAutoInstallProgram: setAutoInstallProgram,
 	storeAdjustments: storeAdjustments,
-	version: version
+	version: version,
+	getSigmaTCPSettings: readConfiguration,
+	configureSigmaTCP: configure
 };
 

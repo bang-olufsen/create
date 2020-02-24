@@ -52,7 +52,7 @@ var exec = require("child_process").exec;
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "roon") {
+			if (event.content.extension == "roon") {
 				beo.bus.emit("ui", {target: "roon", header: "roonSettings", content: {roonEnabled: roonEnabled}});
 			}
 		}

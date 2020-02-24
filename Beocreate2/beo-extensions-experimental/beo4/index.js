@@ -15,10 +15,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-// SONY TV CONTROL (IP-BASED)
+// BEO4 INTERFACING FOR BEOCREATE 2
 
 var SerialPort = require('serialport'); // for communicating through serial ports
-var Readline = require('@serialport/parser-readline');
+//var Readline = require('@serialport/parser-readline');
+var Readline = SerialPort.parsers.Readline;
 
 var beo4Directory = {
   "address": {
@@ -77,16 +78,14 @@ var beo4Directory = {
   }
 };
 
-module.exports = function(beoBus) {
-	var module = {};
-	var beoBus = beoBus;
+
 	
 	var beo4Address = "";
 	var beo4Source = "";
 	var beo4Command = "";
 	var beo4LastAVSource = "";
 	
-	beoBus.on('general', function(event) {
+	beo.bus.on('general', function(event) {
 		// See documentation on how to use BeoBus.
 		// GENERAL channel broadcasts events that concern the whole system.
 		
@@ -98,7 +97,7 @@ module.exports = function(beoBus) {
 			
 		}
 		
-		if (event.header == "activatedElement") {
+		if (event.header == "activatedExtension") {
 			if (event.content == "beo4") {
 				
 			}
@@ -255,14 +254,11 @@ module.exports = function(beoBus) {
 		}
 	
 		//sendToClient("b4sc " + beo4Source, "remotes");
-		beoBus.emit("ui", {target: "beo4", header: "lastCommand", content: {source: beo4Source, command: beo4Command}});
+		beo.bus.emit("ui", {target: "beo4", header: "lastCommand", content: {source: beo4Source, command: beo4Command}});
 		
-		beoBus.emit("remote", {header: "command", content: {source: beo4Source, command: beo4Command, remoteType: "beo4"}});
+		beo.bus.emit("remote", {header: "command", content: {source: beo4Source, command: beo4Command, remoteType: "beo4"}});
 	}
 	
-	
-	return module;
-};
 
 
 

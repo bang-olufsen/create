@@ -63,7 +63,7 @@ var countryList = require('country-list');
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "choose-country") {
+			if (event.content.extension == "choose-country") {
 				beo.bus.emit("ui", {target: "choose-country", header: "showList", content: {countries: orderedCountries}});
 				getAndShowCurrentCountry();
 			}

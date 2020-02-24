@@ -421,6 +421,7 @@
 	bottom: 25%;
 	left: 25%;
 	right: 25%;
+	pointer-events: none;
 }
 
 
@@ -462,7 +463,7 @@
 		bottom: 0;
 		left: -100%;
 		right: 0;
-		box-shadow: 0px -1px 0px var(--menu-line-dark);
+		box-shadow: 0px -1px 0px var(--menu-line);
 	}
 	
 	#now-playing-text-area-wrap {
@@ -479,7 +480,7 @@
 	.dark #now-playing-text-area-wrap {
 		color: inherit;
 		background-color: #333;
-		border-bottom: 1px solid var(--menu-line-dark);
+		border-bottom: 1px solid var(--menu-line);
 	}
 	
 	#now-playing-control-area-wrap {

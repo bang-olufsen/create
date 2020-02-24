@@ -1,4 +1,4 @@
-/*Copyright 2017-2019 Bang & Olufsen A/S
+/*Copyright 2017-2020 Bang & Olufsen A/S
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -71,7 +71,7 @@ var developerMode = false;
 var quietMode = false;
 var forceBeosounds = false;
 
-console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2019 Bang & Olufsen");
+console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2020 Bang & Olufsen A/S");
 
 
 // CHECK COMMAND LINE ARGUMENTS
@@ -87,6 +87,10 @@ if (cmdArgs.indexOf("beosounds") != -1) forceBeosounds = true;
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
 if (developerMode) console.log("Developer mode, user interface will not be cached.");
 
+if (!fs.existsSync(dataDirectory)) {
+	fs.mkdirSync(dataDirectory);
+	console.log("Created user data directory '"+dataDirectory+"'.");
+}
 
 // BEOBUS
 
@@ -178,11 +182,15 @@ function getSettings(extension) {
 	if (extension) {
 		if (fs.existsSync(dataDirectory+"/"+extension+".json")) { 
 			try {
-				settings = JSON.parse( // Read settings file.
-					fs.readFileSync(dataDirectory+"/"+extension+".json")
-				);
-				// Return the parsed JSON.
-				if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
+				file = fs.readFileSync(dataDirectory+"/"+extension+".json", "utf8").trim();
+					if (file) {
+					settings = JSON.parse(file);
+					// Return the parsed JSON.
+					if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
+				} else {
+					if (debugMode >= 2) console.log("Settings file for '"+extension+"' is empty.");
+					settings = null;
+				}
 			} catch (error) {
 				console.error("Error loading settings for '"+extension+"':", error);
 				settings = null;
@@ -227,8 +235,6 @@ function getAllSettings() {
 				beoBus.emit(extension, {header: "settings", content: {settings: getSettings(extension)}});
 			}
 		}
-	} else {
-		fs.mkdirSync(dataDirectory);
 	}
 }
 
@@ -263,6 +269,7 @@ global.beo = {
 	completeShutdown: completeShutdownForExtension,
 	setup: false,
 	selectedExtension: selectedExtension, 
+	selectedDeepMenu: selectedDeepMenu,
 	debug: debugMode,
 	developerMode: developerMode,
 	daemon: daemonMode,
@@ -276,6 +283,7 @@ global.beo = {
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
 var selectedExtension = null;
+var selectedDeepMenu = null;
 
 
 // HTTP & EXPRESS SERVERS
@@ -300,8 +308,8 @@ etags = (developerMode) ? false : true; // Disable etags (caching) when running 
 expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.
 expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: etags})); // Prefer product images from system directory.
 expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For user product images.
-expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For extensions.
 expressServer.use("/extensions", express.static(dataDirectory+"/beo-extensions", {etag: etags})); // For user extensions.
+expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For system extensions.
 expressServer.get("/", function (req, res) {
 	// Root requested, serve the complete UI
 	if (beoUI != false) {
@@ -435,7 +443,7 @@ if (!quietMode) {
 		
 		setTimeout(function() {
 			playProductSound("startup");
-		}, 1000);
+		}, 1500);
 	}
 }
 
@@ -516,7 +524,6 @@ function assembleBeoUI() {
 		
 		// Load all extensions.
 		for (extensionName in masterList) {
-			if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
 			extension = loadExtensionWithPath(extensionName, masterList[extensionName].path, "extensions");
 			if (extension != null) {
 				allExtensions[extensionName] = extension;
@@ -635,6 +642,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 	
 	isSource = false;
 	if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() && fs.existsSync(fullPath+'/menu.html')) { 
+		if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
 		// A directory is a menu and its menu.html exists.
 		menu = fs.readFileSync(fullPath+'/menu.html', "utf8"); // Read the menu from file.
 		
@@ -698,6 +706,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 			return null;
 		}
 	} else {
+		console.error("'"+extensionName+"' is not a Beocreate 2 extension. Skipping.");
 		return null;
 	}
 	
@@ -713,7 +722,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 
 beoCom.on("open", function(connectionID, protocol) {
 	// Connection opens. Nothing actually needs to be done here. The client will request setup status, which will get processed by the "setup" extension.
-	
+	beoBus.emit('general', {header: "connected"});
 });
 
 
@@ -731,9 +740,10 @@ beoCom.on("data", function(data, connection) {
 		case "general":
 			if (data.header == "activatedExtension") {
 				selectedExtension = data.content.extension;
+				selectedDeepMenu = data.content.deepMenu;
 				eventType = "general";
 				eventHeader = "activatedExtension";
-				eventContent = data.content.extension;
+				eventContent = {extension: data.content.extension, deepMenu: data.content.deepMenu};
 			}
 			break;
 		case "test":

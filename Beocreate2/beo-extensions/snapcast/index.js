@@ -69,7 +69,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "snapcast") {
+			if (event.content.extension == "snapcast") {
 				beo.bus.emit("ui", {target: "snapcast", header: "snapcastSettings", content: settings});
 			}
 		}
@@ -113,6 +113,12 @@ var fs = require("fs");
 				settings.serverAddress = event.content.address;
 				relaunch = settings.snapcastEnabled;
 				configureSnapcast([{option: "server", value: settings.serverAddress}], relaunch, function(success) {
+					beo.bus.emit("ui", {target: "snapcast", header: "snapcastSettings", content: settings});
+				});
+			} else {
+				settings.serverAddress = null;
+				relaunch = settings.snapcastEnabled;
+				configureSnapcast([{option: "server", remove: true}], relaunch, function(success) {
 					beo.bus.emit("ui", {target: "snapcast", header: "snapcastSettings", content: settings});
 				});
 			}

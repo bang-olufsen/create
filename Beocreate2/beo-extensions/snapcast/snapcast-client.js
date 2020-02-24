@@ -27,11 +27,9 @@ $(document).on("snapcast", function(event, data) {
 		if (data.content.serverAddress) {
 			serverAddress = data.content.serverAddress
 			$("#snapcast-server-address").text(serverAddress).removeClass("button");
-			$("#snapcast-enabled-toggle").removeClass("disabled");
 		} else {
 			serverAddress = null;
 			$("#snapcast-server-address").text("Set...").addClass("button");
-			$("#snapcast-enabled-toggle").addClass("disabled");
 		}
 		beo.notify(false, "snapcast");
 	}
@@ -57,16 +55,23 @@ function toggleAutoJoin() {
 }
 
 function setServerAddress() {
-	beo.startTextInput(1, "Snapcast Server", "Enter Snapcast server address.", {text: serverAddress, placeholders: {text: "10.0..."}}, function(input) {
+	beo.startTextInput(1, "Snapcast Server", "Enter Snapcast server address. Leave blank to discover automatically.", {text: serverAddress, placeholders: {text: "10.0..."}, optional: {text: true}}, function(input) {
 		// Validate and store input.
 		if (input) {
-			if (isValidIP(input.text)) {
+			if (input.text == "") {
 				if (snapcastEnabled) {
 					beo.notify({title: "Updating settings...", icon: "attention", timeout: false});
 				}
-				beo.send({target: "snapcast", header: "setServerAddress", content: {address: input.text}});
+				beo.send({target: "snapcast", header: "setServerAddress", content: {address: null}});
 			} else {
-				beo.notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				if (isValidIP(input.text)) {
+					if (snapcastEnabled) {
+						beo.notify({title: "Updating settings...", icon: "attention", timeout: false});
+					}
+					beo.send({target: "snapcast", header: "setServerAddress", content: {address: input.text}});
+				} else {
+					beo.notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				}
 			}
 		}
 	});

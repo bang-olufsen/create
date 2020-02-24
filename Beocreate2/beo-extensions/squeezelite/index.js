@@ -53,7 +53,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "squeezelite") {
+			if (event.content.extension == "squeezelite") {
 				beo.bus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: squeezeliteEnabled}});
 			}
 		}

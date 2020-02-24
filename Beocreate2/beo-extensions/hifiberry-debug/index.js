@@ -37,7 +37,7 @@ beo.bus.on('general', function(event) {
 	}
 	
 	if (event.header == "activatedExtension") {
-		if (event.content == "hifiberry-debug") {
+		if (event.content.extension == "hifiberry-debug") {
 			
 			if (!collecting) {
 				if (archive) {

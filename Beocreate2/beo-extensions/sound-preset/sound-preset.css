@@ -2,7 +2,7 @@
 	http://beocreate-core.local/extensions/sound-preset/sound-preset.css
 	http://beocreate-4-encore.local/extensions/sound-preset/sound-preset.css */
 
-#sound-preset .collection-item:after {
+#sound-preset .collection-item-content:after {
 	content: "Show";
 }
 	
@@ -18,6 +18,7 @@
 	opacity: 0.5;
 	pointer-events: none;
 	display: inline-block;
+	position: absolute;
 	background-color: currentColor;
 	-webkit-mask-image: url(/common/beo.svg);
 	mask-image: url(/common/beo.svg);
@@ -27,6 +28,8 @@
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;
 	mask-position: center;
+	left: 0;
+	top: 0;
 }
 
 .sound-preset-information {

@@ -29,6 +29,10 @@ var fs = require("fs");
 	};
 	var audioControl = null;
 	
+	var descriptions = {
+		externalMetadata: null
+	}
+	
 	beo.bus.on('general', function(event) {
 		
 		if (event.header == "startup") {
@@ -48,8 +52,27 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "privacy") {
-				beo.sendToUI("privacy", {header: "privacySettings", content: settings});
+			if (event.content.extension == "privacy") {
+				for (d in descriptions) {
+					if (descriptions[d] == null) {
+						file = null;
+						switch (d) {
+							case "externalMetadata":
+								file = "/opt/audiocontrol2/privacy.html";
+								break;
+						}
+						if (file != null) {
+							if (fs.existsSync(file)) {
+								descriptionItems = fs.readFileSync(file, "utf8").split("\n");
+								if (descriptionItems[0] == d) {
+									descriptionItems.shift();
+									descriptions[d] = descriptionItems.join("\n");
+								}
+							}
+						}
+					}
+				}
+				beo.sendToUI("privacy", {header: "privacySettings", content: {settings: settings, descriptions: descriptions}});
 			}
 		}
 	});
@@ -65,7 +88,7 @@ var fs = require("fs");
 					settings.externalMetadata = (!settings.externalMetadata) ? true : false;
 					enabled = (settings.externalMetadata) ? "1" : "0";
 					audioControl.configure([{section: "privacy", option: "external_metadata", value: enabled}], true, function() {
-						beo.sendToUI("privacy", {header: "privacySettings", content: settings});
+						beo.sendToUI("privacy", {header: "privacySettings", content: {settings: settings}});
 					});
 				}
 			}

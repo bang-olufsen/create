@@ -22,6 +22,7 @@ SOFTWARE.*/
 
 	
 var version = require("./package.json").version;
+var SerialPort = require('serialport'); // for communicating through serial ports
 debug = beo.debugMode;
 var port = null;
 

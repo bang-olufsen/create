@@ -41,7 +41,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "ssh") {
+			if (event.content.extension == "ssh") {
 				settings.sshPasswordChanged = isPasswordChanged("root");
 				beo.bus.emit("ui", {target: "ssh", header: "sshSettings", content: settings});
 			}

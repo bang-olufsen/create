@@ -23,6 +23,8 @@ $(document).on("sound-preset", function(event, data) {
 					classes: ["sound-preset-item"],
 					label: soundPresets[presetID].presetName,
 					icon: soundPresets[presetID].productImage,
+					//onclickSecondary: "console.log('Favourited "+presetID+".');",
+					//secondarySymbol: "common/symbols-black/star.svg",
 					data: {"data-preset-id": presetID},
 					onclick: "sound_preset.selectPreset('"+presetID+"');",
 					checkmark: true

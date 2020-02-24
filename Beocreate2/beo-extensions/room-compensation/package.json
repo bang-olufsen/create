@@ -1,7 +1,7 @@
 {
-  "name": "@beocreate/tone-controls",
-  "version": "0.5.1",
-  "description": "Tone controls for Beocreate sound systems.",
+  "name": "@beocreate/room-compensation",
+  "version": "0.5.0",
+  "description": "Room compensation user interface for Beocreate 2 / HiFiBerryOS",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,12 +11,13 @@
     "url": "github.com/bang-olufsen/create"
   },
   "keywords": [
-    "tonetouch",
-    "loudness",
-    "beocreate",
-    "sound",
+    "arc",
+    "room",
+    "compensation",
     "bang",
-    "olufsen"
+    "olufsen",
+    "beocreate",
+    "hifiberry"
   ],
   "author": "Bang & Olufsen",
   "license": "MIT"

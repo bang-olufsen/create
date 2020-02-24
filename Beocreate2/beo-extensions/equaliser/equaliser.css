@@ -1,6 +1,21 @@
 /* @override 
 	http://beocreate-core.local/extensions/equaliser/equaliser.css */
 	
+	/* @group Preview Graph */
+	
+	.equaliser-graph-preview {
+		position: relative;
+		height: 120px;
+		/*-webkit-mask-image: -webkit-linear-gradient(top, white 0%, white 90%, rgba(0, 0, 0, 0) 100%);*/
+		pointer-events: none;
+		/*background-color: var(--ultra-light-grey);*/
+		border: 1px solid var(--menu-line);
+		margin-bottom: 5px;
+		margin-top: 10px;
+	}
+	
+	/* @end */
+	
 	/* @group Graph */
 	
 	#equaliser-graph-container {
@@ -350,6 +365,7 @@
 
 /* @end */
 
+
 /* @group Filter Bar */
 
 .collection-row-scroller {
@@ -537,6 +553,28 @@
 	width: calc(100% - 50px);
 	max-width: none;
 }
+
+/* @group Overrides for Sound Design */
+
+.speaker-equaliser #equaliser-tab-l,
+.speaker-equaliser #equaliser-tab-r,
+.speaker-equaliser #equaliser-tab-group-lr,
+.sound-design #equaliser-tab-a,
+.sound-design #equaliser-tab-b,
+.sound-design #equaliser-tab-c,
+.sound-design #equaliser-tab-d,
+.sound-design #equaliser-tab-group-ab,
+.sound-design #equaliser-tab-group-cd,
+.sound-design #speaker-equaliser-header,
+.speaker-equaliser #sound-design-header {
+	display: none;
+}
+
+.sound-design #equaliser-channel-settings-button {
+	display: none;
+}
+
+/* @end */
 
 @media only screen and (max-width: 360px) {
 	

@@ -2,41 +2,61 @@ var equaliser = (function() {
 
 var Fs = null;
 var eqGraph = null;
+var eqPreviewGraphSpeaker = null;
+var eqPreviewGraphSoundDesign = null;
 var dBScale = 15;
 var displayQ = "oct";
 var showAllChannels = true;
 var uiSettingsLoaded = false;
 var groupAB = false;
 var groupCD = false;
+var groupLR = false;
+var equaliserMode = null // 0 for speaker equaliser, 1 for sound design.
+var channelsToUse = "abcd";
 
 var dspFilters = {
 	a: [],
 	b: [],
 	c: [],
-	d: []
+	d: [],
+	l: [],
+	r: []
 };
 var uiFilters = {
 	a: [],
 	b: [],
 	c: [],
-	d: []
+	d: [],
+	l: [],
+	r: []
 };
 var canControlEqualiser = {
   "a": 0,
   "b": 0,
   "c": 0,
-  "d": 0
+  "d": 0,
+  "l": 0,
+  "r": 0
 };
 
-const channelColours = {a: "red", b: "yellow", c: "green", d: "blue"};
+const channelColours = {a: "red", b: "yellow", c: "green", d: "blue", l: "grey", r: "red"};
 const graphColours = ["#FF3E46", "#FFAA46", "#2CD5C4", "#2C7FE4"];
+const graphColoursSoundDesign = ["#999999", "#FF3E46"];
 
 if (!eqGraph) eqGraph = new Beograph("equaliser-graph-container", {colours: graphColours, labels: {frequency: true, gain: true}});
+
+if (!eqPreviewGraphSpeaker) eqPreviewGraphSpeaker = new Beograph("speaker-equaliser-preview", {resolution: 128, colours: graphColours, showZero: false, grid: false});
+if (!eqPreviewGraphSoundDesign) eqPreviewGraphSoundDesign = new Beograph("sound-design-preview", {resolution: 128, colours: graphColoursSoundDesign, showZero: false, grid: false});
 
 $(document).on("general", function(event, data) {
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "equaliser") {
-			showLinked();
+			if (data.content.deepMenu == null) {
+				beo.sendToProduct("equaliser", {header: "getPreviews"});
+			}
+			if (data.content.deepMenu == "equaliser-editor") {
+				beo.sendToProduct("equaliser", {header: "getSettings"});
+			}
 		}
 	}
 	
@@ -45,6 +65,17 @@ $(document).on("general", function(event, data) {
 const mathPI = Math.PI;
 
 $(document).on("equaliser", function(event, data) {
+	
+	if (data.header == "previews" && data.content.filterResponses) {
+		eqPreviewGraphSpeaker.store([0], {data: data.content.filterResponses.a.master, colour: 0});
+		eqPreviewGraphSpeaker.store([1], {data: data.content.filterResponses.b.master, colour: 1});
+		eqPreviewGraphSpeaker.store([2], {data: data.content.filterResponses.c.master, colour: 2});
+		eqPreviewGraphSpeaker.store([3], {data: data.content.filterResponses.d.master, colour: 3}, true);
+		
+		eqPreviewGraphSoundDesign.store([0], {data: data.content.filterResponses.l.master, colour: 0});
+		eqPreviewGraphSoundDesign.store([1], {data: data.content.filterResponses.r.master, colour: 1}, true);
+	}
+	
 	if (data.header == "settings") {
 		
 		if (data.content.Fs) Fs = data.content.Fs;
@@ -69,13 +100,16 @@ $(document).on("equaliser", function(event, data) {
 			
 			if (data.content.uiSettings.groupAB != undefined) groupAB = data.content.uiSettings.groupAB;
 			if (data.content.uiSettings.groupCD != undefined) groupCD = data.content.uiSettings.groupCD;
+			if (data.content.uiSettings.groupLR != undefined) groupLR = data.content.uiSettings.groupLR;
 			
 			uiSettingsLoaded = true;
 		}
 		newFilterIndex = (data.content.newFilterIndex != undefined) ? data.content.newFilterIndex : null;
 		if (data.content.channels) {
 			for (channel in data.content.channels) {
-				loadFiltersForChannel(channel, data.content.channels[channel], newFilterIndex);
+				if (channelsToUse.indexOf(channel) != -1) {
+					loadFiltersForChannel(channel, data.content.channels[channel], newFilterIndex);
+				}
 			}
 			selectChannel(); // Will automatically draw filters when ready.
 		}
@@ -93,9 +127,38 @@ $(document).on("equaliser", function(event, data) {
 	}
 });
 
+
+function showEqualiser(theEqualiser) {
+	if (theEqualiser == "speaker-equaliser") {
+		$("#equaliser-editor").addClass("speaker-equaliser").removeClass("sound-design");
+		if (equaliserMode != 0) {
+			selectedFilter = 0;
+			selectedChannel = "a";
+			beo.showMenuTab("equaliser-ch-a", true);
+			equaliserMode = 0;
+			channelsToUse = "abcd";
+			eqGraph.setOptions({colours: graphColours});
+			$("#equaliser-add-filter-crossover-group").removeClass("hidden");
+		}
+	} else if (theEqualiser == "sound-design") {
+		$("#equaliser-editor").removeClass("speaker-equaliser").addClass("sound-design");
+		if (equaliserMode != 1) {
+			selectedFilter = 0;
+			selectedChannel = "l";
+			beo.showMenuTab("equaliser-ch-l", true);
+			equaliserMode = 1;
+			channelsToUse = "lr";
+			eqGraph.setOptions({colours: graphColoursSoundDesign});
+			eqGraph.store([2, 3], {clearData: true});
+			$("#equaliser-add-filter-crossover-group").addClass("hidden");
+		}
+	}
+	beo.showDeepMenu("equaliser-editor");
+}
+
 function loadFiltersForChannel(channel, filtersToLoad, newFilterIndex = null) {
 	dspFilters[channel] = filtersToLoad;
-	channelIndex = ("abcd").indexOf(channel);
+	channelIndex = channelsToUse.indexOf(channel);
 	if (channel != selectedChannel) {
 		show = (showAllChannels) ? true : false;
 		faded = true;
@@ -293,18 +356,17 @@ function populateFilterBar() {
 		if (uiFilters[selectedChannel][f].separateRight) {
 			$("#equaliser-filters > #add-filter-button").before('<div class="separator"></div>');
 		} 
-		
-		if (hasLowPass) {
-			$(".add-low-pass-menu-item").addClass("disabled");
-		} else {
-			$(".add-low-pass-menu-item").removeClass("disabled");
-		}
-		
-		if (hasHighPass) {
-			$(".add-high-pass-menu-item").addClass("disabled");
-		} else {
-			$(".add-high-pass-menu-item").removeClass("disabled");
-		}
+	}
+	if (hasLowPass) {
+		$(".add-low-pass-menu-item").addClass("disabled");
+	} else {
+		$(".add-low-pass-menu-item").removeClass("disabled");
+	}
+	
+	if (hasHighPass) {
+		$(".add-high-pass-menu-item").addClass("disabled");
+	} else {
+		$(".add-high-pass-menu-item").removeClass("disabled");
 	}
 	selectFilter();
 }
@@ -402,9 +464,9 @@ function updateFilterBarAndList(reposition) {
 var selectedChannel = "a";
 function selectChannel(channelTab = selectedChannel) {
 	selectedChannel = channelTab.substr(-1);
-	showLinked(selectedChannel);
+	//showLinked(selectedChannel);
 	for (var channelIndex = 0; channelIndex < 4; channelIndex++) {
-		channel = ("abcd").charAt(channelIndex);
+		channel = channelsToUse.charAt(channelIndex);
 		if (channel != selectedChannel) {
 			show = (showAllChannels) ? true : false;
 			faded = true;
@@ -414,7 +476,11 @@ function selectChannel(channelTab = selectedChannel) {
 		}
 		eqGraph.store([channelIndex], {faded: faded, show: show});
 	}
-	chText = "Channel "+selectedChannel.toUpperCase();
+	if (channelsToUse == "lr") {
+		chText = (selectedChannel == "l") ? "Left channel" : "Right channel";
+	} else {
+		chText = "Channel "+selectedChannel.toUpperCase();
+	}
 	if (selectedChannel == "a" || selectedChannel == "b") {
 		$("#equaliser-channel-grouping span").text("A & B");
 		grouped = groupAB;
@@ -424,6 +490,11 @@ function selectChannel(channelTab = selectedChannel) {
 		$("#equaliser-channel-grouping span").text("C & D");
 		grouped = groupCD;
 		if (grouped) chText = "Channels C & D";
+	}
+	if (selectedChannel == "l" || selectedChannel == "r") {
+		$("#equaliser-channel-grouping span").text("Left & Right");
+		grouped = groupLR;
+		if (grouped) chText = "Left & Right";
 	}
 	$(".equaliser-selected-channel").text(chText);
 	(grouped) ? beo.setSymbol("#equaliser-group-channels-button", "common/symbols-black/link.svg") : beo.setSymbol("#equaliser-group-channels-button", "common/symbols-black/link-unlinked.svg");
@@ -444,12 +515,12 @@ function selectFilter(filter = selectedFilter, fromUI) {
 		filter = autoSelectFilter;
 		autoSelectFilter = null;
 	}
-	$(".ui-equaliser-item").removeClass("red yellow green blue");
+	$(".ui-equaliser-item").removeClass("red yellow green blue grey selected");
 	if (uiFilters[selectedChannel].length-1 < filter) {
 		filter = uiFilters[selectedChannel].length-1;
 		if (filter == -1) filter = 0;
 	}
-	$('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').addClass(channelColours[selectedChannel]);
+	$('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').addClass(channelColours[selectedChannel]+" selected");
 	
 	// Scroll to the selected filter.
 	if ($('.ui-equaliser-item[data-ui-filter-index="'+filter+'"]').length) {
@@ -469,7 +540,7 @@ function selectFilter(filter = selectedFilter, fromUI) {
 		toggleBypass();
 	} else {
 		selectedFilter = filter;
-		chIndex = ("abcd").indexOf(selectedChannel);
+		chIndex = channelsToUse.indexOf(selectedChannel);
 		if (uiFilters[selectedChannel][selectedFilter]) {
 			if (typeof uiFilters[selectedChannel][selectedFilter].index == "object") {
 				eqGraph.copyData([[chIndex, uiFilters[selectedChannel][selectedFilter].index[0]]], [4]);
@@ -516,10 +587,16 @@ $("#equaliser-graph-container .graph-handle-width-drag").draggable({
 	drag: function( event, ui ) {
 		dragX = ((ui.position.left + bandwidthDragEdge - graphDimensions.x)/graphDimensions.w)*100;
 		if (bandwidthDragEdge == 0) {
+			if (selectedFilterFcOffset-dragX < 0.6) {
+				dragX = selectedFilterFcOffset - 0.6;
+			}
 			$("#equaliser-graph-container .graph-handle-width").css("width", (selectedFilterFcOffset-dragX)*2+"%").css("margin-left", "-"+(selectedFilterFcOffset-dragX)+"%");
 			F1 = convertHz(dragX, "log", 100);
 			F2 = convertHz(dragX+(selectedFilterFcOffset-dragX)*2, "log", 100);
 		} else {
+			if (dragX-selectedFilterFcOffset < 0.6) {
+				dragX = selectedFilterFcOffset + 0.6;
+			}
 			$("#equaliser-graph-container .graph-handle-width").css("width", (dragX-selectedFilterFcOffset)*2+"%").css("margin-left", "-"+(dragX-selectedFilterFcOffset)+"%");
 			F2 = convertHz(dragX, "log", 100);
 			F1 = convertHz(dragX-(dragX-selectedFilterFcOffset)*2, "log", 100);
@@ -599,7 +676,8 @@ $("#equaliser-graph-divider").draggable({
 		localStorage.beocreateEqualiserGraphHeight = newGraphHeight;
 	},
 	drag: function( event, ui ) {
-		newGraphHeight = ((ui.position.top - $("#equaliser").offset().top) / $("#equaliser").innerHeight())*100;
+		console.log(ui.position.top, $("#equaliser-editor").offset().top);
+		newGraphHeight = ((ui.position.top - $("#equaliser-editor").offset().top) / $("#equaliser-editor").innerHeight())*100;
 		if (newGraphHeight < 20) newGraphHeight = 20;
 		if (newGraphHeight > 60) newGraphHeight = 60;
 		$("#equaliser-graph-container").css("height", newGraphHeight+"%");
@@ -814,6 +892,8 @@ function setFilter(parameter, value, calculateAndDraw = true, tooltip = false, t
 	if (channel == "b" && groupAB) duplicateToChannel = "a";
 	if (channel == "c" && groupCD) duplicateToChannel = "d";
 	if (channel == "d" && groupCD) duplicateToChannel = "c";
+	if (channel == "l" && groupLR) duplicateToChannel = "r";
+	if (channel == "r" && groupLR) duplicateToChannel = "l";
 	
 	if (typeof filterIndex == "number") {
 		switch (parameter) {
@@ -845,10 +925,10 @@ function setFilter(parameter, value, calculateAndDraw = true, tooltip = false, t
 			updateFilterBarAndList();
 			gainAtFc = calculateFilter(channel, filterIndex);
 			uiFilters[channel][uiFilter].gainAtFc = gainAtFc;
-			channelIndex = ("abcd").indexOf(channel);
+			channelIndex = channelsToUse.indexOf(channel);
 			eqGraph.copyData([[channelIndex, filterIndex]], [4]);
 			if (duplicateToChannel) {
-				duplicateIndex = ("abcd").indexOf(duplicateToChannel);
+				duplicateIndex = channelsToUse.indexOf(duplicateToChannel);
 				eqGraph.copyData([channelIndex], [duplicateIndex]);
 			}
 			eqGraph.draw();
@@ -886,11 +966,11 @@ function setFilter(parameter, value, calculateAndDraw = true, tooltip = false, t
 		uiFilters[channel][uiFilter].gainAtFc = gainAtFc;
 		updateFilterUI(true, (calculateAndDraw > 1) ? null : parameter, tooltip, tooltipAutoHide);
 		updateFilterBarAndList();
-		channelIndex = ("abcd").indexOf(channel);
+		channelIndex = channelsToUse.indexOf(channel);
 		eqGraph.copyData([[channelIndex, filterIndex[0]]], [4]);
 		eqGraph.copyData([[channelIndex, filterIndex[1]]], [[4, 1]]);
 		if (duplicateToChannel) {
-			duplicateIndex = ("abcd").indexOf(duplicateToChannel);
+			duplicateIndex = channelsToUse.indexOf(duplicateToChannel);
 			eqGraph.copyData([channelIndex], [duplicateIndex]);
 		}
 		eqGraph.draw();
@@ -1072,13 +1152,14 @@ function updateFilterUI(show = true, excludeParameter, tooltip, tooltipAutoHide)
 			showFcGainHandle = false;
 		}
 		if (showBandwidthHandle || showFcGainHandle) {
+			colour = (equaliserMode == 0) ? graphColours[chIndex] : graphColoursSoundDesign[chIndex];
 			selectedFilterFcOffset = convertHz(uiFilters[selectedChannel][selectedFilter].frequency, "linear", 100);
 			// Frequency / gain.
 			if (excludeParameter != "gain" && excludeParameter != "frequency") {
-				$("#equaliser-graph-container .graph-handle").css("top", (50-(gain*gainMultiplier/dBScale)*50)+"%").css("color", graphColours[chIndex]);
-				$("#equaliser-graph-container .graph-handle").css("left", selectedFilterFcOffset+"%").css("color", graphColours[chIndex]);
+				$("#equaliser-graph-container .graph-handle").css("top", (50-(gain*gainMultiplier/dBScale)*50)+"%").css("color", colour);
+				$("#equaliser-graph-container .graph-handle").css("left", selectedFilterFcOffset+"%").css("color", colour);
 			}
-			$("#equaliser-graph-container .graph-handle-width").css("color", graphColours[chIndex]).css("left", selectedFilterFcOffset+"%").css("top", (50-(gain*gainMultiplier/dBScale)*50)+"%");
+			$("#equaliser-graph-container .graph-handle-width").css("color", colour).css("left", selectedFilterFcOffset+"%").css("top", (50-(gain*gainMultiplier/dBScale)*50)+"%");
 			
 			if (tooltip == "gain") {
 				showGraphLabel([{unit: "dB", value: gain}], tooltipAutoHide);
@@ -1141,7 +1222,7 @@ function updateFilterUI(show = true, excludeParameter, tooltip, tooltipAutoHide)
 
 function calculateFilter(channel, filterIndex, store = true) {
 	filter = dspFilters[channel][filterIndex];
-	channelIndex = ("abcd").indexOf(channel);
+	channelIndex = channelsToUse.indexOf(channel);
 	getGainAtFc = null;
 	if (filter.bypass) {
 		coeffs = [1,0,0,1,0,0];
@@ -1332,12 +1413,14 @@ function previewCoefficients(coeffs) {
 	if (selectedChannel == "b" && groupAB) duplicateToChannel = "a";
 	if (selectedChannel == "c" && groupCD) duplicateToChannel = "d";
 	if (selectedChannel == "d" && groupCD) duplicateToChannel = "c";
-	channelIndex = ("abcd").indexOf(selectedChannel);
+	if (selectedChannel == "l" && groupLR) duplicateToChannel = "r";
+	if (selectedChannel == "r" && groupLR) duplicateToChannel = "l";
+	channelIndex = channelsToUse.indexOf(selectedChannel);
 	filterIndex = uiFilters[selectedChannel][selectedFilter].index;
 	eqGraph.store([[channelIndex, filterIndex]], {coefficients: coeffs});
 	eqGraph.copyData([[channelIndex, filterIndex]], [4]);
 	if (duplicateToChannel) {
-		duplicateIndex = ("abcd").indexOf(duplicateToChannel);
+		duplicateIndex = channelsToUse.indexOf(duplicateToChannel);
 		eqGraph.copyData([channelIndex], [duplicateIndex]);
 	}
 	eqGraph.draw();
@@ -1513,6 +1596,14 @@ function groupChannels(confirmed, updateOnly = false) {
 				beo.ask("equaliser-group-prompt", ["C & D", selectedChannel.toUpperCase(), (selectedChannel == "c") ? "D" : "C"]);
 			}
 		}
+		if (selectedChannel == "l" || selectedChannel == "r") {
+			grouped = (!groupLR) ? true : false;
+			if (!grouped || confirmed) {
+				beo.sendToProduct("equaliser", {header: "groupChannels", content: {channels: "LR", grouped: grouped, fromChannel: selectedChannel}});
+			} else {
+				beo.ask("equaliser-group-prompt", ["left & right", (selectedChannel == "l") ? "left" : "right", (selectedChannel == "l") ? "right" : "left"]);
+			}
+		}
 	} else {
 		if (groupAB) {
 			if (selectedChannel == "b") {
@@ -1535,6 +1626,17 @@ function groupChannels(confirmed, updateOnly = false) {
 		} else {
 			$("#equaliser-tab-c, #equaliser-tab-d").removeClass("hidden");
 			$("#equaliser-tab-group-cd").addClass("hidden");
+		}
+		if (groupLR) {
+			if (selectedChannel == "r") {
+				selectChannel("l");
+				beo.showMenuTab("equaliser-ch-l", true);
+			}
+			$("#equaliser-tab-l, #equaliser-tab-r").addClass("hidden");
+			$("#equaliser-tab-group-lr").removeClass("hidden");
+		} else {
+			$("#equaliser-tab-l, #equaliser-tab-r").removeClass("hidden");
+			$("#equaliser-tab-group-lr").addClass("hidden");
 		}
 	}
 }
@@ -1688,7 +1790,8 @@ return {
 	enterCoefficient: enterCoefficient,
 	saveCoefficients: saveCoefficients,
 	revertCoefficients: revertCoefficients,
-	showChannelSettings: showChannelSettings
+	showChannelSettings: showChannelSettings,
+	showEqualiser: showEqualiser
 };
 
 })();

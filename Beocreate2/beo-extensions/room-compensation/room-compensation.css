@@ -1,0 +1,40 @@
+/* @override 
+	http://beocreate-core.local/extensions/room-compensation/room-compensation.css */
+	
+#room-measurement-current-level {
+	font-size: 0.8em;
+	font-weight: 500;
+	width: 280px;
+	margin-bottom: 0.5em;
+}
+	
+#room-measurement-recommended-level {
+	width: 280px;
+	font-size: 0.8em;
+	font-weight: 500;
+	margin-top: -5px;
+	position: relative;
+}
+
+#room-measurement-recommended-level div {
+	background-color: var(--turquoise);
+	height: 4px;
+	display: block;
+	margin-left: 40%;
+	margin-bottom: 0.5em;
+	margin-right: 20%;
+}
+
+#room-measurement-recommended-level span {
+	position: absolute;
+	opacity: 0.3;
+}
+
+#room-measurement-recommended-level .lower {
+	left: 40%;
+}
+
+#room-measurement-recommended-level .upper {
+	right: 20%;
+}
+

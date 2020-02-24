@@ -25,25 +25,28 @@ var debug = beo.debug;
 var version = require("./package.json").version;
 
 
-var settings = {
+var defaultSettings = {
 	autoUpdate: false,
-	autoCheck: false
+	autoCheck: true
 };
+var settings = JSON.parse(JSON.stringify(defaultSettings));
 
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
 		
-		
+		if (settings.autoCheck) {
+			startAutoCheckTimeout();
+		}
 
 	}
 	
 	if (event.header == "activatedExtension") {
-		if (event.content == "software-update") {
+		if (event.content.extension == "software-update") {
 			checkForUpdate();
 		}
 		
-		if (event.content == "system-settings") {
+		if (event.content == "general-settings") {
 			if (newVersion) {
 				beo.sendToUI("software-update", {header: "badge", content: {badge: 1}});
 			} else {
@@ -51,10 +54,22 @@ beo.bus.on('general', function(event) {
 			}
 		}
 	}
+	
+	if (event.header == "connected") {
+		if (newVersion) {
+			beo.sendToUI("software-update", {header: "badge", content: {badge: 1}});
+		}
+	}
 });
 
 
 beo.bus.on('software-update', function(event) {
+	
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+		}
+	}
 	
 	if (event.header == "install") {
 		installUpdate();
@@ -81,6 +96,7 @@ function checkForUpdate(forceCheck) {
 				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 			} else {
 				newVersion = null;
+				releaseNotes = "";
 				if (debug) console.log("Product appears to be up to date.");
 				beo.sendToUI("software-update", {header: "upToDate"});
 			}
@@ -93,6 +109,7 @@ function checkForUpdate(forceCheck) {
 			beo.sendToUI("software-update", {header: "upToDate"});
 		}
 	}
+	if (settings.autoCheck) startAutoCheckTimeout();
 }
 
 var updateInProgress = false;
@@ -195,6 +212,14 @@ function installUpdate() {
 			console.log('Software updater process exited (code '+code.toString()+").");
 		});
 	}
+}
+
+var autoCheckTimeout;
+function startAutoCheckTimeout() {
+	clearTimeout(autoCheckTimeout);
+	autoCheckTimeout = setTimeout(function() {
+		checkForUpdate();
+	}, 86400000) // Check once per day.
 }
 
 

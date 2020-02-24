@@ -111,7 +111,7 @@ function unmute(fade = false) {
 	beo.send({target: "sound", header: "unmute", content: {fade: fade}});
 }
 
-
+var adjustingReleaseTimeout;
 $(".master-volume-slider").slider({
 	range: "min",
 	min: 0,
@@ -122,10 +122,14 @@ $(".master-volume-slider").slider({
 	},
 	start: function(event, ui) {
 		adjustingSystemVolume = true;
+		clearTimeout(adjustingReleaseTimeout);
 	},
 	stop: function(event, ui) {
-		adjustingSystemVolume = false;
-		updateSystemVolumeSliders();
+		adjustingReleaseTimeout = setTimeout(function() {
+			adjustingSystemVolume = false;
+			updateSystemVolumeSliders();
+		}, 300);
+		
 	}
 });
 

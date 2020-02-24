@@ -95,7 +95,7 @@ var request = require('request'); // for sending HTTP requests to the DACP serve
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "shairport-sync") {
+			if (event.content.extension == "shairport-sync") {
 				ssncVersion = (shairportSyncVersion) ? shairportSyncVersion.split("-")[0] : false;
 				readShairportSyncConfiguration();
 				ssncPassword = (configuration.general.password) ? true : false;

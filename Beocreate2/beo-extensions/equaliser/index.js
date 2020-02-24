@@ -34,12 +34,15 @@ var _ = beo.underscore;
 		"b": [],
 		"c": [],
 		"d": [],
+		"l": [],
+		"r": [],
 		"ui": {
 			showAllChannels: true,
 			dBScale: 20,
 			displayQ: "Q",
 			groupAB: false,
-			groupCD: false
+			groupCD: false,
+			groupLR: true
 		}
 	}; 
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
@@ -49,16 +52,31 @@ var _ = beo.underscore;
 	  "a": 0,
 	  "b": 0,
 	  "c": 0,
-	  "d": 0
+	  "d": 0,
+	  "l": 0,
+	  "r": 0
 	};
 	// Store the amount of equaliser filter banks available in the DSP here.
+	
+	var disabledTemporarily = {
+	  "a": false,
+	  "b": false,
+	  "c": false,
+	  "d": false,
+	  "l": false,
+	  "r": false
+	};
 	
 	var filterResponses = {
 		"a": {data: [], master: []},
 		"b": {data: [], master: []},
 		"c": {data: [], master: []},
-		"d": {data: [], master: []}
+		"d": {data: [], master: []},
+		"l": {data: [], master: []},
+		"r": {data: [], master: []}
 	};
+	
+	
 	
 	var driverTypes = {a: {}, b: {}, c: {}, d: {}};
 	
@@ -73,9 +91,9 @@ var _ = beo.underscore;
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "equaliser") {
+			if (event.content.extension == "equaliser") {
 				
-				beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}, canControl: canControlEqualiser, Fs: Fs}});
+				//beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}, canControl: canControlEqualiser, Fs: Fs}});
 			}
 		}
 	});
@@ -88,6 +106,14 @@ var _ = beo.underscore;
 				settings = Object.assign(settings, event.content.settings);
 			}
 			
+		}
+		
+		if (event.header == "getPreviews") {
+			beo.sendToUI("equaliser", {header: "previews", content: {filterResponses: filterResponses}});
+		}
+		
+		if (event.header == "getSettings") {
+			beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d, l: settings.l, r: settings.r}, canControl: canControlEqualiser, Fs: Fs}});
 		}
 		
 		if (event.header == "setScale") {
@@ -141,6 +167,20 @@ var _ = beo.underscore;
 					}
 				}
 				settings.ui.groupCD = event.content.grouped;
+			}
+			if (event.content.channels == "LR") {
+				if (event.content.grouped == true) {
+					if (event.content.fromChannel == "l") {
+						settings.r = _.clone(settings.l);
+						sendChannels.r = settings.r;
+						applyAllFiltersFromSettings("r");
+					} else if (event.content.fromChannel == "r") {
+						settings.l = _.clone(settings.r);
+						sendChannels.l = settings.l;
+						applyAllFiltersFromSettings("l");
+					}
+				}
+				settings.ui.groupLR = event.content.grouped;
 			}
 			beo.sendToUI("equaliser", {header: "settings", content: {uiSettings:  settings.ui, channels: sendChannels}});
 			beo.saveSettings("equaliser", settings);
@@ -294,10 +334,12 @@ var _ = beo.underscore;
 						channel = "abcd".charAt(c);
 						applyAllFiltersFromSettings(channel, true);
 					}
+					applyAllFiltersFromSettings("l", true);
+					applyAllFiltersFromSettings("r", true);
 				} else {
 					Fs = null;
 					canControlEqualiser = {
-					  "a": 0, "b": 0, "c": 0, "d": 0
+					  "a": 0, "b": 0, "c": 0, "d": 0, "l": 0, "r": 0
 					};
 				}
 				
@@ -305,7 +347,7 @@ var _ = beo.underscore;
 				metadata = {};
 				Fs = null;
 				canControlEqualiser = {
-				  "a": 0, "b": 0, "c": 0, "d": 0
+				  "a": 0, "b": 0, "c": 0, "d": 0, "l": 0, "r": 0
 				};
 			}
 			
@@ -432,12 +474,22 @@ var _ = beo.underscore;
 	function applyAllFiltersFromSettings(channel, checkMetadata) {
 		
 		if (checkMetadata) {
-			if (metadata["IIR_"+channel.toUpperCase()] && metadata["IIR_"+channel.toUpperCase()].value[0]) {
-				canControlEqualiser[channel] = parseInt(metadata["IIR_"+channel.toUpperCase()].value[0].split("/")[1])/5; // Save how many filters are in this bank.
+			if (channel == "l" || channel == "r") {
+				chText = (channel == "l") ? "Left" : "Right";
+				if (metadata["customFilterRegisterBank"+chText] && metadata["customFilterRegisterBank"+chText].value[0]) {
+					canControlEqualiser[channel] = parseInt(metadata["customFilterRegisterBank"+chText].value[0].split("/")[1])/5; // Save how many filters are in this bank.
+				} else {
+					canControlEqualiser[channel] = 0; // Can't do anything
+				}
+				if (debug) console.log(chText+" channel has "+canControlEqualiser[channel]+" biquad filters available for sound design.");
 			} else {
-				canControlEqualiser[channel] = 0; // Can't do anything
+				if (metadata["IIR_"+channel.toUpperCase()] && metadata["IIR_"+channel.toUpperCase()].value[0]) {
+					canControlEqualiser[channel] = parseInt(metadata["IIR_"+channel.toUpperCase()].value[0].split("/")[1])/5; // Save how many filters are in this bank.
+				} else {
+					canControlEqualiser[channel] = 0; // Can't do anything
+				}
+				if (debug) console.log("Channel "+channel.toUpperCase()+" has "+canControlEqualiser[channel]+" biquad filters available.");
 			}
-			if (debug) console.log("Channel "+channel.toUpperCase()+" has "+canControlEqualiser[channel]+" biquad filters available.");
 		}
 		
 		if (canControlEqualiser[channel]) {
@@ -457,8 +509,15 @@ var _ = beo.underscore;
 	
 	
 	function applyFilterFromSettings(channel, filterIndex) {
-		if (parseInt(metadata["IIR_"+channel.toUpperCase()].value[0].split("/")[1]) >= (canControlEqualiser[channel] * 5)) { // Check that this register exists, just in case.
-			register = parseInt(metadata["IIR_"+channel.toUpperCase()].value[0].split("/")[0])+(filterIndex * 5); // This is the register (start register + 5 * filter index)
+		if (channel == "l") {
+			bank = "customFilterRegisterBankLeft";
+		} else if (channel == "r") {
+			bank = "customFilterRegisterBankRight";
+		} else {
+			bank = "IIR_"+channel.toUpperCase();
+		}
+		if (parseInt(metadata[bank].value[0].split("/")[1]) >= (canControlEqualiser[channel] * 5)) { // Check that this register exists, just in case.
+			register = parseInt(metadata[bank].value[0].split("/")[0])+(filterIndex * 5); // This is the register (start register + 5 * filter index)
 			
 			if (settings[channel][filterIndex] != undefined) {
 				filter = settings[channel][filterIndex];
@@ -528,7 +587,7 @@ var _ = beo.underscore;
 					}
 				}
 					
-				if (filter.bypass) coeffs = [1,0,0,1,0,0];
+				if (filter.bypass || disabledTemporarily[channel] == true) coeffs = [1,0,0,1,0,0];
 				
 				if (coeffs.length == 6) { 
 					// Apply the filter.
@@ -549,6 +608,22 @@ var _ = beo.underscore;
 		}
 	}
 	
+	function tempDisable(disable, channels = []) {
+		for (var c = 0; c < channels.length; c++) {
+			if (("abcdlr").indexOf(channels[c]) != -1) {
+				if (disable && disabledTemporarily[channels[c]] == false) {
+					if (debug) console.log("Disabling parametric equaliser temporarily for channel "+channels[c].toUpperCase()+".");
+					disabledTemporarily[channels[c]] = true;
+					applyAllFiltersFromSettings(channels[c]);
+				}
+				if (!disable && disabledTemporarily[channels[c]] == true) {
+					if (debug) console.log("Re-enabling parametric equaliser for channel "+channels[c].toUpperCase()+".");
+					disabledTemporarily[channels[c]] = false;
+					applyAllFiltersFromSettings(channels[c]);
+				}
+			}
+		}
+	}
 	
 	
 	groupIDs = [];
@@ -676,6 +751,12 @@ function getGroupedChannels(forChannel) {
 	if (forChannel == "d" && settings.ui.groupCD) {
 		forChannel += "c";
 	}
+	if (forChannel == "l" && settings.ui.groupLR) {
+		forChannel += "r";
+	}
+	if (forChannel == "r" && settings.ui.groupLR) {
+		forChannel += "l";
+	}
 	return forChannel;
 }
 	
@@ -685,9 +766,10 @@ function sendCurrentSettingsToSoundPreset() {
 	settingsSendTimeout = setTimeout(function() {
 		for (var i = 0; i < 4; i++) {
 			channel = ("abcd").charAt(i);
-			calculateMasterGraphAndDrivers(channel);
+			calculateMasterGraph(channel, true);
 		}
-		
+		calculateMasterGraph("l", true);
+		calculateMasterGraph("r", true);
 		beo.bus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}}});
 	}, 1000);
 }
@@ -708,7 +790,7 @@ function calculateFilterResponse(channel, filter, coeffs) {
 	filterResponses[channel].data[filter] = points;
 }
 
-function calculateMasterGraphAndDrivers(channel) {
+function calculateMasterGraph(channel, getDrivers) {
 	// Sum all subgraphs.
 	filterResponses[channel].master = [];
 	highestPoint = -35;
@@ -725,20 +807,22 @@ function calculateMasterGraphAndDrivers(channel) {
 		filterResponses[channel].master.push([plotFreq, plotPoint]);
 		if (plotPoint > highestPoint) highestPoint = plotPoint;
 	}
-	offset = (highestPoint < 0) ? highestPoint : 0;
-	lowCutoff = null;
-	highCutoff = null;
-	for (var i = 0; i < 128; i++) {
-		if (filterResponses[channel].master[i][1] > -6+offset) {
-			// Above -6 dB.
-			if (lowCutoff == null) lowCutoff = filterResponses[channel].master[i][0];
-			highCutoff = null; // Reset high cutoff whenever output is above -6 dB.
-		} else {
-			// Below -6 dB.
-			if (highCutoff == null) highCutoff = filterResponses[channel].master[i][0];
+	if (getDrivers) {
+		offset = (highestPoint < 0) ? highestPoint : 0;
+		lowCutoff = null;
+		highCutoff = null;
+		for (var i = 0; i < 128; i++) {
+			if (filterResponses[channel].master[i][1] > -6+offset) {
+				// Above -6 dB.
+				if (lowCutoff == null) lowCutoff = filterResponses[channel].master[i][0];
+				highCutoff = null; // Reset high cutoff whenever output is above -6 dB.
+			} else {
+				// Below -6 dB.
+				if (highCutoff == null) highCutoff = filterResponses[channel].master[i][0];
+			}
 		}
+		driverTypes[channel] = {type: getDriverType(lowCutoff, highCutoff), low: lowCutoff, high: highCutoff};
 	}
-	driverTypes[channel] = {type: getDriverType(lowCutoff, highCutoff), low: lowCutoff, high: highCutoff};
 }
 
 // Determines the type of the loudspeaker driver based on the given frequency range.
@@ -774,6 +858,7 @@ module.exports = {
 	checkSettings: checkSettings,
 	getDriverTypes: function() {return driverTypes},
 	applySoundPreset: applySoundPreset,
+	tempDisable: tempDisable,
 	version: version
 };
 

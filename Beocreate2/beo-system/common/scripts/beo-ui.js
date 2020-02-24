@@ -105,7 +105,12 @@ $(document).on("general", function(event, data) {
 		if (product_information && product_information.systemID && product_information.systemName) {
 			if (data.content.status == "shuttingDown") {
 				sendToProductView({header: "powerStatus", content: {status: "shuttingDown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
-				notify({title: "Shutting down product…", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", icon: "common/symbols-black/power.svg", timeout: false});
+				notify({title: "Shutting down product…", icon: "attention", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", timeout: false});
+				setTimeout(function() {
+					beo.notify({title: "Shutdown complete", message: "You may now unplug the product from power.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Connect Again", timeout: false});
+					noConnectionNotifications = false;
+					maxConnectionAttempts = 5;
+				}, 20000);
 				noConnectionNotifications = true;
 				maxConnectionAttempts = 0;
 			} else if (data.content.status == "rebooting") {
@@ -247,6 +252,7 @@ function prepareMenus() {
 						title: $(this).attr("data-menu-title"),
 						deepMenu: []
 					};
+					if ($(this).attr("data-menu-title-short")) extensions[menuID].shortTitle = $(this).attr("data-menu-title-short");
 					$(".scroll-area", this).first().prepend('<h1 class="large-title">'+$("header h1", this).first().text()+'</h1>'); // Duplicate title for views that use a large title.					
 				} else {
 					// SUBMENUS
@@ -311,6 +317,7 @@ function prepareMenus() {
 							title: $(this).attr("data-menu-title"),
 							deepMenu: []
 						};
+						if ($(this).attr("data-menu-title-short")) extensions[$(this).attr("id")].shortTitle = $(this).attr("data-menu-title-short");
 					} else { // Add deep menu to the list
 						extensions[$(this).attr("data-parent-extension")].deepMenu.push($(this).attr("id"));
 					}
@@ -576,16 +583,24 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 				}
 			}
 			
-			menuState[selectedParentMenu].submenu = newExtension;
-			if (!invisibly) activatedExtension(newExtension);
-			
 			if (selectedExtension && direction) {
-				backTitle = $("#"+selectedExtension).attr("data-menu-title");
+				if (extensions[selectedExtension].shortTitle) {
+					backTitle = extensions[selectedExtension].shortTitle;
+				} else {
+					backTitle = extensions[selectedExtension].title;
+				}
 				backTarget = selectedExtension;
 			} else if (selectedParentMenu) {
 				backTarget = selectedParentMenu;
-				backTitle = extensions[selectedParentMenu].title;
+				if (extensions[selectedParentMenu].shortTitle) {
+					backTitle = extensions[selectedParentMenu].shortTitle;
+				} else {
+					backTitle = extensions[selectedParentMenu].title;
+				}
 			}
+			
+			menuState[selectedParentMenu].submenu = newExtension;
+			activatedExtension(newExtension, invisibly);
 			
 			if (!direction) {
 				if (!invisibly) {
@@ -634,7 +649,11 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		 	- If the parent menu is already selected and a submenu is open, close it.
 		*/
 			if (selectedExtension && direction) {
-				backTitle = $("#"+selectedExtension).attr("data-menu-title");
+				if (extensions[selectedExtension].shortTitle) {
+					backTitle = extensions[selectedExtension].shortTitle;
+				} else {
+					backTitle = extensions[selectedExtension].title;
+				}
 				backTarget = selectedExtension;
 			}
 			if (selectedParentMenu != newExtension) {
@@ -652,11 +671,11 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 						$("#" + menuState[selectedParentMenu].submenu).addClass("hidden-right").removeClass("block");
 						
 					}
-					if (!invisibly) activatedExtension(newExtension);
+					activatedExtension(newExtension, invisibly);
 				} else if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu) {
-					if (!invisibly) activatedExtension(menuState[selectedParentMenu].submenu);
+					activatedExtension(menuState[selectedParentMenu].submenu, invisibly);
 				} else {
-					if (!invisibly) activatedExtension(newExtension);
+					activatedExtension(newExtension, invisibly);
 				}
 			} else {
 				// This is the same top level menu as previously.
@@ -667,7 +686,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 					if (deepMenuState[menuState[selectedParentMenu].submenu] && deepMenuState[menuState[selectedParentMenu].submenu].length > 0) {
 						showDeepMenu(menuState[selectedParentMenu].submenu, menuState[selectedParentMenu].submenu, true);
 					}
-					if (!invisibly) activatedExtension(selectedParentMenu);
+					activatedExtension(selectedParentMenu, invisibly);
 					if (!direction) {
 						if (!invisibly) {
 							$("#" + selectedParentMenu).addClass("block new");
@@ -714,7 +733,6 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 				}
 			}
 		}
-		
 		
 		if (backTarget) {
 			if (!fromBackButton) {
@@ -810,6 +828,7 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 			}
 		}
 		if (oldMenu != newMenu) {
+			activatedExtension(selectedExtension);
 			if (back) {
 				if (!hideNew) {
 					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
@@ -834,7 +853,11 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 				if (!overrideWithExtension) $("#" + newMenu).removeClass("new");
 				deepNavigating = false;
 			}, 600);
-			backTitle = $("#"+oldMenu).attr("data-menu-title");
+			if ($("#"+oldMenu).attr("data-menu-title-short")) {
+				backTitle = $("#"+oldMenu).attr("data-menu-title-short");
+			} else {
+				backTitle = $("#"+oldMenu).attr("data-menu-title");
+			}
 			if (!back && !hideNew) {
 				$("#"+newMenu+" .back-button.master").addClass("visible");
 				$("#"+newMenu+" .back-button.master").attr("data-back-text", backTitle).attr("data-back-target-deep", oldMenu);
@@ -863,18 +886,25 @@ $(document).on("click", ".back-button.master", function() {
 
 
 
-function activatedExtension(extensionID) {
+function activatedExtension(extensionID, invisibly = false) {
 	// Trigger the same event in both the UI and on the product.
-	setTimeout(function() {
-		updateSliderWidths();
-	}, 20);
 	selectedExtension = extensionID;
-	$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID}});
-	beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID}});
-	sendToProductView(extensionID);
-	
-	// Save state, so that the UI returns to the same menu when reloaded.
-	localStorage.beoCreateSelectedExtension = extensionID;
+	if (!invisibly) {
+		setTimeout(function() {
+			updateSliderWidths();
+		}, 20);
+		if (deepMenuState[selectedExtension] && deepMenuState[selectedExtension].length > 0) {
+			deepMenu = deepMenuState[selectedExtension][deepMenuState[selectedExtension].length-1];
+		} else {
+			deepMenu = null;
+		}
+		$(document).trigger("general", {header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
+		beoCom.send({target: "general", header: "activatedExtension", content: {extension: extensionID, deepMenu: deepMenu}});
+		sendToProductView(extensionID);
+		
+		// Save state, so that the UI returns to the same menu when reloaded.
+		localStorage.beoCreateSelectedExtension = extensionID;
+	}
 }
 
 
@@ -1058,6 +1088,7 @@ function createCollectionItem(options) {
 	if (options.static) options.classes.push("static");
 	if (options.checkmark) options.classes.push("checkmark");
 	if (options.overlay) options.classes.push("overlay");
+	if (options.onclickSecondary && options.secondarySymbol) options.classes.push("secondary-action");
 	
 	// Custom classes
 	if (options.classes) {
@@ -1077,6 +1108,18 @@ function createCollectionItem(options) {
 		}
 	}
 	
+	
+	collectionItem += '>\n';
+	
+	// Secondary action
+	if (options.onclickSecondary && options.secondarySymbol) {
+		
+		collectionItem += '<div class="button symbol collection-item-secondary-symbol" onclick="'+options.onclickSecondary+'" style="-webkit-mask-image: url('+options.secondarySymbol+'); mask-image: url('+options.secondarySymbol+');"></div>';
+	}
+	
+	// Square helper allows the collection item to maintain aspect ratio
+	collectionItem += '<img class="square-helper" src="common/square-helper.png">\n<div class="collection-item-content"';
+	
 	// Action
 	if (options.onclick) {
 		collectionItem += ' onclick="'+options.onclick+'"';
@@ -1084,10 +1127,9 @@ function createCollectionItem(options) {
 	
 	collectionItem += '>\n';
 	
-	// Square helper allows the collection item to maintain aspect ratio
-	collectionItem += '<img class="square-helper" src="common/square-helper.png">\n<div class="collection-item-content">\n';
-	
-	if (options.icon) collectionItem += '<img class="collection-icon" src="'+options.icon+'">\n';
+	//if (options.icon) collectionItem += '<img class="collection-icon" src="'+options.icon+'">\n';
+	iconSize = (options.iconSize) ? options.iconSize : "";
+	if (options.icon) collectionItem += '<img class="collection-icon '+iconSize+'" src="common/square-helper.png" style="background-image: url('+options.icon+');">\n';
 	
 	if (options.labelUpper || options.label) {
 		collectionItem += '<div class="collection-item-text">\n';
@@ -1133,7 +1175,7 @@ var currentNotificationID = false;
 var notificationIcon = "";
 var attentionIcon = new Image();
 
-function notify(options, dismissWithID) { // Display a standard HUD notification
+function notify(options, dismissWithID = currentNotificationID) { // Display a standard HUD notification
 	
 	/* Possible options:
 	no options = dismiss notification.
@@ -1179,7 +1221,7 @@ function notify(options, dismissWithID) { // Display a standard HUD notification
 		if (options.buttonAction) {
 			if (options.buttonTitle) $(".hud-notification .button").text(options.buttonTitle);
 			if (options.buttonAction == "close") {
-				$(".hud-notification .button").attr("onclick", "beo.notify(undefined, currentNotificationID);");
+				$(".hud-notification .button").attr("onclick", "beo.notify(undefined);");
 			} else {
 				$(".hud-notification .button").attr("onclick", options.buttonAction);
 			}
@@ -1509,21 +1551,23 @@ var currentPopup = null;
 var currentPopupParent = null;
 var popupCancelAction = null;
 function showPopupView(popupContentID, overridePopup, cancelAction) {
-	popupCancelAction = null;
-	if (popupContentID) {
-		if (!currentPopup || overridePopup == currentPopup) {
-			if (currentPopup) {
-				$("#open-popup .popup-content").addClass("hidden");
-				currentPopupParent.append($("#open-popup .popup-content").detach());
+	if (!currentPopup) {
+		popupCancelAction = null;
+		if (popupContentID) {
+			if (!currentPopup || overridePopup == currentPopup) {
+				if (currentPopup) {
+					$("#open-popup .popup-content").addClass("hidden");
+					currentPopupParent.append($("#open-popup .popup-content").detach());
+				}
+				currentPopup = popupContentID;
+				currentPopupParent = $("#"+popupContentID).parent();
+				$("#open-popup").append($("#"+popupContentID).detach());
+				$("#open-popup .popup-content").removeClass("hidden");
+				
+				// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
+				showPopupViewInternal("#open-popup", "#open-popup-back-plate");
+				if (cancelAction != undefined) popupCancelAction = cancelAction;
 			}
-			currentPopup = popupContentID;
-			currentPopupParent = $("#"+popupContentID).parent();
-			$("#open-popup").append($("#"+popupContentID).detach());
-			$("#open-popup .popup-content").removeClass("hidden");
-			
-			// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
-			showPopupViewInternal("#open-popup", "#open-popup-back-plate");
-			if (cancelAction != undefined) popupCancelAction = cancelAction;
 		}
 	}
 }
@@ -1702,7 +1746,13 @@ function validateTextInput() {
 	txt = $("#text-input input[type=text]").val();
 	passwd = $("#text-input input[type=password]").val();
 	if (textInputMode == 1 || textInputMode == 3) {
-		if (!txt) textInputValid = false;
+		if (!txt) {
+			if (textInputOptions.optional && textInputOptions.optional.text) {
+				textInputValid = true;
+			} else {
+				textInputValid = false;
+			}
+		} 
 		if (textInputOptions.minLength && textInputOptions.minLength.text) {
 			if (txt.length < textInputOptions.minLength.text) textInputValid = false;
 		}

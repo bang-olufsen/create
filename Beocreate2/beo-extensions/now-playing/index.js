@@ -26,16 +26,7 @@ SOFTWARE.*/
 		useExternalArtwork: "auto"
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
-	
-	var allSources = {};
-	var currentSource = null;
-	var focusedSource = null;
-	
-	var playerState = "stopped";
-	
-	var metadataCacheIndex = 1;
-	
-	var sources = null;
+
 	
 	beo.bus.on('general', function(event) {
 		// See documentation on how to use beo.bus.
@@ -48,7 +39,7 @@ SOFTWARE.*/
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content == "now-playing") {
+			if (event.content.extension == "now-playing") {
 				
 			}
 			
@@ -58,56 +49,6 @@ SOFTWARE.*/
 		}
 	});
 	
-	beo.bus.on("sources", function(event) {
-		
-		
-		if (event.header == "sourcesChanged") {
-			if (event.content.sources) {
-				allSources = event.content.sources;
-			}
-			if (event.content.focusedSource) {
-				if (event.content.focusedSource == focusedSource) {
-					if (playerState != allSources[focusedSource].playerState) {
-						playerState = allSources[focusedSource].playerState;
-						beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
-					}
-				} else {
-					sendMetadata(event.content.focusedSource, true);
-				}
-				focusedSource = event.content.focusedSource;
-			} else {
-				focusedSource = null;
-				playerState = "stopped";
-				beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
-				sendMetadata();
-			}
-			if (event.content.currentSource) {
-				currentSource = event.content.currentSource;
-			} else {
-				currentSource = null;
-			}
-		}
-		
-		if (event.header == "playerStateChanged") {
-			if (event.content.extension && event.content.state) {
-				allSources[event.content.extension].playerState = event.content.state;
-				if (event.content.extension == focusedSource) {
-					if (playerState != event.content.state) {
-						playerState = event.content.state;
-						beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
-					}
-				}
-			}
-		}
-		
-		if (event.header == "metadataChanged") {
-			if (event.content.extension && event.content.metadata) {
-				allSources[event.content.extension].metadata = event.content.metadata;
-				if (event.content.extension == focusedSource) sendMetadata(event.content.extension, true);
-			}
-		}
-
-	});
 	
 	
 	beo.bus.on("now-playing", function(event) {
@@ -126,72 +67,6 @@ SOFTWARE.*/
 			beo.bus.emit("ui", {target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: settings.useExternalArtwork}});
 		}
 		
-		if (event.header == "metadata") {
-			sendMetadata = {};
-			if (!metadataCache[event.content.extension]) {
-				metadataCache[event.content.extension] = {};
-			}
-			
-			if (event.content.title != undefined) {
-				sendMetadata.title = event.content.title;
-				metadataCache[event.content.extension].title = event.content.title;
-			}
-			if (event.content.album != undefined) {
-				sendMetadata.album = event.content.album;
-				metadataCache[event.content.extension].album = event.content.album;
-			}
-			if (event.content.artist != undefined) {
-				sendMetadata.artist = event.content.artist;
-				metadataCache[event.content.extension].artist = event.content.artist;
-			}
-			if (event.content.picture != undefined) {
-				metadataCache[event.content.extension].picture = event.content.picture;
-				sendMetadata.picture = event.content.picture;
-				if (event.content.picturePort) {
-					metadataCache[event.content.extension].picturePort = event.content.picturePort;
-					sendMetadata.picturePort = event.content.picturePort;
-				} else {
-					metadataCache[event.content.extension].picturePort = null;
-					sendMetadata.picturePort = null;
-				}
-			} else {
-				metadataCache[event.content.extension].picturePort = null;
-				metadataCache[event.content.extension].picture = false;
-				sendMetadata.picture = false;
-			}
-			metadataCacheIndex++;
-			if (metadataCacheIndex > 1000) metadataCacheIndex = 1;
-			beo.sendToUI("now-playing", {header: "metadata", content: {metadata: sendMetadata, cacheIndex: metadataCacheIndex, extension: event.content.extension}});
-			
-		}
-		
-		if (event.header == "playerState") {
-			if (focusedSource && event.content.extension == focusedSource) {
-				if (event.content.state != playerState || previousPlayedSource != focusedSource) {
-					switch (event.content.state) {
-						case "stopped":
-						case "paused":
-						case "playing":
-							playerState = event.content.state;
-							previousPlayedSource = focusedSource;
-							beo.sendToUI("now-playing", {header: "playerState", content: {state: event.content.state}});
-							break;
-					}
-				}
-			}
-		}
-		
-		if (event.header == "getData") {
-			beo.sendToUI("now-playing", {header: "playerState", content: {state: playerState}});
-			if (focusedSource) {
-				if (event.content.cacheIndex != metadataCacheIndex) {
-					sendMetadata(focusedSource, false, true);
-				}
-			} else {
-				sendMetadata(null, false, true);
-				//if (event.content.cacheIndex != metadataCacheIndex) sendMetadata(lastSource);
-			}
-		}
 		
 		if (event.header == "transport") {
 			if (event.content.action) {
@@ -209,29 +84,20 @@ SOFTWARE.*/
 		switch (event.content.command) {
 			
 			case "VOL UP":
-				beo.bus.emit("sound", {header: "setVolume", content: "+2"});
+				beo.bus.emit("sound", {header: "setVolume", content: "+1"});
 				break;
 			case "VOL DOWN":
-				beo.bus.emit("sound", {header: "setVolume", content: "-2"});
+				beo.bus.emit("sound", {header: "setVolume", content: "-1"});
 				break;
 			case "MUTE":
-				beo.bus.emit("sound", {header: "toggleMute"});
+				//beo.bus.emit("sound", {header: "toggleMute"});
+				break;
+			case "GO":
+				beo.bus.emit("sources", {header: "transport", content: {action: "playPause"}});
 				break;
 		}
 	});
-	
-	
-	function sendMetadata(forSource = null, increment, sendSettings) {
-		if (increment) {
-			metadataCacheIndex++;
-			if (metadataCacheIndex > 1000) metadataCacheIndex = 1;
-		}
-		if (forSource && allSources[forSource] && allSources[forSource].metadata) {
-			beo.sendToUI("now-playing", {header: "metadata", content: {metadata: allSources[forSource].metadata, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
-		} else {
-			beo.sendToUI("now-playing", {header: "metadata", content: {metadata: null, extension: forSource, cacheIndex: metadataCacheIndex, useExternalArtwork: settings.useExternalArtwork}});
-		}
-	}
+
 	
 	
 module.exports = {

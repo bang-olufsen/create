@@ -66,6 +66,7 @@ function setHostname(productName, callback) {
 				n = n.replace(/_/g, "-"); // Replace underscores with hyphens
 				n = n.replace(/[^\x00-\x7F]/g, ""); // Remove non-ascii characters
 				n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+				n = n.toLowerCase(); // Make lower case.
 				
 				exec("/usr/bin/hostnamectl set-hostname --static "+n, function(error, stdout, stderr) {
 					

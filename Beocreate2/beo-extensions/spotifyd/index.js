@@ -257,7 +257,7 @@ var fs = require("fs");
 	function writeConfiguration() {
 		// Saves current configuration back into the file.
 		if (fs.existsSync("/etc/spotifyd.conf")) {
-			spotifydConfig = [];
+			config = [];
 			for (section in configuration) {
 				sectionStart = (config.length != 0) ? "\n["+section+"]" : "["+section+"]";
 				config.push(sectionStart);

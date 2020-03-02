@@ -91,7 +91,7 @@ var releaseNotes = "";
 function checkForUpdate(forceCheck) {
 	checkTime = new Date().getTime();
 	if (checkTime - lastChecked > 300000 || forceCheck) {
-		exec("/opt/hifiberry/bin/update --check", function(error, stdout, stderr) {
+		exec("/opt/hifiberry/bin/update --latest --check", function(error, stdout, stderr) {
 			lastChecked = checkTime;
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
@@ -126,10 +126,10 @@ function installUpdate() {
 		updateInProgress = true;
 		if (beo.developerMode) {
 			if (debug) console.log("Starting software update simulation.");
-			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate"]);
+			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--latest"]);
 		} else {
 			if (debug) console.log("Starting software update.");
-			updateProcess = spawn("/opt/hifiberry/bin/update");
+			updateProcess = spawn("/opt/hifiberry/bin/update", ["--latest"]);
 		}
 		//updateProcess = spawn("curl", ["https://www.hifiberry.com/images/updater-20191030-pi3.tar.gz", "-o", "updater.tar.gz", "--progress-bar"], {cwd: "/data"});
 		

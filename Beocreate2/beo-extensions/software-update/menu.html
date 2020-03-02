@@ -23,18 +23,81 @@
 				<div id="update-available-container">
 					<!-- OS name & version -->
 				</div>
-				<hr class="margin-bottom">
+				<!--<hr class="margin-bottom">-->
 				<div class="button pill grey software-update-available hidden" id="install-update-button" onclick="software_update.install();">Update Now</div>
-				<h2>New in This Version</h2>
+				<h2>New in this version</h2>
 				<div id="update-release-notes">
 					
 				</div>
 
 			</div>
 			<!--<h2>Previous Releases</h2>-->
+			<hr>
+			<div class="menu-item" onclick="beo.ask('auto-update-prompt');">
+					<div class="menu-text-wrap">
+						<div class="menu-label">Automatic Updates</div>
+						<div class="menu-value auto-update-mode"></div>
+					</div>
+			</div>
 		</div>
 	</div>
 
+	<div class="ask-menu" id="auto-update-prompt">
+		<h2>Automatic updates</h2>
+		<p>Updates will be installed nightly when the product is not in use.</p>
+		<div class="auto-update-mode-selector">
+			<!--<div class="menu-item checkmark left icon" onclick="beo.setAppearance(null, true);" id="auto-update-experimental">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-text-wrap">
+					<div class="menu-label">Experimental</div>
+				</div>
+			</div>-->
+			<div class="menu-item checkmark left icon two-rows" onclick="software_update.setAutoUpdate('latest');" id="auto-update-latest">
+				<div class="first-row">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Quick</div>
+					</div>
+				</div>
+				<div class="menu-custom-markup">
+					<p>Latest update as it becomes available.</p>
+				</div>
+			</div>
+			<div class="menu-item checkmark left icon two-rows" onclick="software_update.setAutoUpdate('stable');" id="auto-update-stable">
+				<div class="first-row">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Regular</div>
+					</div>
+				</div>
+				<div class="menu-custom-markup">
+					<p>Latest update, one to two weeks after release.</p>
+				</div>
+			</div>
+			<div class="menu-item checkmark left icon two-rows" onclick="software_update.setAutoUpdate('critical');" id="auto-update-critical">
+				<div class="first-row">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+					<div class="menu-text-wrap">
+						<div class="menu-label">Security Updates</div>
+					</div>
+				</div>
+				<div class="menu-custom-markup">
+					<p>Updates with important security content. Previously released changes and features are included in these updates.</p>
+				</div>
+			</div>
+			<!--<hr>
+			<div class="menu-item checkmark left icon" onclick="beo.setAppearance(true, true);" id="auto-update-off">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-text-wrap">
+					<div class="menu-label">Off</div>
+				</div>
+			</div>-->
+		</div>
+		
+		<div class="ask-buttons">
+			<div class="button pill black cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/software-update-client.js"></script>

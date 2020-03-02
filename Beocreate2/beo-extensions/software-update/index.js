@@ -26,8 +26,7 @@ var version = require("./package.json").version;
 
 
 var defaultSettings = {
-	autoUpdate: false,
-	autoCheck: true
+	autoCheck: true,
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
@@ -44,6 +43,7 @@ beo.bus.on('general', function(event) {
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "software-update") {
 			checkForUpdate();
+			autoUpdateMode();
 		}
 		
 		if (event.content == "general-settings") {
@@ -68,6 +68,12 @@ beo.bus.on('software-update', function(event) {
 	if (event.header == "settings") {
 		if (event.content.settings) {
 			settings = Object.assign(settings, event.content.settings);
+		}
+	}
+	
+	if (event.header == "autoUpdateMode") {
+		if (event.content.mode != undefined) {
+			autoUpdateMode(event.content.mode);
 		}
 	}
 	
@@ -220,6 +226,40 @@ function startAutoCheckTimeout() {
 	autoCheckTimeout = setTimeout(function() {
 		checkForUpdate();
 	}, 86400000) // Check once per day.
+}
+
+function autoUpdateMode(mode) {
+	if (mode) {
+		switch (mode) {
+			case "critical":
+			case "stable":
+			case "latest":
+			case "experimental":
+				fs.writeFileSync("/etc/update.release", mode);
+				break;
+			case false:
+				fs.writeFileSync("/etc/update.release", "off");
+				break;
+		}
+	} else {
+		if (fs.existsSync("/etc/update.release")) {
+			modeRead = fs.readFileSync(path, "utf8").trim();
+			switch (modeRead) {
+				case "critical":
+				case "stable":
+				case "latest":
+				case "experimental":
+					mode = modeRead;
+					break;
+				default:
+					mode = false;
+					break;
+			}
+		} else {
+			mode = false;
+		}
+	}
+	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: mode}});
 }
 
 

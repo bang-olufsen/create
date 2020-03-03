@@ -243,7 +243,7 @@ function autoUpdateMode(mode) {
 		}
 	} else {
 		if (fs.existsSync("/etc/update.release")) {
-			modeRead = fs.readFileSync(path, "utf8").trim();
+			modeRead = fs.readFileSync("/etc/update.release", "utf8").trim();
 			switch (modeRead) {
 				case "critical":
 				case "stable":

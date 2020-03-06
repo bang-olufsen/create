@@ -15,7 +15,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-// SQUEEZelite CONTROL FOR BEOCREATE
+// DLNA CONTROL FOR BEOCREATE
 
 var exec = require("child_process").exec;
 var fs = require("fs");
@@ -39,7 +39,7 @@ var fs = require("fs");
 			}
 			
 			if (sources) {
-				getSqueezeliteStatus(function(enabled) {
+				getDLNAStatus(function(enabled) {
 					sources.setSourceOptions("dlna", {
 						enabled: enabled,
 						aka: ["upnp"],
@@ -53,7 +53,7 @@ var fs = require("fs");
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content.extension == "squeezelite") {
+			if (event.content.extension == "dlna") {
 				beo.bus.emit("ui", {target: "dlna", header: "dlnaSettings", content: {dlnaEnabled: dlnaEnabled}});
 			}
 		}
@@ -87,7 +87,7 @@ var fs = require("fs");
 		if (event.header == "dlnaEnabled") {
 			
 			if (event.content.enabled != undefined) {
-				setSqueezeliteStatus(event.content.enabled, function(newStatus, error) {
+				setDLNAStatus(event.content.enabled, function(newStatus, error) {
 					beo.bus.emit("ui", {target: "dlna", header: "dlnaSettings", content: {dlnaEnabled: newStatus}});
 					if (sources) sources.setSourceOptions("dlna", {enabled: newStatus});
 					if (newStatus == false) {

@@ -1037,9 +1037,8 @@ function deleteAllFilters(confirmed) {
 
 var compareTimeout = null;
 function compare(on, touch = false) {
-	if (touch == (document.documentElement.className.indexOf("touch") != -1)) {
+	if (touch == document.documentElement.classList.contains("touch")) {
 		if (on) {
-			console.log("On");
 			clearTimeout(compareTimeout);
 			$("#equaliser-compare-prompt").text("Comparing with all filters turned off").addClass("visible");
 			beo.sendToProduct("equaliser", {header: "compare", content: {channel: selectedChannel, on: true}});
@@ -1047,7 +1046,6 @@ function compare(on, touch = false) {
 				compareTimeout = null;
 			}, 500);
 		} else {
-			console.log("Off");
 			if (compareTimeout) {
 				clearTimeout(compareTimeout);
 				$("#equaliser-compare-prompt").text("Press and hold the ear to compare");

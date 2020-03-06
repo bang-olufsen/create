@@ -26,7 +26,10 @@ var fs = require("fs");
 	
 	var sources = null;
 	
-	var bluetoothEnabled = false;
+	var settings = {
+		bluetoothEnabled: false,
+		bluetoothDiscoverable: false
+	};
 	var configuration = {};
 	
 	beo.bus.on('general', function(event) {
@@ -54,7 +57,8 @@ var fs = require("fs");
 		
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "bluetooth") {
-				beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {bluetoothEnabled: bluetoothEnabled}});
+				beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", 
+					content: {settings: settings }});
 			}
 		}
 	});
@@ -78,7 +82,7 @@ var fs = require("fs");
 			
 			if (event.content.enabled != undefined) {
 				setBluetoothStatus(event.content.enabled, function(newStatus, error) {
-					beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {bluetoothEnabled: newStatus}});
+					beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {settings: settings }});
 					if (sources) sources.setSourceOptions("bluetooth", {enabled: newStatus, playerState: "stopped"});
 					if (newStatus == false) {
 						if (sources) sources.sourceDeactivated("bluetooth");
@@ -90,17 +94,49 @@ var fs = require("fs");
 			}
 		
 		}
+
+		if (event.header == "bluetoothDiscovery") {			
+			if (event.content.enabled != undefined && event.content.enabled) {
+				startBluetoothDiscovery(function(newStatus) {
+					beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {settings: settings }});
+				})
+			}		
+		}
 	});
 	
 	
 	function getBluetoothStatus(callback) {
 		exec("systemctl is-active --quiet bluealsa-aplay.service").on('exit', function(code) {
 			if (code == 0) {
-				bluetoothEnabled = true;
+				settings.bluetoothEnabled = true;
 				callback(true);
 			} else {
-				bluetoothEnabled = false;
+				settings.bluetoothEnabled = false;
 				callback(false);
+			}
+		});
+	}
+
+	function getBluetoothDiscoveryStatus(callback) {
+		exec("bluetoothctl show | grep 'Discoverable: yes'").on('exit', function(code) {
+			if (code == 0) {
+				settings.bluetoothDiscoverable = true;
+				callback(true);
+			} else {
+				settings.bluetoothDiscoverable = false;
+				callback(false);
+			}
+		});
+	}
+
+	function startBluetoothDiscovery(callback) {
+		exec("bluetoothctl discoverable yes").on('exit', function(code) {
+			if (code == 0) {
+				settings.bluetoothDiscoverable = true;
+				callback(true)
+			} else {
+				settings.bluetoothDiscoverable = false;
+				callback(false)
 			}
 		});
 	}
@@ -109,17 +145,17 @@ var fs = require("fs");
 		if (enabled) {
 			exec("systemctl enable --now bluetooth.service bluealsa.service bluealsa-aplay.service").on('exit', function(code) {
 				if (code == 0) {
-					bluetoothEnabled = true;
+					settings.bluetoothEnabled = true;
 					if (debug) console.log("Bluetooth enabled.");
 					callback(true);
 				} else {
-					bluetoothEnabled = false;
+					settings.bluetoothEnabled = false;
 					callback(false, true);
 				}
 			});
 		} else {
 			exec("systemctl disable --now bluetooth.service bluealsa.service bluealsa-aplay.service").on('exit', function(code) {
-				bluetoothEnabled = false;
+				settings.bluetoothEnabled = false;
 				if (code == 0) {
 					callback(false);
 					if (debug) console.log("Bluetooth disabled.");
@@ -230,6 +266,7 @@ var fs = require("fs");
 	
 module.exports = {
 	version: version,
-	isEnabled: getBluetoothStatus
+	isEnabled: getBluetoothStatus,
+	isDiscoveryRunning: getBluetoothDiscoveryStatus
 };
 

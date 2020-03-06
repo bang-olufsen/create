@@ -280,6 +280,9 @@ function prepareMenus() {
 							menuOptions.valueClasses = [$(this).attr("data-menu-value-class")];
 							menuOptions.value = "";
 						}
+						if ($(this).attr("data-menu-attachment")) {
+							menuOptions.attachment = $(this).attr("data-menu-attachment");
+						}
 						if ($(this).attr("data-menu-title-class")) {
 							menuOptions.labelClasses = [$(this).attr("data-menu-title-class")];
 						}
@@ -1074,6 +1077,13 @@ function createMenuItem(options) {
 	
 	menuItem += '</div>\n';
 	
+	if (options.attachment) {
+		menuItem += '<div class="menu-attachment';
+		if (options.icon) menuItem += ' icon-margin';
+		menuItem += '"';
+		if (options.id) menuItem += ' id="'+options.id+'-attachment"';
+		menuItem += '>'+options.attachment+'</div>\n';
+	}
 
 	return menuItem;
 }
@@ -1532,7 +1542,6 @@ function endHold() {
 }
 
 
-
 // SLIDER WIDTH
 // Sliders that start their range from the centre need their widths to be updated when resized.
 
@@ -1903,6 +1912,7 @@ document.ontouchstart = function(event) {
 	if (event.target.className.indexOf("hold") != -1) {
 		startHold(event.target, event);
 	}
+	
 }
 
 document.ontouchmove = function(event) {
@@ -1917,9 +1927,7 @@ document.ontouchmove = function(event) {
 	}
 	
 	
-	if (event.target.className.indexOf("hold") != -1) {
-		endHold();
-	}
+	
 }
 
 document.ontouchend = function(event) {
@@ -1934,6 +1942,7 @@ document.ontouchend = function(event) {
 		event.preventDefault();
 		endHold();
 	}
+	
 	
 }
 
@@ -1988,6 +1997,18 @@ Math.radians = function(degrees) {
 Math.distance = function(x1, y1, x2, y2) {
 	return Math.sqrt((x2 -= x1) * x2 + (y2 -= y1) * y2);
 };
+
+Math.angle = function(x1, y1, x2, y2) {
+	y = x1 - x2;
+	x = y1 - y2;
+	theta = Math.atan2(-y, x);
+	theta = theta * -1;
+	theta = theta * (180 / Math.PI);
+	if (theta < 0) {
+		theta = 360+theta;
+	}
+	return theta.toFixed(1);
+}
 
 
 return {

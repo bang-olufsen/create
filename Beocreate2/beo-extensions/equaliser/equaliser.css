@@ -249,6 +249,34 @@
 		font-weight: 500;
 	}
 	
+	#equaliser-compare-prompt {
+		background-color: rgba(0,0,0,0.8);
+		position: absolute;
+		color: white;
+		transition: opacity 0.5s ease, transform 0.5s ease;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		opacity: 0;
+		font-size: 0.8em;
+		text-align: center;
+		z-index: 1;
+		pointer-events: none;
+		height: 46px;
+		box-sizing: border-box;
+		width: 160px;
+		left: 50%;
+		top: 50%;
+		margin-top: -23px;
+		margin-left: -80px;
+		padding-left: 1em;
+		padding-right: 1em;
+	}
+	
+	#equaliser-compare-prompt.visible {
+		opacity: 1;
+	}
+	
 	/* @end */
 	
 	/* @group Link */
@@ -531,6 +559,7 @@
 .control-value {
 	font-weight: 500;
 	text-align: center;
+	pointer-events: none;
 }
 
 .large .control-value {
@@ -547,6 +576,7 @@
 .control-unit {
 	opacity: 0.5;
 	font-size: 0.8em;
+	pointer-events: none;
 }
 
 #coeffs-controls input[type=text].menu-value {

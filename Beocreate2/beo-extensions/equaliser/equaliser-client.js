@@ -38,6 +38,14 @@ var canControlEqualiser = {
   "l": 0,
   "r": 0
 };
+var disabledTemporarily = {
+  "a": false,
+  "b": false,
+  "c": false,
+  "d": false,
+  "l": false,
+  "r": false
+};
 
 const channelColours = {a: "red", b: "yellow", c: "green", d: "blue", l: "grey", r: "red"};
 const graphColours = ["#FF3E46", "#FFAA46", "#2CD5C4", "#2C7FE4"];
@@ -568,24 +576,21 @@ function selectFilter(filter = selectedFilter, fromUI) {
 
 var bandwidthDragEdge = 0;
 var graphDimensions;
-$("#equaliser-graph-container .graph-handle-width-drag").draggable({
-	scroll: false,
-	helper: function( event ) {
-	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
-	},
-	start: function( event, ui ) {
-		if ($(this).hasClass("left")) bandwidthDragEdge = 0;
-		if ($(this).hasClass("right")) bandwidthDragEdge = 5;
+var bandwidthDrag = new Beodrag("#equaliser-graph-container .graph-handle-width-drag", {
+	touchImmediately: true,
+	pre: function( event, position ) {
+		if ($(event.target).hasClass("left")) bandwidthDragEdge = 0;
+		if ($(event.target).hasClass("right")) bandwidthDragEdge = 5;
 		graphDimensions = eqGraph.getDimensions();
 		$("#equaliser-graph-container .graph-handle-width").addClass("drag");
 	},
-	stop: function( event, ui ) {
+	end: function( event, position ) {
 		$("#equaliser-graph-container .graph-handle-width").removeClass("drag");
 		updateFilterUI(true);
 		showGraphLabel(false);
 	},
-	drag: function( event, ui ) {
-		dragX = ((ui.position.left + bandwidthDragEdge - graphDimensions.x)/graphDimensions.w)*100;
+	move: function( event, position ) {
+		dragX = ((position.elementX + bandwidthDragEdge - graphDimensions.x)/graphDimensions.w)*100;
 		if (bandwidthDragEdge == 0) {
 			if (selectedFilterFcOffset-dragX < 0.6) {
 				dragX = selectedFilterFcOffset - 0.6;
@@ -604,28 +609,28 @@ $("#equaliser-graph-container .graph-handle-width-drag").draggable({
 		
 		setFilter("Q", getQFromCutoff(uiFilters[selectedChannel][selectedFilter].frequency, F1, F2), true, "Q");
 	}
-});
+}, document.querySelector("#equaliser-editor"));
 
 var gainDragStartPosition = 0;
-$("#equaliser-graph-container .graph-handle").draggable({
-	scroll: false,
-	helper: function( event ) {
-	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
-	},
-	start: function( event, ui ) {
+var gainFcDrag = new Beodrag("#equaliser-graph-container .graph-handle", {
+	touchImmediately: true,
+	pre: function( event, position ) {
 		graphDimensions = eqGraph.getDimensions();
-		gainDragStartPosition = ((ui.position.top - graphDimensions.y)/graphDimensions.h)*100;
+		gainDragStartPosition = ((position.elementY - graphDimensions.y)/graphDimensions.h)*100;
 		$("#equaliser-graph-container .graph-handle, #equaliser-graph-container .graph-handle-width").addClass("drag");
 	},
-	stop: function( event, ui ) {
+	end: function( event, position) {
 		$("#equaliser-graph-container .graph-handle, #equaliser-graph-container .graph-handle-width").removeClass("drag");
 		updateFilterUI(true);
 		updateFilterBarAndList(true);
 		showGraphLabel(false);
 	},
-	drag: function( event, ui ) {
-		dragX = ((ui.position.left - graphDimensions.x)/graphDimensions.w)*100;
-		dragY = ((ui.position.top - graphDimensions.y)/graphDimensions.h)*100;
+	cancel: function(event, position) {
+		$("#equaliser-graph-container .graph-handle, #equaliser-graph-container .graph-handle-width").removeClass("drag");
+	},
+	move: function( event, position ) {
+		dragX = ((position.elementX - graphDimensions.x)/graphDimensions.w)*100;
+		dragY = ((position.elementY - graphDimensions.y)/graphDimensions.h)*100;
 		
 		
 		Fc = convertHz(dragX, "log", 100);
@@ -655,7 +660,7 @@ $("#equaliser-graph-container .graph-handle").draggable({
 		}
 		
 	}
-});
+}, document.querySelector("#equaliser-editor"));
 
 
 // GRAPH RESIZE
@@ -664,57 +669,48 @@ if (localStorage.beocreateEqualiserGraphHeight) {
 }
 
 var newGraphHeight = 0;
-$("#equaliser-graph-divider").draggable({
-	scroll: false,
-	helper: function( event ) {
-	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
-	},
-	start: function( event, ui ) {
-		
-	},
-	stop: function( event, ui ) {
+var graphDividerDrag = new Beodrag("#equaliser-graph-divider", {
+	end: function( event, position ) {
 		localStorage.beocreateEqualiserGraphHeight = newGraphHeight;
 	},
-	drag: function( event, ui ) {
-		console.log(ui.position.top, $("#equaliser-editor").offset().top);
-		newGraphHeight = ((ui.position.top - $("#equaliser-editor").offset().top) / $("#equaliser-editor").innerHeight())*100;
+	move: function( event, position ) {
+		newGraphHeight = ((position.elementY - $("#equaliser-editor").offset().top) / $("#equaliser-editor").innerHeight())*100;
 		if (newGraphHeight < 20) newGraphHeight = 20;
 		if (newGraphHeight > 60) newGraphHeight = 60;
 		$("#equaliser-graph-container").css("height", newGraphHeight+"%");
 		eqGraph.draw();
 	}
-});
+}, document.querySelector("#equaliser-editor"));
 
 
 
 var controlSquareParameter = null;
-var controlSquareLastPosition = null;
+var controlSquareLastPosition = [0, 0];
 var deltaAlternate = false;
 var dragPrecision = 1;
 if ($("body").hasClass("touch")) dragPrecision = 2;
 
-$(".filter-controls .control-square-wrap").draggable({
-	scroll: false,
-	helper: function( event ) {
-	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
-	},
-	start: function( event, ui ) {
-		controlSquareLastPosition = (ui.position);
+var controlSquareDrag = new Beodrag(".filter-controls .control-square-wrap", {
+	touchImmediately: true,
+	pre: function( event, position ) {
+		
+		controlSquareLastPosition = [position.pageX, position.pageY];
 		$("#equaliser-graph-container .graph-handle-width").addClass("drag");
-		if ($(this).parent().hasClass("equaliser-fc-control")) controlSquareParameter = "frequency";
-		if ($(this).parent().hasClass("equaliser-gain-control")) controlSquareParameter = "gain";
-		if ($(this).parent().hasClass("equaliser-q-control")) controlSquareParameter = "Q";
+		if ($(event.target).parent().hasClass("equaliser-fc-control")) controlSquareParameter = "frequency";
+		if ($(event.target).parent().hasClass("equaliser-gain-control")) controlSquareParameter = "gain";
+		if ($(event.target).parent().hasClass("equaliser-q-control")) controlSquareParameter = "Q";
 		deltaAlternate = 0;
 	},
-	stop: function( event, ui ) {
+	end: function( event, position ) {
 		$("#equaliser-graph-container .graph-handle-width").removeClass("drag");
 		updateFilterUI(true);
 		updateFilterBarAndList(true);
 		showGraphLabel(false);
 	},
-	drag: function( event, ui ) {
-		deltaX = ui.position.left - controlSquareLastPosition.left;
-		deltaY = ui.position.top - controlSquareLastPosition.top;
+	move: function( event, position ) {
+		deltaX = position.pageX - controlSquareLastPosition[0];
+		deltaY = position.pageY - controlSquareLastPosition[1];
+		console.log(deltaY);
 		
 		switch (controlSquareParameter) {
 			case "frequency":
@@ -780,9 +776,9 @@ $(".filter-controls .control-square-wrap").draggable({
 		}
 		deltaAlternate++;
 		if (deltaAlternate > dragPrecision) deltaAlternate = 0; // More precise dragging at slow speeds.
-		controlSquareLastPosition = (ui.position);
+		controlSquareLastPosition = [position.pageX, position.pageY];
 	}
-});
+}, document.querySelector("#equaliser-editor"));
 
 function step(parameter, direction) {
 	delta = (direction) ? 1 : -1;
@@ -1036,6 +1032,34 @@ function deleteAllFilters(confirmed) {
 		}, 500);
 	} else {
 		beo.ask("equaliser-delete-all-prompt");
+	}
+}
+
+var compareTimeout = null;
+function compare(on, touch = false) {
+	if (touch == (document.documentElement.className.indexOf("touch") != -1)) {
+		if (on) {
+			console.log("On");
+			clearTimeout(compareTimeout);
+			$("#equaliser-compare-prompt").text("Comparing with all filters turned off").addClass("visible");
+			beo.sendToProduct("equaliser", {header: "compare", content: {channel: selectedChannel, on: true}});
+			compareTimeout = setTimeout(function() {
+				compareTimeout = null;
+			}, 500);
+		} else {
+			console.log("Off");
+			if (compareTimeout) {
+				clearTimeout(compareTimeout);
+				$("#equaliser-compare-prompt").text("Press and hold the ear to compare");
+				compareTimeout = setTimeout(function() {
+					compareTimeout = null;
+					$("#equaliser-compare-prompt").removeClass("visible");
+				}, 3000);
+			} else {
+				$("#equaliser-compare-prompt").removeClass("visible");
+			}
+			beo.sendToProduct("equaliser", {header: "compare", content: {channel: selectedChannel, on: false}});
+		}
 	}
 }
 
@@ -1786,6 +1810,7 @@ return {
 	toggleBypass: toggleBypass,
 	deleteFilter: deleteFilter,
 	deleteAllFilters: deleteAllFilters,
+	compare: compare,
 	addFilter: addFilter,
 	enterCoefficient: enterCoefficient,
 	saveCoefficients: saveCoefficients,

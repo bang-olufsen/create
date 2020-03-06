@@ -1,0 +1,24 @@
+{
+  "name": "@beocreate/dlna",
+  "version": "0.1.0",
+  "description": "Control for DLNA Beocreate systems",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bang-olufsen/create.git"
+  },
+  "keywords": [
+    "beocreate",
+    "squeezebox"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bang-olufsen/create/issues"
+  },
+  "homepage": "https://github.com/bang-olufsen/create#readme",
+  "dependencies": {}
+}

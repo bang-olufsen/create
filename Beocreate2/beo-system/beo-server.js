@@ -647,29 +647,40 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 		menu = fs.readFileSync(fullPath+'/menu.html', "utf8"); // Read the menu from file.
 		
 		// First check if this extension is included or excluded with this hardware.
+		
+		menuParts = menu.split("\">\n");
+		headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
+		menuParts.shift();
+		body = menuParts.join("\">\n");
+		head = {};
+		for (l in headItems) {
+			lineItems = headItems[l].split("=\"");
+			head[lineItems[0]] = lineItems[1];
+		};
+		
 		shouldIncludeExtension = true;
-		enableWith = menu.match(/data-enable-with="(.*?)"/g);
-		disableWith = menu.match(/data-disable-with="(.*?)"/g);
-		if (enableWith != null || disableWith != null) {
+		
+		if (head["data-enable-with"] || head["data-disable-with"]) {
 			shouldIncludeExtension = false;
 			cardType = systemConfiguration.cardType.toLowerCase();
-			if (enableWith != null) {
-				if (enableWith[0].slice(18, -1).toLowerCase().split(", ").indexOf(cardType) != -1) 
+			if (head["data-enable-with"]) {
+				if (head["data-enable-with"].toLowerCase().split(", ").indexOf(cardType) != -1) 
 					shouldIncludeExtension = true;
-			} else if (disableWith != null) {
-				if (disableWith[0].slice(19, -1).toLowerCase().split(", ").indexOf(cardType) == -1) shouldIncludeExtension = true;
+			} else if (head["data-disable-with"]) {
+				if (head["data-disable-with"].toLowerCase().split(", ").indexOf(cardType) == -1) 
+					shouldIncludeExtension = true;
 			}
 		}
 		
 		
+		
 		if (shouldIncludeExtension) {
-			menu = menu.replace('>', ' data-asset-path="'+basePath+'/'+extensionName+'">'); // Add asset path.
-			if (menu.indexOf('<div class="menu-screen source') != -1) isSource = true; 
-			menu = menu.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path
-			//menu = menu.split('€systemName').join(systemName); // Replace the special character in src with the correct asset path
+			head["data-asset-path"] = basePath+'/'+extensionName; // Add asset path.
+			if (head.class.indexOf('source') != -1) isSource = true; 
+			body = body.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path
 			
-			context = menu.match(/data-context="(.*?)"/g); // Get menu context (who it wants as a parent menu, if any).
-			if (context != null) context = context[0].slice(14, -1).split("/")[0];
+			
+			context = (head["data-context"] != null) ? head["data-context"].split("/")[0] : null; // Get menu context (who it wants as a parent menu, if any).
 			
 			// Load a translation array, if it exists.
 			if (systemConfiguration.language != "en" && fs.existsSync(fullPath+'/translations/'+systemConfiguration.language+'.json')) {
@@ -696,11 +707,19 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 					extensionLoadedSuccesfully = true;
 				}
 			}
-			if (!extensionsLoaded) extensionsList[extensionName] = ({isSource: isSource, loadedSuccesfully: extensionLoadedSuccesfully});
+			if (!extensionsLoaded) extensionsList[extensionName] = ({isSource: isSource, loadedSuccesfully: extensionLoadedSuccesfully, menuTitle: head["data-menu-title"]});
+			
 			
 			// Extract scripts into a separate array
-			extensionScripts = menu.match(/^<script.*/gm);
-			menu = menu.replace(/^<script.*/gm, "");
+			extensionScripts = body.match(/^<script.*/gm);
+			body = body.replace(/^<script.*/gm, "");
+			
+			headString = "<div";
+			for (headItem in head) {
+				headString += " "+headItem+'="'+head[headItem]+'"';
+			}
+			headString += ">";
+			menu = ([headString, body]).join("\n");
 			return {menu: menu, scripts: extensionScripts, context: context, isSource: isSource};
 		} else {
 			return null;

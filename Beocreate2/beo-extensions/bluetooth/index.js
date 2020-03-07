@@ -28,7 +28,8 @@ var fs = require("fs");
 	
 	var settings = {
 		bluetoothEnabled: false,
-		bluetoothDiscoverable: false
+		bluetoothDiscoverable: false,
+		pairingMode: null
 	};
 	var configuration = {};
 	
@@ -52,13 +53,24 @@ var fs = require("fs");
 				});
 			}
 			
-			
+			readBluetoothConfiguration();
+			if (configuration.General &&
+				configuration.General.DiscoverableTimeout != undefined) {
+				if (configuration.General.DiscoverableTimeout.value == "0") {
+					settings.pairingMode = "always";
+				} else {
+					settings.pairingMode = parseFloat(configuration.General.DiscoverableTimeout.value);
+				}
+			} else {
+				settings.pairingMode = null;
+			}
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "bluetooth") {
-				beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", 
-					content: {settings: settings }});
+				getBluetoothDiscoveryStatus(function() {
+					beo.sendToUI("bluetooth", {header: "bluetoothSettings", content: {settings: settings}});
+				});
 			}
 		}
 	});
@@ -95,12 +107,31 @@ var fs = require("fs");
 		
 		}
 
-		if (event.header == "bluetoothDiscovery") {			
-			if (event.content.enabled != undefined && event.content.enabled) {
-				startBluetoothDiscovery(function(newStatus) {
-					beo.bus.emit("ui", {target: "bluetooth", header: "bluetoothSettings", content: {settings: settings }});
+		if (event.header == "bluetoothDiscoverable") {			
+			if (event.content.enabled != undefined) {
+				setBluetoothDiscoverable(event.content.enabled, function(newStatus) {
+					beo.sendToUI("bluetooth", {header: "bluetoothSettings", content: {settings: settings}});
 				})
 			}		
+		}
+		
+		if (event.header == "setPairingMode") {
+			if (event.content.mode) {
+				timeout = null;
+				if (event.content.mode == "always") {
+					timeout = 0;
+				} else if (!isNaN(event.content.mode)) {
+					timeout = event.content.mode;
+				}
+				if (timeout != null) {
+					configureBluetooth({section: "General", option: "DiscoverableTimeout", value: timeout.toString()}, true);
+					settings.pairingMode = event.content.mode;
+					beo.sendToUI("bluetooth", {header: "bluetoothSettings", content: {settings: settings}});
+					if (settings.bluetoothDiscoverable) {
+						setBluetoothDiscoverable(true);
+					}
+				}
+			}
 		}
 	});
 	
@@ -128,7 +159,9 @@ var fs = require("fs");
 			}
 		});
 	}
-
+	
+	var bluetoothDiscoveryTimeout = null;
+	
 	function startBluetoothDiscovery(callback) {
 		exec("bluetoothctl discoverable yes").on('exit', function(code) {
 			if (code == 0) {
@@ -139,6 +172,39 @@ var fs = require("fs");
 				callback(false)
 			}
 		});
+	}
+	
+	function setBluetoothDiscoverable(enabled, callback) {
+		clearTimeout(bluetoothDiscoveryTimeout);
+		if (enabled) {
+			exec("bluetoothctl discoverable yes").on('exit', function(code) {
+				if (code == 0) {
+					settings.bluetoothDiscoverable = true;
+					
+					if (settings.pairingMode != "always" && settings.pairingMode != null) {
+						bluetoothDiscoveryTimeout = setTimeout(function() {
+							getBluetoothDiscoveryStatus(function() {
+								beo.sendToUI("bluetooth", {header: "bluetoothSettings", content: {settings: settings}});
+							});
+						}, settings.pairingMode*1000+2000);
+					}
+					if (callback) callback(true);
+				} else {
+					settings.bluetoothDiscoverable = false;
+					if (callback) callback(false, true);
+				}
+			});
+		} else {
+			exec("bluetoothctl discoverable no").on('exit', function(code) {
+				if (code == 0) {
+					settings.bluetoothDiscoverable = false;
+					if (callback) callback(false);
+				} else {
+					settings.bluetoothDiscoverable = false;
+					if (callback) callback(false, true);
+				}
+			});
+		}
 	}
 	
 	function setBluetoothStatus(enabled, callback) {
@@ -193,7 +259,7 @@ var fs = require("fs");
 				}
 			}
 			writeBluetoothConfiguration();
-			if (relaunch && bluetoothEnabled) {
+			if (relaunch && settings.bluetoothEnabled) {
 				exec("systemctl restart bluetooth.service bluealsa.service bluealsa-aplay.service", function(error, stdout, stderr) {
 					if (error) {
 						if (debug) console.error("Relaunching Bluetooth failed: "+error);
@@ -213,7 +279,7 @@ var fs = require("fs");
 	
 	bluetoothConfigModified = 0;
 	function readBluetoothConfiguration() {
-		if (fs.existsSync("/etc/bluetooth-main.conf")) {
+		if (fs.existsSync("/etc/bluetooth/main.conf")) {
 			modified = fs.statSync("/etc/bluetooth/main.conf").mtimeMs;
 			if (modified != bluetoothConfigModified) {
 				// Reads configuration into a JavaScript object for easy access.
@@ -246,7 +312,7 @@ var fs = require("fs");
 	
 	function writeBluetoothConfiguration() {
 		// Saves current configuration back into the file.
-		if (fs.existsSync("/etc/bluetooth-main.conf")) {
+		if (fs.existsSync("/etc/bluetooth/main.conf")) {
 			bluetoothConfig = [];
 			for (section in configuration) {
 				bluetoothConfig.push("["+section+"]");

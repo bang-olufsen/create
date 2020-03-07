@@ -25,6 +25,7 @@
  	
  	this.options = {
  		touchImmediately: false,
+ 		preventClick: false,
  		touchDelay: 300,
  		enabled: true,
  		arrange: false,
@@ -42,9 +43,9 @@
  	if (!options.cancel || typeof options.cancel != "function") this.options.cancel = null;
  	
  	var elements = null;
+ 	var elementFound = false;
  	var dragEvent = null;
-	var dragging = false;
-	var dragStarted = false;
+	var dragging = 0;
 	var dragTimeout = null;
 	var clickHandler = null;
 	var touch = false;
@@ -60,9 +61,11 @@
 		startX: 0,
 		startY: 0
 	};
+	
  	
  	this.onDragStart = function(event) {
  		if (this.options.enabled) {
+ 			dragging = false;
  			elements = this.context.querySelectorAll(this.element);
 	 		elementFound = false;
 	 		for (element in elements) {
@@ -73,7 +76,7 @@
 		 	}
 	 		if (elementFound) {
 		 		dragEvent = event;
-				dragStarted = false;
+	 			dragging = 0;
 				touch = (event.targetTouches) ? true : false;
 				if (!touch) {
 					positions.pageX = dragEvent.pageX;
@@ -96,36 +99,31 @@
 					dragTimeout = setTimeout(function() {
 						dragTimeout = null;
 						if (myThis.options.pre) myThis.options.pre(event, positions, dragEvent.target);
+						dragging = 1;
 					}, this.options.touchDelay);
 				} else {
 					if (this.options.pre) this.options.pre(event, positions, dragEvent.target);
+					dragging = 1;
 				}
 			}
 		}
  	}
  	this.onDragMove = function(event) {
  		if (dragEvent) {
-			if (!dragging && !dragStarted) {
+			if (dragging < 2) {
 				if (!touch) {
 					clearTimeout(dragTimeout);
 					dragTimeout = null;
 				}
 				if (!dragTimeout) {
-					dragStarted = true;
+					dragging = 2;
 					if (this.options.start) this.options.start(event, positions, dragEvent.target);
 					if (this.options.arrange) this.arrangeStart(event);
-					dragging = true;
-					if (!touch) {
-						if (dragEvent.target.getAttribute('onclick')) {
-							clickHandler = dragEvent.target.getAttribute('onclick');
-							dragEvent.target.removeAttribute('onclick');
-						}
-					}
 					event.preventDefault();
 				} else {
 					this.onDragEnd(event, true);
 				}
-			} else if (dragging) {
+			} else if (dragging == 2) {
 				event.preventDefault();
 				if (!touch) {
 					x = event.pageX;
@@ -147,23 +145,17 @@
 			}
 		}
  	}
+ 	
+ 	
  	this.onDragEnd = function(event, fromDrag = false) {
- 		if (dragging) {
-			dragging = false;
+ 		if (dragging == 2) {
+			//dragging = false;
 			if (this.options.arrange) {
 				this.arrangeEnd(event);
 			} else if (this.options.end) {
 				this.options.end(event, positions, dragEvent.target);
 			}
-			if (clickHandler) {
-				setTimeout(function() {
-					dragEvent.target.setAttribute('onclick', clickHandler);
-					clickHandler = null;
-					dragEvent = null;
-				}, 20);
-			} else {
-				dragEvent = null;
-			}
+			dragEvent = null;
 			event.preventDefault();
 		} else if (dragEvent) {
 			if (this.options.cancel) this.options.cancel(event, positions, dragEvent.target);
@@ -173,6 +165,15 @@
 			dragTimeout = null;
 		}
  	}
+ 	
+ 	this.onClick = function(event) {
+ 		if (elementFound && (this.options.preventClick || dragging > 0)) {
+ 			dragging = 0;
+ 			elementFound = false;
+ 			event.stopPropagation();
+ 		}
+ 	}
+ 	
  	this.context.addEventListener("mousedown", this.onDragStart.bind(this), false);
  	this.context.addEventListener("mousemove", this.onDragMove.bind(this), false);
  	document.addEventListener("mouseup", this.onDragEnd.bind(this), false);
@@ -180,6 +181,9 @@
  	this.context.addEventListener("touchstart", this.onDragStart.bind(this), false);
  	this.context.addEventListener("touchmove", this.onDragMove.bind(this), {passive: false, capture: false});
  	this.context.addEventListener("touchend", this.onDragEnd.bind(this), false);
+ 	
+ 	this.context.addEventListener("click", this.onClick.bind(this), {passive: false, capture: true});
+ 	
  	
  	var itemPositions = [];
 	var currentPosition = 0;

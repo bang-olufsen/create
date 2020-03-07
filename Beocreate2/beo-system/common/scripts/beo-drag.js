@@ -233,7 +233,7 @@
 			newDeltaY = itemPositions[newPosition]-itemPositions[currentPosition];
 			dragEvent.target.style.transform = "translateY("+newDeltaY+"px)";
 			// Run end
-			if (this.options.end) this.options.end(event, positions, dragEvent.target, currentPosition, newPosition);
+			if (this.options.end) this.options.end(event, positions, dragEvent.target, currentPosition, newPosition, elements);
 		} else {
 			dragEvent.target.style.transform = null;
 			if (this.options.end) this.options.end(event, positions, dragEvent.target);

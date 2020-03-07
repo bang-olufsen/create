@@ -3,6 +3,7 @@ var sources = (function() {
 allSources = {};
 currentSource = null;
 focusedSource = null;
+sourceOrder = [];
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -41,8 +42,14 @@ $(document).on("sources", function(event, data) {
 			} else {
 				focusedSource = null;
 			}
+			if (data.content.sourceOrder) {
+				sourceOrder = data.content.sourceOrder;
+				orderChanged = true;
+			} else {
+				orderChanged = false;
+			}
 			showActiveSources();
-			updateDisabledSources();
+			updateSourceOrder(orderChanged);
 			updateAliases();
 		}
 	}
@@ -157,28 +164,98 @@ function showActiveSources() {
 	}
 }
 
-function updateDisabledSources() {
-	// Move disabled and enabled sources to their own sections.
-	disabledSources = 0;
-	for (source in allSources) {
-		if (allSources[source].enabled == true) {
-			if ($('.disabled-sources .menu-item[data-extension-id="'+source+'"]')) {
-				$(".enabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+var previousDisabled = 0;
+function updateSourceOrder(force) {
+	// Move disabled and enabled sources to their own sections, preserving user order.
+		disabledSources = 0;
+		for (source in allSources) {
+			if (allSources[source].enabled != true) disabledSources++;
+		}
+		if (previousDisabled != disabledSources || force) {
+			for (s in sourceOrder) {
+				source = sourceOrder[s];
+				if (allSources[source].enabled == true || arrangingSources) {
+					if ($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').length > 0) {
+						$(".enabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+					} else {
+						$(".enabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+					}
+				} else {
+					if ($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').length > 0) {
+						$(".disabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+					} else {
+						$(".disabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+					}
+				}
 			}
-		} else {
-			if ($('.enabled-sources .menu-item[data-extension-id="'+source+'"]')) {
-				$(".disabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
-				disabledSources++;
+			previousDisabled = disabledSources;
+			if (disabledSources && !arrangingSources) {
+				$(".disabled-sources-header").removeClass("hidden");
+			} else {
+				$(".disabled-sources-header").addClass("hidden");
 			}
 		}
-	}
-	if (disabledSources) {
-		$(".disabled-sources-header").removeClass("hidden");
-	} else {
-		$(".disabled-sources-header").addClass("hidden");
-	}
-	
 }
+
+var arrangingSources = false;
+var sourceArrangeDrag = null;
+var sourcesArranged = false;
+function toggleArrange() {
+	if (!arrangingSources) {
+		arrangingSources = true;
+		sourcesArranged = false;
+		if (!sourceArrangeDrag) {
+			sourceArrangeDrag = new Beodrag(".enabled-sources .menu-item", {
+				arrange: true,
+				preventClick: true,
+				pre: function(event, position, target) {
+					target.classList.add("drag"); // When item is held down long enough.
+				},
+				start: function(event, position, target) {
+					target.classList.add("drag");
+				},
+				move: function(event, position, target) {
+					// Move is handled by the internal "arranger" feature in Beodrag.
+				},
+				end: function(event, position, target, moveFrom = null, moveTo = null, elements) {
+					if (moveFrom != null) {
+						sourcesArranged = true;
+						setTimeout(function() {
+							sourceToMove = sourceOrder[moveFrom];
+							sourceOrder.splice(moveFrom, 1);
+							sourceOrder.splice(moveTo, 0, sourceToMove);
+							for (var e = 0; e < elements.length; e++) {
+								elements[e].style.transition = "none";
+								elements[e].style.transform = null;
+								elements[e].style.transition = null;
+							}
+							updateSourceOrder(true);
+						}, 300);
+					}
+					target.classList.remove("drag");
+				},
+				cancel: function(event, position, target) {
+					target.classList.remove("drag");
+				}
+			}, document.querySelector("#sources"));
+		} else {
+			sourceArrangeDrag.setOptions({enabled: true});
+		}
+		$("#toggle-source-arrange-button").text("Sources Arranged").toggleClass("black grey");
+		updateSourceOrder(true); // Moves all sources to "enabled" section.
+		$(".enabled-sources .menu-item").removeClass("chevron");
+	} else {
+		arrangingSources = false;
+		sourceArrangeDrag.setOptions({enabled: false});
+		$("#toggle-source-arrange-button").text("Arrange Sources...").toggleClass("black grey");
+		updateSourceOrder(true);
+		$(".enabled-sources .menu-item, .disabled-sources .menu-item").addClass("chevron");
+		if (sourcesArranged) {
+			beo.sendToProduct("sources", {header: "arrangeSources", content: {sourceOrder: sourceOrder}});
+		}
+	}
+}
+
 
 function updateAliases() {
 	for (extension in allSources) {
@@ -202,7 +279,8 @@ function updateAliases() {
 
 function showStartableSources() {
 	$(".startable-sources").empty();
-	for (source in allSources) {
+	for (s in sourceOrder) {
+		source = sourceOrder[s];
 		if (allSources[source].startable) {
 			menuOptions = {
 				label: extensions[source].title,
@@ -265,6 +343,7 @@ return {
 	showStartableSources: showStartableSources,
 	startSource: startSource,
 	setAlias: setAlias,
+	toggleArrange: toggleArrange,
 	testSetActive: testSetActive
 }
 

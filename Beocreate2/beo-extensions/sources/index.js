@@ -61,6 +61,7 @@ var exec = require("child_process").exec;
 			
 		}
 		
+		
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "sources") {
 				if (!checkingEnabled) checkEnabled();
@@ -333,7 +334,9 @@ var exec = require("child_process").exec;
 					}
 					
 					if (overview.players[i].supported_commands) {
-						allSources[extension].transportControls = overview.players[i].supported_commands;
+						if (allSources[extension].allowChangingTransportControls) {
+							allSources[extension].transportControls = overview.players[i].supported_commands;
+						}
 						if (overview.players[i].supported_commands.indexOf("play") != -1) {
 							allSources[extension].startable = true;
 						} else {
@@ -341,6 +344,10 @@ var exec = require("child_process").exec;
 						}
 					} else {
 						allSources[extension].startable = false;
+					}
+					
+					if (extension == "bluetooth") {
+						allSources[extension].aliasInNowPlaying = overview.players[i].name;
 					}
 					
 					if (!allSources[extension].metadata.title) {
@@ -361,6 +368,9 @@ var exec = require("child_process").exec;
 			if (metadata.playerState == "unknown") metadata.playerState = "stopped";
 			
 			if (!focusedSource) focusedSource = extension;
+			if (extension == "bluetooth") {
+				allSources[extension].aliasInNowPlaying = metadata.playerName;
+			}
 			
 			metadataChanged = false;
 			playerStateChanged = false;
@@ -576,11 +586,13 @@ var exec = require("child_process").exec;
 					playerState: "stopped",
 					stopOthers: true,
 					transportControls: false,
+					allowChangingTransportControls: true,
 					usesHifiberryControl: false,
 					canLove: false,
 					startable: false,
 					metadata: {},
-					alias: null
+					alias: null,
+					aliasInNowPlaying: null
 				};
 				if (debug) console.log("Registering source '"+extension+"'...");
 			}
@@ -597,6 +609,7 @@ var exec = require("child_process").exec;
 			}
 			if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
 			if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
+			if (options.allowChangingTransportControls != undefined) allSources[extension].allowChangingTransportControls = (options.allowChangingTransportControls) ? true : false;
 			if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
 			if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
 			if (options.startable) allSources[extension].startable = options.startable; // Can this source be started from Beocreate 2?
@@ -613,6 +626,7 @@ var exec = require("child_process").exec;
 				}
 				beo.saveSettings("sources", settings);
 			}
+			if (options.aliasInNowPlaying != undefined) allSources[extension].aliasInNowPlaying = options.aliasInNowPlaying;
 			
 			
 			if (!sourceAdded) { 
@@ -696,7 +710,7 @@ var exec = require("child_process").exec;
 	function checkEnabled(queue, callback) {
 		checkingEnabled = true;
 		if (!queue) {
-			if (debug) console.log("Checking enabled status for all sources...");
+			if (debug > 1) console.log("Checking enabled status for all sources...");
 			queue = [];
 			for (extension in allSources) {
 				if (beo.extensions[extension].isEnabled) {

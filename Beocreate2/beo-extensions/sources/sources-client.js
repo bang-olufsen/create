@@ -13,6 +13,9 @@ $(document).on("general", function(event, data) {
 	}
 	
 	if (data.header == "activatedExtension") {
+		if (data.content.extension != "sources" && arrangingSources) {
+			toggleArrange();
+		}
 		if (allSources[data.content.extension]) {
 			if (allSources[data.content.extension].alias) {
 				$("#"+data.content.extension+" .source-alias-control .menu-value").text(allSources[data.content.extension].alias.name).removeClass("button");
@@ -104,7 +107,9 @@ function showActiveSources() {
 	if (currentSource != null) {
 		sourceIcon = null;
 		sourceName = null;
-		if (allSources[currentSource].alias) {
+		if (allSources[currentSource].aliasInNowPlaying) {
+			sourceName = allSources[currentSource].aliasInNowPlaying;
+		} else if (allSources[currentSource].alias) {
 			if (allSources[currentSource].alias.icon) {
 				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
 			}
@@ -135,7 +140,9 @@ function showActiveSources() {
 	if (focusedSource != null) {
 		sourceIcon = null;
 		sourceName = null;
-		if (allSources[focusedSource].alias) {
+		if (allSources[focusedSource].aliasInNowPlaying) {
+			sourceName = allSources[focusedSource].aliasInNowPlaying;
+		} else if (allSources[focusedSource].alias) {
 			if (allSources[focusedSource].alias.icon) {
 				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[focusedSource].alias.icon;
 			}

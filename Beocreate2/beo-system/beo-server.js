@@ -553,8 +553,15 @@ function assembleBeoUI() {
 					// Check if the top level menu exists.
 					if (menuStructure[m].kind == "menu") {
 						if (menuStructure[m].menu == context) {
-							// Top level menu was found, put the submenu into it.
-							menuStructure[m].submenus.push(extension);
+							// Top level menu was found, put the submenu into it. Use sort-as field for sorting, if exists.
+							menusToSort = [];
+							for (var i = 0; i < menuStructure[m].submenus.length; i++) {
+								menusToSort.push((allExtensions[menuStructure[m].submenus[i]].sortAs) ? allExtensions[menuStructure[m].submenus[i]].sortAs : menuStructure[m].submenus[i]);
+							}
+							sortName = (allExtensions[extension].sortAs) ? allExtensions[extension].sortAs : extension;
+							newIndex = findMenuPlacement(menusToSort, sortName);
+							menuStructure[m].submenus.splice(newIndex, 0, extension);
+
 							menuPlaced = true;
 							break;
 						}
@@ -636,6 +643,12 @@ function assembleBeoUI() {
 	
 }
 
+function findMenuPlacement(inNames, forName) {
+	//console.log(inNames, inNames.sort(), forName);
+	inNames.push(forName);
+	inNames.sort();
+	return inNames.indexOf(forName);
+}
 
 
 function loadExtensionWithPath(extensionName, fullPath, basePath) {
@@ -682,6 +695,8 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 			
 			context = (head["data-context"] != null) ? head["data-context"].split("/")[0] : null; // Get menu context (who it wants as a parent menu, if any).
 			
+			sortAs = (head["data-sort-as"] != null) ? head["data-sort-as"] : null; // Sort this extension with another name?
+			
 			// Load a translation array, if it exists.
 			if (systemConfiguration.language != "en" && fs.existsSync(fullPath+'/translations/'+systemConfiguration.language+'.json')) {
 				translations[menuPath] = JSON.parse(fs.readFileSync(fullPath+'/translations/'+systemConfiguration.language+'.json', "utf8"));
@@ -720,7 +735,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 			}
 			headString += ">";
 			menu = ([headString, body]).join("\n");
-			return {menu: menu, scripts: extensionScripts, context: context, isSource: isSource};
+			return {menu: menu, scripts: extensionScripts, context: context, sortAs: sortAs, isSource: isSource};
 		} else {
 			return null;
 		}

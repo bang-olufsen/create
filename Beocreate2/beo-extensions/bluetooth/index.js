@@ -127,9 +127,7 @@ var fs = require("fs");
 					configureBluetooth({section: "General", option: "DiscoverableTimeout", value: timeout.toString()}, true);
 					settings.pairingMode = event.content.mode;
 					beo.sendToUI("bluetooth", {header: "bluetoothSettings", content: {settings: settings}});
-					if (settings.bluetoothDiscoverable) {
-						setBluetoothDiscoverable(true);
-					}
+					setBluetoothDiscoverable(true);
 				}
 			}
 		}

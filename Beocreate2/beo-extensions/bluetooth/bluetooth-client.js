@@ -36,7 +36,7 @@ $(document).on("bluetooth", function(event, data) {
 					text = "For 2 minutes";
 					break;
 				case "always":
-					text = "Always";
+					text = "Until stopped";
 					break;
 			}
 			$("#bluetooth-pairing-mode .menu-value").text(text);

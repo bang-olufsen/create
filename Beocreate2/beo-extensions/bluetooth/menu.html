@@ -15,7 +15,7 @@
 			<div class="button pill black" onclick="bluetooth.toggleDiscoverable();" id="bluetooth-discovery-button">Start Bluetooth Pairing</div>
 			<div class="menu-item" id="bluetooth-pairing-mode" onclick="beo.ask('bluetooth-pairing-mode-prompt');">
 				<div class="menu-label">Open for Pairing</div>
-				<div class="menu-value">For 1 minute</div>
+				<div class="menu-value"></div>
 			</div>
 			<p>Start pairing and connect to '<span class="system-name">the product</span>' in the Bluetooth settings on your device to play music. Previous devices can connect again without pairing.</p>
 			<p>Note: volume control is currently not synchronised between your device and this product.</p>
@@ -24,7 +24,7 @@
 	
 	<div class="ask-menu" id="bluetooth-pairing-mode-prompt">
 		<h2>Open for pairing</h2>
-		<p>Select how long the product will pair with new Bluetooth sources.</p>
+		<p>Select how long the product will accept connections from new Bluetooth devices.</p>
 		<div class="bluetooth-pairing-mode-selector">
 			<div class="menu-item checkmark left icon" onclick="bluetooth.setPairingMode(60);" id="bluetooth-pairing-mode-60">
 				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
@@ -36,7 +36,7 @@
 			</div>
 			<div class="menu-item checkmark left icon" onclick="bluetooth.setPairingMode('always');" id="bluetooth-pairing-mode-always">
 				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
-				<div class="menu-label">Always</div>
+				<div class="menu-label">Until stopped</div>
 			</div>
 		</div>
 		<p>Changing this setting will interrupt music playing over Bluetooth and disconnect devices.</p>

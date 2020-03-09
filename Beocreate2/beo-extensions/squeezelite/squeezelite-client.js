@@ -1,9 +1,10 @@
 var squeezelite = (function() {
 
-var squeezeliteEnabled = false;
 var serverAddress = null;
 
+
 $(document).on("squeezelite", function(event, data) {
+	
 	if (data.header == "squeezeliteSettings") {
 		
 		if (data.content.squeezeliteEnabled) {

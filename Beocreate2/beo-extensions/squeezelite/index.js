@@ -23,12 +23,11 @@ var fs = require("fs");
 var debug = beo.debug;
 var version = require("./package.json").version;
 
-
 var sources = null;
 
 var settings = {
-	squeezeliteEnabled: false,
 	serverAddress: null,
+	squeezeliteEnabled: true
 }
 
 var configuration = {};
@@ -61,13 +60,13 @@ beo.bus.on('general', function(event) {
 		} else {
 			settings.serverAddress = null;
 		}
-		
-		
+
 	}
 	
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "squeezelite") {
-			beo.bus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: {squeezeliteEnabled: squeezeliteEnabled}});
+			settings.squeezeliteEnabled = 
+			beo.bus.emit("ui", {target: "squeezelite", header: "squeezeliteSettings", content: settings});
 		}
 	}
 	
@@ -80,7 +79,7 @@ beo.bus.on('product-information', function(event) {
 		if (event.content.systemName && fs.existsSync("/var/squeezelite/squeezelite.name")) {
 			fs.writeFileSync("/var/squeezelite/squeezelite.name", event.content.systemName);
 			if (debug) console.log("System name updated for Squeezelite.");
-			if (squeezeliteEnabled) {
+			if (settings.squeezeliteEnabled) {
 				exec("systemctl restart squeezelite.service lmsmpris.service").on('exit', function(code) {
 					if (code == 0) {
 						// Success
@@ -136,10 +135,10 @@ beo.bus.on('squeezelite', function(event) {
 function getSqueezeliteStatus(callback) {
 	exec("systemctl is-active --quiet squeezelite.service lmsmpris.service").on('exit', function(code) {
 		if (code == 0) {
-			squeezeliteEnabled = true;
+			settings.squeezeliteEnabled = true;
 			callback(true);
 		} else {
-			squeezeliteEnabled = false;
+			settings.squeezeliteEnabled = false;
 			callback(false);
 		}
 	});
@@ -149,17 +148,17 @@ function setSqueezeliteStatus(enabled, callback) {
 	if (enabled) {
 		exec("systemctl enable --now squeezelite.service lmsmpris.service").on('exit', function(code) {
 			if (code == 0) {
-				squeezeliteEnabled = true;
+				settings.squeezeliteEnabled = true;
 				if (debug) console.log("Squeezelite enabled.");
 				callback(true);
 			} else {
-				squeezeliteEnabled = false;
+				settings.squeezeliteEnabled = false;
 				callback(false, true);
 			}
 		});
 	} else {
 		exec("systemctl disable --now squeezelite.service lmsmpris.service").on('exit', function(code) {
-			squeezeliteEnabled = false;
+			settings.squeezeliteEnabled = false;
 			if (code == 0) {
 				callback(false);
 				if (debug) console.log("Squeezelite disabled.");
@@ -220,6 +219,7 @@ function writeSqueezeliteConfiguration() {
 
 
 function readSqueezeliteConfiguration() {
+	configuration={}
 	if (fs.existsSync("/etc/squeezelite.json")) {
 		modified = fs.statSync("/etc/squeezelite.json").mtimeMs;
 		if (modified != squeezeliteConfigModified) {
@@ -228,8 +228,8 @@ function readSqueezeliteConfiguration() {
 			squeezeliteConfig = fs.readFileSync("/etc/squeezelite.json", "utf8").split('\n');
 			configuration = JSON.parse(squeezeliteConfig)
 		}
-		return configuration;
 	}
+	return configuration;
 }
 
 	

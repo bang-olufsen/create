@@ -181,17 +181,19 @@ function updateSourceOrder(force) {
 		if (previousDisabled != disabledSources || force) {
 			for (s in sourceOrder) {
 				source = sourceOrder[s];
-				if (allSources[source].enabled == true || arrangingSources) {
-					if ($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').length > 0) {
-						$(".enabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+				if (allSources[source]) {
+					if (allSources[source].enabled == true || arrangingSources) {
+						if ($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').length > 0) {
+							$(".enabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+						} else {
+							$(".enabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+						}
 					} else {
-						$(".enabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
-					}
-				} else {
-					if ($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').length > 0) {
-						$(".disabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
-					} else {
-						$(".disabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+						if ($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').length > 0) {
+							$(".disabled-sources").append($('.enabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+						} else {
+							$(".disabled-sources").append($('.disabled-sources .menu-item[data-extension-id="'+source+'"]').detach());
+						}
 					}
 				}
 			}

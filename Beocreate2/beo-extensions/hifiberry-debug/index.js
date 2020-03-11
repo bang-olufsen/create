@@ -17,6 +17,7 @@ SOFTWARE.*/
 
 // HIFIBERRY DEBUG INFORMATION COLLECTOR FOR BEOCREATE
 
+var request = require("request");
 var exec = require("child_process").exec;
 var fs = require("fs");
 
@@ -28,6 +29,7 @@ var archive = null;
 var archiveDownloadTimeout;
 
 var hifiberryState = {};
+var previousExtension = null
 
 beo.bus.on('general', function(event) {
 	
@@ -65,7 +67,11 @@ beo.bus.on('general', function(event) {
 			beo.sendToUI("hifiberry-debug", {header: "state", content: {exclusiveAudio: exclusiveAudio, resamplingRate: resamplingRate}});
 		}
 		
-		
+		if (event.content.extension != previousExtension) {
+			request.post("http://127.0.1.1:3141/api/activate/beo_"+event.content.extension);
+			if (previousExtension) request.post("http://127.0.1.1:3141/api/deactivate/beo_"+previousExtension);
+			previousExtension = event.content.extension;
+		}
 	}
 });
 

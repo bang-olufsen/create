@@ -61,9 +61,9 @@ Design and develop extensions to expand the functionality of the system.
 
 ### Sound & Customisation
 
-Create sound presets, DSP programs and product identities to customise the sound system.
+Create speaker presets, DSP programs and product identities to customise the sound system.
 
-- [Sound Presets](Documentation/SoundPresets.md)
+- [Speaker Presets](Documentation/SoundPresets.md)
 - DSP Programs
 - [Product Identities](Documentation/ProductIdentities.md)
 

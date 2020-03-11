@@ -471,7 +471,7 @@ var _ = beo.underscore;
 		return {compatibilityIssues: compatibilityIssues, validatedSettings: validatedSettings, previewProcessor: "equaliser.generateSettingsPreview"};
 	}
 	
-	function applySoundPreset(theSettings, samplingRate) {
+	function applySpeakerPreset(theSettings, samplingRate) {
 		settings = Object.assign(settings, checkSettings(theSettings, samplingRate).validatedSettings);
 		for (var c = 0; c < 4; c++) {
 			channel = "abcd".charAt(c);
@@ -868,7 +868,7 @@ function getDriverType(low, high) {
 module.exports = {
 	checkSettings: checkSettings,
 	getDriverTypes: function() {return driverTypes},
-	applySoundPreset: applySoundPreset,
+	applySpeakerPreset: applySpeakerPreset,
 	tempDisable: tempDisable,
 	version: version
 };

@@ -552,7 +552,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	}
 	
 	
-	function applySoundPreset(theSettings) {
+	function applySpeakerPreset(theSettings) {
 		settings = Object.assign(settings, checkSettings(theSettings).validatedSettings);
 		
 		for (var c = 0; c < 4; c++) {
@@ -779,7 +779,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	
 module.exports = {
 	checkSettings: checkSettings,
-	applySoundPreset: applySoundPreset,
+	applySpeakerPreset: applySpeakerPreset,
 	version: version
 };
 

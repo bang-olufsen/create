@@ -217,7 +217,7 @@ function measureRoom(stage) {
 		beo.sendToUI("room-compensation", {header: "measuringRoom", content: {phase: "starting"}});
 		if (!settings.measureWithSoundDesign) {
 			// Temporarily disable sound design and tone controls.
-			if (beo.extensions["tone-controls"] && beo.extensions["tone-controls"].tempDisable) beo.extensions["tone-controls"].tempDisable(true);
+			if (beo.extensions["beosonic"] && beo.extensions["beosonic"].tempDisable) beo.extensions["beosonic"].tempDisable(true);
 			if (beo.extensions.equaliser && beo.extensions.equaliser.tempDisable) beo.extensions.equaliser.tempDisable(true, ['l','r']);
 		}
 		measurementPhase = 0;
@@ -239,7 +239,7 @@ function measureRoom(stage) {
 					setOrRestoreVolume("restore");
 					if (!settings.measureWithSoundDesign) {
 						// Restore sound design and tone controls.
-						if (beo.extensions["tone-controls"] && beo.extensions["tone-controls"].tempDisable) beo.extensions["tone-controls"].tempDisable(false);
+						if (beo.extensions["beosonic"] && beo.extensions["beosonic"].tempDisable) beo.extensions["beosonic"].tempDisable(false);
 						if (beo.extensions.equaliser && beo.extensions.equaliser.tempDisable) beo.extensions.equaliser.tempDisable(false, ['l','r']);
 					}
 					if (debug) console.log("Recording finished, analysing samples...");

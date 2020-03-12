@@ -1,5 +1,5 @@
 {
-  "name": "@beocreate/tone-controls",
+  "name": "@beocreate/beosonic",
   "version": "0.5.1",
   "description": "Tone controls for Beocreate sound systems.",
   "main": "index.js",
@@ -12,6 +12,7 @@
   },
   "keywords": [
     "tonetouch",
+	"beosonic",
     "loudness",
     "beocreate",
     "sound",

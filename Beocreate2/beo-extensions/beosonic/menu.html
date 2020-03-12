@@ -1,0 +1,114 @@
+<div class="menu-screen" id="beosonic" data-icon="tonetouch.svg" data-namespace="beosonic" data-menu-title="Listening Mode" data-stylesheet="beosonic.css" data-menu-attachment="<div class=&quot;segmented-control beosonic-quick-presets&quot;></div>" data-built-in="1" data-context="sound/basic" data-sort-as="tone" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP">
+	<header>
+		<div class="back-button master"></div>
+		<h1>Listening Mode</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div id="beosonic-control">
+				<img class="square-helper" src="common/square-helper.png">
+				<div id="beosonic-area" style="background-image: url(€/beosonic-circles.svg);">
+					<div id="beosonic-glow"></div>
+				</div>
+				
+				<div class="beosonic-label primary top">Bright</div>
+				<div class="beosonic-label primary bottom">Warm</div>
+				<div class="beosonic-label primary left">Relaxed</div>
+				<div class="beosonic-label primary right">Energetic</div>
+				
+				<div class="beosonic-label secondary nw">Low bass</div>
+				<div class="beosonic-label secondary ne">High treble</div>
+				<div class="beosonic-label secondary sw">Low treble</div>
+				<div class="beosonic-label secondary se">High bass</div>
+				<div id="beosonic-dot"></div>
+			</div>
+			
+			<h2>Presets</h2>
+			<div id="beosonic-presets">
+				
+			</div>
+				
+			<p id="beosonic-preset-instruction" class="hidden"><span id="beosonic-preset-drag-note" class="hidden">Drag to rearrange presets. </span><span id="beosonic-quick-access-note" class="hidden">Presets above the line are shown in the Sound menu for quick access.</span></p>
+			
+			<div class="button pill black hidden" id="beosonic-presets-arranged" onclick="beosonic.editPresets(false);">Presets Arranged</div>
+			<div class="button-row centre" id="beosonic-preset-button-row">
+				<div class="button pill grey" id="beosonic-edit-presets-button" onclick="beosonic.editPresets(true);">Edit List…</div>
+				<div class="button pill black" id="beosonic-save-preset-button" onclick="beosonic.savePreset();">Save New…</div>
+			</div>
+		
+			
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="replace-beosonic-prompt">
+		<h2>Replace existing preset?</h2>
+		<p>A preset with the same name already exists. Would you like to replace it?</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beosonic.replaceExisting(true);">Replace</div>
+			<div class="button pill black cancel default" onclick="beosonic.replaceExisting(false);">Don't Replace</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="beosonic-preset-action-prompt">
+		<h2 class="ask-dynamic-0"></h2>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beosonic.renamePreset();">Rename Preset</div>
+			<div class="button pill grey" onclick="beosonic.deletePreset();">Remove Preset</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="delete-beosonic-preset-prompt">
+		<h2>Remove <span class="ask-dynamic-0">Preset Name</span>?</h2>
+		<p>This cannot be undone.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beosonic.deletePreset(true);">Remove Preset</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Don't Remove</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="beosonic-preset-include-adjustments">
+		<h2 class="ask-dynamic-0"></h2>
+		<p>Choose settings to include in the preset.</p>
+		<div id="beosonic-available-adjustments">
+		
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black default" onclick="beo.askOption(0);">Save Preset</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Don't Save</div>
+		</div>
+	</div>
+	
+	<!--<div class="tabs">
+		<div class="selected" data-select-tab="tone-touch">ToneTouch</div>
+		<div data-select-tab="tone-control-options">More</div>
+	</div>-->
+	
+	<!--<div class="tab visible" id="tone-touch-tab" data-tab-id="tone-touch">
+		<div id="tone-touch-area" style="background-image: url(€/tone-touch-circles.svg);">
+			<div class="tone-touch-field upper left" id="tone-touch-field-1">Warm</div>
+			<div class="tone-touch-field upper right" id="tone-touch-field-2">Excited</div>
+			<div class="tone-touch-field lower left" id="tone-touch-field-3">Relaxed</div>
+			<div class="tone-touch-field lower right" id="tone-touch-field-4">Bright</div>
+		</div>
+		<div id="tone-touch-dot" class="drag-handle" title="Move to adjust bass and treble">
+			<span>Off</span>
+			<div id="tone-touch-scale-area"></div>
+		</div>
+	</div>-->
+	
+	<!--<div class="scroll-area tab" data-tab-id="tone-control-options">
+		<div class="menu-content">
+			<h2 data-translation="adaptiveLoudness">Adaptive Loudness</h2>
+			<div class="slider-wrap">
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/loudness-flat.svg); mask-image: url(€/symbols-black/loudness-flat.svg);"></div>
+				<div class="loudness-slider show-value"></div>
+				<div class="symbol" style="-webkit-mask-image: url(€/symbols-black/loudness-max.svg); mask-image: url(€/symbols-black/loudness-max.svg);"></div>
+			</div>
+			<p>Enhances bass and treble at low listening levels to compensate for sensitivity of the human ear.</p>
+		</div>
+	</div>-->
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/beosonic-client.js"></script>

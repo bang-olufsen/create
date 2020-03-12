@@ -265,6 +265,7 @@ function updatePresetList(moveFrom, moveTo) {
 		presetToMove = presetOrder[moveFrom];
 		presetOrder.splice(moveFrom, 1);
 		presetOrder.splice(moveTo, 0, presetToMove);
+		beo.sendToProduct("beosonic", {header: "arrangePresets", content: {presetOrder: presetOrder}});
 	}
 	$("#beosonic-presets").empty();
 	for (i in presetOrder) {

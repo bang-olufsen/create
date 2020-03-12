@@ -659,9 +659,14 @@ var exec = require("child_process").exec;
 					for (o in settings.sourceOrder) {
 						if (!allSources[settings.sourceOrder[o]]) {
 							// Remove this source from source order.
-							settings.sourceOrder.splice(o, 1);
+							delete settings.sourceOrder[0];
 							orderChanged = true;
 						}
+					}
+					if (orderChanged) { // Remove gaps in the array.
+						settings.sourceOrder = settings.sourceOrder.filter(function (el) {
+							return el != null;
+						});
 					}
 					// Check if any new sources exist in the system.
 					for (source in allSources) {

@@ -720,7 +720,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 					if (debugMode > 2) {
 						console.error("Extension '"+extensionName+"' has no server-side code:", error);
 					} else if (debugMode) {
-						console.error("Extension '"+extensionName+"' has no server-side code.");
+						console.log("Extension '"+extensionName+"' has no server-side code.");
 					}
 					extensionLoadedSuccesfully = true;
 				}

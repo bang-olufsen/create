@@ -1748,6 +1748,13 @@ function showChannelSettings() {
 	}
 }
 
+function getBeosonicPreview() {
+	return {
+		label: "Sound Design",
+		description: "Room compensation and custom equalisation for left and right channels"
+	};
+}
+
 
 // adapted from: https://stackoverflow.com/questions/846221/logarithmic-slider
 function convertHz(value, targetFormat, maxp) {
@@ -1814,7 +1821,8 @@ return {
 	saveCoefficients: saveCoefficients,
 	revertCoefficients: revertCoefficients,
 	showChannelSettings: showChannelSettings,
-	showEqualiser: showEqualiser
+	showEqualiser: showEqualiser,
+	getBeosonicPreview: getBeosonicPreview
 };
 
 })();

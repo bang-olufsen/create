@@ -26,8 +26,7 @@ var version = require("./package.json").version;
 
 
 var defaultSettings = {
-	autoUpdate: false,
-	autoCheck: true
+	autoCheck: true,
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
@@ -44,6 +43,7 @@ beo.bus.on('general', function(event) {
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "software-update") {
 			checkForUpdate();
+			autoUpdateMode();
 		}
 		
 		if (event.content == "general-settings") {
@@ -71,6 +71,12 @@ beo.bus.on('software-update', function(event) {
 		}
 	}
 	
+	if (event.header == "autoUpdateMode") {
+		if (event.content.mode != undefined) {
+			autoUpdateMode(event.content.mode);
+		}
+	}
+	
 	if (event.header == "install") {
 		installUpdate();
 	}
@@ -85,7 +91,7 @@ var releaseNotes = "";
 function checkForUpdate(forceCheck) {
 	checkTime = new Date().getTime();
 	if (checkTime - lastChecked > 300000 || forceCheck) {
-		exec("/opt/hifiberry/bin/update --check", function(error, stdout, stderr) {
+		exec("/opt/hifiberry/bin/update --latest --check", function(error, stdout, stderr) {
 			lastChecked = checkTime;
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
@@ -120,10 +126,10 @@ function installUpdate() {
 		updateInProgress = true;
 		if (beo.developerMode) {
 			if (debug) console.log("Starting software update simulation.");
-			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate"]);
+			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--latest"]);
 		} else {
 			if (debug) console.log("Starting software update.");
-			updateProcess = spawn("/opt/hifiberry/bin/update");
+			updateProcess = spawn("/opt/hifiberry/bin/update", ["--latest"]);
 		}
 		//updateProcess = spawn("curl", ["https://www.hifiberry.com/images/updater-20191030-pi3.tar.gz", "-o", "updater.tar.gz", "--progress-bar"], {cwd: "/data"});
 		
@@ -220,6 +226,40 @@ function startAutoCheckTimeout() {
 	autoCheckTimeout = setTimeout(function() {
 		checkForUpdate();
 	}, 86400000) // Check once per day.
+}
+
+function autoUpdateMode(mode) {
+	if (mode) {
+		switch (mode) {
+			case "critical":
+			case "stable":
+			case "latest":
+			case "experimental":
+				fs.writeFileSync("/etc/update.release", mode);
+				break;
+			case false:
+				fs.writeFileSync("/etc/update.release", "off");
+				break;
+		}
+	} else {
+		if (fs.existsSync("/etc/update.release")) {
+			modeRead = fs.readFileSync("/etc/update.release", "utf8").trim();
+			switch (modeRead) {
+				case "critical":
+				case "stable":
+				case "latest":
+				case "experimental":
+					mode = modeRead;
+					break;
+				default:
+					mode = false;
+					break;
+			}
+		} else {
+			mode = false;
+		}
+	}
+	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: mode}});
 }
 
 

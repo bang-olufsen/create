@@ -19,11 +19,11 @@
 	self = this;
 	this.container = container;
 	this.graphs = [
-		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
-		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
-		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
-		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0},
-		{data: [], show: true, fill: false, lineWidth: 1.5, offset: 0}
+		{data: [], show: true, fill: false, lineWidth: 1, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1, offset: 0},
+		{data: [], show: true, fill: false, lineWidth: 1, offset: 0}
 	];
 	this.pi = Math.PI;
 	

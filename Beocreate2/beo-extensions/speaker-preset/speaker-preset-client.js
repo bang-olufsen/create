@@ -1,49 +1,49 @@
-var sound_preset = (function() {
+var speaker_preset = (function() {
 
-soundPresets = {};
+speakerPresets = {};
 excludedSettings = [];
 settingsCount = 0;
-currentSoundPreset = null;
-selectedSoundPreset = null;
+currentSpeakerPreset = null;
+selectedSpeakerPreset = null;
 willInstallFallbackDSP = false;
 
-$(document).on("sound-preset", function(event, data) {
+$(document).on("speaker-preset", function(event, data) {
 	if (data.header == "presets") {
 		
-		if (data.content.compactPresetList && !_.isEqual(soundPresets, data.content.compactPresetList)) {
-			soundPresets = data.content.compactPresetList;
+		if (data.content.compactPresetList && !_.isEqual(speakerPresets, data.content.compactPresetList)) {
+			speakerPresets = data.content.compactPresetList;
 			
 			// List presets in the UI, separating Bang & Olufsen and other presets.
-			$(".sound-preset-collection").empty();
+			$(".speaker-preset-collection").empty();
 			
-			bangOlufsenSoundPresetCount = 0;
-			customSoundPresetCount = 0;
-			for (presetID in soundPresets) {
+			bangOlufsenSpeakerPresetCount = 0;
+			customSpeakerPresetCount = 0;
+			for (presetID in speakerPresets) {
 				presetItem = beo.createCollectionItem({
-					classes: ["sound-preset-item"],
-					label: soundPresets[presetID].presetName,
-					icon: soundPresets[presetID].productImage,
+					classes: ["speaker-preset-item"],
+					label: speakerPresets[presetID].presetName,
+					icon: speakerPresets[presetID].productImage,
 					//onclickSecondary: "console.log('Favourited "+presetID+".');",
 					//secondarySymbol: "common/symbols-black/star.svg",
 					data: {"data-preset-id": presetID},
-					onclick: "sound_preset.selectPreset('"+presetID+"');",
+					onclick: "speaker_preset.selectPreset('"+presetID+"');",
 					checkmark: true
 				});
 				
-				if (soundPresets[presetID].bangOlufsenProduct) {
-					$(".bang-olufsen-sound-presets").append(presetItem);
-					bangOlufsenSoundPresetCount++;
+				if (speakerPresets[presetID].bangOlufsenProduct) {
+					$(".bang-olufsen-speaker-presets").append(presetItem);
+					bangOlufsenSpeakerPresetCount++;
 				} else {
-					$(".custom-sound-presets").append(presetItem);
-					customSoundPresetCount++;
+					$(".custom-speaker-presets").append(presetItem);
+					customSpeakerPresetCount++;
 				}
 			}
 		}
 		
-		if (data.content.currentSoundPreset) {
-			currentSoundPreset = data.content.currentSoundPreset;
+		if (data.content.currentSpeakerPreset) {
+			currentSpeakerPreset = data.content.currentSpeakerPreset;
 		} else {
-			currentSoundPreset = null;
+			currentSpeakerPreset = null;
 		}
 		
 		if (data.content.action) {
@@ -60,45 +60,45 @@ $(document).on("sound-preset", function(event, data) {
 	
 	if (data.header == "currentPresetName") {
 		if (data.content.presetName) {
-			$(".current-sound-preset-name").text(data.content.presetName);
+			$(".current-speaker-preset-name").text(data.content.presetName);
 		} else {
-			$(".current-sound-preset-name").text("");
+			$(".current-speaker-preset-name").text("");
 		}
 	}
 	
 	if (data.header == "presetPreview") {
 		if (data.content.preset) {
 			preset = data.content.preset;
-			selectedSoundPreset = data.content.preset.fileName;
-			$(".sound-preset-information h1").text(preset.presetName);
-			$(".sound-preset-product-image").css("background-image", "url("+preset.productImage+")");
+			selectedSpeakerPreset = data.content.preset.fileName;
+			$(".speaker-preset-information h1").text(preset.presetName);
+			$(".speaker-preset-product-image").css("background-image", "url("+preset.productImage+")");
 			if (preset.bangOlufsenProduct) {
-				$(".sound-preset-beo-logo").removeClass("hidden");
-				$(".sound-preset-information h2").addClass("hidden");
+				$(".speaker-preset-beo-logo").removeClass("hidden");
+				$(".speaker-preset-information h2").addClass("hidden");
 			} else {
-				$(".sound-preset-beo-logo").addClass("hidden");
-				$(".sound-preset-information h2").removeClass("hidden");
+				$(".speaker-preset-beo-logo").addClass("hidden");
+				$(".speaker-preset-information h2").removeClass("hidden");
 			}
 			
 			if (preset.description) {
-				$(".sound-preset-information p.description").text(preset.description);
+				$(".speaker-preset-information p.description").text(preset.description);
 			} else {
-				$(".sound-preset-information p.description").text("");
+				$(".speaker-preset-information p.description").text("");
 			}
 			
 			if (data.content.currentDSPProgram) {
-				$(".sound-preset-install-fallback-dsp .current-dsp-program-name").text(data.content.currentDSPProgram);
+				$(".speaker-preset-install-fallback-dsp .current-dsp-program-name").text(data.content.currentDSPProgram);
 			} else {
-				$(".sound-preset-install-fallback-dsp .current-dsp-program-name").text("unknown program");
+				$(".speaker-preset-install-fallback-dsp .current-dsp-program-name").text("unknown program");
 			}
 			
 			excludedSettings = [];
 			willInstallFallbackDSP = false;
 			settingsCount = 0;
-			$(".apply-sound-preset-button").removeClass("disabled");
+			$(".apply-speaker-preset-button").removeClass("disabled");
 			
-			$(".sound-preset-contents").empty();
-			$(".sound-preset-install-fallback-dsp").addClass("hidden");
+			$(".speaker-preset-contents").empty();
+			$(".speaker-preset-install-fallback-dsp").addClass("hidden");
 			
 			if (product_information && product_information.clearPresetPreview) {
 				product_information.clearPresetPreview();
@@ -113,25 +113,25 @@ $(document).on("sound-preset", function(event, data) {
 							presetPreview = beo.executeFunction(preset.content[soundAdjustment].report.previewProcessor, [preset.content[soundAdjustment].report, preset.presetName]);
 							menuOptions = {
 								label: presetPreview[0],
-								onclick: 'sound_preset.toggleSetting(\''+soundAdjustment+'\');',
+								onclick: 'speaker_preset.toggleSetting(\''+soundAdjustment+'\');',
 								icon: $("#"+soundAdjustment).attr("data-asset-path")+"/symbols-black/"+$("#"+soundAdjustment).attr("data-icon"),
 								toggle: true,
 								twoRows: true,
 								customMarkup: presetPreview[1],
-								classes: ["sound-preset-toggle", soundAdjustment]
+								classes: ["speaker-preset-toggle", soundAdjustment]
 							};
 							if (presetPreview[2] && presetPreview[2] != "") {
-								//$(".sound-preset-contents").append('<p class="warning">'+presetPreview[2]+'</p>');
+								//$(".speaker-preset-contents").append('<p class="warning">'+presetPreview[2]+'</p>');
 								menuOptions.customMarkup += '<p class="warning">'+presetPreview[2]+'</p>';
-								$(".sound-preset-install-fallback-dsp").removeClass("hidden");
+								$(".speaker-preset-install-fallback-dsp").removeClass("hidden");
 								$(".install-fallback-dsp-toggle").addClass("on");
 								willInstallFallbackDSP = true;
 							}
-							$(".sound-preset-contents").append(beo.createMenuItem(menuOptions));
+							$(".speaker-preset-contents").append(beo.createMenuItem(menuOptions));
 						
 						
 						}
-						//$(".sound-preset-contents").append(presetPreview[1]);
+						//$(".speaker-preset-contents").append(presetPreview[1]);
 					}
 					settingsCount++;
 				} else if (preset.content[soundAdjustment].status == 2) {
@@ -143,17 +143,17 @@ $(document).on("sound-preset", function(event, data) {
 				}
 			}
 			
-			beo.showPopupView("sound-preset-preview-popup");
+			beo.showPopupView("speaker-preset-preview-popup");
 		}
 		
 	}
 	
 	if (data.header == "presetApplied" && data.content.presetID) {
 	
-		beo.notify({title: soundPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
-		beo.hidePopupView("sound-preset-preview-popup");
+		beo.notify({title: speakerPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
+		beo.hidePopupView("speaker-preset-preview-popup");
 		
-		currentSoundPreset = data.content.presetID;
+		currentSpeakerPreset = data.content.presetID;
 		showCurrentPreset();
 	}
 	
@@ -169,7 +169,7 @@ $(document).on("sound-preset", function(event, data) {
 				beo.notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is a system preset. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "askToReplace":
-				beo.ask("replace-sound-preset-prompt", [data.content.existingPresetName], null, "sound_preset.replaceExistingPreset(false);");
+				beo.ask("replace-speaker-preset-prompt", [data.content.existingPresetName], null, "speaker_preset.replaceExistingPreset(false);");
 				break;
 		}
 	}
@@ -180,15 +180,15 @@ function toggleSetting(setting) {
 	settingIndex = excludedSettings.indexOf(setting);
 	if (settingIndex == -1) {
 		excludedSettings.push(setting);
-		$(".sound-preset-toggle."+setting).removeClass("on");
+		$(".speaker-preset-toggle."+setting).removeClass("on");
 	} else {
 		excludedSettings.splice(settingIndex, 1);
-		$(".sound-preset-toggle."+setting).addClass("on");
+		$(".speaker-preset-toggle."+setting).addClass("on");
 	}
 	if (settingsCount == excludedSettings.length) {
-		$(".apply-sound-preset-button").addClass("disabled");
+		$(".apply-speaker-preset-button").addClass("disabled");
 	} else {
-		$(".apply-sound-preset-button").removeClass("disabled");
+		$(".apply-speaker-preset-button").removeClass("disabled");
 	}
 }
 
@@ -203,42 +203,42 @@ function toggleInstallFallbackDSP() {
 }
 
 function selectPreset(presetID) {
-	beo.send({target: "sound-preset", header: "selectSoundPreset", content: {presetID: presetID}});
-	//beo.showPopupView("sound-preset-preview-popup");
+	beo.send({target: "speaker-preset", header: "selectSpeakerPreset", content: {presetID: presetID}});
+	//beo.showPopupView("speaker-preset-preview-popup");
 }
 
 function showCurrentPreset() {
-	$(".sound-preset-item.checked").removeClass("checked");
-	if (currentSoundPreset) {
-		$('.sound-preset-item[data-preset-id="'+currentSoundPreset+'"]').addClass("checked");
+	$(".speaker-preset-item.checked").removeClass("checked");
+	if (currentSpeakerPreset) {
+		$('.speaker-preset-item[data-preset-id="'+currentSpeakerPreset+'"]').addClass("checked");
 	}
 }
 
 function closePreview() {
-	beo.hidePopupView("sound-preset-preview-popup");
-	selectedSoundPreset = null;
+	beo.hidePopupView("speaker-preset-preview-popup");
+	selectedSpeakerPreset = null;
 }
 
 function applyPreset() {
-	beo.send({target: "sound-preset", header: "applySoundPreset", content: {presetID: selectedSoundPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
+	beo.send({target: "speaker-preset", header: "applySpeakerPreset", content: {presetID: selectedSpeakerPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
 }
 
 function optionsForSelectedPreset() {
-	if (selectedSoundPreset) {
-		if (soundPresets[selectedSoundPreset].readOnly) {
-			beo.ask("sound-preset-options-readonly-prompt");
+	if (selectedSpeakerPreset) {
+		if (speakerPresets[selectedSpeakerPreset].readOnly) {
+			beo.ask("speaker-preset-options-readonly-prompt");
 		} else {
-			beo.ask("sound-preset-options-prompt");
+			beo.ask("speaker-preset-options-prompt");
 		}
 	}
 }
 
 function deletePreset(confirmed) {
-	if (selectedSoundPreset) {
+	if (selectedSpeakerPreset) {
 		if (!confirmed) {
-			beo.ask("delete-sound-preset-prompt", [soundPresets[selectedSoundPreset].presetName]);
+			beo.ask("delete-speaker-preset-prompt", [speakerPresets[selectedSpeakerPreset].presetName]);
 		} else {
-			beo.send({target: "sound-preset", header: "deleteSoundPreset", content: {presetID: selectedSoundPreset}});
+			beo.send({target: "speaker-preset", header: "deleteSpeakerPreset", content: {presetID: selectedSpeakerPreset}});
 			closePreview();
 			beo.ask();
 		}
@@ -247,7 +247,7 @@ function deletePreset(confirmed) {
 
 function replaceExistingPreset(replace) {
 	beo.ask();
-	beo.send({target: "sound-preset", header: "replaceExistingPreset", content: {replace: replace}});
+	beo.send({target: "speaker-preset", header: "replaceExistingPreset", content: {replace: replace}});
 }
 
 return {

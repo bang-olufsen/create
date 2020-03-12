@@ -1,12 +1,12 @@
-# Sound Presets
+# Speaker Presets
 
 Beocreate 2 integrates with *Beocreate 4-Channel Amplifier*, which contains a flexible and powerful *DSP* (digital signal processor) for customising the sound signature of the system.
 
-Sound presets are collections of sound adjustment settings that can be applied at once, instantly. Presets can be imported right in the user interface (Sound > Sound Preset > Import Preset). In this document we cover how the presets work and how they can be created.
+Speaker presets are collections of sound adjustment settings that can be applied at once, instantly. Presets can be imported right in the user interface (Sound > Speaker Preset > Import Preset). In this document we cover how the presets work and how they can be created.
 
 ### New in Beocreate 2
 
-In Beocreate 2, sound presets (previously called *sound profiles*) are now separated from DSP programs for greater flexibility:
+In Beocreate 2, speaker presets (previously called *sound profiles*) are now separated from DSP programs for greater flexibility:
 
 1. A DSP program determines the sound processing flow and which sound adjustment features are available.
 2. A sound preset contains the actual settings that are dynamically applied to the DSP program (equaliser and crossover parameters, levels, delays, ...).
@@ -14,10 +14,10 @@ In Beocreate 2, sound presets (previously called *sound profiles*) are now separ
 
 ## Data Format: JSON
 
-In essence, sound presets are JSON files. The following is an example of a valid, although nonsensical, sound preset file:
+In essence, speaker presets are JSON files. The following is an example of a valid, although nonsensical, speaker preset file:
 
 	{
-		"sound-preset": {
+		"speaker-preset": {
 			"presetName": "Beovox CX 50",
 			"productIdentity": "beovox-cx50",
 			"fallbackDSP": "beocreate-universal",
@@ -52,7 +52,7 @@ In essence, sound presets are JSON files. The following is an example of a valid
 		}
 	}
 
-The file has been divided into three top-level items: **sound-preset**, **equaliser** and **channels**. Each of these correspond to different *extensions* in Beocreate 2, which will handle the settings when previewing and applying the preset.
+The file has been divided into three top-level items: **speaker-preset**, **equaliser** and **channels**. Each of these correspond to different *extensions* in Beocreate 2, which will handle the settings when previewing and applying the preset.
 
 *Note:* These settings are currently supported by the default Beocreate 2 extensions and Beocreate Universal DSP program. Other extensions and DSP programs can add support for more settings.
 
@@ -74,9 +74,9 @@ Preset name should be embedded in the *sound-preset* section of the file as *pre
 Next, we will cover the different sections and possible settings of a preset in detail. Required settings in each section are indicated as such, others are optional.
 
 
-## sound-preset
+## speaker-preset
 
-This is the only ***required section***. It stores basic information about the sound preset, listed below.
+This is the only ***required section***. It stores basic information about the speaker preset, listed below.
 
 #### Preset Name
 
@@ -88,7 +88,7 @@ This is the only ***required section***. It stores basic information about the s
 
 	"productIdentity": "beovox-cx50"
 
-The identifier of a "product identity", that may contain information such as model name, manufacturer, designer, manufacturing years and a product image. Several product identities are included in Beocreate 2. Define this property to use a standalone product identity or an identity from another sound preset.
+The identifier of a "product identity", that may contain information such as model name, manufacturer, designer, manufacturing years and a product image. Several product identities are included in Beocreate 2. Define this property to use a standalone product identity or an identity from another speaker preset.
 
 For more information on product identities, refer to [this document](ProductIdentities.md).
 
@@ -96,7 +96,7 @@ For more information on product identities, refer to [this document](ProductIden
 
 	"fallbackDSP": "beocreate-universal"
 
-If the current DSP program doesn't support all of the settings in the preset, install the DSP program with this file name, if it is available on the system. For all default sound presets, this is "beocreate-universal". Other presets can use it as well if suitable.
+If the current DSP program doesn't support all of the settings in the preset, install the DSP program with this file name, if it is available on the system. For all default speaker presets, this is "beocreate-universal". Other presets can use it as well if suitable.
 
 #### Sampling Rate
 
@@ -104,13 +104,7 @@ If the current DSP program doesn't support all of the settings in the preset, in
 
 *Required in some cases*. The value is in Hz.
 
-If the sound preset contains filters defined as coefficients directly (explained later), the sampling rate has to be defined so that it can be matched with the DSP program. If not defined, those filters will be ignored. The sampling rate can also be defined with each filter, but this is an easier way.
-
-#### Read-only
-
-	"readOnly": false
-
-Read-only sound presets can't be deleted or replaced from the user interface.
+If the speaker preset contains filters defined as coefficients directly (explained later), the sampling rate has to be defined so that it can be matched with the DSP program. If not defined, those filters may not sound the way as intended. The sampling rate can also be defined with each filter, but this is an easier way.
 
 #### Preset Version
 
@@ -288,7 +282,7 @@ Possible values are: *true* or *false*.
 
 ## Product Identities
 
-The purpose and structure of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in sound presets by adding a *product-information* section and defining the same properties there:
+The purpose and structure of product identities are covered [here](ProductIdentities.md). Product identities can be embedded in speaker presets by adding a *product-information* section and defining the same properties there:
 
 	"product-information": {
 		"modelID": "beovox-cx50",

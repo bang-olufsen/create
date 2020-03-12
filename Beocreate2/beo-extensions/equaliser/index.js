@@ -113,7 +113,7 @@ var _ = beo.underscore;
 		}
 		
 		if (event.header == "getSettings") {
-			beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d, l: settings.l, r: settings.r}, canControl: canControlEqualiser, Fs: Fs}});
+			beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d, l: settings.l, r: settings.r}, canControl: canControlEqualiser, Fs: Fs, disabledTemporarily: disabledTemporarily}});
 		}
 		
 		if (event.header == "setScale") {
@@ -270,6 +270,17 @@ var _ = beo.underscore;
 			}
 			beo.sendToUI("equaliser", {header: "settings", content: {channels: sendChannels}});
 			beo.saveSettings("equaliser", settings);
+		}
+		
+		if (event.header == "compare" && event.content.channel) {
+			compareChannel = getGroupedChannels(event.content.channel);
+			
+			for (var c = 0; c < compareChannel.length; c++) {
+				channel = compareChannel.charAt(c);
+				disable = (event.content.on) ? true : false;
+				tempDisable(disable, [channel]);
+			}
+			beo.sendToUI("equaliser", {header: "disabledTemporarily", content: disabledTemporarily});
 		}
 		
 		if (event.header == "setFilter" && event.content.items) {
@@ -460,7 +471,7 @@ var _ = beo.underscore;
 		return {compatibilityIssues: compatibilityIssues, validatedSettings: validatedSettings, previewProcessor: "equaliser.generateSettingsPreview"};
 	}
 	
-	function applySoundPreset(theSettings, samplingRate) {
+	function applySpeakerPreset(theSettings, samplingRate) {
 		settings = Object.assign(settings, checkSettings(theSettings, samplingRate).validatedSettings);
 		for (var c = 0; c < 4; c++) {
 			channel = "abcd".charAt(c);
@@ -496,7 +507,7 @@ var _ = beo.underscore;
 			
 			// Loop through the whole available DSP filter bank.
 			// If the current settings have more filters, apply as many as possible. If there are fewer, the filter function will automatically apply a flat filter instead.
-			if (debug) console.log("Applying biquad filters for channel "+channel.toUpperCase()+"...");
+			if (debug >= 2) console.log("Applying biquad filters for channel "+channel.toUpperCase()+"...");
 			crossoverTypesImported = false;
 			for (var f = 0; f < canControlEqualiser[channel]; f++) {
 				if (importCrossoverType(channel, f)) crossoverTypesImported = true;
@@ -857,7 +868,7 @@ function getDriverType(low, high) {
 module.exports = {
 	checkSettings: checkSettings,
 	getDriverTypes: function() {return driverTypes},
-	applySoundPreset: applySoundPreset,
+	applySpeakerPreset: applySpeakerPreset,
 	tempDisable: tempDisable,
 	version: version
 };

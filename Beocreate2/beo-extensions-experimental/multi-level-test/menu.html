@@ -7,42 +7,25 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
-			<div class="categories">
-			<div class="menu-item chevron" onclick="multi_level.goTo(3);">
+			<p>This extension will clone a "prototype" of the deep menu as many times as needed to go deeper.</p>
+			<div class="menu-item chevron" onclick="multi_level.nextLevel();">
+				<div class="menu-label">Go to Level 2</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="menu-screen" id="multi-level-test-prototype" data-parent-extension="multi-level-test" data-menu-title="Multi-Level L2">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Multi-Level L2</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="menu-item chevron next-level-menu-item" onclick="multi_level.nextLevel();">
 				<div class="menu-label">Go to Level 3</div>
-			</div>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="menu-screen" id="multi-level-test-l3" data-parent-extension="multi-level-test" data-menu-title="Multi-Level L3">
-	
-	<header>
-		<div class="back-button master"></div>
-		<h1>Multi-Level L3</h1>
-	</header>
-	
-	<div class="scroll-area">
-		<div class="menu-content">
-			<div class="menu-item chevron" onclick="multi_level.goTo(4);">
-				<div class="menu-label">Go to Level 4</div>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="menu-screen" id="multi-level-test-l4" data-parent-extension="multi-level-test" data-menu-title="Multi-Level L4">
-	
-	<header>
-		<div class="back-button master"></div>
-		<h1>Multi-Level L4</h1>
-	</header>
-	
-	<div class="scroll-area">
-		<div class="menu-content">
-			<div class="menu-item chevron disabled" onclick="multi_level.goTo(5);">
-				<div class="menu-label">Go to Level 5</div>
 			</div>
 		</div>
 	</div>

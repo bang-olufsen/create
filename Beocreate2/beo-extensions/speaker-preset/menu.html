@@ -1,0 +1,143 @@
+<div class="menu-screen setup-large-title" id="speaker-preset" data-icon="preset.svg" data-menu-title="Speaker Preset" data-stylesheet="speaker-preset.css" data-menu-value-class="current-speaker-preset-name" data-built-in="1" data-context="sound/basic" data-enable-with="Beocreate 4-Channel Amplifier">
+	<header>
+		<div class="back-button master setup"></div>
+		<h1>Speaker Preset</h1>
+	</header>
+	
+	<!--<div class="tabs">
+		<div class="selected" data-select-tab="speaker-presets-beo">Bang &amp; Olufsen</div>
+		<div data-select-tab="speaker-presets-custom">Custom</div>
+	</div> -->
+
+	<div class="scroll-area">
+		
+		
+		<div class="menu-content">
+			<p class="setup-prompt">Select a preset for your speakers. You can customise the sound later.</p>
+			<h2 class="disclosure on" data-disclosure=".bang-olufsen-speaker-presets">Bang &amp; Olufsen</h2>
+			<!--<p>Presets designed by our acousticians specifically for these speaker models.</p>-->
+			
+			<div class="collection speaker-preset-collection bang-olufsen-speaker-presets">
+				
+				<!--<div class="collection-item">
+					<img class="square-helper" src="common/square-helper.png"> 
+					<div class="collection-item-content">
+						<img class="collection-icon" src="product-images/beovox-cx50.png">
+						<div class="collection-item-text">
+							<div class="collection-label lower">Beovox CX 50</div>
+						</div>
+					</div>
+				</div>-->
+				
+			</div>
+		
+			<h2 class="disclosure on" data-disclosure=".custom-speaker-presets">Other</h2>
+			
+			<div class="collection speaker-preset-collection custom-speaker-presets margin-bottom">
+			</div>
+			
+			
+			<!--<div class="menu-item icon setup-hide">
+				<img class="menu-icon" src="common/symbols-black/add.svg">
+				<div class="menu-label">Save New Preset...</div>
+			</div>
+			
+			<div class="menu-item icon">
+				<img class="menu-icon" src="€/symbols-black/upload.svg">
+				<div class="menu-label">Import Preset...</div>
+			</div>-->
+			<div class="button pill grey" onclick="beo.uploadFile({title: 'Import Speaker Preset', uploadMessage: 'Importing speaker preset...', types: ['.json']}, 'speaker-preset');">Import Preset…</div>
+			<div class="button-row centre setup-hide hidden">
+				<div class="button pill black">Save…</div>
+				<div class="button pill">Import…</div>
+			</div>
+		</div>
+	</div>
+	
+		<div class="popup-content hidden" id="speaker-preset-preview-popup">
+			<header class="popup">
+				<div class="button symbol left" onclick="speaker_preset.closePreview();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+				<h1>Speaker Preset</h1>
+				<div class="button symbol right setup-hide" onclick="speaker_preset.optionsForSelectedPreset();" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
+			</header>
+			
+			<div class="scroll-area">
+				<div class="speaker-preset-product-image-wrap header-image-wrap">
+					<div class="speaker-preset-product-image header-image"></div>
+					<div class="speaker-preset-beo-logo hidden"></div>
+				</div>
+				<div class="menu-content">
+					<div class="speaker-preset-information">
+						<h2 class="centre"></h2>
+						<h1>Preset Name</h1>
+						<p class="product"></p>
+						<p class="description"></p>
+						<!--<div class="button-bar">
+							<div class="button symbol border" style="background-image: url(common/symbols-black/delete.svg);"></div>
+							<div class="button symbol border" style="background-image: url(common/symbols-black/share.svg);"></div>
+						</div>-->
+					</div>
+					<hr class="setup-hide">
+					<div class="speaker-preset-install-fallback-dsp setup-hide hidden">
+						<p class="warning">Some settings are incompatible with the current DSP program (<span class="current-dsp-program-name">N/A</span>).</p>
+						<!--<p class="success">A compatible DSP program can be automatically installed.</p>-->
+						<div class="menu-item toggle on install-fallback-dsp-toggle" onclick="speaker_preset.toggleInstallFallbackDSP();">
+							<div class="menu-label">Install Compatible Program</div>
+							<div class="menu-toggle"></div>
+						</div>
+						<hr>
+					</div>
+					
+					
+					<h2 class="disclosure setup-hide" data-disclosure=".speaker-preset-settings">Details</h2>
+					<div class="speaker-preset-settings setup-hide hidden">
+						<div class="speaker-preset-contents">
+							
+						</div>
+						<p class="setup-hide">Only the selected settings will be applied.</p>
+					</div>
+					
+					
+				</div>
+			</div>
+			
+			<footer>
+				<div onclick="speaker_preset.applyPreset();" class="button pill black apply-speaker-preset-button">Use This Speaker Preset</div>
+			</footer>
+		</div>
+	
+	<div class="ask-menu" id="replace-speaker-preset-prompt">
+		<h2>Replace Existing Preset?</h2>
+		<p>'<span class="ask-dynamic-0">Preset Name</span>' has the same file name as the imported preset. Would you like to replace it?</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="speaker_preset.replaceExistingPreset(true);">Replace</div>
+			<div class="button pill black cancel default" onclick="speaker_preset.replaceExistingPreset(false);">Don't Replace</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="speaker-preset-options-prompt">
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="speaker_preset.deletePreset();">Remove Preset...</div>
+			<div class="button pill grey disabled" onclick="speaker_preset.exportPreset();">Export Preset</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="speaker-preset-options-readonly-prompt">
+		<div class="ask-buttons">
+			<div class="button pill grey disabled" onclick="speaker_preset.exportPreset();">Export Preset</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="delete-speaker-preset-prompt">
+		<h2>Remove <span class="ask-dynamic-0">Preset Name</span>?</h2>
+		<p>This cannot be undone.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="speaker_preset.deletePreset(true);">Remove Preset</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Don't Remove</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/speaker-preset-client.js"></script>

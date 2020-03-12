@@ -1,0 +1,33 @@
+<div class="menu-screen" id="alsa-ttable" data-icon="volume-limit.svg" data-menu-title="Channels & limits" data-built-in="1" data-context="sound/adjustments" data-disable-with="Beocreate 4-Channel Amplifier, DAC+ DSP">
+	<header>
+		<div class="back-button master"></div>
+		<h1 data-translation="headerTitle">Channels & limits</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+		
+			<h2>Speaker configuration</h2>
+			<div class="segmented-control" id="alsa-ttable-role">
+				<div onclick="alsa_ttable.selectRole('stereo');" id="ttable-alsa-stereo">Stereo</div>
+				<div onclick="alsa_ttable.selectRole('mono');" id="ttable-alsa-mono">Mono</div>
+			</div>
+			
+			<h2>Volume limit</h2>
+			<div id="alsa-ttable-volume-wrap">
+				<!-- <h2 data-translation="sliderTitleALSA"></h2> -->
+				<div class="slider-wrap">
+					<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume-mute.svg); mask-image: url(common/symbols-black/volume-mute.svg);"></div>
+					<div class="alsa-volume-limit-slider black show-value"></div>
+					<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
+				</div>
+			</div>
+			<p data-translation="limitVolumeNotice">Limit the maximum volume level for sources.</p>
+			
+			<div class="button margin-top pill grey" onclick="alsa_ttable.save();">Store Adjustments...</div>
+			<p>Activate adjustments. This will stop the currently playing source.</p>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/alsa-ttable-client.js"></script>

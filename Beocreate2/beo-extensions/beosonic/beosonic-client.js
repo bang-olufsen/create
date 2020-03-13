@@ -354,10 +354,11 @@ function editPresets(editing) {
 }
 
 var newPresetName = null;
-function savePreset(withAdjustments, systemPresetConflict = false) {
+function savePreset(withAdjustments, systemPresetConflict = false, preselectAdjustments = null) {
 	if (!withAdjustments) {
-		beo.startTextInput(1, "New Preset", 
-			(!systemPresetConflict) ? "Enter a name for this preset." : "A built-in preset with this name already exists. Please choose another name.", 
+		if (preselectAdjustments) defaultAdjustments = preselectAdjustments;
+		beo.startTextInput(1, "New Listening Mode", 
+			(!systemPresetConflict) ? "Enter a name for this listening mode preset." : "A built-in preset with this name already exists. Please choose another name.", 
 			{text: (!systemPresetConflict) ? "" : beosonicPresets[systemPresetConflict].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}}, function(input) {
 			// Validate and store input.
 			if (input && input.text) {
@@ -391,15 +392,16 @@ function replaceExisting(confirmed) {
 
 var availableAdjustments = ["beosonic", "channels", "equaliser"];
 var selectedAdjustments = [];
+var defaultAdjustments = [];
 function selectAdjustmentsToInclude(toggleAdjustment) {
 	if (!toggleAdjustment) {
 		// List adjustments.
-		selectedAdjustments = ["beosonic"];
+		selectedAdjustments = ["beosonic"].concat(defaultAdjustments);
 		$("#beosonic-available-adjustments").empty();
 		for (a in availableAdjustments) {
 			menuOptions = {
 					icon: extensions[availableAdjustments[a]].assetPath+"/symbols-black/"+extensions[availableAdjustments[a]].icon,
-					toggle: false,
+					toggle: (selectedAdjustments.indexOf(availableAdjustments[a]) != -1) ? true : false,
 					onclick: "beosonic.selectAdjustmentsToInclude('"+availableAdjustments[a]+"');",
 					id: "beosonic-selected-adjustment-toggle-"+availableAdjustments[a]
 				};
@@ -407,7 +409,6 @@ function selectAdjustmentsToInclude(toggleAdjustment) {
 			if (availableAdjustments[a] == "beosonic") {
 				menuOptions.label = "Beosonic";
 				menuOptions.description = "Bass and treble";
-				menuOptions.toggle = true;
 				menuOptions.disabled = true;
 				beosonicPreview = true;
 			} else {

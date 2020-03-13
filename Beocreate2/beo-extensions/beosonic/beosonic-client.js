@@ -363,7 +363,7 @@ function editPresets(editing) {
 var newPresetName = null;
 function savePreset(withAdjustments, systemPresetConflict = false, preselectAdjustments = null) {
 	if (!withAdjustments) {
-		defaultAdjustments = (preselectedAdjustments) ? preselectAdjustments : [];
+		defaultAdjustments = (preselectAdjustments) ? preselectAdjustments : [];
 		beo.startTextInput(1, "New Listening Mode", 
 			(!systemPresetConflict) ? "Enter a name for this listening mode preset." : "A built-in preset with this name already exists. Please choose another name.", 
 			{text: (!systemPresetConflict) ? "" : beosonicPresets[systemPresetConflict].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}}, function(input) {

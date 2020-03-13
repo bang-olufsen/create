@@ -80,17 +80,19 @@ $(document).on("beosonic", function(event, data) {
 	}
 	
 	if (data.header == "savingPreset") {
-		if (data.content.exists) {
-			if (beosonicPresets[data.content.exists].readOnly) {
-				// Can't replace system preset. Choose new name.
-				savePreset(null, data.content.exists);
+		if (newPresetName) {
+			if (data.content.exists) {
+				if (beosonicPresets[data.content.exists].readOnly) {
+					// Can't replace system preset. Choose new name.
+					savePreset(null, data.content.exists);
+				} else {
+					// Ask to replace.
+					beo.ask("replace-beosonic-prompt");
+				}
 			} else {
-				// Ask to replace.
-				beo.ask("replace-beosonic-prompt");
+				// Ask which sound adjustments to include.
+				selectAdjustmentsToInclude();
 			}
-		} else {
-			// Ask which sound adjustments to include.
-			selectAdjustmentsToInclude();
 		}
 	}
 	

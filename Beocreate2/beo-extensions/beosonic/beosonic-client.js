@@ -71,7 +71,12 @@ $(document).on("beosonic", function(event, data) {
 					updateQuickPresets();
 				}
 			}
+			
+			if (data.content.presetSaved) {
+				beo.notify({title: beosonicPresets[data.content.presetSaved].presetName, message: "Listening mode saved", icon: "common/symbols-black/checkmark-round.svg"});
+			}
 		}
+		
 	}
 	
 	if (data.header == "savingPreset") {

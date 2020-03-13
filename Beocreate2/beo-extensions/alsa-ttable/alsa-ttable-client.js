@@ -7,16 +7,11 @@ settings = {
 
 $(document).on("alsa-ttable", function(event, data) {
 	
-	console.log("event: "+data.header);
 
 	if (data.header == "ttableSettings") {
 		
 		if (data.content.settings) {
 			settings = data.content.settings;
-			
-			console.log("settings: ",settings);
-			
-			console.log("settings: "+settings.limit_db+"/"+settings.role)
 			
 			if (settings.limit_db) {
 				$(".alsa-volume-limit-slider span").attr("data-content", alsaVolumeLimitPercentageToSliderText(settings.limit_db))
@@ -54,7 +49,7 @@ function alsaVolumeLimitPercentageToSliderText(value) {
 }
 
 function selectRole(role) {
-	console.log("selecting role "+role)
+	console.log("Selecting role "+role)
 	if (role == "mono") {
 		document.getElementById("ttable-alsa-mono").classList.add("selected");
 		document.getElementById("ttable-alsa-stereo").classList.remove("selected");
@@ -73,7 +68,7 @@ function save() {
 
 return {
 	selectRole: selectRole,
-	save: save,
+	save: save
 }
 
 })();

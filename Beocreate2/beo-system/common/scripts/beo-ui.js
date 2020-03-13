@@ -525,6 +525,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		
 		backTarget = null;
 		backTitle = null;
+		fromDeepMenu = false;
 		
 		
 		if (direction) {
@@ -586,6 +587,12 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 						$("#" + menuToClose).removeClass("block").addClass("hidden-right");
 					}
 				}
+				
+				// Close deep menus too.
+				if (deepMenuState[menuState[selectedParentMenu].submenu] && deepMenuState[menuState[selectedParentMenu].submenu].length > 0) {
+					showDeepMenu(menuState[selectedParentMenu].submenu, menuState[selectedParentMenu].submenu, true);
+					if (menuState[selectedParentMenu].submenu == newExtension) fromDeepMenu = true;
+				}
 			}
 			
 			if (selectedExtension && direction) {
@@ -609,13 +616,15 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 			
 			if (!direction) {
 				if (!invisibly) {
+					if (fromDeepMenu) $("#" + newExtension).addClass("hidden-left").removeClass("hidden-right");
 					$("#" + newExtension).addClass("block new");
 					setTimeout(function() {
-						$("#" + newExtension).removeClass("hidden-right");
+						$("#" + newExtension).removeClass("hidden-right hidden-left");
 						$("#" + selectedParentMenu).addClass("hidden-left");
 						$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
 					}, 50);
 				} else {
+					
 					$("#" + newExtension).addClass("block");
 					$("#" + newExtension).removeClass("hidden-right");
 					$("#" + selectedParentMenu).addClass("hidden-left");
@@ -833,7 +842,7 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 			}
 		}
 		if (oldMenu != newMenu) {
-			activatedExtension(selectedExtension);
+			if (!navigating) activatedExtension(selectedExtension);
 			if (back) {
 				if (!hideNew) {
 					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
@@ -910,6 +919,7 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
+	console.log(menuState, deepMenuState);
 }
 
 

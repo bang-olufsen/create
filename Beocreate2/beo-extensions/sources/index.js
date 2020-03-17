@@ -676,7 +676,7 @@ var exec = require("child_process").exec;
 							for (o in settings.sourceOrder) {
 								try {
 									titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
-								} catch (err) {{
+								} catch (err) {
                                                                         console.log("problem ordering "+settings.sourceOrder[o]);
 								}
 									

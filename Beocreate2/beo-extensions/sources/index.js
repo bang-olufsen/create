@@ -674,7 +674,12 @@ var exec = require("child_process").exec;
 							// This source doesn't exist. Add it to the mix alphabetically (by display name), preserving user order.
 							titles = [];
 							for (o in settings.sourceOrder) {
-								titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
+								try {
+									titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
+								} catch (err) {{
+                                                                        console.log("problem ordering "+settings.sourceOrder[o]);
+								}
+									
 							}
 							newTitle = beo.extensionsList[source].menuTitle;
 							newIndex = 0;

@@ -143,7 +143,6 @@ beo.bus.on('beosonic', function(event) {
 		if (event.content.presetID) {
 			presetID = event.content.presetID;
 			if (compactPresetList[presetID]) {
-				if (debug) console.log("Deleting Beosonic preset '"+presetID+"'...")
 				delete compactPresetList[presetID];
 				delete fullPresetList[presetID];
 				
@@ -153,6 +152,7 @@ beo.bus.on('beosonic', function(event) {
 				settings.presetOrder.splice(index, 1);
 				beo.saveSettings("beosonic", settings);
 				beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, presets: compactPresetList}});
+				if (debug) console.log("Beosonic preset '"+presetID+"' was deleted.");
 			}
 		}
 	}
@@ -431,7 +431,7 @@ function savePresetToFile(withName, withAdjustments) {
 	
 	settings.selectedPreset = newID;
 	if (settings.presetOrder.indexOf(newID) == -1) settings.presetOrder.push(newID);
-	beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, presets: compactPresetList}});
+	beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, presets: compactPresetList, presetSaved: newID}});
 	beo.saveSettings("beosonic", settings);
 	if (debug) console.log("New Beosonic preset '"+withName+"' was saved.")
 }

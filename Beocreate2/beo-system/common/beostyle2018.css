@@ -2127,7 +2127,6 @@ a.button {
 	background-color: var(--button-bg);
 	padding-top: var(--font-spacing-compensation);
 	border: 1px solid transparent;
-	max-width: 350px;
 	box-sizing: border-box;
 	white-space: nowrap;
 	flex-shrink: 0;

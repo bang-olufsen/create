@@ -17,6 +17,7 @@ SOFTWARE.*/
 
 // BEOCREATE SOURCES
 var request = require("request");
+var fetch = require("node-fetch");
 var exec = require("child_process").exec;
 
 	var debug = beo.debug;
@@ -230,22 +231,16 @@ var exec = require("child_process").exec;
 				break;
 		}
 		if (endpoint && processor) {
-			request.get({
-				url: "http://127.0.1.1:"+settings.port+endpoint,
-				json: true
-			}, function(err, res, body) {
-				if (err) {
-					if (debug) console.log("Could not retrieve data: " + err);
-					if (callback) callback(false);
-				} else {
-					if (res.statusCode == 200) {
-						processor(body);
+			fetch("http://127.0.1.1:"+settings.port+endpoint).then(res => {
+				if (res.status == 200) {
+					res.json().then(json => {
+						processor(json);
 						if (callback) callback(true);
-					} else {
-						// No content.
-						if (debug) console.log("Error retrieving data from AudioControl:", res.statusCode, err, body);
-						if (callback) callback(false);
-					}
+					});
+				} else {
+					// No content.
+					if (debug) console.log("Error retrieving data from AudioControl:", res.status, res.statusText, res.text);
+					if (callback) callback(false);
 				}
 			});
 		}
@@ -271,12 +266,12 @@ var exec = require("child_process").exec;
 				break;
 		}
 		if (endpoint) {
-			request.post("http://127.0.1.1:"+settings.port+endpoint, function(err, res, body) {
-				if (err) {
-					if (debug) console.log("Could not send HiFiBerry control command: " + err);
-					if (callback) callback(false, err);
-				} else {
+			fetch("http://127.0.1.1:"+settings.port+endpoint, {method: "post"}).then(res => {
+				if (res.status == 200) {
 					if (callback) callback(true);
+				} else {
+					if (debug) console.log("Could not send HiFiBerry control command: " + res.status, res.statusText);
+					if (callback) callback(false, res.statusText);
 				}
 			});
 		}
@@ -657,7 +652,7 @@ var exec = require("child_process").exec;
 					orderChanged = false;
 					// Check if any sources have been removed from the system.
 					for (o in settings.sourceOrder) {
-						if (!allSources[settings.sourceOrder[o]]) {
+						if (!allSources[settings.sourceOrder[o]] || !beo.extensions[settings.sourceOrder[o]]) {
 							// Remove this source from source order.
 							delete settings.sourceOrder[0];
 							orderChanged = true;
@@ -674,7 +669,7 @@ var exec = require("child_process").exec;
 							// This source doesn't exist. Add it to the mix alphabetically (by display name), preserving user order.
 							titles = [];
 							for (o in settings.sourceOrder) {
-								titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
+								if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
 							}
 							newTitle = beo.extensionsList[source].menuTitle;
 							newIndex = 0;

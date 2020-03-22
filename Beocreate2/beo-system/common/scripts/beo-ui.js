@@ -21,6 +21,7 @@ var extensions = {};
 var selectedExtension = null;
 var stateRestored = false;
 var historyConstructed = false;
+var os = null;
 
 beo = (function() {
 
@@ -28,6 +29,8 @@ uiSettings = {
 	disclosure: {}
 };
 hifiberryOS = false;
+
+os = getOS();
 
 $( document ).ready(function() {
 	// FASTCLICK
@@ -62,6 +65,8 @@ $( document ).ready(function() {
 	} else {
 		attentionIcon.src = "common/hifiberry-wait-animate.svg";
 	}
+
+	$(".device").text(os[1]); // Change strings and instructions in the UI to refer to the correct platform.
 	
 	setTimeout(function() {
 		$("nav.bar .image-cacher").addClass("hidden");
@@ -2047,6 +2052,37 @@ Math.angle = function(x1, y1, x2, y2) {
 	return theta.toFixed(1);
 }
 
+// Detect platform to tailor instructions.
+// https://stackoverflow.com/questions/38241480/detect-macos-ios-windows-android-and-linux-os-with-js
+// (modified to return a human-readable string that will be used in the UI)
+function getOS() {
+	var userAgent = window.navigator.userAgent,
+		platform = window.navigator.platform,
+		macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+		windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+		iosPlatforms = ['iPhone', 'iPad', 'iPod'],
+		os = null;
+		osUI = "";
+	if (macosPlatforms.indexOf(platform) !== -1) {
+		os = 'macos';
+		osUI = "Mac";
+	} else if (iosPlatforms.indexOf(platform) !== -1) {
+		os = 'ios';
+		osUI = platform;
+	} else if (windowsPlatforms.indexOf(platform) !== -1) {
+		os = 'windows';
+		osUI = "Windows device";
+	} else if (/Android/.test(userAgent)) {
+		os = 'android';
+		osUI = "Android device";
+	} else {
+		os = 'other';
+		osUI = "device"
+	}
+
+  return [os, osUI];
+}
+
 
 return {
 	ask: ask,
@@ -2079,7 +2115,8 @@ return {
 	setAppearance: setAppearance,
 	isDarkAppearance: function() {return darkAppearance},
 	insertConnectionGuide: insertConnectionGuide,
-	wizard: wizard
+	wizard: wizard,
+	getOS: getOS
 }
 
 })();

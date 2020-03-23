@@ -654,7 +654,7 @@ var exec = require("child_process").exec;
 					for (o in settings.sourceOrder) {
 						if (!allSources[settings.sourceOrder[o]] || !beo.extensions[settings.sourceOrder[o]]) {
 							// Remove this source from source order.
-							delete settings.sourceOrder[0];
+							delete settings.sourceOrder[o];
 							orderChanged = true;
 						}
 					}

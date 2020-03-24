@@ -17,11 +17,19 @@ SOFTWARE.*/
 
 // DAC+ ADC ANALOGUE INPUT CONTROL FOR BEOCREATE
 
+var fs = require("fs");
+alsaloopConfigModified = 0;
+
+
 var exec = require("child_process").exec;
 
 	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
+	var defaultSettings = {
+		"sensitivity": 0
+	};
+	var configuration = JSON.parse(JSON.stringify(defaultSettings));
 	
 	var sources = null;
 	
@@ -48,12 +56,20 @@ var exec = require("child_process").exec;
 				});
 			}
 			
+			console.log
+			configuration = readAlsaloopConfiguration();
+			if (configuration == null) {
+				configuration = JSON.parse(JSON.stringify(defaultSettings));
+			}
+			
+			
 			
 		}
 		
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "alsaloop") {
 				beo.bus.emit("ui", {target: "alsaloop", header: "alsaloopSettings", content: {loopEnabled: loopEnabled}});
+				beo.bus.emit("ui", {target: "alsaloop", header: "alsaloopSensitivity", content: {sensitivity: configuration.sensitivity}});
 			}
 		}
 	});
@@ -76,6 +92,16 @@ var exec = require("child_process").exec;
 			}
 		
 		}
+		
+		if (event.header == "sensitivity") {
+			
+			if (event.content.sensitivity != undefined) {
+				configuration.sensitivity = event.content.sensitivity
+				writeAlsaloopConfiguration();
+			}
+		
+		}
+		
 	});
 	
 	
@@ -96,7 +122,7 @@ var exec = require("child_process").exec;
 			exec("systemctl enable --now alsaloop.service").on('exit', function(code) {
 				if (code == 0) {
 					loopEnabled = true;
-					if (debug) console.log("ADC enabled.");
+					if (debug) console.log("alsaloop enabled.");
 					callback(true);
 				} else {
 					loopEnabled = false;
@@ -108,13 +134,37 @@ var exec = require("child_process").exec;
 				loopEnabled = false;
 				if (code == 0) {
 					callback(false);
-					if (debug) console.log("ADC disabled.");
+					if (debug) console.log("alsaloop disabled.");
 				} else {
 					callback(false, true);
 				}
 			});
 		}
 	}
+	
+	function writeAlsaloopConfiguration() {
+		// Saves current configuration back into the file.
+		fs.writeFileSync("/etc/alsaloop.json", JSON.stringify(configuration));
+		alsaloopConfigModified = fs.statSync("/etc/alsaloop.json").mtimeMs;
+	}
+
+
+	function readAlsaloopConfiguration() {
+		configuration={}
+		if (fs.existsSync("/etc/alsaloop.json")) {
+			modified = fs.statSync("/etc/alsaloop.json").mtimeMs;
+			if (modified != alsaloopConfigModified) {
+				// Reads configuration into a JavaScript object for easy access.
+				alsaloopConfigModified = modified;
+				alsaloopConfig = fs.readFileSync("/etc/alsaloop.json", "utf8").split('\n');
+				configuration = JSON.parse(alsaloopConfig)
+			}
+			return configuration;
+		}
+		return null
+		
+	}
+
 	
 module.exports = {
 	version: version,

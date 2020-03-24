@@ -195,7 +195,7 @@ var network = (function() {
 		if (data.header == "exitingHotspot") {
 			// When the product applies new network settings, the connection will be temporarily lost. Inform Beocreate app of this so that it knows to auto-reconnect.
 			beo.sendToProductView({header: "autoReconnect", content: {status: "networkConnect", systemID: product_information.systemID(), systemName: product_information.systemName()}});
-			beo.notify({title: "Applying network settings…", message: "Make sure your device is connected to the same network as the product.", icon: "attention", timeout: false, id: "applyingNetworkSettings"});
+			beo.notify({title: "Applying network settings…", message: "Make sure your "+os[1]+" is connected to the same network as the product.", icon: "attention", timeout: false, id: "applyingNetworkSettings"});
 			noConnectionNotifications = true;
 			maxConnectionAttempts = 20;
 		}

@@ -28,7 +28,7 @@ var dataDirectory = "/etc/beocreate/";
 processPath = process.argv[1];
 cmdArgs = process.argv.slice(2);
 if (!cmdArgs[2]) {
-	console.log("Usage: node "+processPath+" [extension] [parameter] [value]")
+	console.log("Usage: node "+processPath+" [extension] [parameter] [value]\nValue supports JSON data types.");
 } else {
 	// [0] extension [1] parameter [2+] value
 	value = cmdArgs.slice(2).join(" ");
@@ -46,14 +46,12 @@ if (!cmdArgs[2]) {
 		settings = {};
 	}
 	if (settings != null) {
-		if (value == "true" || value == "false") {
-			settings[cmdArgs[1]] = (value == "true") ? true : false;
-		} else if (value == "null") {
-			settings[cmdArgs[1]] = null;
-		} else if (isNaN(value)) {
-			settings[cmdArgs[1]] = value;
+		[returnValue, error] = getValueJSON(value);
+		if (error) { // There was an error.
+			console.log("Value could not be interpreted as JSON, falling back to old method.");
+			settings[cmdArgs[1]] = getValue(value);
 		} else {
-			settings[cmdArgs[1]] = Number(value);
+			settings[cmdArgs[1]] = returnValue;
 		}
 		try {
 			fs.writeFileSync(dataDirectory+cmdArgs[0]+".json", JSON.stringify(settings));
@@ -68,3 +66,23 @@ if (!cmdArgs[2]) {
 	}
 }
 process.exit(0);
+
+function getValueJSON(value) {
+	try {
+		return [JSON.parse("{\"data\": "+value+"}").data, null];
+	} catch (error) {
+		return [null, error];
+	}
+}
+
+function getValue(value) {
+	if (value == "true" || value == "false") {
+	 	return (value == "true") ? true : false;
+	} else if (value == "null") {
+		return null;
+	} else if (isNaN(value)) {
+		return value;
+	} else {
+		return Number(value);
+	}
+}

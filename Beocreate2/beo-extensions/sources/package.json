@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/sources",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Music source management for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,6 @@
   "author": "Bang & Olufsen",
   "license": "MIT",
   "dependencies": {
-    "request": "^2.88.0"
+    "node-fetch": "^2.6.0"
   }
 }

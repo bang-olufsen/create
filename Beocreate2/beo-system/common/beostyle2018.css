@@ -2132,6 +2132,10 @@ a.button {
 	flex-shrink: 0;
 }
 
+footer .button.pill {
+	max-width: 350px;
+}
+
 .button.pill:not(.collection-row-item) {
 	height: 35px;
 	margin: 10px auto;

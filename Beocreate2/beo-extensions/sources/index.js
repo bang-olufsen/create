@@ -17,6 +17,7 @@ SOFTWARE.*/
 
 // BEOCREATE SOURCES
 var request = require("request");
+var fetch = require("node-fetch");
 var exec = require("child_process").exec;
 
 	var debug = beo.debug;
@@ -35,7 +36,8 @@ var exec = require("child_process").exec;
 	var focusIndex = 0; // Increment and assign to each source, so that it's known which one activated latest.
 	var defaultSettings = {
 			"port": 81, // HiFiBerry API port.
-			"aliases": {}
+			"aliases": {},
+			"sourceOrder": []
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
@@ -60,6 +62,7 @@ var exec = require("child_process").exec;
 			
 		}
 		
+		
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "sources") {
 				if (!checkingEnabled) checkEnabled();
@@ -79,10 +82,18 @@ var exec = require("child_process").exec;
 				}
 				break;
 			case "getSources":
-				beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource, sourceOrder: settings.sourceOrder}});
 				break;
 			case "getDefaultAliases":
 				beo.bus.emit("ui", {target: "sources", header: "defaultAliases", content: {aliases: defaultAliases}});
+				break;
+			case "arrangeSources":
+				if (event.content.sourceOrder) {
+					settings.sourceOrder = event.content.sourceOrder;
+					if (debug) console.log("Source order is now: "+settings.sourceOrder.join(", ")+".");
+					beo.saveSettings("sources", settings);
+					beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource, sourceOrder: settings.sourceOrder}});
+				}
 				break;
 			case "setAlias":
 				if (event.content.extension) {
@@ -220,22 +231,16 @@ var exec = require("child_process").exec;
 				break;
 		}
 		if (endpoint && processor) {
-			request.get({
-				url: "http://127.0.1.1:"+settings.port+endpoint,
-				json: true
-			}, function(err, res, body) {
-				if (err) {
-					if (debug) console.log("Could not retrieve data: " + err);
-					if (callback) callback(false);
-				} else {
-					if (res.statusCode == 200) {
-						processor(body);
+			fetch("http://127.0.1.1:"+settings.port+endpoint).then(res => {
+				if (res.status == 200) {
+					res.json().then(json => {
+						processor(json);
 						if (callback) callback(true);
-					} else {
-						// No content.
-						if (debug) console.log("Error retrieving data from AudioControl:", res.statusCode, err, body);
-						if (callback) callback(false);
-					}
+					});
+				} else {
+					// No content.
+					if (debug) console.log("Error retrieving data from AudioControl:", res.status, res.statusText, res.text);
+					if (callback) callback(false);
 				}
 			});
 		}
@@ -261,12 +266,12 @@ var exec = require("child_process").exec;
 				break;
 		}
 		if (endpoint) {
-			request.post("http://127.0.1.1:"+settings.port+endpoint, function(err, res, body) {
-				if (err) {
-					if (debug) console.log("Could not send HiFiBerry control command: " + err);
-					if (callback) callback(false, err);
-				} else {
+			fetch("http://127.0.1.1:"+settings.port+endpoint, {method: "post"}).then(res => {
+				if (res.status == 200) {
 					if (callback) callback(true);
+				} else {
+					if (debug) console.log("Could not send HiFiBerry control command: " + res.status, res.statusText);
+					if (callback) callback(false, res.statusText);
 				}
 			});
 		}
@@ -324,7 +329,9 @@ var exec = require("child_process").exec;
 					}
 					
 					if (overview.players[i].supported_commands) {
-						allSources[extension].transportControls = overview.players[i].supported_commands;
+						if (allSources[extension].allowChangingTransportControls) {
+							allSources[extension].transportControls = overview.players[i].supported_commands;
+						}
 						if (overview.players[i].supported_commands.indexOf("play") != -1) {
 							allSources[extension].startable = true;
 						} else {
@@ -332,6 +339,10 @@ var exec = require("child_process").exec;
 						}
 					} else {
 						allSources[extension].startable = false;
+					}
+					
+					if (extension == "bluetooth") {
+						allSources[extension].aliasInNowPlaying = overview.players[i].name;
 					}
 					
 					if (!allSources[extension].metadata.title) {
@@ -352,6 +363,9 @@ var exec = require("child_process").exec;
 			if (metadata.playerState == "unknown") metadata.playerState = "stopped";
 			
 			if (!focusedSource) focusedSource = extension;
+			if (extension == "bluetooth") {
+				allSources[extension].aliasInNowPlaying = metadata.playerName;
+			}
 			
 			metadataChanged = false;
 			playerStateChanged = false;
@@ -567,11 +581,13 @@ var exec = require("child_process").exec;
 					playerState: "stopped",
 					stopOthers: true,
 					transportControls: false,
+					allowChangingTransportControls: true,
 					usesHifiberryControl: false,
 					canLove: false,
 					startable: false,
 					metadata: {},
-					alias: null
+					alias: null,
+					aliasInNowPlaying: null
 				};
 				if (debug) console.log("Registering source '"+extension+"'...");
 			}
@@ -588,6 +604,7 @@ var exec = require("child_process").exec;
 			}
 			if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
 			if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
+			if (options.allowChangingTransportControls != undefined) allSources[extension].allowChangingTransportControls = (options.allowChangingTransportControls) ? true : false;
 			if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
 			if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
 			if (options.startable) allSources[extension].startable = options.startable; // Can this source be started from Beocreate 2?
@@ -604,6 +621,7 @@ var exec = require("child_process").exec;
 				}
 				beo.saveSettings("sources", settings);
 			}
+			if (options.aliasInNowPlaying != undefined) allSources[extension].aliasInNowPlaying = options.aliasInNowPlaying;
 			
 			
 			if (!sourceAdded) { 
@@ -629,7 +647,45 @@ var exec = require("child_process").exec;
 				clearTimeout(sourceRegistrationTimeout)
 				sourceRegistrationTimeout = setTimeout (function() {
 					if (debug) console.log("All sources registered.");
-					beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+					
+					// Order sources:
+					orderChanged = false;
+					// Check if any sources have been removed from the system.
+					for (o in settings.sourceOrder) {
+						if (!allSources[settings.sourceOrder[o]] || !beo.extensions[settings.sourceOrder[o]]) {
+							// Remove this source from source order.
+							delete settings.sourceOrder[o];
+							orderChanged = true;
+						}
+					}
+					if (orderChanged) { // Remove gaps in the array.
+						settings.sourceOrder = settings.sourceOrder.filter(function (el) {
+							return el != null;
+						});
+					}
+					// Check if any new sources exist in the system.
+					for (source in allSources) {
+						if (settings.sourceOrder.indexOf(source) == -1) {
+							// This source doesn't exist. Add it to the mix alphabetically (by display name), preserving user order.
+							titles = [];
+							for (o in settings.sourceOrder) {
+								if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
+							}
+							newTitle = beo.extensionsList[source].menuTitle;
+							newIndex = 0;
+							for (t in titles) {
+								if ([newTitle, titles[t]].sort()[1] == newTitle) newIndex = t+1;
+							}
+							settings.sourceOrder.splice(newIndex, 0, source);
+							orderChanged = true;
+						}
+					}
+					if (orderChanged) {
+						if (debug) console.log("Source order is now: "+settings.sourceOrder.join(", ")+".");
+						beo.saveSettings("sources", settings);
+					}
+					
+					beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource, sourceOrder: settings.sourceOrder}});
 					audioControlGet("status", function(result) {
 						audioControlGet("metadata");
 					});
@@ -640,6 +696,10 @@ var exec = require("child_process").exec;
 						}
 					}
 					sourcesRegistered = true;
+					
+
+					
+					
 				}, 1000);
 			}
 		}
@@ -650,7 +710,7 @@ var exec = require("child_process").exec;
 	function checkEnabled(queue, callback) {
 		checkingEnabled = true;
 		if (!queue) {
-			if (debug) console.log("Checking enabled status for all sources...");
+			if (debug > 1) console.log("Checking enabled status for all sources...");
 			queue = [];
 			for (extension in allSources) {
 				if (beo.extensions[extension].isEnabled) {

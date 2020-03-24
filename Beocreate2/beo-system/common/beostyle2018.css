@@ -1126,7 +1126,8 @@ nav.full .nav-content:before {
 }
 
 .menu-item.drag {
-	transition: box-shadow 0.3s ease, background-color 0.3s ease;
+	transition: box-shadow 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+	opacity: 0.8;
 	z-index: 2;
 	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
 	background-color: var(--main-bg) !important;
@@ -1289,11 +1290,11 @@ nav.full .nav-content:before {
 	height: 63px !important;
 }
 
-.checkmark.left .menu-icon {
+.checkmark.left .menu-icon:first-child {
 	opacity: 0;
 }
 
-.checkmark.left.checked .menu-icon {
+.checkmark.left.checked .menu-icon:first-child {
 	opacity: 1;
 }
 
@@ -2126,7 +2127,6 @@ a.button {
 	background-color: var(--button-bg);
 	padding-top: var(--font-spacing-compensation);
 	border: 1px solid transparent;
-	max-width: 350px;
 	box-sizing: border-box;
 	white-space: nowrap;
 	flex-shrink: 0;

@@ -36,6 +36,7 @@ var _ = beo.underscore;
 		"d": [],
 		"l": [],
 		"r": [],
+		"roomCompensationPreset": null,
 		"ui": {
 			showAllChannels: true,
 			dBScale: 20,
@@ -376,12 +377,12 @@ var _ = beo.underscore;
 	2. Returns validated settings. If everything checks out, it's a copy of the input. Any incompatibilities will be stripped out or adapted (use this to migrate old settings in case of an upgrade). 
 	*/
 	
-	function checkSettings(theSettings, samplingRate) {
+	function checkSettings(theSettings, samplingRate, channelString = "abcd") {
 		validatedSettings = {};
 		compatibilityIssues = {};
 		
-		for (var c = 0; c < 4; c++) {
-			channel = "abcd".charAt(c);
+		for (var c = 0; c < channelString.length; c++) {
+			channel = channelString.charAt(c);
 			if (theSettings[channel] != undefined) {
 				validatedSettings[channel] = [];
 				compatibilityIssues[channel] = [];
@@ -477,7 +478,7 @@ var _ = beo.underscore;
 			channel = "abcd".charAt(c);
 			applyAllFiltersFromSettings(channel, true);
 		}
-		importChannelGroups();
+		importChannelGroups("speakerEqualiser");
 		beo.saveSettings("equaliser", settings);
 	}
 	
@@ -742,11 +743,16 @@ var _ = beo.underscore;
 		}
 	}
 	
-function importChannelGroups() {
-	settings.ui.groupAB = (_.isEqual(settings.a, settings.b)) ? true : false;
-	settings.ui.groupCD = (_.isEqual(settings.c, settings.d)) ? true : false;
-	if (settings.ui.groupAB && debug) console.log("Grouping equaliser settings for channels A+B.");
-	if (settings.ui.groupCD && debug) console.log("Grouping equaliser settings for channels C+D.");
+function importChannelGroups(forEqualiser) {
+	if (forEqualiser == "speakerEqualiser") {
+		settings.ui.groupAB = (_.isEqual(settings.a, settings.b)) ? true : false;
+		settings.ui.groupCD = (_.isEqual(settings.c, settings.d)) ? true : false;
+		if (settings.ui.groupAB && debug) console.log("Grouping equaliser settings for channels A+B.");
+		if (settings.ui.groupCD && debug) console.log("Grouping equaliser settings for channels C+D.");
+	} else if (forEqualiser == "soundDesign") {
+		settings.ui.groupLR = (_.isEqual(settings.l, settings.r)) ? true : false;
+		if (settings.ui.groupLR && debug) console.log("Grouping equaliser settings for channels L+R.");
+	}
 }
 
 function getGroupedChannels(forChannel) {
@@ -781,8 +787,25 @@ function sendCurrentSettingsToSoundPreset() {
 		}
 		calculateMasterGraph("l", true);
 		calculateMasterGraph("r", true);
-		beo.bus.emit('sound-preset', {header: "currentSettings", content: {extension: "equaliser", settings: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}}});
+		beo.bus.emit('speaker-preset', {header: "currentSettings", content: {extension: "equaliser", settings: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}}});
 	}, 1000);
+}
+
+function getSettingsForBeosonic() {
+	return {
+		l: settings.l, 
+		r: settings.r, 
+		roomCompensationPreset: settings.roomCompensationPreset
+	};
+}
+
+function applyBeosonicPreset(fromSettings) {
+	settings = Object.assign(settings, checkSettings(fromSettings, null, "lr").validatedSettings);
+	settings.roomCompensationPreset = fromSettings.roomCompensationPreset;
+	applyAllFiltersFromSettings("l", true);
+	applyAllFiltersFromSettings("r", true);
+	importChannelGroups("soundDesign");
+	beo.saveSettings("equaliser", settings);
 }
 
 function calculateFilterResponse(channel, filter, coeffs) {
@@ -868,6 +891,8 @@ function getDriverType(low, high) {
 module.exports = {
 	checkSettings: checkSettings,
 	getDriverTypes: function() {return driverTypes},
+	getSettingsForBeosonic: getSettingsForBeosonic,
+	applyBeosonicPreset: applyBeosonicPreset,
 	applySpeakerPreset: applySpeakerPreset,
 	tempDisable: tempDisable,
 	version: version

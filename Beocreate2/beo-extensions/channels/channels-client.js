@@ -472,6 +472,13 @@ function showingTab(tab) {
 	}
 }
 
+function getBeosonicPreview() {
+	return {
+		label: "Channels",
+		description: "Balance, speaker roles and other settings"
+	};
+}
+
 return {
 	generateSettingsPreview: generateSettingsPreview,
 	selectRole: selectRole,
@@ -481,7 +488,8 @@ return {
 	showAdvancedSettings: showAdvancedSettings,
 	showAdvancedSettingsPopup: showAdvancedSettingsPopup,
 	showingAdvancedTab: function() {showingTab('advanced')},
-	showingBasicsTab: function() {showingTab('basics')}
+	showingBasicsTab: function() {showingTab('basics')},
+	getBeosonicPreview: getBeosonicPreview
 }
 
 })();

@@ -712,13 +712,16 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 						extensionLoadedSuccesfully = true;
 					}
 					catch (error) {
-						console.log("Error loading extension '"+extensionName+"':");
-						console.log(error);
+						console.error("Error loading extension '"+extensionName+"':", error);
 						extensionLoadedSuccesfully = false;
 					}
 				}
 				catch (error) {
-					if (debugMode) console.log("Extension '"+extensionName+"' has no server-side code.");
+					if (debugMode > 2) {
+						console.error("Extension '"+extensionName+"' has no server-side code:", error);
+					} else if (debugMode) {
+						console.log("Extension '"+extensionName+"' has no server-side code.");
+					}
 					extensionLoadedSuccesfully = true;
 				}
 			}

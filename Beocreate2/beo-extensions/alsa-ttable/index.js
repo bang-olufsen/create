@@ -19,10 +19,10 @@ SOFTWARE.
 
 // TTABLE (ALSA)
 
+var execSync = require('child_process').execSync;
 var version = require("./package.json").version;
 
 var debug = beo.debug;
-var metadata = {};
 
 var defaultSettings = {
 	"limit_db": -3,
@@ -31,7 +31,6 @@ var defaultSettings = {
 
 
 function read_settings() {
-	var execSync = require('child_process').execSync;
 	var child;
 
 	try {
@@ -42,24 +41,23 @@ function read_settings() {
 			settings.role=res[0]
 			settings.limit_db=res[1]
 		} else {
-			console.log("could not read settings via speaker-role")
+			console.error("Could not read ALSA-ttable settings via speaker-role.")
 		}
 		
-		beo.bus.emit("ui", {target: "alsa-ttable", header: "ttableSettings", content: {settings: settings}});
+		beo.sendToUI("alsa-ttable", {header: "ttableSettings", content: {settings: settings}});
 	} catch (error) {
-		console.log("exception reading settings via speaker-role : "+error);
+		console.error("Exception reading settings via speaker-role:", error);
 	}
 }
 
 
 function write_settings(settings) {
-	var execSync = require('child_process').execSync;
 	var child;
 
 	try {
 		child = execSync('/opt/hifiberry/bin/speaker-role '+settings.role + " "+settings.limit_db)
 	} catch (error) {
-		console.log("exception calling speaker-role : "+error);
+		console.error("Exception calling speaker-role:", error);
 	}
 }
 
@@ -68,9 +66,7 @@ beo.bus.on('general', function(event) {
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "alsa-ttable") {
 			
-			console.log("starting alsa-ttable")
-			
-			if (debug) console.log("reading ALSA settings...");
+			if (debug) console.log("Reading settings for ALSA-ttable...");
 			read_settings();
 			
 		}
@@ -86,7 +82,7 @@ beo.bus.on('alsa-ttable', function(event) {
 		if (settings.limit_db != undefined && settings.role != undefined) {
 			write_settings(settings);
 		} else {
-			console.log("incomplete settings, ignoring");
+			console.error("Settings for ALSA-ttable were incomplete, ignoring.");
 		}
 	}
 	

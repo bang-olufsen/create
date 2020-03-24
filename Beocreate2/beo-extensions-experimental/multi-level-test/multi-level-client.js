@@ -8,8 +8,10 @@ $(document).on("general", function(event, data) {
 		if (data.content.extension == "multi-level-test") {
 			if (data.content.deepMenu != null) {
 				currentLevel = parseInt(data.content.deepMenu.split("-").pop());
-				console.log("Now at level "+currentLevel);
+			} else {
+				currentLevel = 1;
 			}
+			console.log("Now at level "+currentLevel);
 		}
 	}
 

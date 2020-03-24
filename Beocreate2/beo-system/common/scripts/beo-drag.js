@@ -174,6 +174,12 @@
  		}
  	}
  	
+ 	this.onContextMenu = function(event) {
+ 		if (elementFound) {
+ 			this.onDragEnd(event, true);
+ 		}
+ 	}
+ 	
  	this.context.addEventListener("mousedown", this.onDragStart.bind(this), false);
  	this.context.addEventListener("mousemove", this.onDragMove.bind(this), false);
  	document.addEventListener("mouseup", this.onDragEnd.bind(this), false);
@@ -183,6 +189,7 @@
  	this.context.addEventListener("touchend", this.onDragEnd.bind(this), false);
  	
  	this.context.addEventListener("click", this.onClick.bind(this), {passive: false, capture: true});
+ 	this.context.addEventListener("contextmenu", this.onContextMenu.bind(this), {passive: false, capture: true});
  	
  	
  	var itemPositions = [];

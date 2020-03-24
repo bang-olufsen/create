@@ -250,7 +250,8 @@ function prepareMenus() {
 						icon: $(this).attr("data-icon"), 
 						assetPath: $(this).attr("data-asset-path"), 
 						title: $(this).attr("data-menu-title"),
-						deepMenu: []
+						deepMenu: [],
+						namespace: $(this).attr("data-namespace")
 					};
 					if ($(this).attr("data-menu-title-short")) extensions[menuID].shortTitle = $(this).attr("data-menu-title-short");
 					$(".scroll-area", this).first().prepend('<h1 class="large-title">'+$("header h1", this).first().text()+'</h1>'); // Duplicate title for views that use a large title.					
@@ -318,7 +319,8 @@ function prepareMenus() {
 							icon: $(this).attr("data-icon"), 
 							assetPath: $(this).attr("data-asset-path"), 
 							title: $(this).attr("data-menu-title"),
-							deepMenu: []
+							deepMenu: [],
+							namespace: $(this).attr("data-namespace")
 						};
 						if ($(this).attr("data-menu-title-short")) extensions[$(this).attr("id")].shortTitle = $(this).attr("data-menu-title-short");
 					} else { // Add deep menu to the list
@@ -523,6 +525,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		
 		backTarget = null;
 		backTitle = null;
+		fromDeepMenu = false;
 		
 		
 		if (direction) {
@@ -584,6 +587,12 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 						$("#" + menuToClose).removeClass("block").addClass("hidden-right");
 					}
 				}
+				
+				// Close deep menus too.
+				if (deepMenuState[menuState[selectedParentMenu].submenu] && deepMenuState[menuState[selectedParentMenu].submenu].length > 0) {
+					showDeepMenu(menuState[selectedParentMenu].submenu, menuState[selectedParentMenu].submenu, true);
+					if (menuState[selectedParentMenu].submenu == newExtension) fromDeepMenu = true;
+				}
 			}
 			
 			if (selectedExtension && direction) {
@@ -607,13 +616,15 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 			
 			if (!direction) {
 				if (!invisibly) {
+					if (fromDeepMenu) $("#" + newExtension).addClass("hidden-left").removeClass("hidden-right");
 					$("#" + newExtension).addClass("block new");
 					setTimeout(function() {
-						$("#" + newExtension).removeClass("hidden-right");
+						$("#" + newExtension).removeClass("hidden-right hidden-left");
 						$("#" + selectedParentMenu).addClass("hidden-left");
 						$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
 					}, 50);
 				} else {
+					
 					$("#" + newExtension).addClass("block");
 					$("#" + newExtension).removeClass("hidden-right");
 					$("#" + selectedParentMenu).addClass("hidden-left");
@@ -831,7 +842,7 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 			}
 		}
 		if (oldMenu != newMenu) {
-			activatedExtension(selectedExtension);
+			if (!navigating) activatedExtension(selectedExtension);
 			if (back) {
 				if (!hideNew) {
 					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
@@ -908,6 +919,7 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
+	console.log(menuState, deepMenuState);
 }
 
 
@@ -1013,7 +1025,7 @@ function createMenuItem(options) {
 	// Icon
 	if (options.icon) {
 		//menuItem += '<img class="menu-icon" src="'+options.icon+'">\n';
-		menuItem += '<div class="menu-icon" style="-webkit-mask-image: url('+options.icon+'); mask-image: url('+options.icon+');"></div>\n';
+		menuItem += '<div class="menu-icon left" style="-webkit-mask-image: url('+options.icon+'); mask-image: url('+options.icon+');"></div>\n';
 	}
 	
 	menuItem += '<div class="menu-text-wrap">\n';
@@ -1435,48 +1447,39 @@ function commaAndList(list, andWord, translationID, extensionID) {
 // ASK
 
 var askOpen = false;
+var askTransitionTimeout;
 var askCallbacks = null;
 var askCancelCallback = null;
 var askParent = null;
+var askExiting = false;
 function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 	if (menuID) {
-		if (askOpen) returnAsk();
-		askOpen = true;
-		if (callbacks) askCallbacks = callbacks;
-		if (cancelCallback) askCancelCallback = cancelCallback;
-		/*if (cancelAction) {
-			$("#ask-back-plate").attr("onclick", cancelAction);
+		if (askOpen) {
+			if (!askExiting) ask();
+			setTimeout(function() {
+				returnAsk();
+				showAsk(menuID, dynamicContent, callbacks, cancelCallback);
+			}, 250);
 		} else {
-			$("#ask-back-plate").attr("onclick", "ask();");
-		}*/
-		askParent = $("#"+menuID).parent();
-		$("#ask-content").append($("#"+menuID).detach());
-		$("#ask-content > *").addClass("menu-content ask-menu-content");
-		if (dynamicContent) {
-			for (var i = 0; i < dynamicContent.length; i++) {
-				$("#ask-content .ask-dynamic-"+i).text(dynamicContent[i]);
-			}
+			showAsk(menuID, dynamicContent, callbacks, cancelCallback);
 		}
-		$("#ask, #ask-back-plate").addClass("block");
-		setTimeout(function() {
-			$("#ask, #ask-back-plate").addClass("visible");
-		}, 150);
 	} else {
+		askExiting = true;
 		if (askCancelCallback) askCancelCallback();
 		$("#ask, #ask-back-plate").removeClass("visible");
-		setTimeout(function() {
+		askTransitionTimeout = setTimeout(function() {
 			$("#ask, #ask-back-plate").removeClass("block");
 			returnAsk();
 		}, 500);
 		askCallbacks = null;
 		askCancelCallback = null;
-		askOpen = false;
 	}
 }
 
 function askOption(callbackIndex) {
+	askExiting = true;
 	$("#ask, #ask-back-plate").removeClass("visible");
-	setTimeout(function() {
+	askTransitionTimeout = setTimeout(function() {
 		$("#ask, #ask-back-plate").removeClass("block");
 		returnAsk();
 	}, 500);
@@ -1484,11 +1487,42 @@ function askOption(callbackIndex) {
 		askCallbacks[callbackIndex]();
 	}
 	askCallbacks = null;
-	askOpen = false;
+}
+
+function showAsk(menuID, dynamicContent, callbacks, cancelCallback) {
+	askOpen = true;
+	if (callbacks) askCallbacks = callbacks;
+	if (cancelCallback) askCancelCallback = cancelCallback;
+	/*if (cancelAction) {
+		$("#ask-back-plate").attr("onclick", cancelAction);
+	} else {
+		$("#ask-back-plate").attr("onclick", "ask();");
+	}*/
+	askParent = $("#"+menuID).parent();
+	$("#ask-content").append($("#"+menuID).detach());
+	$("#ask-content > *").addClass("menu-content ask-menu-content");
+	if (dynamicContent) {
+		for (var i = 0; i < dynamicContent.length; i++) {
+			$("#ask-content .ask-dynamic-"+i).text(dynamicContent[i]);
+		}
+	}
+	if (!$("#ask").hasClass("block")) {
+		$("#ask, #ask-back-plate").addClass("block");
+		setTimeout(function() {
+			$("#ask, #ask-back-plate").addClass("visible");
+		}, 150);
+	} else {
+		$("#ask, #ask-back-plate").addClass("visible");
+	}
 }
 
 function returnAsk() {
-	$(askParent).append($("#ask-content > *").detach());
+	if (askOpen) {
+		clearTimeout(askTransitionTimeout);
+		$(askParent).append($("#ask-content > *").detach());
+		askOpen = false;
+		askExiting = false;
+	}
 }
 
 
@@ -1501,7 +1535,7 @@ var holdTimeout = null;
 var clickHandler = null;
 
 // Drag detector cancels the appearance of the contextual menu in case the user moves away from the target whilst holding down.
-$(document).on("mouseout mouseup", ".hold", function(event) {
+$(document).on("mouseout mousemove mouseup", ".hold", function(event) {
 	endHold();
 });
 
@@ -1926,6 +1960,9 @@ document.ontouchmove = function(event) {
 		}
 	}
 	
+	if (event.target.className.indexOf("hold") != -1) {
+		endHold();
+	}
 	
 	
 }

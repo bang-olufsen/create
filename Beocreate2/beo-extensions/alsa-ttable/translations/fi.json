@@ -1,9 +1,0 @@
-{
-  "menuTitle": "Voimakkuusrajoitin",
-  "headerTitle": "Voimakkuusrajoitin",
-  "sliderTitlePi": "Raspberry Pi -lähteet",
-  "sliderTitleSPDIF": "Optinen sisääntulo",
-  "sliderTitleI2S2": "Laajennusliitäntä",
-  "masterVolumeNotice": "Aseta kaiuttimillesi maksimiäänenvoimakkuus. Käytä lähteesi äänenvoimakkuussäädintä normaalissa kuuntelussa.",
-  "volumeLimitUnsupported": "Nykyinen DSP-ohjelma ei tue äänenvoimakkuusrajoitusten säätöä."
-}

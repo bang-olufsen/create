@@ -139,6 +139,7 @@ $(document).on("equaliser", function(event, data) {
 function showEqualiser(theEqualiser) {
 	if (theEqualiser == "speaker-equaliser") {
 		$("#equaliser-editor").addClass("speaker-equaliser").removeClass("sound-design");
+		$(".equaliser-sound-design-listening-mode").addClass("hidden");
 		if (equaliserMode != 0) {
 			selectedFilter = 0;
 			selectedChannel = "a";
@@ -149,6 +150,7 @@ function showEqualiser(theEqualiser) {
 			$("#equaliser-add-filter-crossover-group").removeClass("hidden");
 		}
 	} else if (theEqualiser == "sound-design") {
+		$(".equaliser-sound-design-listening-mode").removeClass("hidden");
 		$("#equaliser-editor").removeClass("speaker-equaliser").addClass("sound-design");
 		if (equaliserMode != 1) {
 			selectedFilter = 0;
@@ -1748,6 +1750,17 @@ function showChannelSettings() {
 	}
 }
 
+function getBeosonicPreview() {
+	return {
+		label: "Sound Design",
+		description: "Room compensation and custom equalisation for left and right channels"
+	};
+}
+
+function saveBeosonicPreset() {
+	if (beosonic && beosonic.savePreset) beosonic.savePreset(null, null, ["equaliser"]);
+}
+
 
 // adapted from: https://stackoverflow.com/questions/846221/logarithmic-slider
 function convertHz(value, targetFormat, maxp) {
@@ -1814,7 +1827,9 @@ return {
 	saveCoefficients: saveCoefficients,
 	revertCoefficients: revertCoefficients,
 	showChannelSettings: showChannelSettings,
-	showEqualiser: showEqualiser
+	showEqualiser: showEqualiser,
+	getBeosonicPreview: getBeosonicPreview,
+	saveBeosonicPreset: saveBeosonicPreset
 };
 
 })();

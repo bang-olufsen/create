@@ -22,7 +22,7 @@ var exec = require('child_process').exec;
 
 var net = require("net");
 var dnssd = require("dnssd2"); // for service discovery.
-var request = require('request'); // for sending HTTP requests to the DACP server
+var fetch = require("node-fetch"); // for sending HTTP requests to the DACP server
 
 	var debug = beo.debug;
 	
@@ -417,22 +417,17 @@ var request = require('request'); // for sending HTTP requests to the DACP serve
 			destination = controllableSources["shairport-sync-"+daid];
 			
 			if (destination.daid && destination.acre && dacpServices[destination.daid]) {
-				request.get({
-					headers: {
-						'Active-Remote': destination.acre,
-						'Host': 'starlight.local.'
-					},
-					uri: 'http://' + dacpServices[destination.daid].addresses[0] + ":" + dacpServices[destination.daid].port + "/ctrl-int/1/" + command,
-					encoding: null
-					//method: 'GET'
-				}, function(err, res, body) {
-					if (err) {
-						console.log("DACP error: " + err);
-					}
-					if (res.statusCode == 200) {
-						  	
-					  } else if (res.statusCode == 204) {
-							
+				fetch('http://' + dacpServices[destination.daid].addresses[0] + ":" + dacpServices[destination.daid].port + "/ctrl-int/1/" + command, {
+						headers: {
+							'Active-Remote': destination.acre,
+							'Host': 'starlight.local.'
+						},
+					}).then(res => {
+					if (res.status == 200) {
+						// OK.
+					} else {
+						// No content.
+						if (debug) console.log("Error sending DACP command:", res.status, res.statusText, res.text);
 					}
 				});
 			}

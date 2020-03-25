@@ -285,9 +285,11 @@ function setOrRestoreVolume(stage) {
 			});
 		}
 		if (stage == "restore" && volumeBeforeMeasurements != null) { // Restore volume to the saved level.
-			if (debug) console.log("Restoring volume to "+volumeBeforeMeasurements+" %.");
-			beo.extensions.sound.setVolume(volumeBeforeMeasurements);
-			volumeBeforeMeasurements = null;
+			setTimeout(function() {
+				if (debug) console.log("Restoring volume to "+volumeBeforeMeasurements+" %.");
+				beo.extensions.sound.setVolume(volumeBeforeMeasurements);
+				volumeBeforeMeasurements = null;
+			}, 2000);
 		}
 	} else {
 		volumeBeforeMeasurements = null;

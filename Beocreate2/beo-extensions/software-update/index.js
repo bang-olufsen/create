@@ -99,14 +99,14 @@ function checkForUpdate(forceCheck) {
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
 			if (newVersion) {
-				if (debug) console.log("Software update is available – release "+newVersion+".");
+				if (debug) console.log("Software update is available – release "+newVersion+" ('"+autoUpdate+"' track).");
 				updateLines.splice(0, 1);
 				releaseNotes = updateLines.join("\n").trim();
 				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 			} else {
 				newVersion = null;
 				releaseNotes = "";
-				if (debug) console.log("Product appears to be up to date.");
+				if (debug) console.log("Product appears to be up to date ('"+autoUpdate+"' track).");
 				beo.sendToUI("software-update", {header: "upToDate"});
 			}
 		});

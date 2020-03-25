@@ -263,7 +263,7 @@ function autoUpdateMode(mode) {
 		}
 	}
 	autoUpdate = (mode) ? mode : "latest";
-	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: settings.autoUpdateMode}});
+	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate}});
 }
 
 

@@ -238,15 +238,15 @@ function autoUpdateMode(mode) {
 			case "stable":
 			case "latest":
 			case "experimental":
-				fs.writeFileSync("/etc/update.release", mode);
+				fs.writeFileSync("/etc/updater.release", mode);
 				break;
 			case false:
-				fs.writeFileSync("/etc/update.release", "off");
+				fs.writeFileSync("/etc/updater.release", "off");
 				break;
 		}
 	} else {
-		if (fs.existsSync("/etc/update.release")) {
-			modeRead = fs.readFileSync("/etc/update.release", "utf8").trim();
+		if (fs.existsSync("/etc/updater.release")) {
+			modeRead = fs.readFileSync("/etc/updater.release", "utf8").trim();
 			switch (modeRead) {
 				case "critical":
 				case "stable":

@@ -39,8 +39,12 @@ $(document).on("beosonic", function(event, data) {
 			}
 		}
 		
+		$(".beosonic-menu-preset").removeClass("selected");
+		$("#beosonic-presets .menu-item").removeClass("checked");
 		if (data.content.settings.selectedPreset) {
 			currentPreset = data.content.settings.selectedPreset;
+			$('.beosonic-menu-preset[data-beosonic-preset="'+currentPreset+'"]').addClass("selected");
+			$('#beosonic-presets .menu-item[data-beosonic-preset="'+currentPreset+'"]').addClass("checked");
 		} else {
 			currentPreset = null;
 		}

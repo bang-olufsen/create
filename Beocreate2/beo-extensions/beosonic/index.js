@@ -339,8 +339,9 @@ function applyBeosonicPreset(presetID) {
 		}
 	}
 	
+	if (debug) console.log("Beosonic preset '"+compactPresetList[presetID].presetName+"' was applied.");
 	settings.selectedPreset = presetID;
-	beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, presets: compactPresetList}});
+	beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings}});
 	beo.saveSettings("beosonic", settings);
 }
 
@@ -433,7 +434,7 @@ function savePresetToFile(withName, withAdjustments) {
 	if (settings.presetOrder.indexOf(newID) == -1) settings.presetOrder.push(newID);
 	beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, presets: compactPresetList, presetSaved: newID}});
 	beo.saveSettings("beosonic", settings);
-	if (debug) console.log("New Beosonic preset '"+withName+"' was saved.")
+	if (debug) console.log("Beosonic preset '"+withName+"' was saved.")
 }
 
 function generateFilename(name) {

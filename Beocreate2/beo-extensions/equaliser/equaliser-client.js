@@ -591,6 +591,9 @@ var bandwidthDrag = new Beodrag("#equaliser-graph-container .graph-handle-width-
 		updateFilterUI(true);
 		showGraphLabel(false);
 	},
+	cancel: function(event, position) {
+		$("#equaliser-graph-container .graph-handle-width").removeClass("drag");
+	},
 	move: function( event, position ) {
 		dragX = ((position.elementX + bandwidthDragEdge - graphDimensions.x)/graphDimensions.w)*100;
 		if (bandwidthDragEdge == 0) {

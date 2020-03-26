@@ -152,6 +152,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					} else if (result == 3) {
 						beo.bus.emit("ui", {target: "network", header: "networkUpdated", content: {ssid: event.content.ssid}});
 						if (debug) console.log("Network '"+event.content.ssid+"' was updated.");
+						temporarilyAllowSetupNetwork();
 					}
 					networks = networkCore.listSavedNetworks();
 					if (networks.length > 0 && beo.setup) {

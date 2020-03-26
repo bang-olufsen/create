@@ -2394,6 +2394,19 @@ footer .button.pill {
 	outline-color: #ddd;
 }
 
+.segmented-control.vertical {
+	flex-direction: column;
+	height: auto;
+}
+
+.segmented-control.vertical > div {
+	margin-right: 0;
+	margin-bottom: 1px;
+}
+
+.segmented-control.vertical > div:last-child {
+	margin-bottom: 0;
+}
 
 /* @end */
 

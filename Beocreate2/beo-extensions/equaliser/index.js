@@ -778,7 +778,7 @@ function getGroupedChannels(forChannel) {
 }
 	
 var settingsSendTimeout;
-function sendCurrentSettingsToSoundPreset() {
+function sendCurrentSettingsToSoundPreset(timeout = 1000) {
 	clearTimeout(settingsSendTimeout);
 	settingsSendTimeout = setTimeout(function() {
 		for (var i = 0; i < 4; i++) {
@@ -788,7 +788,7 @@ function sendCurrentSettingsToSoundPreset() {
 		calculateMasterGraph("l", true);
 		calculateMasterGraph("r", true);
 		beo.bus.emit('speaker-preset', {header: "currentSettings", content: {extension: "equaliser", settings: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}}});
-	}, 1000);
+	}, timeout);
 }
 
 function getSettingsForBeosonic() {
@@ -805,6 +805,7 @@ function applyBeosonicPreset(fromSettings) {
 	applyAllFiltersFromSettings("l", true);
 	applyAllFiltersFromSettings("r", true);
 	importChannelGroups("soundDesign");
+	sendCurrentSettingsToSoundPreset(10);
 	beo.saveSettings("equaliser", settings);
 }
 

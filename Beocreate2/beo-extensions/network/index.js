@@ -28,7 +28,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	
 	var defaultSettings = {
 		"useHifiberryHotspot": true,
-		"setupNetworkConnectionLost": false,
+		"setupNetworkWhenConnectionLost": false,
 		"testNoEthernet": false
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));

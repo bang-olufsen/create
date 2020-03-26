@@ -28,7 +28,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	
 	var defaultSettings = {
 		"useHifiberryHotspot": true,
-		"hotspotWhenConnectionLost": false,
+		"setupNetworkConnectionLost": false,
 		"testNoEthernet": false
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
@@ -41,7 +41,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	var hasInternetConnection = false;
 	var cachedIPAddresses = {wifi: null, ethernet: null}; // If IP addresses change, the system should rebroadcast its zeroconf advertisement.
 	
-	var hotspotStartedOnce = false;
+	var canStartSetupNetwork = false;
 	
 	
 	beo.bus.on('general', function(event) {
@@ -53,6 +53,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					setConnectionMode({mode: "connected"});
 				} else {
 					setConnectionMode({mode: "initial"});
+					temporarilyAllowSetupNetwork();
 				}
 			});
 		}
@@ -180,6 +181,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 							extensions["setup"].allowAdvancing("network", false);
 						}
 					}
+					temporarilyAllowSetupNetwork();
 					beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
 				} else {
 					if (debug) console.error("Network '"+event.content.ssid+"' was not removed, because it was not found.");
@@ -228,7 +230,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	beo.bus.on('setup', function(event) {
 	
 		if (event.header == "advancing" && event.content.fromExtension == "network") {
-			hotspotStartedOnce = false;
+			temporarilyAllowSetupNetwork();
 			beo.bus.emit("ui", {target: "network", header: "exitingHotspot"});
 			setConnectionMode({mode: "initial"});
 		}
@@ -319,7 +321,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 							} else {
 								connectionCheckCounter++;
 								if (connectionCheckCounter >= connectionCheckMax) {
-									if (networkHardware.wifi && (settings.hotspotWhenConnectionLost || !hotspotStartedOnce) {
+									if (networkHardware.wifi && canStartSetupNetwork) {
 										setConnectionMode({mode: "hotspot"});
 									} else {
 										setConnectionMode({mode: "disconnected"});
@@ -437,6 +439,17 @@ var networkCore = require('../../beocreate_essentials/networking');
 				child_process.exec("systemctl stop tempap.service");
 				networkCore.setSetupNetworkStatus(false);
 			}
+		}
+	}
+	
+	setupNetworkAllowTimeout = null;
+	function temporarilyAllowSetupNetwork() {
+		canStartSetupNetwork = true;
+		if (!settings.setupNetworkWhenConnectionLost) {
+			clearTimeout(setupNetworkAllowTimeout);
+			setupNetworkAllowTimeout = setTimeout(function() {
+				canStartSetupNetwork = false;
+			}, 90000);
 		}
 	}
 	

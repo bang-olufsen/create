@@ -73,10 +73,10 @@
 								<div class="symbol-value right">0 dB</div>
 								<div class="symbol button channel-mute" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);" title="Mute or set volume"></div>
 							</div>
-							<!--<div class="symbol-wrap right show-value">
-								<div class="symbol-value">2 ms</div>
+							<div class="symbol-wrap right show-value channel-delay">
+								<div class="symbol-value"></div>
 								<div class="symbol button" style="-webkit-mask-image: url(€/symbols-black/clock.svg); mask-image: url(€/symbols-black/clock.svg);" title="Delay"></div>
-							</div>-->
+							</div>
 							<div class="symbol-wrap">
 								<div class="symbol button channel-invert" style="-webkit-mask-image: url(€/symbols-black/invert.svg); mask-image: url(€/symbols-black/invert.svg);" title="Invert polarity"></div>
 							</div>
@@ -123,6 +123,30 @@
 				
 				
 			</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="channel-delay-adjustment">
+		<h2>Channel <span class="ask-dynamic-0"></span> delay</h2>
+		<div class="fine-adjust">
+			<div class="segmented-control vertical">
+				<div onclick="channels.delayStep(-1);">–1</div>
+				<div onclick="channels.delayStep(-0.1);">–0.1</div>
+				<div onclick="channels.delayStep(-0.01);">–0.01</div>
+			</div>
+			<div class="fine-adjust-middle">
+				<div class="fine-adjust-value">0</div>
+				<div class="fine-adjust-unit">ms</div>
+				<p>0 samples</p>
+			</div>
+			<div class="segmented-control vertical">
+				<div onclick="channels.delayStep(1);">+1</div>
+				<div onclick="channels.delayStep(0.1);">+0.1</div>
+				<div onclick="channels.delayStep(0.01);">+0.01</div>
+			</div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Done</div>
 		</div>
 	</div>
 	

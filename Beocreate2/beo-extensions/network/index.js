@@ -27,9 +27,13 @@ var networkCore = require('../../beocreate_essentials/networking');
 	var version = require("./package.json").version;
 	
 	var defaultSettings = {
-		"useHifiberryHotspot": true
+		"useHifiberryHotspot": true,
+		"hotspotWhenConnectionLost": false,
+		"testNoEthernet": false
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
+	// testNoEthernet: Set to true to make Ethernet a "stealth" interface: even when connected, the system will consider it disconnected to allow testing automated hotspot functions.
 	
 	var networkHardware = {wifi: false, ethernet: false};
 	
@@ -37,7 +41,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	var hasInternetConnection = false;
 	var cachedIPAddresses = {wifi: null, ethernet: null}; // If IP addresses change, the system should rebroadcast its zeroconf advertisement.
 	
-	var testNoEthernet = false; // Set to true to make Ethernet a "stealth" interface: even when connected, the system will consider it disconnected to allow testing automated hotspot functions.
+	var hotspotStartedOnce = false;
 	
 	
 	beo.bus.on('general', function(event) {
@@ -121,7 +125,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 			
 			networkCore.getEthernetStatus(function(status, error) {
 				if (!error) {
-					beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
+					beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: settings.testNoEthernet}});
 				} else {
 					beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
 				}
@@ -209,7 +213,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					} else {
 						networkCore.getEthernetStatus(function(status, error) {
 							if (!error) {
-								beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: testNoEthernet}});
+								beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: status, testNoEthernet: settings.testNoEthernet}});
 							} else {
 								beo.bus.emit("ui", {target: "network", header: "ethernetStatus", content: {status: null, error: error}});
 							}
@@ -224,6 +228,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	beo.bus.on('setup', function(event) {
 	
 		if (event.header == "advancing" && event.content.fromExtension == "network") {
+			hotspotStartedOnce = false;
 			beo.bus.emit("ui", {target: "network", header: "exitingHotspot"});
 			setConnectionMode({mode: "initial"});
 		}
@@ -294,6 +299,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					break;
 				case "hotspot":
 					// Start hotspot. During hotspot mode, periodically check if previously set up Wi-Fi networks become available, switch hotspot off in that case.
+					hotspotStartedOnce = true;
 					setupNetwork(true);
 					if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
 						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["sound-preset", "product-information"]});
@@ -313,7 +319,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 							} else {
 								connectionCheckCounter++;
 								if (connectionCheckCounter >= connectionCheckMax) {
-									if (networkHardware.wifi) {
+									if (networkHardware.wifi && (settings.hotspotWhenConnectionLost || !hotspotStartedOnce) {
 										setConnectionMode({mode: "hotspot"});
 									} else {
 										setConnectionMode({mode: "disconnected"});
@@ -451,7 +457,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					cachedIPAddresses.ethernet = null;
 				}
 				//if (status.connected) console.log("Ethernet connected.");
-				if (testNoEthernet) connection = false;
+				if (settings.testNoEthernet) connection = false;
 			} else {
 				networkHardware.ethernet = false;
 				cachedIPAddresses.ethernet = null;

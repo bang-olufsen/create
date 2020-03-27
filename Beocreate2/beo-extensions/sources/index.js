@@ -161,36 +161,7 @@ var exec = require("child_process").exec;
 				audioControlGet("metadata");
 				break;
 			case "transport":
-				if (focusedSource && allSources[focusedSource].transportControls) {
-					action = event.content.action;
-					if (allSources[focusedSource].usesHifiberryControl) {
-						audioControl(action, null, function(success) {
-							if (!success) {
-								switch (action) {
-									case "playPause":
-									case "play":
-									case "pause":
-									case "stop":
-									case "next":
-									case "previous":
-										beo.bus.emit(focusedSource, {header: "transport", content: {action: action}});
-										break;
-								}
-							}
-						});
-					} else {
-						switch (action) {
-							case "playPause":
-							case "play":
-							case "pause":
-							case "stop":
-							case "next":
-							case "previous":
-								beo.bus.emit(focusedSource, {header: "transport", content: {action: action}});
-								break;
-						}
-					}
-				}
+				transport(event.content.action);
 				break;
 			case "toggleLove":
 				if (focusedSource && allSources[focusedSource].canLove) {
@@ -436,6 +407,32 @@ var exec = require("child_process").exec;
 			}
 		}
 		return extension;
+	}
+	
+	
+	// TRANSPORT
+	
+	function transport(action, overrideHifiberry = false) {
+		if (focusedSource && allSources[focusedSource].transportControls) {
+			if (allSources[focusedSource].usesHifiberryControl && !overrideHifiberry) {
+				audioControl(action, null, function(success) {
+					if (!success) {
+						transport(action, true);
+					}
+				});
+			} else {
+				switch (action) {
+					case "playPause":
+					case "play":
+					case "pause":
+					case "stop":
+					case "next":
+					case "previous":
+						beo.bus.emit(focusedSource, {header: "transport", content: {action: action}});
+						break;
+				}
+			}
+		}
 	}
 	
 	
@@ -765,7 +762,8 @@ module.exports = {
 	sourceDeactivated: sourceDeactivated,
 	allSources: allSources,
 	settings: settings,
-	stopAllSources: stopAllSources
+	stopAllSources: stopAllSources,
+	transport: transport
 };
 
 

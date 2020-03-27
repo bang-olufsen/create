@@ -69,8 +69,10 @@ SOFTWARE.*/
 		
 		
 		if (event.header == "transport") {
-			if (event.content.action) {
-				beo.bus.emit("sources", {header: "transport", content: {action: event.content.action}});
+			if (event.content.action &&
+				beo.extensions.sources && 
+				beo.extensions.sources.transport) {
+				beo.extensions.sources.transport(event.content.action);
 			}
 		}
 		
@@ -79,25 +81,6 @@ SOFTWARE.*/
 		}
 	});
 	
-	
-	beo.bus.on("remote", function(event) {
-		switch (event.content.command) {
-			
-			case "VOL UP":
-				beo.bus.emit("sound", {header: "setVolume", content: "+1"});
-				break;
-			case "VOL DOWN":
-				beo.bus.emit("sound", {header: "setVolume", content: "-1"});
-				break;
-			case "MUTE":
-				//beo.bus.emit("sound", {header: "toggleMute"});
-				break;
-			case "GO":
-				beo.bus.emit("sources", {header: "transport", content: {action: "playPause"}});
-				break;
-		}
-	});
-
 	
 	
 module.exports = {

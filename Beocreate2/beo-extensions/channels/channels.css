@@ -131,6 +131,7 @@
 .symbol-wrap .symbol-value {
 	position: absolute;
 	opacity: 0;
+	font-weight: 500;
 	font-size: 0.8em;
 	text-align: center;
 	right: -17px;
@@ -148,10 +149,35 @@
 }
 
 .symbol-wrap.show-value .symbol-value {
-	opacity: 0.3;
+	opacity: 1;
 	transform: translateX(0);
 }
 
 #advanced-channel-settings-popup .channels-channel-item:last-child hr {
 	display: none;
+}
+
+.fine-adjust {
+	display: flex;
+}
+
+.fine-adjust-middle {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.fine-adjust-value {
+	font-size: 1.5em;
+	font-weight: 500;
+}
+
+.fine-adjust p {
+	margin-bottom: 0;
+}
+
+.fine-adjust .segmented-control {
+	max-width: 25%;
 }

@@ -44,7 +44,7 @@ $(".alsa-volume-limit-slider").slider({
 
 
 function alsaVolumeLimitPercentageToSliderText(value) {
-	sliderText = ""+value+"db";
+	sliderText = value+" dB";
 	return sliderText;
 }
 

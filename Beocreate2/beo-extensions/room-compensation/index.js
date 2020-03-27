@@ -129,7 +129,7 @@ function detectMicrophone(stage) {
 						console.error("Microphone detection failed:", stderr);
 					} else if (stdout.trim() != "") {
 						micItems = stdout.trim().split(":");
-						microphone = {index: parseInt(micItems[0]), name: micItems[1]};
+						microphone = {index: parseInt(micItems[0]), name: micItems[1], maxSPL: parseFloat(micItems[2])};
 						if (debug) console.log(microphone.name+" detected as audio input "+microphone.index+".");
 						beo.sendToUI("room-compensation", {header: "microphoneDetected", content: {microphoneName: microphone.name}});
 						runMicrophoneDetection = false;
@@ -168,8 +168,8 @@ function measureLevel(stage) {
 		exec("/opt/hifiberry/bin/input-level --card=hw:"+microphone.index+",0", function(error, stdout, stderr) {
 			if (!error) {
 				if (stdout) {
-					level = parseFloat(stdout);
-					if (debug >= 2) console.log("Input level currently at: "+level+" dB.");
+					level = microphone.maxSPL+parseFloat(stdout); // The level from stdout is < 0.
+					if (debug >= 2) console.log("Input level currently at: "+level+" dB SPL.");
 					beo.sendToUI("room-compensation", {header: "inputLevel", content: {level: level}});
 					levelHistory.push(level);
 					if (levelHistory.length == 4) levelHistory.shift();
@@ -285,9 +285,11 @@ function setOrRestoreVolume(stage) {
 			});
 		}
 		if (stage == "restore" && volumeBeforeMeasurements != null) { // Restore volume to the saved level.
-			if (debug) console.log("Restoring volume to "+volumeBeforeMeasurements+" %.");
-			beo.extensions.sound.setVolume(volumeBeforeMeasurements);
-			volumeBeforeMeasurements = null;
+			setTimeout(function() {
+				if (debug) console.log("Restoring volume to "+volumeBeforeMeasurements+" %.");
+				beo.extensions.sound.setVolume(volumeBeforeMeasurements);
+				volumeBeforeMeasurements = null;
+			}, 2000);
 		}
 	} else {
 		volumeBeforeMeasurements = null;

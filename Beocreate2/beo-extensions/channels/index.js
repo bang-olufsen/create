@@ -299,6 +299,13 @@ beo.bus.on('channels', function(event) {
 		applyChannelLevelFromSettings(event.content.channel);
 		beo.saveSettings("channels", settings);
 	}
+	
+	if (event.header == "setDelay" && event.content.channel && event.content.delay >= 0) {
+		// Set delay in milliseconds.
+		settings[event.content.channel].delay = event.content.delay;
+		applyChannelDelayFromSettings(event.content.channel);
+		beo.saveSettings("channels", settings);
+	}
 });
 
 beo.bus.on('dsp', function(event) {
@@ -673,7 +680,6 @@ function applyBalanceFromSettings(log) {
 
 
 function applyChannelDelayFromSettings(channel) {
-	
 	if (settings[channel] && !isNaN(settings[channel].delay)) {
 		
 		// Delay is input as milliseconds. Convert to samples based on sampling rate.
@@ -684,7 +690,7 @@ function applyChannelDelayFromSettings(channel) {
 				
 				delaySamples = Math.round(settings[channel].delay / 1000 * Fs);
 				if (delaySamples <= canControlChannels[channel].delay) {
-					beoDSP.writeDSP(delayRegister, delaySamples, true, true);
+					beoDSP.writeDSP(delayRegister, delaySamples, false);
 				} else {
 					beoDSP.writeDSP(delayRegister, canControlChannels[channel].delay, true, true);
 					if (debug) console.log("Set delay for channel "+channel.toUpperCase()+" ("+settings[channel].delay+" ms / "+delaySamples+" samples) exceeds the indicated maximum ("+canControlChannels[channel].delay+" samples). Maximum delay applied.");

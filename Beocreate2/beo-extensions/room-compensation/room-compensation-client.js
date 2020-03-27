@@ -76,7 +76,7 @@ $(document).on("room-compensation", function(event, data) {
 	
 	if (data.header == "inputLevel" && data.content.level) {
 		$("#room-measurement-current-level span").text(Math.round(data.content.level*10)/10);
-		$("#room-measurement-current-level-fill").css("width", ((data.content.level+50) * 100 / 50) + "%");
+		$("#room-measurement-current-level-fill").css("width", (data.content.level-50)*2 + "%");
 	}
 	
 	if (data.header == "measuringRoom") {

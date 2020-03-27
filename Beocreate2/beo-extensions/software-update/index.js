@@ -99,14 +99,14 @@ function checkForUpdate(forceCheck) {
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
 			if (newVersion) {
-				if (debug) console.log("Software update is available – release "+newVersion+".");
+				if (debug) console.log("Software update is available – release "+newVersion+" ('"+autoUpdate+"' track).");
 				updateLines.splice(0, 1);
 				releaseNotes = updateLines.join("\n").trim();
 				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 			} else {
 				newVersion = null;
 				releaseNotes = "";
-				if (debug) console.log("Product appears to be up to date.");
+				if (debug) console.log("Product appears to be up to date ('"+autoUpdate+"' track).");
 				beo.sendToUI("software-update", {header: "upToDate"});
 			}
 		});
@@ -238,15 +238,15 @@ function autoUpdateMode(mode) {
 			case "stable":
 			case "latest":
 			case "experimental":
-				fs.writeFileSync("/etc/update.release", mode);
+				fs.writeFileSync("/etc/updater.release", mode);
 				break;
 			case false:
-				fs.writeFileSync("/etc/update.release", "off");
+				fs.writeFileSync("/etc/updater.release", "off");
 				break;
 		}
 	} else {
-		if (fs.existsSync("/etc/update.release")) {
-			modeRead = fs.readFileSync("/etc/update.release", "utf8").trim();
+		if (fs.existsSync("/etc/updater.release")) {
+			modeRead = fs.readFileSync("/etc/updater.release", "utf8").trim();
 			switch (modeRead) {
 				case "critical":
 				case "stable":
@@ -263,7 +263,7 @@ function autoUpdateMode(mode) {
 		}
 	}
 	autoUpdate = (mode) ? mode : "latest";
-	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: settings.autoUpdateMode}});
+	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate}});
 }
 
 

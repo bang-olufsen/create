@@ -624,6 +624,8 @@ function assembleBeoUI() {
 			translations = "";
 		}
 		
+		if (debugMode) menus.push("<script>debug = true;</script>");
+		
 		extensionsLoaded = true;
 	} else {
 		menus.push("<script>\n\n// NO EXTENSIONS\n\n beo.notify({title: 'Extensions folder missing', message: 'If you did not deliberately disable extensions, contact Bang & Olufsen Create support team.', id: 'noExtensions'});\nnoExtensions = true;\n\n</script>");

@@ -46,6 +46,15 @@
 		<metadata type="delayDRegister" maxDelay="2000" storable="yes">783</metadata>
 		<metadata type="delayCRegister" maxDelay="2000" storable="yes">784</metadata>
 		<metadata type="delayBRegister" maxDelay="2000" storable="yes">785</metadata>
+		<metadata type="spdifTXUserDataSource" storable="yes">63135</metadata>
+		<metadata type="spdifTXUserDataL0" storable="yes">63135</metadata>
+		<metadata type="spdifTXUserDataL1" storable="yes">63168</metadata>
+		<metadata type="spdifTXUserDataL2" storable="yes">63169</metadata>
+		<metadata type="spdifTXUserDataL3" storable="yes">63170</metadata>
+		<metadata type="spdifTXUserDataL4" storable="yes">63171</metadata>
+		<metadata type="spdifTXUserDataL5" storable="yes">63172</metadata>
+		<metadata type="spdifTXUserDataR0" storable="yes">63173</metadata>
+		<metadata type="spdifTXUserDataR1" storable="yes">63185</metadata>
 	</beometa>
   <dateTime>2020-01-24T00:19:54.1276906Z</dateTime>
   <version>4.2.1.1764</version>

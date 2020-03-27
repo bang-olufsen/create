@@ -19,8 +19,6 @@ $(document).on("alsaloop", function(event, data) {
 	
 	if (data.header == "alsaloopSensitivity") {
 		
-		console.log("got alsaloopSensitivity");
-		
 		if (data.content.sensitivity) {
 			console.log("Sensitivity: "+data.content.sensitivity);
 			if (data.content.sensitivity > 0) {

@@ -16,7 +16,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 // BEOCREATE SOURCES
-var request = require("request");
 var fetch = require("node-fetch");
 var exec = require("child_process").exec;
 

@@ -21,7 +21,7 @@ SOFTWARE.*/
 var exec = require('child_process').exec;
 var execFile = require('child_process').execFile;
 var beoDSP = require('../../beocreate_essentials/dsp');
-var request = require('request');
+var fetch = require("node-fetch");
 
 
 
@@ -142,7 +142,7 @@ var request = require('request');
 			case "volume":
 				if (event.content.percent != undefined) {
 					if (debug >= 2) console.log("Volume received from AudioControl: "+event.content.percent+" %.");
-					reportVolume(event.content.percent);
+					reportVolume(mapVolume(event.content.percent, true));
 				}
 				break;
 			case "setVolume":
@@ -327,18 +327,12 @@ var request = require('request');
 	
 	function getVolumeViaAudioControl(callback) {
 		if (callback) {
-			request.get({
-				url: "http://127.0.1.1:"+sourcesSettings.port+"/api/volume",
-				json: true
-			}, function(err, res, body) {
-				if (err) {
-					if (debug) console.error("Could not retrieve volume: " + err);
-					callback(null);
-				} else {
-					if (res.statusCode == 200) {
+			fetch("http://127.0.1.1:"+sourcesSettings.port+"/api/volume").then(res => {
+				if (res.status == 200) {
+					res.json().then(json => {
 						try {
-							if (body.percent != undefined) {
-								callback(body.percent);
+							if (json.percent != undefined) {
+								callback(json.percent);
 							} else {
 								callback(null);
 								if (debug) console.error("Volume value not returned.");
@@ -347,9 +341,10 @@ var request = require('request');
 							callback(null);
 							if (debug) console.error("Volume control not set up properly.");
 						}
-					} else {
-						callback(null);
-					}
+					});
+				} else {
+					callback(null);
+					if (debug) console.error("Could not retrieve volume: " + res.status, res.statusText);
 				}
 			});
 		}

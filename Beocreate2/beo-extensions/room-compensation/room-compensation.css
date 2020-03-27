@@ -1,40 +1,59 @@
 /* @override 
 	http://beocreate-core.local/extensions/room-compensation/room-compensation.css */
 	
-#room-measurement-current-level {
-	font-size: 0.8em;
-	font-weight: 500;
+#room-measurement-level-meter {
 	width: 280px;
+	position: relative;
 	margin-bottom: 0.5em;
 }
 	
-#room-measurement-recommended-level {
-	width: 280px;
+#room-measurement-current-level {
 	font-size: 0.8em;
 	font-weight: 500;
-	margin-top: -5px;
+	margin-bottom: 0.5em;
 	position: relative;
 }
 
-#room-measurement-recommended-level div {
-	background-color: var(--turquoise);
-	height: 4px;
-	display: block;
-	margin-left: 40%;
-	margin-bottom: 0.5em;
-	margin-right: 20%;
+#room-measurement-passable-level,
+#room-measurement-recommended-level {
+	font-size: 0.8em;
+	font-weight: 500;
+	margin-top: -5px;
+	float: left;
 }
 
+#room-measurement-passable-level {
+	margin-left: 30%;
+	width: 20%;
+}
+
+#room-measurement-recommended-level {
+	width: 50%;
+}
+
+
+#room-measurement-passable-level div,
+#room-measurement-recommended-level div {
+	height: 4px;
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+#room-measurement-passable-level div {
+	background-color: var(--spindle);
+}
+
+#room-measurement-recommended-level div {
+	background-color: var(--mariner);
+}
+
+#room-measurement-passable-level span,
 #room-measurement-recommended-level span {
 	position: absolute;
 	opacity: 0.3;
 }
 
+#room-measurement-passable-level .lower,
 #room-measurement-recommended-level .lower {
-	left: 40%;
+	
 }
-
-#room-measurement-recommended-level .upper {
-	right: 20%;
-}
-

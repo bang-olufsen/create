@@ -27,25 +27,31 @@ console.log("\nListing Node modules used by Beocreate 2...\n");
 
 var fs = require('fs');
 
+var modules = {};
 var moduleList = [];
 var systemDirectory = __dirname;
 
 
-checkDirectory(systemDirectory);
-checkDirectory(systemDirectory+"/../beocreate_essentials");
+checkDirectory(systemDirectory, "the system");
+checkDirectory(systemDirectory+"/../beocreate_essentials", "Beocreate Essentials");
 
 extensions = fs.readdirSync(systemDirectory+"/../beo-extensions");
 for (var i = 0; i < extensions.length; i++) {
-	checkDirectory(systemDirectory+"/../beo-extensions/"+extensions[i]);
+	checkDirectory(systemDirectory+"/../beo-extensions/"+extensions[i], extensions[i]);
 }
 
-function checkDirectory(path) {
+function checkDirectory(path, extension) {
 	if (fs.statSync(path).isDirectory()) {
 		console.log("Checking "+path+"...");
 		if (fs.existsSync(path+"/package.json")) {
 			packageJSON = JSON.parse(fs.readFileSync(path+"/package.json"));
 			if (packageJSON.dependencies) {
 				for (dependency in packageJSON.dependencies) {
+					if (!modules[dependency]) {
+						modules[dependency] = [extension];
+					} else {
+						modules[dependency].push(extension);
+					}
 					if (moduleList.indexOf(dependency) == -1) moduleList.push(dependency);
 				}
 			}
@@ -53,5 +59,10 @@ function checkDirectory(path) {
 	}
 }
 
-console.log("\nModules used in this installation:\n\n"+moduleList.join(" "));
+console.log("\nAll modules and who uses them:\n");
+for (m in modules) {
+	console.log(m+" (used by: "+modules[m].join(", ")+")");
+}
+
+console.log("\nAll modules used in this installation:\n\n"+moduleList.join(" "));
 process.exit(0);

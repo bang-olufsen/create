@@ -1,4 +1,4 @@
-<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css">
+<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css" data-namespace="equaliser">
 
 
 	
@@ -50,6 +50,7 @@
 	
 	<div id="equaliser-graph-container" class="at-top">
 		
+		<div id="equaliser-compare-prompt">Press and hold the ear to compare</div>
 	</div>
 	
 	<div id="equaliser-graph-divider"></div>
@@ -102,6 +103,8 @@
 				<div class="menu-icon right button symbol" id="equaliser-group-channels-button" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.groupChannels();" title="Group or ungroup channels"></div>
 				
 				<div class="menu-icon right button symbol" id="equaliser-channel-settings-button" style="-webkit-mask-image: url(extensions/channels/symbols-black/channels.svg); mask-image: url(extensions/channels/symbols-black/channels.svg);" onclick="equaliser.showChannelSettings();" title="Adjust channel level, role and more"></div>
+				
+				<div class="menu-icon right button symbol" id="equaliser-compare-button" style="-webkit-mask-image: url(€/symbols-black/ear.svg); mask-image: url(€/symbols-black/ear.svg);" onmousedown="equaliser.compare(true);" onmouseup="equaliser.compare(false);" ontouchstart="equaliser.compare(true, true);" ontouchend="equaliser.compare(false, true);" title="Hold to compare with all filters off"></div>
 				
 				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="beo.ask('equaliser-options-prompt');" title="More filter options"></div>
 			</div>
@@ -219,6 +222,13 @@
 			</div>
 			<p id="equaliser-no-filters-message">Add filters to start shaping the sound.</p>
 			
+			<div class="equaliser-sound-design-listening-mode hidden">
+				<hr>
+				<h2>Presets</h2>
+				<p>Current sound design can be saved to a listening mode preset. <a href="#" onclick="beo.showExtension('beosonic');">View saved presets.</a></p>
+				<div class="button pill grey" onclick="equaliser.saveBeosonicPreset();">Save Listening Mode...</div>
+			</div>
+			
 			<!--<h2>Channel options</h2>
 			<div class="menu-item toggle" id="equaliser-channel-inverted" onclick="equaliser.toggleInvert();">
 				<div class="menu-label">Invert Signal</div>
@@ -311,10 +321,15 @@
 		</div>
 		
 		<div class="ask-menu" id="equaliser-options-prompt">
-			<h2 class="equaliser-selected-channel"></h2>
+			<!--<h2 class="equaliser-selected-channel"></h2>-->
 			<div class="ask-buttons">
+				<div class="equaliser-sound-design-listening-mode hidden">
+					<div class="button pill grey" onclick="equaliser.saveBeosonicPreset();">Save Listening Mode...</div>
+					<p>Create a new listening mode preset that includes the current sound design.</p>
+					<hr>
+				</div>
 				<div class="button pill grey disabled" onclick="equaliser.importFilters();">Import Filters...</div>
-				<div class="button pill grey" onclick="equaliser.deleteAllFilters();">Remove All Filters...</div>
+				<div class="button pill grey" onclick="equaliser.deleteAllFilters();">Remove Channel Filters...</div>
 				<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 			</div>
 		</div>

@@ -49,6 +49,7 @@ var exec = require("child_process").exec;
 						enabled: enabled,
 						aka: ["mpd"],
 						transportControls: ["play", "stop"],
+						allowChangingTransportControls: false,
 						usesHifiberryControl: true
 					});
 				});

@@ -596,7 +596,7 @@ dhcpConfig = {wifi: {}, ethernet: {}};
 function readDHCPSettings(forInterface) {
 	path = null;
 	if (forInterface == "wifi") path = "/etc/systemd/network/wireless.network";
-	if (forInterface == "ethernet") path = "/etc/systemd/network/dhcp.network";
+	if (forInterface == "ethernet") path = "/etc/systemd/network/eth0.network";
 	if (path) {
 		if (fs.existsSync(path)) {
 			modified = fs.statSync(path).mtimeMs;
@@ -644,7 +644,7 @@ function readDHCPSettings(forInterface) {
 function writeDHCPSettings(forInterface) {
 	path = null;
 	if (forInterface == "wifi") path = "/etc/systemd/network/wireless.network";
-	if (forInterface == "ethernet") path = "/etc/systemd/network/dhcp.network";
+	if (forInterface == "ethernet") path = "/etc/systemd/network/eth0.network";
 	if (path) {
 		// Saves current configuration back into the file.
 		if (fs.existsSync(path)) {

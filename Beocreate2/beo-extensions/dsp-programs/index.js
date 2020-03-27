@@ -433,6 +433,8 @@ var _ = require('underscore');
 					currentMetadata = metadata;
 					if (id == dspUpgrade) {
 						dspUpgrade = false;
+						settings.autoUpgradedTo = id;
+						beo.saveSettings("dsp-programs", settings);
 						beo.bus.emit("ui", {target: "dsp-programs", header: "dspUpgrade", content: {dspUpgrade: false}});
 					}
 					
@@ -621,8 +623,10 @@ var _ = require('underscore');
 		}
 		if (match) {
 			if (settings.autoUpgrade == false) {
-				if (debug) console.log("An upgrade to the current DSP program is on file.");
-				dspUpgrade = match;
+				if (!settings.autoUpgradedTo || settings.autoUpgradedTo != match) {
+					if (debug) console.log("An upgrade to the current DSP program is on file.");
+					dspUpgrade = match;
+				}
 			} else {
 				return match;
 			}

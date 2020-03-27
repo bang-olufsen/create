@@ -1,0 +1,38 @@
+{
+	"speaker-preset": {
+		"presetName": "Other Speaker",
+		"presetVersion": 2,
+		"readOnly": true,
+		"productIdentity": "small-speaker",
+		"description": "A basic preset with four full-range channels. Suitable for use as a normal, standalone amplifier.",
+		"fallbackDSP": "beocreate-universal"
+	},
+	"equaliser": {
+		"a": [],
+		"b": [],
+		"c": [],
+		"d": [] 
+	},
+	"channels": {
+		"a": {
+			"level": 100,
+			"enabled": true,
+			"role": "left"
+		},
+		"b": {
+			"level": 100,
+			"enabled": true,
+			"role": "right"
+		},
+		"c": {
+			"level": 100,
+			"enabled": true,
+			"role": "left"
+		},
+		"d": {
+			"level": 100,
+			"enabled": true,
+			"role": "right"
+		}
+	}
+}

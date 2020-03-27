@@ -1,0 +1,136 @@
+/* @override 
+	http://beocreate-core.local/extensions/speaker-preset/speaker-preset.css
+	http://beocreate-4-encore.local/extensions/speaker-preset/speaker-preset.css */
+
+#speaker-preset .collection-item-content:after {
+	content: "Show";
+}
+	
+.setup #speaker-preset .collection-item:after {
+	/*content: "Select";*/
+}
+
+.speaker-preset-beo-logo {
+	width: 32px;
+	height: 32px;
+	margin-left: 18px;
+	margin-top: 20px;
+	opacity: 0.5;
+	pointer-events: none;
+	display: inline-block;
+	position: absolute;
+	background-color: currentColor;
+	-webkit-mask-image: url(/common/beo.svg);
+	mask-image: url(/common/beo.svg);
+	-webkit-mask-size: 32px;
+	mask-size: 32px;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	left: 0;
+	top: 0;
+}
+
+.speaker-preset-information {
+	text-align: center;
+}
+
+.speaker-preset-information h1 {
+	font-size: 1.5em;
+}
+
+.speaker-preset-information h2 {
+	height: auto;
+	margin-bottom: -0.5em;
+}
+
+.speaker-preset-contents p {
+	/*opacity: 0.5;*/
+}
+
+.speaker-preset-contents .data-square {
+	display: inline-block;
+	background-color: silver;
+	color: white;
+	height: 16px;
+	font-size: 0.7em;
+	box-sizing: border-box;
+	padding: var(--font-spacing-compensation) 0.3em 0.1em;
+	margin-left: 0.2em;
+	margin-right: 0.2em;
+	font-weight: 500;
+}
+
+.speaker-preset-preview-detail {
+	display: flex;
+}
+
+.speaker-preset-preview-detail-channel {
+	display: flex;
+	flex-direction: column;
+	margin-right: 5px;
+	margin-left: 5px;
+}
+
+.speaker-preset-preview-detail-channel:first-child {
+	margin-left: 0;
+}
+
+.speaker-preset-preview-detail-channel:last-child {
+	margin-right: 0;
+}
+
+.speaker-preset-preview-detail-channel .channel-dot {
+	flex-shrink: 0;
+	border-radius: 50%;
+	width: 10px;
+	position: relative;
+	height: 10px;
+	margin-bottom: 0.3em;
+}
+
+.speaker-preset-preview-detail-channel .channel-dot:after {
+	display: block;
+	position: absolute;
+	left: 0;
+	top: -1px;
+	font-size: 0.8em;
+	font-weight: 500;
+	margin-left: 1em;
+}
+
+.speaker-preset-preview-detail-channel .channel-dot.a:after {
+	content: "A";
+}
+
+.speaker-preset-preview-detail-channel .channel-dot.b:after {
+	content: "B";
+}
+
+.speaker-preset-preview-detail-channel .channel-dot.c:after {
+	content: "C";
+}
+
+.speaker-preset-preview-detail-channel .channel-dot.d:after {
+	content: "D";
+}
+
+.speaker-preset-preview-detail-channel p {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+
+.header-image.speaker-preset-product-image {
+	bottom: 10px;
+	top: 10px;
+}
+
+@media only screen and (min-width: 621px) {
+	
+	.speaker-preset-product-image-wrap {
+		height: 30vh;
+	}
+	
+}

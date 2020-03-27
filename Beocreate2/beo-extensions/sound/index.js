@@ -21,7 +21,7 @@ SOFTWARE.*/
 var exec = require('child_process').exec;
 var execFile = require('child_process').execFile;
 var beoDSP = require('../../beocreate_essentials/dsp');
-var request = require('request');
+var fetch = require("node-fetch");
 
 
 
@@ -30,7 +30,8 @@ var request = require('request');
 	var version = require("./package.json").version;
 	
 	var defaultSettings = {
-		"advancedSoundAdjustmentsEnabled": false
+		"advancedSoundAdjustmentsEnabled": false,
+		"volumeControlRange": [0, 100]
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
@@ -52,6 +53,7 @@ var request = require('request');
 	var directDSPVolumeControlAvailable = false;
 	var alsaDSPVolumeControlAvailable = false;
 	var alsaMixer = null;
+	var volumeControlRange = [0, 100];
 	
 	beo.bus.on('general', function(event) {
 		// See documentation on how to use beo.bus.
@@ -120,12 +122,27 @@ var request = require('request');
 			case "settings":
 				if (event.content.settings) {
 					settings = Object.assign(settings, event.content.settings);
+					
+					if (settings.volumeControlRange) {
+						for (var i = 0; i < 2; i++) {
+							if (settings.volumeControlRange[i]) {
+								value = parseFloat(settings.volumeControlRange[i]);
+								if (value != NaN) {
+									if (value < 0) value = 0;
+									if (value > 100) value = 100;
+								} else {
+									value = (i == 0) ? 0 : 100;
+								}
+								volumeControlRange[i] = value;
+							}
+						}
+					}
 				}
 				break;
 			case "volume":
 				if (event.content.percent != undefined) {
 					if (debug >= 2) console.log("Volume received from AudioControl: "+event.content.percent+" %.");
-					reportVolume(event.content.percent);
+					reportVolume(mapVolume(event.content.percent, true));
 				}
 				break;
 			case "setVolume":
@@ -184,6 +201,8 @@ var request = require('request');
 			if (volumeControl == 0) console.log("System has no volume control.");
 			if (volumeControl == 1) console.log("Volume control is via ALSA ('"+alsaMixer+"').");
 			if (volumeControl == 2) console.log("Volume control is via direct DSP control.");
+			
+			if (volumeControlRange[0] != 0 || volumeControlRange[1] != 100) console.log("Volume control range maps to "+volumeControlRange[0]+"-"+volumeControlRange[1]+".");
 		}
 	}
 	
@@ -196,7 +215,7 @@ var request = require('request');
 				callback(null);
 				break;
 			case 1: // Talk to ALSA.
-				setVolumeViaALSA(volume, function(newVolume) {
+				setVolumeViaALSA(mapVolume(volume, false), function(newVolume) {
 					reportVolume(newVolume, callback, flag);
 				});
 				break;
@@ -214,7 +233,7 @@ var request = require('request');
 				break;
 			case 1: // Talk to ALSA.
 				getVolumeViaALSA(function(newVolume) {
-					reportVolume(newVolume, callback, flag);
+					reportVolume(mapVolume(newVolume, true), callback, flag);
 				});
 				break;
 			case 2: // Talk to the DSP directly.
@@ -308,18 +327,12 @@ var request = require('request');
 	
 	function getVolumeViaAudioControl(callback) {
 		if (callback) {
-			request.get({
-				url: "http://127.0.1.1:"+sourcesSettings.port+"/api/volume",
-				json: true
-			}, function(err, res, body) {
-				if (err) {
-					if (debug) console.error("Could not retrieve volume: " + err);
-					callback(null);
-				} else {
-					if (res.statusCode == 200) {
+			fetch("http://127.0.1.1:"+sourcesSettings.port+"/api/volume").then(res => {
+				if (res.status == 200) {
+					res.json().then(json => {
 						try {
-							if (body.percent != undefined) {
-								callback(body.percent);
+							if (json.percent != undefined) {
+								callback(json.percent);
 							} else {
 								callback(null);
 								if (debug) console.error("Volume value not returned.");
@@ -328,9 +341,10 @@ var request = require('request');
 							callback(null);
 							if (debug) console.error("Volume control not set up properly.");
 						}
-					} else {
-						callback(null);
-					}
+					});
+				} else {
+					callback(null);
+					if (debug) console.error("Could not retrieve volume: " + res.status, res.statusText);
 				}
 			});
 		}
@@ -446,6 +460,19 @@ var request = require('request');
 					getVolume();
 				});
 			});
+		}
+	}
+	
+	function mapVolume(value, toFullScale) {
+		if (toFullScale) { // From whatever range specified to 0-100.
+			if (value == 0) value = volumeControlRange[0];
+			return (value - volumeControlRange[0]) * 100 / (volumeControlRange[1] - volumeControlRange[0]);
+		} else { // From 0-100 to whatever range specified.
+			if (value == 0) {
+				return 0;
+			} else {
+				return value * (volumeControlRange[1] - volumeControlRange[0]) / 100 + volumeControlRange[0];
+			}
 		}
 	}
 	

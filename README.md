@@ -17,9 +17,9 @@ Beocreate 2 is bundled with [HiFiBerryOS](https://github.com/hifiberry/hifiberry
 - Beautifully crafted, responsive, browser-based user interface that works within the local network. Dark mode is supported.
 - See what's playing, control playback and volume.
 - Supports multiple sources/streaming protocols that can be set up in one place (powered by [HiFiBerry AudioControl](https://github.com/hifiberry/audiocontrol2)).
-- Sound presets designed by Bang & Olufsen acousticians specifically for select loudspeaker models.
-- Quickly customise the sound with ToneTouch.
-- Parametric equaliser for each output channel – ideal for crossovers and tuning custom loudspeakers.
+- Speaker presets designed by Bang & Olufsen acousticians specifically for select loudspeaker models.
+- Quickly customise the sound with Beosonic and listening modes.
+- Parametric equaliser for general sound design and each output channel – ideal for crossovers and tuning custom loudspeakers.
 - Manage Wi-Fi and Ethernet connections.
 - Extension architecture for easy expandability and future-proofing.
 - Based on Node.js.
@@ -61,9 +61,9 @@ Design and develop extensions to expand the functionality of the system.
 
 ### Sound & Customisation
 
-Create sound presets, DSP programs and product identities to customise the sound system.
+Create speaker presets, DSP programs and product identities to customise the sound system.
 
-- [Sound Presets](Documentation/SoundPresets.md)
+- [Speaker Presets](Documentation/SoundPresets.md)
 - DSP Programs
 - [Product Identities](Documentation/ProductIdentities.md)
 
@@ -85,4 +85,4 @@ Some issues in the current release that aren't acknowledged in the user interfac
 
 The original code for the project (SigmaTCPDaemon, SigmaClientTool Beocreate Server and the bang-olufsen.com-based setup tool) has been archived under the [beocreate1](https://github.com/bang-olufsen/create/tree/beocreate1) branch.
 
-The old DSP programs are in the *Speakers* directory, but please note that these aren't fully compatible with Beocreate 2. Beocreate 2 comes built in with the sound presets for these models.
+The old DSP programs are in the *Speakers* directory, but please note that these aren't fully compatible with Beocreate 2. Beocreate 2 comes built in with the speaker presets for these models.

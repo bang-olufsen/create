@@ -1,0 +1,353 @@
+/* @override 
+	http://beocreate-core.local/extensions/beosonic/beosonic.css
+	 */
+	 
+/* @group Beosonic */
+
+#beosonic-control {
+	position: relative;
+	max-width: 60vh;
+	margin: 20px auto 30px;
+}
+
+#beosonic-area {
+	background-color: #022c27;
+	border-radius: 50%;
+	background-size: 75%;
+	background-repeat: no-repeat;
+	background-position: center;
+	box-shadow: 0 3px 15px rgba(0, 0, 0, 0.3), 0 0 50px #057a7a;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	transition: box-shadow 1s cubic-bezier(.18,0,0,1);
+	overflow: hidden;
+}
+
+#beosonic-glow {
+	background-image: radial-gradient(circle closest-side, #2CD5C4 0%, rgba(43, 213, 196, 0.8) 0%, rgba(41, 213, 196, 0.74) 13.4%, rgba(40, 213, 196, 0.11) 80.6%, rgba(41, 213, 196, 0.04) 90%, rgba(43, 213, 196, 0) 100%);
+	position: absolute;
+	mix-blend-mode: screen;
+	width: 100%;
+	height: 100%;
+	margin-top: -50%;
+	margin-left: -50%;
+	top: 50%;
+	left: 50%;
+	transition: top 1s cubic-bezier(.18,0,0,1), left 1s cubic-bezier(.18,0,0,1);
+}
+
+#beosonic-dot {
+	width: 60px;
+	height: 60px;
+	background-color: white;
+	top: 50%;
+	position: absolute;
+	left: 50%;
+	margin-top: -30px;
+	margin-left: -30px;
+	border-radius: 50%;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.3);
+	transition: box-shadow 0.5s ease, left 0.3s ease, top 0.3s ease, color 0.5s ease, width 0.3s ease, height 0.3s ease, margin-left 0.3s ease, margin-top 0.3s ease, font-size 0.3s ease, transform 0.5s ease, background-color 0.5s ease;
+	cursor: move;
+}
+
+#beosonic-dot:active {
+	transition: box-shadow 0.2s ease, color 0.3s ease, transform 0.2s ease;
+	/*transform: scale(1.1);*/
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+	background-color: #eee;
+}
+
+.beosonic-label {
+	transition: opacity 0.3s ease;
+}
+
+#beosonic-control.drag .beosonic-label,
+#beosonic-control.drag #beosonic-glow,
+#beosonic-control.drag #beosonic-area {
+	transition: none;
+}
+
+.beosonic-label.primary {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	font-size: 0.8em;
+	font-weight: 500;
+	height: 20px;
+	width: 100px;
+	color: white;
+}
+
+.beosonic-label.left,
+.beosonic-label.right {
+	top: 50%;
+	margin-top: -10px;
+}
+
+.beosonic-label.left {
+	left: 10px;
+}
+
+.beosonic-label.right {
+	right: 10px;
+	justify-content: flex-end;
+}
+
+.beosonic-label.top,
+.beosonic-label.bottom {
+	justify-content: center;
+	left: 50%;
+	margin-left: -50px;
+}
+
+.beosonic-label.top {
+	top: 10px;
+}
+
+.beosonic-label.bottom {
+	bottom: 10px;
+}
+
+.beosonic-label.secondary {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.8em;
+	width: 40px;
+	color: rgba(255, 255, 255, 0.5);
+	height: 40px;
+	margin-left: -20px;
+	margin-top: -20px;
+	text-align: center;
+	opacity: 0.25;
+}
+
+.beosonic-label.nw,
+.beosonic-label.ne {
+	top: 22%;
+}
+
+.beosonic-label.sw,
+.beosonic-label.se {
+	top: 78%;
+}
+
+.beosonic-label.nw,
+.beosonic-label.sw {
+	left: 22%;
+}
+
+.beosonic-label.ne,
+.beosonic-label.se {
+	left: 78%;
+}
+
+#beosonic-menu-item-attachment {
+	margin-left: 0;
+}
+
+#beosonic-menu-item-attachment .segmented-control {
+	text-transform: none;
+	letter-spacing: 0;
+	height: var(--menu-height);
+}
+
+#beosonic-menu-item-attachment .segmented-control div {
+	hyphens: auto;
+	-webkit-hyphens: auto;
+	text-align: center;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+}
+
+/* @end */
+
+/* @group ToneTouch */
+
+#tone-touch-tab {
+	height: 100%;
+	position: relative;
+	/*margin: 10px;*/
+}
+
+#tone-touch-area {
+	box-sizing: border-box;
+	position: absolute;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center;
+	/*background-color: #345267;*/
+	background-color: #173e4b;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+}
+
+.dark #tone-touch-area {
+	background-color: #282828;
+}
+
+
+.tone-touch-field {
+	width: 50%;
+	height: 50%;
+	display: flex;
+	justify-content: center;
+	box-sizing: border-box;
+	text-transform: uppercase;
+	letter-spacing: var(--uppercase-spacing);
+	padding: 1.5em 1.4em 1.5em 1.5em;
+	font-size: 0.8em;
+	position: absolute;
+	color: rgba(255,255,255,0.5);
+	transition: background-color 0.1s linear;
+}
+
+.tone-touch-field.upper {
+	align-items: flex-start;
+	top: 0;
+}
+
+.tone-touch-field.lower {
+	align-items: flex-end;
+	bottom: 0;
+}
+
+.tone-touch-field.left {
+	left: 0;
+}
+
+.tone-touch-field.right {
+	right: 0;
+}
+
+#tone-touch-dot {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	background-color: white;
+	position: absolute;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	top: 50%;
+	left: 50%;
+	margin-left: -30px;
+	margin-top: -30px;
+	box-sizing: border-box;
+	padding-top: var(--font-spacing-compensation);
+	cursor: move;
+	color: transparent;
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+	transition: box-shadow 0.5s ease, left 0.3s ease, top 0.3s ease, color 0.5s ease, width 0.3s ease, height 0.3s ease, margin-left 0.3s ease, margin-top 0.3s ease, font-size 0.3s ease, transform 0.5s ease, background-color 0.5s ease;
+}
+
+.dark #tone-touch-dot {
+	background-color: #777;
+	border: 1px solid rgba(255,255,255,0.1);
+}
+
+#tone-touch-dot.text {
+	color: rgba(0,0,0,0.5);
+}
+
+#tone-touch-dot.number {
+	color: rgba(0,0,0,0.5);
+	font-size: 1em;
+}
+
+#tone-touch-dot:active {
+	transition: box-shadow 0.2s ease, color 0.3s ease, transform 0.2s ease;
+	/*transform: scale(1.1);*/
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+	background-color: var(--ultra-light-grey);
+}
+
+.dark #tone-touch-dot:active {
+	background-color: #888;
+}
+
+.dark #tone-touch-dot.text {
+	color: rgba(255,255,255,0.5);
+}
+
+#tone-touch-dot span {
+	text-transform: uppercase;
+	letter-spacing: var(--uppercase-spacing);
+	font-size: 0.7em;
+	font-weight: 500;
+	transition: opacity 0.5s ease;
+	padding-left: var(--uppercase-spacing);
+}
+
+#tone-touch-scale-area {
+	/*background-color: rgba(255,0,0,0.5);*/
+	width: 200px;
+	height: 200px;
+	position: absolute;
+	top: -75px;
+	left: -75px;
+	border-radius: 50%;
+}
+
+.no-touch #tone-touch-scale-area {
+	border-radius: 0;
+	border-left: 2px solid;
+	border-right: 2px solid;
+	border-color: silver;
+	width: 2px;
+	height: 16px;
+	top: 50%;
+	right: 5px;
+	left: auto;
+	cursor: ew-resize;
+	margin-top: -8px;
+	transition: border-color 0.3s ease;
+	display: none;
+}
+
+.number #tone-touch-scale-area,
+.text #tone-touch-scale-area {
+	border-color: transparent;
+}
+
+.tone-touch-field.upper.left {
+	/*width: calc(50% + 1px);
+	height: calc(50% + 1px);*/
+	/*box-shadow: inset -1px -1px rgba(0, 0, 0, 0.05);*/
+}
+
+.tone-touch-field.upper.right {
+	/*height: calc(50% + 1px);*/
+}
+
+.tone-touch-field.lower.right {
+	/*box-shadow: inset 1px 1px rgba(0, 0, 0, 0.05);*/
+}
+
+.tone-touch-field.lower.left {
+	/*width: calc(50% + 1px);*/
+}
+
+#tone-touch-field-1 {
+	background-color: rgba(0,0,0,0.1);
+}
+
+#tone-touch-field-2 {
+	background-color: rgba(0,0,0,0.12);
+}
+
+#tone-touch-field-3 {
+	background-color: rgba(0,0,0,0.2);
+}
+
+#tone-touch-field-4 {
+	background-color: rgba(0,0,0,0.23);
+}
+
+/* @end */

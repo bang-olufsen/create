@@ -1,0 +1,24 @@
+{
+  "name": "@beocreate/beosonic",
+  "version": "0.5.1",
+  "description": "Tone controls for Beocreate sound systems.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "tonetouch",
+	"beosonic",
+    "loudness",
+    "beocreate",
+    "sound",
+    "bang",
+    "olufsen"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT"
+}

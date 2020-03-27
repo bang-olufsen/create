@@ -21,6 +21,7 @@ var extensions = {};
 var selectedExtension = null;
 var stateRestored = false;
 var historyConstructed = false;
+var os = null;
 
 beo = (function() {
 
@@ -28,6 +29,8 @@ uiSettings = {
 	disclosure: {}
 };
 hifiberryOS = false;
+
+os = getOS();
 
 $( document ).ready(function() {
 	// FASTCLICK
@@ -62,6 +65,8 @@ $( document ).ready(function() {
 	} else {
 		attentionIcon.src = "common/hifiberry-wait-animate.svg";
 	}
+
+	$(".device").text(os[1]); // Change strings and instructions in the UI to refer to the correct platform.
 	
 	setTimeout(function() {
 		$("nav.bar .image-cacher").addClass("hidden");
@@ -250,7 +255,8 @@ function prepareMenus() {
 						icon: $(this).attr("data-icon"), 
 						assetPath: $(this).attr("data-asset-path"), 
 						title: $(this).attr("data-menu-title"),
-						deepMenu: []
+						deepMenu: [],
+						namespace: $(this).attr("data-namespace")
 					};
 					if ($(this).attr("data-menu-title-short")) extensions[menuID].shortTitle = $(this).attr("data-menu-title-short");
 					$(".scroll-area", this).first().prepend('<h1 class="large-title">'+$("header h1", this).first().text()+'</h1>'); // Duplicate title for views that use a large title.					
@@ -279,6 +285,9 @@ function prepareMenus() {
 						if ($(this).attr("data-menu-value-class")) {
 							menuOptions.valueClasses = [$(this).attr("data-menu-value-class")];
 							menuOptions.value = "";
+						}
+						if ($(this).attr("data-menu-attachment")) {
+							menuOptions.attachment = $(this).attr("data-menu-attachment");
 						}
 						if ($(this).attr("data-menu-title-class")) {
 							menuOptions.labelClasses = [$(this).attr("data-menu-title-class")];
@@ -315,7 +324,8 @@ function prepareMenus() {
 							icon: $(this).attr("data-icon"), 
 							assetPath: $(this).attr("data-asset-path"), 
 							title: $(this).attr("data-menu-title"),
-							deepMenu: []
+							deepMenu: [],
+							namespace: $(this).attr("data-namespace")
 						};
 						if ($(this).attr("data-menu-title-short")) extensions[$(this).attr("id")].shortTitle = $(this).attr("data-menu-title-short");
 					} else { // Add deep menu to the list
@@ -520,6 +530,7 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		
 		backTarget = null;
 		backTitle = null;
+		fromDeepMenu = false;
 		
 		
 		if (direction) {
@@ -581,6 +592,12 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 						$("#" + menuToClose).removeClass("block").addClass("hidden-right");
 					}
 				}
+				
+				// Close deep menus too.
+				if (deepMenuState[menuState[selectedParentMenu].submenu] && deepMenuState[menuState[selectedParentMenu].submenu].length > 0) {
+					showDeepMenu(menuState[selectedParentMenu].submenu, menuState[selectedParentMenu].submenu, true);
+					if (menuState[selectedParentMenu].submenu == newExtension) fromDeepMenu = true;
+				}
 			}
 			
 			if (selectedExtension && direction) {
@@ -604,13 +621,15 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 			
 			if (!direction) {
 				if (!invisibly) {
+					if (fromDeepMenu) $("#" + newExtension).addClass("hidden-left").removeClass("hidden-right");
 					$("#" + newExtension).addClass("block new");
 					setTimeout(function() {
-						$("#" + newExtension).removeClass("hidden-right");
+						$("#" + newExtension).removeClass("hidden-right hidden-left");
 						$("#" + selectedParentMenu).addClass("hidden-left");
 						$("#" + newExtension).attr("data-edge-swipe-previous", selectedParentMenu);
 					}, 50);
 				} else {
+					
 					$("#" + newExtension).addClass("block");
 					$("#" + newExtension).removeClass("hidden-right");
 					$("#" + selectedParentMenu).addClass("hidden-left");
@@ -828,7 +847,7 @@ function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 			}
 		}
 		if (oldMenu != newMenu) {
-			activatedExtension(selectedExtension);
+			if (!navigating) activatedExtension(selectedExtension);
 			if (back) {
 				if (!hideNew) {
 					$("#" + newMenu).addClass("hidden-left").removeClass("hidden-right");
@@ -905,6 +924,7 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
+	console.log(menuState, deepMenuState);
 }
 
 
@@ -1010,7 +1030,7 @@ function createMenuItem(options) {
 	// Icon
 	if (options.icon) {
 		//menuItem += '<img class="menu-icon" src="'+options.icon+'">\n';
-		menuItem += '<div class="menu-icon" style="-webkit-mask-image: url('+options.icon+'); mask-image: url('+options.icon+');"></div>\n';
+		menuItem += '<div class="menu-icon left" style="-webkit-mask-image: url('+options.icon+'); mask-image: url('+options.icon+');"></div>\n';
 	}
 	
 	menuItem += '<div class="menu-text-wrap">\n';
@@ -1074,6 +1094,13 @@ function createMenuItem(options) {
 	
 	menuItem += '</div>\n';
 	
+	if (options.attachment) {
+		menuItem += '<div class="menu-attachment';
+		if (options.icon) menuItem += ' icon-margin';
+		menuItem += '"';
+		if (options.id) menuItem += ' id="'+options.id+'-attachment"';
+		menuItem += '>'+options.attachment+'</div>\n';
+	}
 
 	return menuItem;
 }
@@ -1425,48 +1452,39 @@ function commaAndList(list, andWord, translationID, extensionID) {
 // ASK
 
 var askOpen = false;
+var askTransitionTimeout;
 var askCallbacks = null;
 var askCancelCallback = null;
 var askParent = null;
+var askExiting = false;
 function ask(menuID, dynamicContent, callbacks, cancelCallback) {
 	if (menuID) {
-		if (askOpen) returnAsk();
-		askOpen = true;
-		if (callbacks) askCallbacks = callbacks;
-		if (cancelCallback) askCancelCallback = cancelCallback;
-		/*if (cancelAction) {
-			$("#ask-back-plate").attr("onclick", cancelAction);
+		if (askOpen) {
+			if (!askExiting) ask();
+			setTimeout(function() {
+				returnAsk();
+				showAsk(menuID, dynamicContent, callbacks, cancelCallback);
+			}, 250);
 		} else {
-			$("#ask-back-plate").attr("onclick", "ask();");
-		}*/
-		askParent = $("#"+menuID).parent();
-		$("#ask-content").append($("#"+menuID).detach());
-		$("#ask-content > *").addClass("menu-content ask-menu-content");
-		if (dynamicContent) {
-			for (var i = 0; i < dynamicContent.length; i++) {
-				$("#ask-content .ask-dynamic-"+i).text(dynamicContent[i]);
-			}
+			showAsk(menuID, dynamicContent, callbacks, cancelCallback);
 		}
-		$("#ask, #ask-back-plate").addClass("block");
-		setTimeout(function() {
-			$("#ask, #ask-back-plate").addClass("visible");
-		}, 150);
 	} else {
+		askExiting = true;
 		if (askCancelCallback) askCancelCallback();
 		$("#ask, #ask-back-plate").removeClass("visible");
-		setTimeout(function() {
+		askTransitionTimeout = setTimeout(function() {
 			$("#ask, #ask-back-plate").removeClass("block");
 			returnAsk();
 		}, 500);
 		askCallbacks = null;
 		askCancelCallback = null;
-		askOpen = false;
 	}
 }
 
 function askOption(callbackIndex) {
+	askExiting = true;
 	$("#ask, #ask-back-plate").removeClass("visible");
-	setTimeout(function() {
+	askTransitionTimeout = setTimeout(function() {
 		$("#ask, #ask-back-plate").removeClass("block");
 		returnAsk();
 	}, 500);
@@ -1474,11 +1492,42 @@ function askOption(callbackIndex) {
 		askCallbacks[callbackIndex]();
 	}
 	askCallbacks = null;
-	askOpen = false;
+}
+
+function showAsk(menuID, dynamicContent, callbacks, cancelCallback) {
+	askOpen = true;
+	if (callbacks) askCallbacks = callbacks;
+	if (cancelCallback) askCancelCallback = cancelCallback;
+	/*if (cancelAction) {
+		$("#ask-back-plate").attr("onclick", cancelAction);
+	} else {
+		$("#ask-back-plate").attr("onclick", "ask();");
+	}*/
+	askParent = $("#"+menuID).parent();
+	$("#ask-content").append($("#"+menuID).detach());
+	$("#ask-content > *").addClass("menu-content ask-menu-content");
+	if (dynamicContent) {
+		for (var i = 0; i < dynamicContent.length; i++) {
+			$("#ask-content .ask-dynamic-"+i).text(dynamicContent[i]);
+		}
+	}
+	if (!$("#ask").hasClass("block")) {
+		$("#ask, #ask-back-plate").addClass("block");
+		setTimeout(function() {
+			$("#ask, #ask-back-plate").addClass("visible");
+		}, 150);
+	} else {
+		$("#ask, #ask-back-plate").addClass("visible");
+	}
 }
 
 function returnAsk() {
-	$(askParent).append($("#ask-content > *").detach());
+	if (askOpen) {
+		clearTimeout(askTransitionTimeout);
+		$(askParent).append($("#ask-content > *").detach());
+		askOpen = false;
+		askExiting = false;
+	}
 }
 
 
@@ -1491,7 +1540,7 @@ var holdTimeout = null;
 var clickHandler = null;
 
 // Drag detector cancels the appearance of the contextual menu in case the user moves away from the target whilst holding down.
-$(document).on("mouseout mouseup", ".hold", function(event) {
+$(document).on("mouseout mousemove mouseup", ".hold", function(event) {
 	endHold();
 });
 
@@ -1530,7 +1579,6 @@ function endHold() {
 		}, 20);
 	}
 }
-
 
 
 // SLIDER WIDTH
@@ -1903,6 +1951,7 @@ document.ontouchstart = function(event) {
 	if (event.target.className.indexOf("hold") != -1) {
 		startHold(event.target, event);
 	}
+	
 }
 
 document.ontouchmove = function(event) {
@@ -1916,10 +1965,11 @@ document.ontouchmove = function(event) {
 		}
 	}
 	
-	
 	if (event.target.className.indexOf("hold") != -1) {
 		endHold();
 	}
+	
+	
 }
 
 document.ontouchend = function(event) {
@@ -1934,6 +1984,7 @@ document.ontouchend = function(event) {
 		event.preventDefault();
 		endHold();
 	}
+	
 	
 }
 
@@ -1989,6 +2040,49 @@ Math.distance = function(x1, y1, x2, y2) {
 	return Math.sqrt((x2 -= x1) * x2 + (y2 -= y1) * y2);
 };
 
+Math.angle = function(x1, y1, x2, y2) {
+	y = x1 - x2;
+	x = y1 - y2;
+	theta = Math.atan2(-y, x);
+	theta = theta * -1;
+	theta = theta * (180 / Math.PI);
+	if (theta < 0) {
+		theta = 360+theta;
+	}
+	return theta.toFixed(1);
+}
+
+// Detect platform to tailor instructions.
+// https://stackoverflow.com/questions/38241480/detect-macos-ios-windows-android-and-linux-os-with-js
+// (modified to return a human-readable string that will be used in the UI)
+function getOS() {
+	var userAgent = window.navigator.userAgent,
+		platform = window.navigator.platform,
+		macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+		windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+		iosPlatforms = ['iPhone', 'iPad', 'iPod'],
+		os = null;
+		osUI = "";
+	if (macosPlatforms.indexOf(platform) !== -1) {
+		os = 'macos';
+		osUI = "Mac";
+	} else if (iosPlatforms.indexOf(platform) !== -1) {
+		os = 'ios';
+		osUI = platform;
+	} else if (windowsPlatforms.indexOf(platform) !== -1) {
+		os = 'windows';
+		osUI = "Windows device";
+	} else if (/Android/.test(userAgent)) {
+		os = 'android';
+		osUI = "Android device";
+	} else {
+		os = 'other';
+		osUI = "device"
+	}
+
+  return [os, osUI];
+}
+
 
 return {
 	ask: ask,
@@ -2021,7 +2115,8 @@ return {
 	setAppearance: setAppearance,
 	isDarkAppearance: function() {return darkAppearance},
 	insertConnectionGuide: insertConnectionGuide,
-	wizard: wizard
+	wizard: wizard,
+	getOS: getOS
 }
 
 })();

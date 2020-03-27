@@ -22,6 +22,36 @@ $(document).on("software-update", function(event, data) {
 		}
 	}
 	
+	if (data.header == "autoUpdateMode") {
+		if (data.content.mode != undefined) {
+			$(".auto-update-mode-selector > .menu-item").removeClass("checked");
+			updateMode = null;
+			switch (data.content.mode) {
+				case "critical":
+					$("#auto-update-critical").addClass("checked");
+					updateMode = "Security only";
+					break;
+				case "stable":
+					$("#auto-update-stable").addClass("checked");
+					updateMode = "Regular";
+					break;
+				case "latest":
+					$("#auto-update-latest").addClass("checked");
+					updateMode = "Quick";
+					break;
+				case "experimental":
+					updateMode = "Experimental";
+					break;
+				case false:
+					updateMode = "Off";
+					break;
+			}
+			if (updateMode) {
+				$(".auto-update-mode").text(updateMode);
+			}
+		}
+	}
+	
 	if (data.header == "updateAvailable" && data.content.version) {
 		$(".checking-for-update").addClass("hidden");
 		newVersion = data.content.version;
@@ -141,9 +171,15 @@ function install() {
 	beo.send({target: "software-update", header: "install"});
 }
 
+function setAutoUpdate(mode) {
+	beo.ask();
+	beo.sendToProduct("software-update", {header: "autoUpdateMode", content: {mode: mode}});
+}
+
 
 return {
-	install: install
+	install: install,
+	setAutoUpdate: setAutoUpdate
 };
 
 })();

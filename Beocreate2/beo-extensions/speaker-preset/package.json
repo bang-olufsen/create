@@ -1,0 +1,23 @@
+{
+  "name": "@beocreate/speaker-preset",
+  "version": "0.6.0",
+  "description": "Speaker preset management for Beocreate sound systems.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "sound",
+    "preset",
+    "dsp",
+    "beocreate",
+    "bang",
+    "olufsen"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT"
+}

@@ -12,12 +12,23 @@
 				<div class="menu-toggle"></div>
 			</div>
 			<hr>
+			<div class="menu-item toggle" id="alsaloop-auto-enable" onclick="alsaloop.toggleAutoEnable();">
+				<div class="menu-label">Start When Signal Detected</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p>When this option is disabled, start analogue input from the Now Playing view.</p>
+			
+			<h2>Sensitivity</h2>
+			<div class="segmented-control" id="alsaloop-sensitivity">
+				<div onclick="alsaloop.setSensitivity(40);" id="alsaloop-sense-40">Low</div>
+				<div onclick="alsaloop.setSensitivity(60);" id="alsaloop-sense-60">Medium</div>
+				<div onclick="alsaloop.setSensitivity(80);" id="alsaloop-sense-80">High</div>
+			</div>
 			<div class="menu-item source-alias-control" id="alsaloop-alias-item" onclick="sources.setAlias('alsaloop');">
 				<div class="menu-label">Alias</div>
 				<div class="menu-value button">Set...</div>
 			</div>
 			
-			<p>Play sound from the analogue input on your DAC+ ADC.</p>
 		</div>
 	</div>
 </div>

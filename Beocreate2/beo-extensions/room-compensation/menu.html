@@ -1,4 +1,4 @@
-<div class="menu-screen" id="room-compensation" data-icon="arc.svg" data-menu-title="Room Compensation" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-stylesheet="room-compensation.css">
+<div class="menu-screen" id="room-compensation" data-icon="arc.svg" data-menu-title="Room Compensation" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-stylesheet="room-compensation.css" data-namespace="room_compensation">
 	<header>
 		<div class="back-button master"></div>
 		<h1>Room Compensation</h1>
@@ -52,14 +52,19 @@
 			
 			<div id="room-measurement-set-volume">
 				<div class="header-image-wrap" style="flex-direction: column;">
-					<div id="room-measurement-current-level"><span>x</span> dB</div>
-					<div class="progress">
-						<div class="progress-fill" id="room-measurement-current-level-fill"></div>
-					</div>
-					<div id="room-measurement-recommended-level">
-						<div></div>
-						<span class="lower">-30</span>
-						<span class="upper">-10</span>
+					<div id="room-measurement-level-meter">
+						<div id="room-measurement-current-level"><span>x</span> dB SPL</div>
+						<div class="progress">
+							<div class="progress-fill" id="room-measurement-current-level-fill"></div>
+						</div>
+						<div id="room-measurement-passable-level">
+							<div></div>
+							<span class="lower">65</span>
+						</div>
+						<div id="room-measurement-recommended-level">
+							<div></div>
+							<span class="lower">75</span>
+						</div>
 					</div>
 				</div>
 				<div class="menu-content">
@@ -71,7 +76,7 @@
 						<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
 					</div>
 					
-					<p class="margin-top">To minimise the effect of background noise during measurement, adjust volume until the indicator reaches green. You can also measure at lower volume, but the results may be less accurate.</p>
+					<p class="margin-top">To minimise the effect of background noise during measurement, adjust volume until the indicator reaches dark blue. You can also measure at lower volume, but the results may be less accurate.</p>
 				</div>
 			</div>
 		</div>

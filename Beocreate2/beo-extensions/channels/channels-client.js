@@ -4,6 +4,7 @@ var channelSettings = {};
 var canDoSimpleStereoSetup = false;
 var driverTypes = {};
 var canControl = {};
+var Fs = 0;
 
 var channelsUIPrepared = false;
 
@@ -50,6 +51,8 @@ $(document).on("channels", function(event, data) {
 		} else {
 			showSimpleRoleSelection(null);
 		}
+		
+		if (data.content.Fs) Fs = data.content.Fs;
 		
 		/*if (data.content.daisyChainEnabled) {
 			$(".channels-daisy-chained").removeClass("hidden");
@@ -145,6 +148,9 @@ function showChannelSettings() {
 				beo.setSymbol(".channel-item-"+channel+" .channel-mute", "common/symbols-black/volume-mute.svg");
 				$(".channel-item-"+channel+" .channel-level-slider").addClass("disabled");
 			}
+			
+			if (channelSettings[channel].delay == undefined) channelSettings[channel].delay = 0;
+			delay(channel);
 			
 			if (channelSettings[channel].level != undefined) {
 				if (channelSettings[channel].level <= 0) {
@@ -281,6 +287,38 @@ function toggleEnabled(channel) {
 	beo.sendToProduct("channels", {header: "toggleEnabled", content: {channel: channel}});
 }
 
+adjustingDelayForChannel = null;
+function showDelayAdjustment(channel) {
+	adjustingDelayForChannel = channel;
+	$("#channel-delay-adjustment .fine-adjust-value").text(Math.round(channelSettings[channel].delay*100)/100);
+	delaySamples = Math.round(channelSettings[channel].delay / 1000 * Fs);
+	$("#channel-delay-adjustment .fine-adjust-middle p").text(delaySamples+" samples");
+	beo.ask("channel-delay-adjustment", [channel.toUpperCase()]);
+}
+
+function delayStep(step) {
+	if (adjustingDelayForChannel != null) {
+		value = channelSettings[adjustingDelayForChannel].delay + step;
+		delay(adjustingDelayForChannel, value);
+	}
+}
+
+function delay(channel, value) {
+	if (value != undefined) {
+		if (value < 0) value = 0;
+		if (Math.round(value / 1000 * Fs) > canControl[channel].delay) value = canControl[channel].delay / Fs * 1000;
+		channelSettings[channel].delay = value;
+		beo.sendToProduct("channels", {header: "setDelay", content: {channel: channel, delay: value}});
+	}
+	
+	$(".channel-item-"+channel+" .channel-delay .symbol-value").text((channelSettings[channel].delay == 0) ? "" : Math.round(channelSettings[channel].delay*100)/100);
+	if (adjustingDelayForChannel != null) {
+		$("#channel-delay-adjustment .fine-adjust-value").text(Math.round(channelSettings[channel].delay*100)/100);
+		delaySamples = Math.round(channelSettings[channel].delay / 1000 * Fs);
+		$("#channel-delay-adjustment .fine-adjust-middle p").text(delaySamples+" samples");
+	}
+}
+
 
 function prepareChannelsUI() {
 	if (!channelsUIPrepared) {
@@ -298,6 +336,7 @@ function prepareChannelsUI() {
 			newItem.find(".channel-level-slider").addClass("channel-level-"+channel+" "+ channelColours[i]);
 			newItem.find(".selected-role").attr("onclick", "channels.selectRole('"+channel+"');");
 			newItem.find(".channel-mute").attr("onclick", "channels.toggleEnabled('"+channel+"');");
+			newItem.find(".channel-delay .button").attr("onclick", "channels.showDelayAdjustment('"+channel+"');");
 			newItem.find(".channel-invert").attr("onclick", "channels.toggleInvert('"+channel+"');");
 			newItem.appendTo("#channels-advanced-container");
 			
@@ -472,16 +511,27 @@ function showingTab(tab) {
 	}
 }
 
+function getBeosonicPreview() {
+	return {
+		label: "Channels",
+		description: "Balance, speaker roles and other settings"
+	};
+}
+
 return {
 	generateSettingsPreview: generateSettingsPreview,
 	selectRole: selectRole,
 	selectRoleSimple: selectRoleSimple,
+	delay: delay,
+	delayStep: delayStep,
+	showDelayAdjustment: showDelayAdjustment,
 	toggleEnabled: toggleEnabled,
 	toggleInvert: toggleInvert,
 	showAdvancedSettings: showAdvancedSettings,
 	showAdvancedSettingsPopup: showAdvancedSettingsPopup,
 	showingAdvancedTab: function() {showingTab('advanced')},
-	showingBasicsTab: function() {showingTab('basics')}
+	showingBasicsTab: function() {showingTab('basics')},
+	getBeosonicPreview: getBeosonicPreview
 }
 
 })();

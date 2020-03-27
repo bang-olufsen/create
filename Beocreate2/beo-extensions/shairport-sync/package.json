@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/shairport-sync",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Control for AirPlay sources in BeoCreate systems",
   "main": "index.js",
   "scripts": {
@@ -24,10 +24,10 @@
   "homepage": "https://github.com/bang-olufsen/create#readme",
   "dependencies": {
     "dnssd2": "^1.0.0",
-    "request": "^2.88.0"
+    "node-fetch": "^2.6.0"
   },
   "beocreate": {
-  	"install": "./install-shairport-sync.sh",
-  	"uninstall": "./uninstall-shairport-sync.sh"
+    "install": "./install-shairport-sync.sh",
+    "uninstall": "./uninstall-shairport-sync.sh"
   }
 }

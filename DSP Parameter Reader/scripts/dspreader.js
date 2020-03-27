@@ -180,6 +180,16 @@ function outputBoards(target, objectID) {
 		addDummyBlocks(blockCount, "#dsp-object-"+objectID);
 	}
 	outputObjectIndex++
+	
+	metadata["spdifTXUserDataSource"] = {value: 63135, storable: "yes"};
+	metadata["spdifTXUserDataL0"] = {value: 63135, storable: "yes"};
+	metadata["spdifTXUserDataL1"] = {value: 63168, storable: "yes"};
+	metadata["spdifTXUserDataL2"] = {value: 63169, storable: "yes"};
+	metadata["spdifTXUserDataL3"] = {value: 63170, storable: "yes"};
+	metadata["spdifTXUserDataL4"] = {value: 63171, storable: "yes"};
+	metadata["spdifTXUserDataL5"] = {value: 63172, storable: "yes"};
+	metadata["spdifTXUserDataR0"] = {value: 63173, storable: "yes"};
+	metadata["spdifTXUserDataR1"] = {value: 63185, storable: "yes"};
 }
 
 

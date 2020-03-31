@@ -68,7 +68,7 @@ var countryList = require('country-list');
 				getAndShowCurrentCountry();
 			}
 			
-			if (event.content == "network") {
+			if (event.content.extension == "network") {
 				getAndShowCurrentCountry();
 			}
 		}

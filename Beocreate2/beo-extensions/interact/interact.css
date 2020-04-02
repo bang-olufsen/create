@@ -1,0 +1,7 @@
+/* @override 
+	http://beocreate-core.local/extensions/interact/interact.css
+	 */
+
+.run-interaction {
+	background-color: var(--button-bg);
+}

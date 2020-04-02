@@ -17,9 +17,8 @@ SOFTWARE.*/
 
 // BEO4 INTERFACING FOR BEOCREATE 2
 
-var SerialPort = require('serialport'); // for communicating through serial ports
-//var Readline = require('@serialport/parser-readline');
-var Readline = SerialPort.parsers.Readline;
+//var SerialPort = require('serialport'); // for communicating through serial ports
+//var Readline = SerialPort.parsers.Readline;
 
 var beo4Directory = {
   "address": {
@@ -110,7 +109,7 @@ var beo4Directory = {
 	var beo4Sources = beo4Directory.source;
 	var beo4Commands = beo4Directory.command;
 	
-	if (SerialPort) {
+	/*if (SerialPort) {
 	
 		var port = new SerialPort("/dev/ttyACM0");
 		var parser = port.pipe(new Readline({ delimiter: '\n' }))
@@ -128,7 +127,7 @@ var beo4Directory = {
 			//console.log('Error: ', err.message);
 		})
 	
-	}
+	}*/
 	
 	
 	function processBeo4Command(link, addressCode, commandCode) {
@@ -211,15 +210,15 @@ var beo4Directory = {
 		switch (beo4Command) {
 			case "VOL UP":
 				// Turn up volume.
-				
+				if (beo.extensions.sound) beo.extensions.sound.setVolume("+2");
 				break;
 			case "VOL DOWN":
 				// Turn down volume.
-				
+				if (beo.extensions.sound) beo.extensions.sound.setVolume("-2");
 				break;
 			case "MUTE":
 				// Mute or unmute the device.
-				
+				if (beo.extensions.sound) beo.extensions.sound.mute();
 				break;
 			case "STOP":
 				
@@ -256,10 +255,11 @@ var beo4Directory = {
 		//sendToClient("b4sc " + beo4Source, "remotes");
 		beo.bus.emit("ui", {target: "beo4", header: "lastCommand", content: {source: beo4Source, command: beo4Command}});
 		
-		beo.bus.emit("remote", {header: "command", content: {source: beo4Source, command: beo4Command, remoteType: "beo4"}});
 	}
 	
 
-
+module.exports = {
+	runTrigger: function() {return true}
+}
 
 

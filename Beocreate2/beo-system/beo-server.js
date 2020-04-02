@@ -779,7 +779,9 @@ beoCom.on("data", function(data, connection) {
 		case "general":
 			if (data.header == "activatedExtension") {
 				selectedExtension = data.content.extension;
+				global.beo.selectedExtension = selectedExtension;
 				selectedDeepMenu = data.content.deepMenu;
+				global.beo.selectedDeepMenu = selectedDeepMenu;
 				eventType = "general";
 				eventHeader = "activatedExtension";
 				eventContent = {extension: data.content.extension, deepMenu: data.content.deepMenu};

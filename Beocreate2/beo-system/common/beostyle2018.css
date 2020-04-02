@@ -19,8 +19,8 @@ Z-INDEX
 Keep track of layers in the UI
 
 11 - Notify
-10 - Ask + plexi
-9  - Text input + plexi
+10 - Text input + plexi
+9  - Ask + plexi
 8  - Popup views + plexi
 +
 +
@@ -1029,8 +1029,14 @@ nav.full .nav-content:before {
 	display: block;
 }
 
+.menu-item .menu-custom-markup {
+	pointer-events: none;
+}
+
 .menu-item .menu-custom-markup > p {
 	margin-bottom: 0em;
+	user-select: none;
+	-webkit-user-select: none;
 }
 
 .menu-item .menu-custom-markup > p:first-child {
@@ -2219,6 +2225,10 @@ footer .button.pill {
 	color: black;
 }
 
+.button.pill.black.disabled {
+	color: gray;
+}
+
 .no-touch .button.pill.black:hover, .button.pill.black:active,
 .no-touch .button.pill.selected:hover, .button.pill.selected:active {
 	background-color: #444;
@@ -2967,7 +2977,7 @@ footer .button.pill {
 }
 
 .plexi#text-input-back-plate {
-	z-index: 9;
+	z-index: 10;
 }
 
 .plexi#open-popup-back-plate {
@@ -2975,7 +2985,7 @@ footer .button.pill {
 }
 
 .plexi#ask-back-plate {
-	z-index: 10;
+	z-index: 9;
 }
 
 .plexi.block {
@@ -3027,7 +3037,7 @@ footer .button.pill {
 	top: 0;
 	right: 0;
 	left: 0;
-	z-index: 10;
+	z-index: 9;
 	display: none;
 	justify-content: center;
 	align-items: center;
@@ -3234,7 +3244,7 @@ input[type=file]#file-input {
 /* @group Text Input */
 
 #text-input {
-	z-index: 9;
+	z-index: 10;
 }
 
 input[type=text]:not(.menu-value), 
@@ -3275,6 +3285,7 @@ input[type=text].menu-value {
 	border: 2px solid var(--ultra-light-grey);
 	background-color: var(--ultra-light-grey);
 	height: 30px;
+	pointer-events: all;
 	transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 	-webkit-appearance: none;
 }

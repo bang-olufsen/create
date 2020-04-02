@@ -370,7 +370,7 @@ function savePreset(withAdjustments, systemPresetConflict = false, preselectAdju
 		defaultAdjustments = (preselectAdjustments) ? preselectAdjustments : [];
 		beo.startTextInput(1, "New Listening Mode", 
 			(!systemPresetConflict) ? "Enter a name for this listening mode preset." : "A built-in preset with this name already exists. Please choose another name.", 
-			{text: (!systemPresetConflict) ? "" : beosonicPresets[systemPresetConflict].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}}, function(input) {
+			{text: (!systemPresetConflict) ? "" : beosonicPresets[systemPresetConflict].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}, autocorrect: true, autocapitalise: true}, function(input) {
 			// Validate and store input.
 			if (input && input.text) {
 				newPresetName = input.text;
@@ -386,7 +386,7 @@ function renamePreset(conflict) {
 	beo.ask();
 	beo.startTextInput(1, "Rename Preset", 
 		(!conflict) ? "Enter a new name for this preset." : "A preset with this name already exists. Please choose another name.", 
-		{text: beosonicPresets[selectedPreset].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}}, function(input) {
+		{text: beosonicPresets[selectedPreset].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}, autocorrect: true, autocapitalise: true}, function(input) {
 		// Validate and store input.
 		if (input && input.text) {
 			beo.sendToProduct("beosonic", {header: "renamePreset", content: {presetID: selectedPreset, name: input.text}});

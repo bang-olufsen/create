@@ -121,7 +121,7 @@ $(document).on("room-compensation", function(event, data) {
 function newMeasurement() {
 	//beo.showPopupView("room-compensation-measurement-assistant");
 	//beo.wizard("#room-measurement-wizard");
-	beo.startTextInput(1, "New Measurement", "Enter a name for this measurement, such as the seat where it is performed.", {text: "", placeholders: {text: "Sofa centre, easy chair, ..."}, minLength: {text: 3}}, function(input) {
+	beo.startTextInput(1, "New Measurement", "Enter a name for this measurement, such as the seat where it is performed.", {text: "", placeholders: {text: "Sofa centre, easy chair, ..."}, minLength: {text: 3}, autocorrect: true, autocapitalise: true}, function(input) {
 		// Validate and store input.
 		if (input && input.text) {
 			newMeasurementName = input.text;

@@ -924,7 +924,6 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
-	console.log(menuState, deepMenuState);
 }
 
 

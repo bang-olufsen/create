@@ -1,4 +1,4 @@
-<div class="menu-screen large-title" id="sources" data-icon="input.svg" data-menu-title="Sources" data-built-in="1" data-stylesheet="sources.css">
+<div class="menu-screen large-title" id="sources" data-icon="input.svg" data-menu-title="Sources" data-built-in="1" data-namespace="sources" data-stylesheet="sources.css">
 	
 	<header>
 		<h1>Sources</h1>
@@ -36,6 +36,42 @@
 			<div class="button pill grey" onclick="beo.askOption(0);">Custom Alias...</div>
 			<div class="button pill grey remove-source-alias" onclick="beo.askOption(1);">No Alias</div>
 			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="source-activated-setup">
+		<h2>Source started</h2>
+		<p>Run actions, when activated source is...</p>
+		<div class="menu-item checkmark left icon" id="source-activated-any" onclick="sources.interactSetup('activated', 'option', null);">
+			<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+			<div class="menu-label">Any Source</div>
+			<div class="menu-value">From standby</div>
+		</div>
+		<hr>
+		<div class="interact-source-list">
+			
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black disabled default" id="source-activated-save-button" onclick="sources.interactSetup('activated', 'save');">Save Trigger</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="source-deactivated-setup">
+		<h2>Source stopped</h2>
+		<p>Run actions, when deactivated source is...</p>
+		<div class="menu-item checkmark left icon" id="source-deactivated-any" onclick="sources.interactSetup('deactivated', 'option', null);">
+			<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+			<div class="menu-label">Any Source</div>
+			<div class="menu-value">To standby</div>
+		</div>
+		<hr>
+		<div class="interact-source-list">
+			
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black disabled default" id="source-deactivated-save-button" onclick="sources.interactSetup('deactivated', 'save');">Save Trigger</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 </div>

@@ -479,8 +479,12 @@ var exec = require("child_process").exec;
 				//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
 			
+			fromStandby = (currentSource == null);
+			
 			determineCurrentSource();
 			if (debug) console.log("Source '"+extension+"' has activated (index "+focusIndex+").");
+			
+			if (beo.extensions.interact) beo.extensions.interact.runTrigger("sources", "sourceActivated", {source: extension, fromStandby: fromStandby});
 	
 		}
 	}
@@ -508,6 +512,8 @@ var exec = require("child_process").exec;
 			
 			determineCurrentSource();
 			if (debug) console.log("Source '"+extension+"' has deactivated.");
+			
+			if (beo.extensions.interact) beo.extensions.interact.runTrigger("sources", "sourceDeactivated", {source: extension, toStandby: (currentSource == null)});
 		
 		}
 	}
@@ -531,12 +537,10 @@ var exec = require("child_process").exec;
 		if (activeSourceCount == 0) {
 			if (currentSource != null) {
 				currentSource = null;
-				beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "red"}}});
 			}
 		} else {
 			if (newSource != currentSource) {
 				currentSource = newSource;
-				beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "green", speed: "fast"}, then: {action: "fadeOut", after: 10}}});
 			}
 		}
 		
@@ -753,6 +757,25 @@ var exec = require("child_process").exec;
 		}
 	}
 	
+	interact = {
+		triggers: {
+				sourceActivated: function(data, interactData) {
+					if (!interactData.source) {
+						return (data.fromStandby) ? data.source : undefined;
+					} else {
+						return (data.source == interactData.source) ? data.source : undefined;
+					}
+				},
+				sourceDeactivated: function(data, interactData) {
+					if (!interactData.source) {
+						return (data.toStandby) ? data.source : undefined;
+					} else {
+						return (data.source == interactData.source) ? data.source : undefined;
+					}
+				}
+			}
+	}
+	
 	
 module.exports = {
 	version: version,
@@ -763,7 +786,8 @@ module.exports = {
 	allSources: allSources,
 	settings: settings,
 	stopAllSources: stopAllSources,
-	transport: transport
+	transport: transport,
+	interact: interact
 };
 
 

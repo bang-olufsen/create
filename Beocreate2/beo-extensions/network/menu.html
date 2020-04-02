@@ -1,4 +1,4 @@
-<div class="menu-screen large-title" id="network" data-icon="wifi-3.svg" data-menu-title="Network" data-built-in="1">
+<div class="menu-screen large-title" id="network" data-icon="wifi-3.svg" data-menu-title="Network" data-built-in="1" data-namespace="network">
 	<header>
 		<div class="back-button master setup"></div>
 		<h1>Network</h1>
@@ -46,10 +46,11 @@
 				
 			</div>
 			
-			<div class="menu-item icon" onclick="network.addOtherNetwork();">
+			<!--<div class="menu-item icon" onclick="network.addOtherNetwork();">
 				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(commom/symbols-black/add.svg);"></div>
 				<div class="menu-label">Add Other Network...</div>
-			</div>
+			</div>-->
+			<div class="button pill grey" onclick="network.addOtherNetwork();">Add Other Network...</div>
 				
 			<div class="saved-networks-wrap">
 				<h2 class="disclosure on" data-disclosure=".saved-networks">Saved Networks</h2>

@@ -206,17 +206,39 @@ var fetch = require("node-fetch");
 		}
 	}
 	
-	
-	function setVolume(volume, callback, mute) {
-		flag = 0;
-		if (mute) flag = 2;
+	setVolumeLevel = systemVolume;
+	function setVolume(volume, callback) {
+		if (typeof volume == "string") {
+			if (volume.charAt(0) == "+") {
+				if (muted) {
+					setVolumeLevel = muted;
+					mute(false);
+				} else {
+					if (volume.length == 1) {
+						setVolumeLevel += 1;
+					} else {
+						setVolumeLevel += parseInt(volume.slice(1));
+					}
+				}
+			} else if (volume.charAt(0) == "-") {
+				if (volume.length == 1) {
+					setVolumeLevel -= 1;
+				} else {
+					setVolumeLevel -= parseInt(volume.slice(1));
+				}
+			}
+		} else {
+			setVolumeLevel = volume;
+		}
+		if (setVolumeLevel < 0) setVolumeLevel = 0;
+		if (setVolumeLevel > 100) setVolumeLevel = 100;
 		switch (volumeControl) {
 			case 0: // No volume control.
 				callback(null);
 				break;
 			case 1: // Talk to ALSA.
-				setVolumeViaALSA(mapVolume(volume, false), function(newVolume) {
-					reportVolume(newVolume, callback, flag);
+				setVolumeViaALSA(mapVolume(setVolumeLevel, false), function(newVolume) {
+					reportVolume(newVolume, callback);
 				});
 				break;
 			case 3: // Talk to the DSP directly.
@@ -241,11 +263,19 @@ var fetch = require("node-fetch");
 		}
 	}
 	
+	var setVolumeUpdateTimeout;
+	
 	function reportVolume(newVolume, callback, flag) {
 		if (systemVolume != newVolume) {
+			if (beo.extensions.interact) beo.extensions.interact.runTrigger("sound", "volumeChanged", {volume: newVolume, up: (newVolume > systemVolume)});
 			systemVolume = newVolume;
 			beo.bus.emit("sound", {header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
 			if (flag != 1) beo.bus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
+			
+			clearTimeout(setVolumeUpdateTimeout);
+			setVolumeUpdateTimeout = setTimeout(function() {
+				setVolumeLevel = systemVolume; // Update the "set volume level" shortly after.
+			}, 500);
 		}
 		if (callback) callback(newVolume);
 	}
@@ -260,7 +290,7 @@ var fetch = require("node-fetch");
 		if (volumeFadeInterval) {
 			clearInterval(volumeFadeInterval);
 		}
-		if (operation == undefined) operation = (muted) ? false : true;
+		if (operation == undefined || operation != true || operation != false) operation = (muted) ? false : true;
 		
 		if (operation == true && !muted) {
 			// Mute.
@@ -409,15 +439,7 @@ var fetch = require("node-fetch");
 
 	
 	function setVolumeViaALSA(volume, callback) {
-		if (typeof volume == "string") {
-			if (volume.charAt(0) == "+") {
-				volume = volume.slice(1) + "%+";
-			} else if (volume.charAt(0) == "-") {
-				volume = volume.slice(1) + "%-";
-			}
-		} else {
-			volume = volume + "%";
-		}
+		volume += "%";
 		execFile("amixer", ["set", alsaMixer, volume], function(error, stdout, stderr) {
 			if (error) {
 				console.error("Error setting volume via ALSA:", error);
@@ -476,13 +498,53 @@ var fetch = require("node-fetch");
 		}
 	}
 	
+	interact = {
+		triggers: {
+				volumeChanged: function(data, interactData) {
+					if (!interactData || interactData.option == "any") {
+						return data.volume;
+					} else {
+						if (interactData.option == "up" && data.up) {
+							return data.volume;
+						} else if (interactData.option == "down" && data.up == false) {
+							return data.volume;
+						} else {
+							return undefined;
+						}
+					}
+				}
+			},
+		actions: {
+				setVolume: function(data, triggerResult, actionResult) {
+					switch (data.option) {
+						case "up":
+							setVolume("+2");
+							break;
+						case "down":
+							setVolume("-2");
+							break;
+						case "slider":
+							setVolume(data.volume);
+							break;
+						case "result":
+							setVolume(parseInt(triggerResult));
+							break;
+					}
+				},
+				mute: function(operation = undefined) {
+					mute(operation);
+				}
+			}
+	}
+	
 	
 module.exports = {
 	version: version,
 	setVolume: setVolume,
 	getVolume: getVolume,
 	checkCurrentMixerAndReconfigure: checkCurrentMixerAndReconfigure,
-	mute: mute
+	mute: mute,
+	interact: interact
 };
 
 

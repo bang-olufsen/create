@@ -154,7 +154,7 @@ var exec = require("child_process").exec;
 				break;
 			case "metadata": // Metadata from AudioControl.
 				if (event.content) {
-					processAudioControlMetadata(event.content);
+					processAudioControlMetadata(event.content.body);
 				}
 				break;
 			case "getMetadata":

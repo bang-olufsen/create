@@ -141,8 +141,8 @@ var fetch = require("node-fetch");
 				break;
 			case "volume":
 				if (event.content.percent != undefined) {
-					if (debug >= 2) console.log("Volume received from AudioControl: "+event.content.percent+" %.");
-					reportVolume(mapVolume(event.content.percent, true));
+					if (debug >= 2) console.log("Volume received from AudioControl: "+event.content.body.percent+" %.");
+					reportVolume(mapVolume(event.content.body.percent, true));
 				}
 				break;
 			case "setVolume":

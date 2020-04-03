@@ -156,6 +156,12 @@ beoBus.on('general', function(event) {
 	}
 });
 
+beoBus.on('dsp', function(event) {
+	if (event.header == "amplifierUnmuted") {
+		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") playProductSound("startup");
+	}
+});
+
 
 // GET AND STORE SETTINGS
 
@@ -315,7 +321,7 @@ expressServer.get("/", function (req, res) {
 	if (beoUI != false) {
 		res.status(200);
 		if (developerMode) {
-			console.log("Developer mode, reconstructing user interface...");
+			console.log("Developer mode, reloading user interface...");
 			res.send(assembleBeoUI()); // No cache - use in development/debug
 	  	} else {
 	  		res.send(beoUI); // Cached version - use this in production
@@ -327,7 +333,7 @@ expressServer.get("/", function (req, res) {
 });
 // REST API endpoint to talk to extensions.
 expressServer.use(express.json());
-expressServer.post("/:extension/:header", function (req, res) {
+expressServer.post("/:extension/:header/:extra*?", function (req, res) {
 	if (req.params.header == "upload") {
 		if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
 		if (debugMode) console.log("File upload for '"+req.params.extension+"':", req.header("fileName"));
@@ -352,8 +358,8 @@ expressServer.post("/:extension/:header", function (req, res) {
 			res.send("cannotReceive");
 		}
 	} else {
-		if (debugMode >= 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
-		beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
+		if (debugMode >= 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body, req.params.extra);
+		beoBus.emit(req.params.extension, {header: req.params.header, content: {body: req.body, extra: req.params.extra}});
 		res.status(200);
 		res.send("OK");
 	}
@@ -384,10 +390,10 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 	}
 });
 
-expressServer.get("/:extension/:header/", function (req, res) {
+expressServer.get("/:extension/:header/:extra", function (req, res) {
 
 	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
-		extensions[req.params.extension].restAPI(req.params.header, function(response) {
+		extensions[req.params.extension].restAPI(req.params.header, req.params.extra, function(response) {
 			if (response) {
 				res.status(200);
 				res.send(response);
@@ -439,11 +445,8 @@ if (systemConfiguration.runAtStart) {
 console.log("System startup.");
 if (!quietMode) {
 	// Play startup sound:
-	if (systemConfiguration.cardType == "Beocreate 4-Channel Amplifier" || forceBeosounds) {
-		
-		setTimeout(function() {
-			playProductSound("startup");
-		}, 1500);
+	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" || forceBeosounds) {
+		playProductSound("startup");
 	}
 }
 
@@ -810,6 +813,7 @@ beoCom.on("data", function(data, connection) {
 
 
 // PRODUCT SOUND EFFECTS
+var startupSoundPlayed = false;
 var productSound = null;
 function playProductSound(sound) {
 	if (debugMode) console.log("Playing sound: "+sound+"...");
@@ -819,6 +823,7 @@ function playProductSound(sound) {
 	switch (sound) {
 		case "startup":
 			soundFile = "startup.wav";
+			startupSoundPlayed = true;
 			break;
 	}
 	if (soundFile) productSound.play(soundPath+soundFile);

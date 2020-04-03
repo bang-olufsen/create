@@ -247,6 +247,12 @@ function listTriggersAndActions() {
 				icon: extensions.interact.assetPath+"/symbols-black/serial-port.svg", 
 				setup: function(data) { serialReceive("setup", data) }, 
 				preview: function(data) { return serialReceive("preview", data) }
+			},
+			httpAPI: {
+				name: "Web Request Received",
+				icon: extensions.interact.assetPath+"/symbols-black/http-api.svg", 
+				setup: function(data) { httpAPISetup("received", "setup", data) }, 
+				preview: function(data) { return httpAPISetup("received", "preview", data) }
 			}
 		}
 		
@@ -267,7 +273,11 @@ function listTriggersAndActions() {
 				icon: extensions.interact.assetPath+"/symbols-black/serial-port.svg", 
 				setup: function(data) { serialSend("setup", data) }, 
 				preview: function(data) { return serialSend("preview", data) }
-			}
+			},
+//			httpAPI: {
+//				name: "Send HTTP Request",
+//				icon: extensions.interact.assetPath+"/symbols-black/http-api.svg"
+//			}
 		}
 		
 		for (extension in extensions) {
@@ -331,23 +341,28 @@ function editTrigger() {
 }
 
 function saveTrigger(extension, type, data = null) {
-	selectedInteraction.triggerExtension = extension;
-	selectedInteraction.triggerType = type;
-	selectedInteraction.triggerData = data;
-	preview = null;
-	if (allTriggers[extension][type].preview) {
-		preview = allTriggers[extension][type].preview(data);
+	if (allTriggers[extension] &&
+		allTriggers[extension][type]) {
+		selectedInteraction.triggerExtension = extension;
+		selectedInteraction.triggerType = type;
+		selectedInteraction.triggerData = data;
+		preview = null;
+		if (allTriggers[extension][type].preview) {
+			preview = allTriggers[extension][type].preview(data);
+		}
+		$("#interact-trigger").html(beo.createMenuItem({
+			label: allTriggers[extension][type].name,
+			icon: allTriggers[extension][type].icon,
+			description: (preview) ? preview : null,
+			onclick: "interact.triggerMenu();",
+			iconRight: "common/symbols-black/more.svg"
+		}));
+		$("#choose-trigger-button").addClass("hidden");
+		unsavedChanges = true;
+		shouldEnableSaveButton();
+	} else {
+		console.error("This trigger doesn't exist in the published triggers.");
 	}
-	$("#interact-trigger").html(beo.createMenuItem({
-		label: allTriggers[extension][type].name,
-		icon: allTriggers[extension][type].icon,
-		description: (preview) ? preview : null,
-		onclick: "interact.triggerMenu();",
-		iconRight: "common/symbols-black/more.svg"
-	}));
-	$("#choose-trigger-button").addClass("hidden");
-	unsavedChanges = true;
-	shouldEnableSaveButton();
 }
 
 function triggerMenu() {
@@ -429,17 +444,22 @@ function isLegalTriggerOrAction(triggerOrAction, theExtension, theType, comparis
 
 
 function saveAction(extension, type, data = null) {
-	if (selectedAction == null) {
-		selectedAction = selectedInteraction.actions.push({}) - 1;
+	if (allActions[extension] &&
+		allActions[extension][type]) {
+		if (selectedAction == null) {
+			selectedAction = selectedInteraction.actions.push({}) - 1;
+		}
+		selectedInteraction.actions[selectedAction] = {
+			extension: extension,
+			type: type,
+			data: data
+		}
+		selectedAction = null;
+		unsavedChanges = true;
+		listAddedActions();
+	} else {
+		console.error("This action doesn't exist in the published actions.");
 	}
-	selectedInteraction.actions[selectedAction] = {
-		extension: extension,
-		type: type,
-		data: data
-	}
-	selectedAction = null;
-	unsavedChanges = true;
-	listAddedActions();
 }
 
 function listAddedActions(moveFrom, moveTo) {
@@ -533,6 +553,9 @@ var interactActionSort = new Beodrag("#interact-actions .menu-item", {
 		target.classList.remove("drag");
 	}
 }, document.querySelector("#interaction-editor"));
+
+
+
 
 // SERIAL MESSAGE TRIGGER & ACTION
 
@@ -656,6 +679,48 @@ function serialSend(stage, data) {
 	}
 }
 
+// HTTP API TRIGGER/ACTION
+
+addressEnd = null;
+function httpAPISetup(type, stage, data) {
+	switch (stage) {
+		case "setup":
+			$("#http-api-received-domain").text(document.domain);
+			beo.ask("http-api-received-setup");
+			if (data && data.addressEnd) {
+				$("#http-api-received-key").text(data.addressEnd).removeClass("light");
+				$("#http-api-received-key-set").text(data.addressEnd).removeClass("button");
+				addressEnd = data.addressEnd;
+			} else {
+				$("#http-api-received-key").text("???").addClass("light");
+				$("#http-api-received-key-set").text("Set...").addClass("button");
+				addressEnd = null;
+			}
+			if (addressEnd) $("#http-api-received-save").addClass("disabled");
+			break;
+		case "set":
+			beo.startTextInput(1, "Set Address End", 
+				"Enter the key for the HTTP POST API address.", 
+				{text: addressEnd, placeholders: {text: "Message"}}, function(input) {
+				// Validate and store input.
+				if (input && input.text) {
+					addressEnd = input.text;
+					$("#http-api-received-key").text(input.text).removeClass("light");
+					$("#http-api-received-key-set").text(input.text).removeClass("button");
+					if (addressEnd) $("#http-api-received-save").removeClass("disabled");
+				}
+			});
+			break;
+		case "save":
+			beo.ask();
+			saveTrigger("interact", "httpAPI", {addressEnd: addressEnd});
+			break;
+		case "preview":
+			return "POST at http://"+document.domain+"/interact/trigger/"+data.addressEnd;
+			break;
+	}
+}
+
 
 return {
 	enableInteractions: enableInteractions,
@@ -676,7 +741,8 @@ return {
 	actionMenu: actionMenu,
 	serialReceive: serialReceive,
 	serialSend: serialSend,
-	selectSerialPort: selectSerialPort
+	selectSerialPort: selectSerialPort,
+	httpAPISetup: httpAPISetup
 }
 	
 })();

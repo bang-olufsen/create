@@ -134,6 +134,10 @@ beo.bus.on('interact', function(event) {
 		startSerialPort();
 	}
 	
+	if (event.header == "trigger") {
+		runTrigger("interact", "httpAPI", {addressEnd: event.content.extra, body: event.content.body});
+	}
+	
 });
 
 function sendSerialPortList() {
@@ -218,6 +222,17 @@ var allTriggers = {
 				return data;
 			} else if (interactData.matchBeginning && data.startsWith(interactData.matchBeginning)) {
 				return data;
+			} else {
+				return undefined;
+			}
+		},
+		httpAPI: function(data, interactData) {
+			if (data.addressEnd && data.addressEnd == interactData.addressEnd) {
+				if (data.body && data.body.data) {
+					return data.body.data;
+				} else {
+					return true;
+				}
 			} else {
 				return undefined;
 			}

@@ -20,7 +20,7 @@
 			<div id="all-interactions">
 			
 			</div>
-			<div class="button pill black" onclick="interact.newInteraction();">New Interaction...</div>
+			<div class="button pill grey" onclick="interact.newInteraction();">New Interaction...</div>
 			<h2>Settings</h2>
 			<div class="menu-item icon chevron" onclick="beo.showDeepMenu('serial-port')">
 				<div class="menu-icon left" style="-webkit-mask-image: url(€/symbols-black/serial-port.svg); mask-image: url(€/symbols-black/serial-port.svg);"></div>
@@ -166,6 +166,21 @@
 		</div>
 		<div class="ask-buttons">
 			<div class="button pill black default disabled" onclick="interact.serialSend('save');" id="interact-serial-send-save">Save Action</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="http-api-received-setup">
+		<h2>Web request received</h2>
+		<p>Run actions, when a POST request is received at...</p>
+		<p><span class="light">http://<span id="http-api-received-domain">domain</span></span><strong>/interact/trigger/<span class="light" id="http-api-received-key">???</span></strong></p>
+		<div class="menu-item" onclick="interact.httpAPISetup('received', 'set');">
+			<div class="menu-label">Address End</div>
+			<div class="menu-value button" id="http-api-received-key-set">Set...</div>
+		</div>
+		<p>If the request JSON body includes "data" property, it is passed to the actions when they run.</p>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="interact.httpAPISetup('received', 'save');" id="http-api-received-save">Save Trigger</div>
 			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>

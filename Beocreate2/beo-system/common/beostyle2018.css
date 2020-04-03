@@ -1619,6 +1619,10 @@ p .bold {
 	font-weight: 500;
 }
 
+span.light {
+	opacity: 0.5;
+}
+
 p .channel-dot {
 	display: inline-block;
 	vertical-align: baseline;

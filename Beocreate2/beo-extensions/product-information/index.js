@@ -553,13 +553,27 @@ var fs = require("fs");
 	}
 	
 	
-	function restAPI(header, callback) {
+	function restAPI(header, extra, callback) {
 		if (header == "discovery") {
 			callback({name: systemName.ui, serviceType: "beocreate", advertisePort: beo.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
 		} else {
 			callback(null);
 		}
 	}
+	
+	
+interact = {
+	actions: {
+		power: function(data, interactData) {
+			if (interactData.option == "shutdown") {
+				beo.bus.emit("general", {header: "requestShutdown", content: {extension: "interact"}});
+			}
+			if (interactData.option == "restart") {
+				beo.bus.emit("general", {header: "requestReboot", content: {extension: "interact"}});
+			}
+		}
+	}
+}
 	
 module.exports = {
 	getProductInformation: getProductInformation,
@@ -569,7 +583,8 @@ module.exports = {
 	addProductIdentity: checkAndAddProductIdentity,
 	deleteProductIdentity: deleteProductIdentity,
 	restAPI: restAPI,
-	version: version
+	version: version,
+	interact: interact
 };
 
 

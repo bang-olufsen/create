@@ -221,7 +221,7 @@ var beo4Directory = {
 				if (beo.extensions.sound) beo.extensions.sound.mute();
 				break;
 			case "STOP":
-				
+				if (beo.extensions.sources) beo.extensions.sources.transport("pause");
 				break;
 			case "UP":
 				
@@ -249,17 +249,29 @@ var beo4Directory = {
 				break;
 			case "GO":
 				//if (beo4NumberInputInProgress) beo4NumberInput(3);
+				if (beo.extensions.sources) beo.extensions.sources.transport("playPause");
 				break;
 		}
 	
-		//sendToClient("b4sc " + beo4Source, "remotes");
-		beo.bus.emit("ui", {target: "beo4", header: "lastCommand", content: {source: beo4Source, command: beo4Command}});
+		beo.sendToUI("beo4", {header: "lastCommand", content: {source: beo4Source, command: beo4Command}});
 		
 	}
-	
+
+interact = {
+	actions: {
+		beo4: function(data, triggerResult) {
+			slices = triggerResult.split("*");
+			if (slices.length == 4) {
+				processBeo4Command(slices[1], slices[2], slices[3]);
+			} else if (slices.length == 3) {
+				processBeo4Command(slices[0], slices[1], slices[2]);
+			}
+		}
+	}
+}
 
 module.exports = {
-	runTrigger: function() {return true}
+	interact: interact
 }
 
 

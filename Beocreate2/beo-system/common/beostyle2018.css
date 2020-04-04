@@ -2606,6 +2606,7 @@ footer .button.pill {
 	display: flex;
 	align-items: flex-end;
 	margin-bottom: 20px;
+	transition: opacity 0.5s ease;
 }
 
 .slider-wrap .symbol {
@@ -3765,7 +3766,7 @@ h2 .channel-dot {
 	transform: translateX(-50px);
 }
 
-.touch .reload-button {
+.touch .developer .reload-button {
 	display: block;
 	z-index: 11;
 }

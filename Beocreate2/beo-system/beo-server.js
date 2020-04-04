@@ -44,6 +44,7 @@ var piSystem = require('../beocreate_essentials/pi_system_tools');
 var systemVersion = require("./package.json").version;
 var defaultSystemConfiguration = {
 	"cardType": "Beocreate 4-Channel Amplifier",
+	"cardFeatures": ["dsp"],
 	"port": 80,
 	"language": "en"
 };
@@ -627,7 +628,7 @@ function assembleBeoUI() {
 			translations = "";
 		}
 		
-		if (debugMode) menus.push("<script>debug = true;</script>");
+		if (debugMode) menus.push("<script>debug = true; developerMode = "+(developerMode)+";</script>");
 		
 		extensionsLoaded = true;
 	} else {
@@ -660,9 +661,14 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 	
 	isSource = false;
 	if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() && fs.existsSync(fullPath+'/menu.html')) { 
-		if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
+		if (debugMode == 2 && !extensionsLoaded) console.log("Loading extension '"+extensionName+"'...");
 		// A directory is a menu and its menu.html exists.
 		menu = fs.readFileSync(fullPath+'/menu.html', "utf8"); // Read the menu from file.
+		try {
+			packageJSON = require(fullPath+"/package.json");
+		} catch (error) {
+			packageJSON = null;
+		}
 		
 		// First check if this extension is included or excluded with this hardware.
 		
@@ -678,7 +684,50 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 		
 		shouldIncludeExtension = true;
 		
-		if (head["data-enable-with"] || head["data-disable-with"]) {
+		/*if (head["data-require-card-feature"] || head["data-reject-card-feature"]) {
+			shouldIncludeExtension = false;
+			if (head["data-require-card-feature"]) {
+				if (head["data-enable-with"].toLowerCase().split(",").indexOf(cardType) != -1) 
+					shouldIncludeExtension = true;
+			} else if (head["data-reject-card-feature"]) {
+				if (head["data-disable-with"].toLowerCase().split(", ").indexOf(cardType) == -1) 
+					shouldIncludeExtension = true;
+			}
+		}*/
+		
+		if (packageJSON && packageJSON.beocreate) {
+			// Check support/unsupport for card/features from package.json file.
+			if (packageJSON.beocreate.requireCardFeatures) {
+				shouldIncludeExtension = false;
+				missingFeatures = _.difference(packageJSON.beocreate.requireCardFeatures, settings.cardFeatures);
+				if (missingFeatures.length == 0) shouldIncludeExtension = true;
+			}
+			if (packageJSON.beocreate.rejectCardFeatures && shouldIncludeExtension) {
+				clearedFeatures = _.difference(packageJSON.beocreate.rejectCardFeatures, settings.cardFeatures);
+				if (clearedFeatures.length < packageJSON.beocreate.rejectCardFeatures) shouldIncludeExtension = false;
+			}
+			
+			cardType = systemConfiguration.cardType.toLowerCase();
+			if (packageJSON.beocreate.enableWith) {
+				shouldIncludeExtension = false;
+				if (typeof packageJSON.beocreate.enableWith == "string") {
+					if (packageJSON.beocreate.enableWith.toLowerCase() == cardType) shouldIncludeExtension = true;
+				} else {
+					for (c in packageJSON.beocreate.enableWith) {
+						if (packageJSON.beocreate.enableWith[c].toLowerCase() == cardType) shouldIncludeExtension = true;
+					}
+				}
+			} else if (packageJSON.beocreate.disableWith) {
+				shouldIncludeExtension = true;
+				if (typeof packageJSON.beocreate.disableWith == "string") {
+					if (packageJSON.beocreate.disableWith.toLowerCase() == cardType) shouldIncludeExtension = false;
+				} else {
+					for (c in packageJSON.beocreate.disableWith) {
+						if (packageJSON.beocreate.disableWith[c].toLowerCase() == cardType) shouldIncludeExtension = false;
+					}
+				}
+			}
+		} else if (head["data-enable-with"] || head["data-disable-with"]) {
 			shouldIncludeExtension = false;
 			cardType = systemConfiguration.cardType.toLowerCase();
 			if (head["data-enable-with"]) {

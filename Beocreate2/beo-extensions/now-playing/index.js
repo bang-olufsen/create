@@ -96,8 +96,8 @@ interact = {
 		previous: function() {
 			transport("previous");
 		},
-		stop: function() {
-			transport("stop");
+		pause: function() {
+			transport("pause");
 		}
 	}
 }

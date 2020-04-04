@@ -817,9 +817,9 @@ interactDictionary = {
 			name: "Previous Track",
 			icon: "extensions/now-playing/symbols-black/previous-track.svg"
 		},
-		stop: {
-			name: "Stop",
-			icon: "extensions/now-playing/symbols-black/stop.svg",
+		pause: {
+			name: "Pause",
+			icon: "extensions/now-playing/symbols-black/pause.svg",
 			once: true,
 			illegalWith: ["actions/now-playing/playPause"]
 		}

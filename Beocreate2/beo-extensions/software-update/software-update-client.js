@@ -49,6 +49,27 @@ $(document).on("software-update", function(event, data) {
 			if (updateMode) {
 				$(".auto-update-mode").text(updateMode);
 			}
+			if (data.content.manualMode && data.content.manualMode != data.content.mode) {
+				$("#manual-update-track").removeClass("hidden");
+				manualMode = "Unknown";
+				switch (data.content.manualMode) {
+					case "critical":
+						manualMode = "Security only";
+						break;
+					case "stable":
+						manualMode = "Regular";
+						break;
+					case "latest":
+						manualMode = "Quick";
+						break;
+					case "experimental":
+						manualMode = "Experimental";
+						break;
+				}
+				$("#manual-update-track .menu-value").text(manualMode);
+			} else {
+				$("#manual-update-track").addClass("hidden");
+			}
 		}
 	}
 	
@@ -176,10 +197,15 @@ function setAutoUpdate(mode) {
 	beo.sendToProduct("software-update", {header: "autoUpdateMode", content: {mode: mode}});
 }
 
+function setManualUpdateMode(mode) {
+	beo.sendToProduct("software-update", {header: "manualUpdateMode", content: {mode: mode}});
+}
+
 
 return {
 	install: install,
-	setAutoUpdate: setAutoUpdate
+	setAutoUpdate: setAutoUpdate,
+	setManualUpdateMode: setManualUpdateMode
 };
 
 })();

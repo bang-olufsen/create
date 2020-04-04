@@ -26,7 +26,8 @@ var version = require("./package.json").version;
 
 
 var defaultSettings = {
-	autoCheck: true
+	autoCheck: true,
+	manualUpdateTrack: null
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
@@ -80,6 +81,28 @@ beo.bus.on('software-update', function(event) {
 		}
 	}
 	
+	if (event.header == "manualUpdateMode") {
+		if (event.content.mode != undefined) {
+			switch (event.content.mode) {
+				case false:
+				case null:
+				case "default":
+				case "auto":
+					beo.saveSettings("software-update", settings);
+					settings.manualUpdateTrack = null;
+					break;
+				case "critical":
+				case "stable":
+				case "latest":
+				case "experimental":
+					settings.manualUpdateTrack = event.content.mode;
+					beo.saveSettings("software-update", settings);
+					break;
+			}
+		}
+		autoUpdateMode();
+	}
+	
 	if (event.header == "install") {
 		installUpdate();
 	}
@@ -93,8 +116,9 @@ var releaseNotes = "";
 
 function checkForUpdate(forceCheck) {
 	checkTime = new Date().getTime();
+	updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : (autoUpdate != false) ? autoUpdate : "latest";
 	if (checkTime - lastChecked > 300000 || forceCheck) {
-		exec("/opt/hifiberry/bin/update --"+autoUpdate+" --check", function(error, stdout, stderr) {
+		exec("/opt/hifiberry/bin/update --"+updateTrack+" --check", function(error, stdout, stderr) {
 			lastChecked = checkTime;
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
@@ -106,7 +130,7 @@ function checkForUpdate(forceCheck) {
 			} else {
 				newVersion = null;
 				releaseNotes = "";
-				if (debug) console.log("Product appears to be up to date ('"+autoUpdate+"' track).");
+				if (debug) console.log("Product appears to be up to date ('"+updateTrack+"' track).");
 				beo.sendToUI("software-update", {header: "upToDate"});
 			}
 		});
@@ -127,14 +151,14 @@ var previousProgress = -5;
 function installUpdate() {
 	if (!updateInProgress) {
 		updateInProgress = true;
-		if (beo.developerMode) {
+		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : (autoUpdate != false) ? autoUpdate : "latest";
+		/*if (beo.developerMode) {
 			if (debug) console.log("Starting software update simulation.");
-			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--"+autoUpdate]);
-		} else {
+			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--"+updateTrack]);
+		} else {*/
 			if (debug) console.log("Starting software update.");
-			updateProcess = spawn("/opt/hifiberry/bin/update", ["--"+autoUpdate]);
-		}
-		//updateProcess = spawn("curl", ["https://www.hifiberry.com/images/updater-20191030-pi3.tar.gz", "-o", "updater.tar.gz", "--progress-bar"], {cwd: "/data"});
+			updateProcess = spawn("/opt/hifiberry/bin/update", ["--"+updateTrack]);
+		//}
 		
 		updateProcess.stdout.on('data', function (data) {
 			//console.log('stdout: ' + data.toString());
@@ -232,16 +256,18 @@ function startAutoCheckTimeout() {
 }
 
 function autoUpdateMode(mode) {
-	if (mode) {
+	if (mode != undefined) {
 		switch (mode) {
 			case "critical":
 			case "stable":
 			case "latest":
 			case "experimental":
 				fs.writeFileSync("/etc/updater.release", mode);
+				autoUpdate = mode;
 				break;
 			case false:
 				fs.writeFileSync("/etc/updater.release", "off");
+				autoUpdate = false;
 				break;
 		}
 	} else {
@@ -252,19 +278,19 @@ function autoUpdateMode(mode) {
 				case "stable":
 				case "latest":
 				case "experimental":
-					mode = modeRead;
+					autoUpdate = modeRead;
 					break;
 				default:
-					mode = false;
+					autoUpdate = false;
 					break;
 			}
 		} else {
-			mode = false;
+			autoUpdate = false;
 		}
 	}
-	autoUpdate = (mode) ? mode : "latest";
-	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate}});
+	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate, manualMode: settings.manualUpdateTrack}});
 }
+
 
 
 	

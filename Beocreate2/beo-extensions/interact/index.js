@@ -24,7 +24,7 @@ var version = require("./package.json").version;
 var SerialPort = require('serialport'); // For communicating through serial ports.
 var Readline = SerialPort.parsers.Readline; // For parsing with newline.
 
-debug = beo.debug;
+var debug = beo.debug;
 
 var defaultSettings = {
 	"interactions": {},
@@ -149,6 +149,7 @@ function sendSerialPortList() {
 }
 
 var port = null;
+var parser = null;
 var portReconnectInterval = null;
 function startSerialPort() {
 	if (SerialPort && settings.serialPortDevice) {
@@ -159,7 +160,7 @@ function startSerialPort() {
 		} else {
 		
 			port = new SerialPort(settings.serialPortDevice);
-			var parser = port.pipe(new Readline({ delimiter: '\n' }));
+			parser = port.pipe(new Readline({ delimiter: '\n' }));
 			
 			port.on('open', function() {
 				if (debug) console.log("Interact: serial port opened to '"+settings.serialPortDevice+"'.");
@@ -178,13 +179,13 @@ function startSerialPort() {
 			
 			port.on("close", function(err) {
 				if (err) {
-					console.log("Interact: serial port '"+port.path+"' was disconnected.");
+					console.error("Interact: serial port '"+port.path+"' was disconnected.");
 					portReconnectInterval = setInterval(function() {
 						startSerialPort();
 					}, 30000);
 					sendSerialPortList();
 				} else {
-					console.log("Interact: serial port to '"+port.path+"' was closed.");
+					if (debug) console.log("Interact: serial port to '"+port.path+"' was closed.");
 				}
 				beo.sendToUI("interact", {header: "serialPortClosed", content: {port: port.path}});
 			});
@@ -221,7 +222,11 @@ var allTriggers = {
 			if (interactData.matchAll && data == interactData.matchAll) {
 				return data;
 			} else if (interactData.matchBeginning && data.startsWith(interactData.matchBeginning)) {
-				return data;
+				if (interactData.removeBeginning) {
+					return data.substr(interactData.matchBeginning.length);
+				} else {
+					return data;
+				}
 			} else {
 				return undefined;
 			}

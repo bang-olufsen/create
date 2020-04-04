@@ -146,11 +146,16 @@
 			<div onclick="interact.serialReceive('matchBeginning');" id="serial-receive-match-beginning">Begins With</div>
 		</div>
 		<div class="menu-item" onclick="interact.serialReceive('set');">
-			<div class="menu-label">Text</div>
+			<div class="menu-label">Matched Text</div>
 			<div class="menu-value button" id="interact-serial-receive-value">Set...</div>
 		</div>
-		<div class="button pill grey" id="interact-serial-capture-button" onclick="interact.serialReceive('capture');">Capture Message</div>
+		<div class="button pill grey" id="interact-serial-capture-button" onclick="interact.serialReceive('capture');">Learn Message...</div>
 		<p class="margin-top">Received message is passed to the actions when they run.</p>
+		<div class="menu-item toggle off" id="serial-receive-remove-beginning" onclick="interact.serialReceive('setRemoveBeginning');">
+			<div class="menu-label">Pass Without Beginning</div>
+			<div class="menu-toggle"></div>
+		</div>
+		<p id="serial-receive-passed-text"></p>
 		<div class="ask-buttons">
 			<div class="button pill black default disabled" onclick="interact.serialReceive('save');" id="interact-serial-receive-save">Save Trigger</div>
 			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
@@ -178,7 +183,7 @@
 			<div class="menu-label">Address End</div>
 			<div class="menu-value button" id="http-api-received-key-set">Set...</div>
 		</div>
-		<p>If the request JSON body includes "data" property, it is passed to the actions when they run.</p>
+		<p>If the request JSON body includes "data" property, the value is passed to the actions when they run.</p>
 		<div class="ask-buttons">
 			<div class="button pill black default disabled" onclick="interact.httpAPISetup('received', 'save');" id="http-api-received-save">Save Trigger</div>
 			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
@@ -202,6 +207,7 @@
 			
 			</div>
 			<p>If the selected serial port disconnects, it will be automatically reopened soon after it becomes available again.</p>
+			
 		</div>
 	</div>
 </div>

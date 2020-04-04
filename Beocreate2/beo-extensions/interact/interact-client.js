@@ -562,6 +562,7 @@ var interactActionSort = new Beodrag("#interact-actions .menu-item", {
 capturingSerial = false;
 messageToMatch = null;
 matchMode = "matchAll";
+removeBeginning = false;
 
 function serialReceive(stage, data = null) {
 	switch (stage) {
@@ -572,11 +573,14 @@ function serialReceive(stage, data = null) {
 				if (data.matchAll) {
 					matchMode = "matchAll";
 					messageToMatch = data.matchAll;
+					removeBeginning = false;
 				} else {
 					matchMode = "matchBeginning";
 					messageToMatch = data.matchBeginning;
+					removeBeginning = data.removeBeginning;
 				}
 				$("#interact-serial-receive-value").text(messageToMatch).removeClass("button");
+				serialReceive("setRemoveBeginning", removeBeginning);
 				serialReceive(matchMode, false);
 			} else {
 				messageToMatch = null;
@@ -589,7 +593,7 @@ function serialReceive(stage, data = null) {
 			break;
 		case "save":
 			beo.ask();
-			saveTrigger("interact", "serialReceive", (matchMode == "matchAll") ? {matchAll: messageToMatch} : {matchBeginning: messageToMatch});
+			saveTrigger("interact", "serialReceive", (matchMode == "matchAll") ? {matchAll: messageToMatch} : {matchBeginning: messageToMatch, removeBeginning: removeBeginning});
 			break;
 		case "set":
 			serialReceive("capture", false);
@@ -601,6 +605,7 @@ function serialReceive(stage, data = null) {
 					messageToMatch = input.text;
 					$("#interact-serial-receive-value").text(input.text).removeClass("button");
 					if (messageToMatch) $("#interact-serial-receive-save").removeClass("disabled");
+					setPassedMessageInstruction(messageToMatch);
 				}
 			});
 			break;
@@ -611,10 +616,10 @@ function serialReceive(stage, data = null) {
 				capturingSerial = (!capturingSerial) ? true : false;
 			}
 			if (capturingSerial == true) {
-				$("#interact-serial-capture-button").text("Stop Capturing");
+				$("#interact-serial-capture-button").text("Stop Learning");
 				$("#interact-serial-receive-value").text("Waiting for message...").removeClass("button");
 			} else {
-				$("#interact-serial-capture-button").text("Capture Message...");
+				$("#interact-serial-capture-button").text("Learn Message...");
 				if (messageToMatch) {
 					$("#interact-serial-receive-value").text(messageToMatch).removeClass("button");
 				} else {
@@ -625,6 +630,7 @@ function serialReceive(stage, data = null) {
 		case "showCapture":
 			if (capturingSerial) {
 				messageToMatch = data;
+				setPassedMessageInstruction(messageToMatch);
 				$("#interact-serial-receive-value").text(data).removeClass("button");
 				if (messageToMatch) $("#interact-serial-receive-save").removeClass("disabled");
 			}
@@ -635,12 +641,46 @@ function serialReceive(stage, data = null) {
 			$("#interact-serial-receive-match div").removeClass("selected");
 			element = (stage == "matchAll") ? "all" : "beginning";
 			$("#serial-receive-match-"+element).addClass("selected");
-			if (messageToMatch && data != false) $("#interact-serial-receive-save").removeClass("disabled");
+			if (matchMode == "matchAll") {
+				serialReceive("setRemoveBeginning", false);
+				$("#serial-receive-remove-beginning").addClass("disabled");
+			} else if (matchMode == "matchBeginning") {
+				$("#serial-receive-remove-beginning").removeClass("disabled");
+			}
+			if (messageToMatch && data != false) {
+				$("#interact-serial-receive-save").removeClass("disabled");
+			}
+			setPassedMessageInstruction(messageToMatch);
+			break;
+		case "setRemoveBeginning":
+			removeBeginning = (data != null) ? data : (removeBeginning == false);
+			if (removeBeginning) {
+				$("#serial-receive-remove-beginning").addClass("on");
+			} else {
+				$("#serial-receive-remove-beginning").removeClass("on");
+			}
+			if (messageToMatch) {
+				$("#interact-serial-receive-save").removeClass("disabled");
+			}
+			setPassedMessageInstruction(messageToMatch);
 			break;
 		case "preview":
-			return "Message "+((data.matchAll) ? "is" : "begins with")+" '"+((data.matchAll) ? data.matchAll : data.matchBeginning)+"'";
+			return "Message "+((data.matchAll) ? "is" : "begins with")+" '"+((data.matchAll) ? data.matchAll : data.matchBeginning)+"'"+((data.removeBeginning) ? ", pass message without the beginning" : "");
 			break;
 	}
+}
+
+function setPassedMessageInstruction(text = null) {
+	if (matchMode == "matchBeginning" && removeBeginning) {
+		if (text) {
+			instruction = "From '"+text+"<strong>abcd</strong>', only '<strong>abcd</strong>' is passed.";
+		} else {
+			instruction = "Message is passed without the matched beginning text.";
+		}
+	} else {
+		instruction = "Whole message is passed.";
+	}
+	$("#serial-receive-passed-text").html(instruction);
 }
 
 messageToSend = null;

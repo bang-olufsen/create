@@ -809,6 +809,12 @@ interactDictionary = {
 			once: true,
 			illegalWith: ["actions/now-playing/playPause"]
 		},
+		pause: {
+			name: "Pause",
+			icon: "extensions/now-playing/symbols-black/pause.svg",
+			once: true,
+			illegalWith: ["actions/now-playing/playPause"]
+		},
 		next: {
 			name: "Next Track",
 			icon: "extensions/now-playing/symbols-black/next-track.svg"
@@ -816,12 +822,6 @@ interactDictionary = {
 		previous: {
 			name: "Previous Track",
 			icon: "extensions/now-playing/symbols-black/previous-track.svg"
-		},
-		pause: {
-			name: "Pause",
-			icon: "extensions/now-playing/symbols-black/pause.svg",
-			once: true,
-			illegalWith: ["actions/now-playing/playPause"]
 		}
 	}
 }

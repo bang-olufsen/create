@@ -123,11 +123,13 @@ var fetch = require("node-fetch"); // for sending HTTP requests to the DACP serv
 	airPlayVolumeSendTimeout = null;
 	beo.bus.on('sound', function(event) {
 		
-		if (event.header == "systemVolume" && !isNaN(event.content.volume)) {
+		if (event.header == "systemVolume" && 
+			!isNaN(event.content.trueVolume &&
+			event.content.fromSetVolume)) {
 			if (settings.syncVolume) {
 				clearTimeout(airPlayVolumeSendTimeout);
 				airPlayVolumeSendTimeout = setTimeout(function() {
-					airPlayVolume = convertAirPlayVolume(event.content.volume, 1);
+					airPlayVolume = convertAirPlayVolume(event.content.trueVolume, 1);
 					sendDACPCommand("setproperty?dmcp.device-volume=" + airPlayVolume);
 				}, 500);
 			}
@@ -423,7 +425,7 @@ var fetch = require("node-fetch"); // for sending HTTP requests to the DACP serv
 							'Host': 'starlight.local.'
 						},
 					}).then(res => {
-					if (res.status == 200) {
+					if (res.status == 200 || res.status == 204) {
 						// OK.
 					} else {
 						// No content.

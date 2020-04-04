@@ -69,11 +69,7 @@ $(document).on("beosonic", function(event, data) {
 			beosonicPresets = data.content.presets;
 			if (data.content.settings.presetOrder) {
 				presetOrder = data.content.settings.presetOrder;
-				if (selectedExtension == "beosonic") {
-					updatePresetList();
-				} else {
-					updateQuickPresets();
-				}
+				updatePresetList();
 			}
 			
 			if (data.content.presetSaved) {
@@ -81,6 +77,14 @@ $(document).on("beosonic", function(event, data) {
 			}
 		}
 		
+	}
+	
+	if (data.header == "beosonicPresets") {
+		beosonicPresets = data.content.presets;
+		if (data.content.presetOrder) {
+			presetOrder = data.content.presetOrder;
+			updateQuickPresets();
+		}
 	}
 	
 	if (data.header == "savingPreset") {
@@ -491,6 +495,70 @@ $(".loudness-slider").slider({
 		}
 });
 
+// INTERACT
+
+interactBeosonicOption = null;
+function interactSetup(stage, data) {
+	switch (stage) {
+		case "setup":
+			if (data && data.preset != undefined) {
+				interactBeosonicOption = data.preset;
+			} else {
+				interactBeosonicOption = null;
+			}
+			$("#interact-beosonic-list").empty();
+			for (i in presetOrder) {
+				$("#interact-beosonic-list").append(beo.createMenuItem({
+					label: beosonicPresets[presetOrder[i]].presetName,
+					value: i,
+					checkmark: "left",
+					data: {"data-option": presetOrder[i]},
+					onclick: "beosonic.interactSetup('option', '"+presetOrder[i]+"');",
+					checked: (interactBeosonicOption == presetOrder[i])
+				}));
+			}
+			
+			interactSetup("option", interactBeosonicOption);
+			$("#select-beosonic-preset-save-button").addClass("disabled");
+			beo.ask("select-beosonic-preset-setup");
+			break;
+		case "option":
+			$("#interact-beosonic-list .menu-item, #interact-beosonic-with-value").removeClass("checked");
+			$("#select-beosonic-preset-save-button").removeClass("disabled");
+			interactBeosonicOption = data;
+			if (data == false) {
+				$("#interact-beosonic-with-value").addClass("checked");
+			} else if (data) {
+				$('#interact-beosonic-list .menu-item[data-option="'+data+'"]').addClass("checked");
+			}
+			break;
+		case "save":
+			beo.ask();
+			window.interact.saveAction("beosonic", "selectPreset", {preset: interactBeosonicOption});
+			break;
+		case "preview":
+			console.log(data);
+			if (!data.preset) {
+				return "Preset with full name, file name or index number from trigger";
+			} else {
+				return beosonicPresets[data.preset].presetName;
+			}
+			break;
+	}
+}
+
+
+interactDictionary = {
+	actions: {
+		selectPreset: {
+			name: "Select Listening Mode",
+			icon: "extensions/beosonic/symbols-black/tonetouch.svg",
+			setup: function(data) { interactSetup("setup", data) }, 
+			preview: function(data) { return interactSetup("preview", data) }
+		}
+	}
+}
+
 return {
 	beosonicTest: beosonicTest,
 	presetAction: presetAction,
@@ -499,7 +567,9 @@ return {
 	renamePreset: renamePreset,
 	deletePreset: deletePreset,
 	replaceExisting: replaceExisting,
-	selectAdjustmentsToInclude: selectAdjustmentsToInclude
+	selectAdjustmentsToInclude: selectAdjustmentsToInclude,
+	interactDictionary: interactDictionary,
+	interactSetup: interactSetup
 }
 
 })();

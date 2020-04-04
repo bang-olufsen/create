@@ -140,13 +140,12 @@ var fetch = require("node-fetch");
 				}
 				break;
 			case "volume":
-				if (event.content.percent != undefined) {
+				if (event.content.body.percent != undefined) {
 					if (debug >= 2) console.log("Volume received from AudioControl: "+event.content.body.percent+" %.");
-					reportVolume(mapVolume(event.content.body.percent, true));
+					reportVolume(event.content.body.percent);
 				}
 				break;
 			case "setVolume":
-				if (debug >= 2) console.log("Volume change event: "+event.content+" %.");
 				setVolume(event.content);
 				break;
 			case "setVolumeAudioControl":
@@ -169,9 +168,9 @@ var fetch = require("node-fetch");
 				//mute(undefined, fade);
 				break;
 			case "getVolume":
-				getVolume(function(volume) {
-					beo.bus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: systemVolume, volumeControl: volumeControl}});
-				}, 1);
+				getVolume(function() {
+					beo.sendToUI("sound", {header: "systemVolume", content: {volume: systemVolume, volumeControl: volumeControl}});
+				});
 				break;
 			case "advancedSoundAdjustmentsEnabled":
 				if (event.content && event.content.enabled != undefined) {
@@ -232,13 +231,14 @@ var fetch = require("node-fetch");
 		}
 		if (setVolumeLevel < 0) setVolumeLevel = 0;
 		if (setVolumeLevel > 100) setVolumeLevel = 100;
+		if (debug >= 2) console.log("Setting volume: "+setVolumeLevel+" %.");
 		switch (volumeControl) {
 			case 0: // No volume control.
 				callback(null);
 				break;
 			case 1: // Talk to ALSA.
 				setVolumeViaALSA(mapVolume(setVolumeLevel, false), function(newVolume) {
-					reportVolume(newVolume, callback);
+					reportVolume(newVolume, callback, true);
 				});
 				break;
 			case 3: // Talk to the DSP directly.
@@ -246,16 +246,14 @@ var fetch = require("node-fetch");
 		}
 	}
 	
-	function getVolume(callback, noUIUpdate) {
-		flag = 0;
-		if (noUIUpdate) flag = 1;
+	function getVolume(callback) {
 		switch (volumeControl) {
 			case 0: // No volume control.
 				if (callback) callback(null);
 				break;
 			case 1: // Talk to ALSA.
 				getVolumeViaALSA(function(newVolume) {
-					reportVolume(mapVolume(newVolume, true), callback, flag);
+					reportVolume(newVolume, callback);
 				});
 				break;
 			case 2: // Talk to the DSP directly.
@@ -265,12 +263,13 @@ var fetch = require("node-fetch");
 	
 	var setVolumeUpdateTimeout;
 	
-	function reportVolume(newVolume, callback, flag) {
+	function reportVolume(trueVolume, callback, fromSetVolume = false) {
+		newVolume = mapVolume(trueVolume, true);
 		if (systemVolume != newVolume) {
 			if (beo.extensions.interact) beo.extensions.interact.runTrigger("sound", "volumeChanged", {volume: newVolume, up: (newVolume > systemVolume)});
 			systemVolume = newVolume;
-			beo.bus.emit("sound", {header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
-			if (flag != 1) beo.bus.emit("ui", {target: "sound", header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
+			beo.bus.emit("sound", {header: "systemVolume", content: {volume: newVolume, trueVolume: trueVolume, volumeControl: volumeControl, fromSetVolume: fromSetVolume}});
+			beo.sendToUI("sound", {header: "systemVolume", content: {volume: newVolume, volumeControl: volumeControl}});
 			
 			clearTimeout(setVolumeUpdateTimeout);
 			setVolumeUpdateTimeout = setTimeout(function() {
@@ -279,6 +278,7 @@ var fetch = require("node-fetch");
 		}
 		if (callback) callback(newVolume);
 	}
+	
 	
 
 	var volumeFadeInterval = null;
@@ -438,22 +438,22 @@ var fetch = require("node-fetch");
 	}
 
 	
-	function setVolumeViaALSA(volume, callback) {
+	function setVolumeViaALSA(volume, callback, mixer = alsaMixer) {
 		volume += "%";
-		execFile("amixer", ["set", alsaMixer, volume], function(error, stdout, stderr) {
+		execFile("amixer", ["set", mixer, volume], function(error, stdout, stderr) {
 			if (error) {
-				console.error("Error setting volume via ALSA:", error);
+				console.error("Error adjusting ALSA mixer control '"+mixer+"':", error);
 				if (callback) callback(null, error);
 			} else {
 				newVolume = parseFloat(stdout.match(/\[(.*?)\]/)[0].slice(1, -2));
-				if (debug >= 2) console.log("Volume set via ALSA: "+newVolume+" %.");
+				if (debug >= 2) console.log("ALSA mixer control '"+mixer+"' set to "+newVolume+" %.");
 				if (callback) callback(newVolume);
 			}
 		});
 	}
 	
-	function getVolumeViaALSA(callback) {
-		exec("amixer get "+alsaMixer, function(error, stdout, stderr) {
+	function getVolumeViaALSA(callback, mixer = alsaMixer) {
+		exec("amixer get "+mixer, function(error, stdout, stderr) {
 			if (error) {
 				if (callback) callback(null, error);
 			} else {
@@ -544,7 +544,9 @@ module.exports = {
 	getVolume: getVolume,
 	checkCurrentMixerAndReconfigure: checkCurrentMixerAndReconfigure,
 	mute: mute,
-	interact: interact
+	interact: interact,
+	alsaSet: setVolumeViaALSA,
+	alsaGet: getVolumeViaALSA
 };
 
 

@@ -63,7 +63,7 @@ beo.bus.on('general', function(event) {
 		}
 		if (event.content.extension == "sound" ||
 			event.content.extension == "interact") {
-			beo.sendToUI("beosonic", {header: "beosonicPresets", content: {presets: compactPresetList, presetOrder: settings.presetOrder}});
+			beo.sendToUI("beosonic", {header: "beosonicPresets", content: {presets: compactPresetList, presetOrder: settings.presetOrder, selectedPreset: settings.selectedPreset}});
 		}
 	}
 });

@@ -81,6 +81,11 @@ $(document).on("beosonic", function(event, data) {
 	
 	if (data.header == "beosonicPresets") {
 		beosonicPresets = data.content.presets;
+		if (data.content.selectedPreset) {
+			currentPreset = data.content.selectedPreset;
+		} else {
+			currentPreset = null;
+		}
 		if (data.content.presetOrder) {
 			presetOrder = data.content.presetOrder;
 			updateQuickPresets();

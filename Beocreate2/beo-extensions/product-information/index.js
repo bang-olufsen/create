@@ -564,7 +564,7 @@ var fs = require("fs");
 	
 interact = {
 	actions: {
-		power: function(data, interactData) {
+		power: function(interactData) {
 			if (interactData.option == "shutdown") {
 				beo.bus.emit("general", {header: "requestShutdown", content: {extension: "interact"}});
 			}

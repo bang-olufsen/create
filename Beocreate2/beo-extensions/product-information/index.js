@@ -54,7 +54,8 @@ var fs = require("fs");
 		"modelID": "beocreate-4ca-mk1", 
 		"modelName": "BeoCreate 4-Channel Amplifier",
 		"productImage": "/product-images/beocreate-4ca-mk1.png",
-		"bonjourEnabled": true
+		"bonjourEnabled": true,
+		"systemNameApprovedByUser": false
 	};
 
 	if (hifiberryOS) {
@@ -62,7 +63,8 @@ var fs = require("fs");
 			"modelID": "hifiberry", 
 			"modelName": "HiFiBerry",
 			"productImage": false,
-			"bonjourEnabled": false
+			"bonjourEnabled": false,
+			"systemNameApprovedByUser": false,
 		};
 	}
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
@@ -103,15 +105,8 @@ var fs = require("fs");
 					// Wait for the system name before starting services.
 					
 					if (!err) systemName = response;
-					if (systemName.ui) {
-						if (!systemNameSent) {
-							beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion, staticName: systemName.static}});
-							systemNameSent = true;
-						}
-						beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
-						startOrUpdateBonjour();
-					} else {
-						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name.
+					if (!systemName.ui || (systemName.ui == "HiFiBerry" && !hifiberryOS && !settings.systemNameApprovedByUser)) {
+						// If the UI name is not defined, assume this is a first-run scenario and give the system a default name. Alternatively, if this is a Beocreate system, it's called "HiFiBerry" but this name has not been user-approved, rename to Beocreate and ask for a new name during setup.
 						if (!systemID) systemID = "new";
 						if (!hifiberryOS) {
 							//newName = "Beocreate-"+systemID.replace(/^0+/, '');
@@ -130,12 +125,27 @@ var fs = require("fs");
 									beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion, staticName: systemName.static}});
 									systemNameSent = true;
 								}
+								beo.bus.emit('product-information', {header: "systemNameChanged", content: {systemName: systemName.ui, staticName: systemName.static}});
 								beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
 								startOrUpdateBonjour();
 							} else {
 								if (debug) console.error("Setting system name failed: "+response);
 							}
 						});
+					} else {
+						if ((systemName.ui == "HiFiBerry" || systemName.ui == "Beocreate") &&
+							!settings.systemNameApprovedByUser &&
+							extensions["setup"] && 
+							extensions["setup"].joinSetupFlow) {
+							extensions["setup"].joinSetupFlow("product-information", {after: ["choose-country", "network", "sound-preset"], allowAdvancing: true});
+						}
+						if (!systemNameSent) {
+							beo.bus.emit("ui", {target: "product-information", header: "showSystemName", content: {systemName: systemName.ui, systemVersion: systemVersion, staticName: systemName.static}});
+							systemNameSent = true;
+						}
+						beo.bus.emit('product-information', {header: "productIdentity", content: {systemName: systemName.ui, modelID: settings.modelID, modelName: settings.modelName, productImage: currentProductImage, systemID: systemID}});
+						startOrUpdateBonjour();
+						
 					}
 				});
 			});
@@ -174,6 +184,8 @@ var fs = require("fs");
 				piSystem.setHostname(event.content.newSystemName, function(success, response) {
 					if (success == true) { 
 						systemName = response;
+						settings.systemNameChanged = true;
+						beo.saveSettings("product-information", settings);
 						if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");
 						beo.bus.emit('product-information', {header: "systemNameChanged", content: {systemName: systemName.ui, staticName: systemName.static}});
 						startOrUpdateBonjour("systemName");
@@ -235,6 +247,14 @@ var fs = require("fs");
 		
 	});
 	
+	beo.bus.on('setup', function(event) {
+	
+		if (event.header == "advancing" && event.content.fromExtension == "product-information") {
+			settings.systemNameApprovedByUser = true;
+			beo.saveSettings("product-information", settings);
+		}
+				
+	});
 
 	beo.bus.on('network', function(event) {
 		

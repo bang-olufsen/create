@@ -184,7 +184,7 @@ var fs = require("fs");
 				piSystem.setHostname(event.content.newSystemName, function(success, response) {
 					if (success == true) { 
 						systemName = response;
-						settings.systemNameChanged = true;
+						settings.systemNameApprovedByUser = true;
 						beo.saveSettings("product-information", settings);
 						if (debug) console.log("System name is now '"+systemName.ui+"' ("+systemName.static+").");
 						beo.bus.emit('product-information', {header: "systemNameChanged", content: {systemName: systemName.ui, staticName: systemName.static}});

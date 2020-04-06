@@ -39,7 +39,7 @@ var countryList = require('country-list');
 				country = extensions["network"].getCountry();
 				if (country == undefined) {
 					if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
-						extensions["setup"].joinSetupFlow("choose-country", {after: null, before: ["network", "sound-preset", "product-information"]});
+						extensions["setup"].joinSetupFlow("choose-country", {after: null, before: ["network", "speaker-preset", "product-information"]});
 					}
 				}
 			}

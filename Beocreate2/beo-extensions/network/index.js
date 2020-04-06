@@ -305,7 +305,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					hotspotStartedOnce = true;
 					setupNetwork(true);
 					if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
-						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["sound-preset", "product-information"]});
+						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["speaker-preset", "product-information"]});
 					}
 					interval = 30;
 					beo.bus.emit("led", {header: "blink", content: {options: {interval: 1, colour: "orange"}}});

@@ -116,7 +116,7 @@ var fs = require("fs");
 						}
 						piSystem.setHostname(newName, function(success, response) {
 							if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
-								extensions["setup"].joinSetupFlow("product-information", {after: ["choose-country", "network", "sound-preset"], allowAdvancing: true});
+								extensions["setup"].joinSetupFlow("product-information", {after: ["choose-country", "network", "speaker-preset"], allowAdvancing: true});
 							}
 							if (success == true) { 
 								systemName = response;

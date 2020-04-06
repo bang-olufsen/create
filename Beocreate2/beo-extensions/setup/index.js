@@ -99,6 +99,7 @@ SOFTWARE.*/
 		
 	});
 	
+	
 	function joinSetupFlow(extension, options) {
 		// An extension can join the setup flow at any time, but it might not get its preferred placement if some extension have already been shown to the user.
 		
@@ -115,7 +116,7 @@ SOFTWARE.*/
 			// Create an entry.
 			allowAdvancing = (options.allowAdvancing) ? true : false
 			newStep = {extension: extension, shown: false, allowAdvancing: allowAdvancing};
-			if (options.before) newStep.before = options.before;
+			/*if (options.before) newStep.before = options.before;
 			if (options.after) newStep.after = options.after;
 			// Next, determine the placement.
 			endIndex = setupFlow.length-1; // Default to adding the extension to the end, but before the finishing step.
@@ -157,7 +158,20 @@ SOFTWARE.*/
 				placedIndex = Math.max(beforeExisting, afterExisting, beforeNew, afterNew, lastShown);
 			}
 			
-			setupFlow.splice(placedIndex, 0, newStep); // Add to the flow.
+			setupFlow.splice(placedIndex, 0, newStep); // Add to the flow.*/
+			
+			// Temporary fixed sort.
+			theOrder = ["setup", "choose-country", "network", "speaker-preset", "product-information", "setup-finish"];
+			tempFlow = [];
+			for (i in setupFlow) {
+				tempFlow[theOrder.indexOf(setupFlow[i].extension)] = setupFlow[i];
+			}
+			index = theOrder.indexOf(extension);
+			tempFlow[index] = {extension: extension, before: options.before, after: options.after};
+			setupFlow = tempFlow.filter(function (el) {
+		  		return el != null;
+			});
+			
 			beo.bus.emit("ui", {target: "setup", header: "joinSetupFlow", content: {extension: extension, setupFlow: setupFlow}});
 			if (debug) console.log("Extension '"+extension+"' joined setup flow.");
 			checkIfMoreSteps();

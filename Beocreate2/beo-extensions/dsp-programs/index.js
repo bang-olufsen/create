@@ -21,6 +21,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 var xmlJS = require('xml-js');
 var execSync = require("child_process").execSync;
 var exec = require("child_process").exec;
+var spawn = require("child_process").spawn;
 var fs = require("fs");
 var _ = require('underscore');
 
@@ -274,9 +275,13 @@ var _ = require('underscore');
 						if (metadata) {
 							if (!metadataFromDSP && !startup) {
 								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
-								if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
+								beo.sendToUI("dsp-programs", {header: "configuringSystem"}});
+								/*if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
 									beo.extensions.setup.restartWhenComplete("speaker-preset", true);
-								}
+								}*/
+								if (debug) console.log("Running HiFiBerry reconfigure script.");
+								configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
+								configureProcess.unref();
 							}
 							metadataFromDSP = true;
 							amplifierMute(false);

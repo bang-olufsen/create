@@ -66,9 +66,14 @@ function toggleEnabled() {
 	beo.send({target: "alsa-eq", header: "alsaEqEnable", content: {eqEnable: enabled}});
 }
 
+function resetEq() {
+	beo.send({target: "alsa-eq", header: "resetEq", content: {}});
+}
+
 
 return {
-	toggleEnabled: toggleEnabled
+	toggleEnabled: toggleEnabled,
+	resetEq: resetEq
 }
 
 })();

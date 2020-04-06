@@ -65,17 +65,16 @@ function read_settings() {
 
 function setALSAEq(hz, percent) {
 	control = controls[hz.toString()];
-	console.log(control, hz);
 	
 	execFile("amixer", ["set", "-D", "equal", control, percent], function(error, stdout, stderr) {
 		if (error) {
 			console.error("Error adjusting ALSA mixer control '"+control+"':", error);
 		} else {
 			percent = parseFloat(stdout.match(/\[(.*?)\]/)[0].slice(1, -2));
-			settings[hz.toString()]=percent;
 			if (debug >= 2) console.log("ALSA mixer control '"+control+"' set to "+percent+" %.");
 		}
 	});
+	settings[hz.toString()]=percent;
 } 
 
 function readALSAEq(hz) {
@@ -157,9 +156,21 @@ beo.bus.on('alsa-eq', function(event) {
 			}
 			enableEq(eqEnable);
 			beo.sendToUI("alsa-eq", {header: "alsaEqEnabled", content: {eqEnabled: eqEnable}});
-			console.log("sent update to UI");
+			if (debug) console.log("sent update to UI");
 		} catch (error) {
 			console.error("Exception enabling/disabling eq: ", error);
+		}
+	}
+	
+	if (event.header == "resetEq") {
+		try {
+			for (var hz in settings) {
+				setALSAEq(hz, 66)
+				if (debug) console.log("reseting",hz);
+			}
+			beo.sendToUI("alsa-eq", {header: "eqSettings", content: {settings: settings}});
+		} catch (error) {
+			console.error("Exception reseting eq: ", error);
 		}
 	}
 });

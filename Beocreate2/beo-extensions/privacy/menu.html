@@ -7,12 +7,19 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
-			<p>No data is automatically shared with Bang &amp; Olufsen or HiFiBerry, but some features access third-party services.</p>
+			<p>Choose how the system uses your data.</p>
+			<!--
+			<div class="menu-item toggle" id="privacy-stats-toggle" onclick="privacy.toggle('stats');">
+				<div class="menu-label">Anonymous Statistics</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p>Let HiFiBerry and Bang &amp; Olufsen know anonymously which product features are used. <a href="#" onclick="privacy.showInfo('stats');">Learn more.</a></p>
+			-->
 			<div class="menu-item toggle" id="privacy-metadata-toggle" onclick="privacy.toggle('externalMetadata');">
 				<div class="menu-label">Metadata from Internet</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p>Find additional information about the tracks you listen to. <a href="#" onclick="privacy.showInfo('externalMetadata');">Learn more.</a></p>
+			<p>Find additional information about the tracks you listen to. Requires accessing third-party services <a href="#" onclick="privacy.showInfo('externalMetadata');">Learn more.</a></p>
 			<hr>
 			<p class="privacy margin-top">Other features may have their own privacy controls. This icon explains, how your data is used.</p>
 		</div>

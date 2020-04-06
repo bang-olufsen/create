@@ -134,7 +134,8 @@ var beo4Directory = {
 	
 	
 		beo4Address = beo4Addresses[addressCode];
-		if (beo4Address == "LIGHT") {
+		if (beo4Address == "LIGHT" ||
+			beo4Address == "SPEAKER") {
 			beo4LastAVSource = beo4Source;
 		} else {
 			if (beo4LastAVSource) {
@@ -249,7 +250,7 @@ var beo4Directory = {
 				break;
 			case "GO":
 				//if (beo4NumberInputInProgress) beo4NumberInput(3);
-				if (beo.extensions.sources) beo.extensions.sources.transport("playPause");
+				if (beo.extensions.sources) beo.extensions.sources.transport("play");
 				break;
 		}
 	

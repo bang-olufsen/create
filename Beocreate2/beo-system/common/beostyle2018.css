@@ -2668,7 +2668,7 @@ footer .button.pill {
 .ui-slider-range {
 	position: absolute;
 	height: 100%;
-	background-color: black;
+	background-color: currentColor;
 }
 
 .ui-slider-range:before,
@@ -2708,9 +2708,9 @@ footer .button.pill {
 	height: 30px;
 	display: block;
 	position: absolute;
-	background-color: black;
+	background-color: currentColor;
 	border-radius: 50%;
-	outline: none !important;
+	outline: none;
 	transition: background-color 0.5s ease, box-shadow 0.5s ease, filter 0.3s ease, left 0.3s ease;
 	box-sizing: border-box;
 	filter: brightness(1);
@@ -2721,6 +2721,7 @@ footer .button.pill {
 	z-index: 1;
 }
 
+
 .no-touch .ui-slider span {
 	width: 24px;
 	height: 24px;
@@ -2728,66 +2729,47 @@ footer .button.pill {
 	margin-left: -11px;
 }
 
+
 .ui-slider.white,
 .dark .ui-slider {
 	background-color: rgba(255,255,255,0.3);
 }
 
-.ui-slider.white span,
-.dark .ui-slider.black span {
-	background-color: white;
+.ui-slider.white,
+.dark .ui-slider.black {
+	color: white;
 }
 
-.ui-slider.white .ui-slider-range,
-.dark .ui-slider.black .ui-slider-range {
-	background-color: white;
+.red.ui-slider {
+	color: var(--carnation);
 }
 
-.red .ui-slider-range,
-.red.ui-slider span {
-	background-color: var(--carnation);
+.green.ui-slider {
+	color: var(--turquoise);
 }
 
-.green .ui-slider-range,
-.green.ui-slider span {
-	background-color: var(--turquoise);
+.blue.ui-slider {
+	color: var(--mariner);
 }
 
-.blue .ui-slider-range,
-.blue.ui-slider span {
-	background-color: var(--mariner);
-}
-
-.yellow .ui-slider-range,
-.yellow.ui-slider span
- {
-	background-color: var(--yellow);
+.yellow.ui-slider {
+	color: var(--yellow);
 }
 
 .ui-slider.disabled span {
 	pointer-events: none;
 }
 
-.ui-slider span:active {
-	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+.no-touch .ui-slider span.ui-state-focus {
+	box-shadow: 0 0px 5px currentColor;
+}
+
+.ui-slider span:active,
+.no-touch .ui-slider span:active {
 	transition: none;
+	box-shadow: 0 3px 8px currentColor;
 }
 
-.red.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--carnation);
-}
-
-.green.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--turquoise);
-}
-
-.blue.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--mariner);
-}
-
-.yellow.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--yellow);
-}
 
 .ui-slider span:first-of-type {
 	text-align: left;
@@ -2799,6 +2781,7 @@ footer .button.pill {
 
 .ui-slider span:after {
 	content: attr(data-content);
+	color: var(--main-font-colour);
 	position: absolute;
 	font-size: 0.8em;
 	font-weight: 500;
@@ -2828,15 +2811,11 @@ footer .button.pill {
 }
 
 .range-from-centre.ui-slider {
-	background-color: black;
-}
-
-.dark .range-from-centre.ui-slider {
-	background-color: white;
+	background-color: currentColor;
 }
 
 .range-from-centre .ui-slider-range {
-	background-color: black;
+	background-color: currentColor;
 	z-index: 1;
 }
 

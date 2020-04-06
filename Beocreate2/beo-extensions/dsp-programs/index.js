@@ -275,7 +275,7 @@ var _ = require('underscore');
 							if (!metadataFromDSP && !startup) {
 								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
 								if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
-									beo.extensions.setup.restartWhenComplete("sound-preset", true);
+									beo.extensions.setup.restartWhenComplete("speaker-preset", true);
 								}
 							}
 							metadataFromDSP = true;

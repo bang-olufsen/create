@@ -396,7 +396,7 @@ var _ = require('underscore');
 			version = null;
 		}
 		name = getProgramName(currentMetadata);
-		return {name: name, version: version};
+		return {name: name, version: version, metadataFromDSP: metadataFromDSP};
 	}
 	
 	

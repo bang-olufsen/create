@@ -93,7 +93,7 @@ $(document).on("speaker-preset", function(event, data) {
 			}
 			
 			excludedSettings = [];
-			willInstallFallbackDSP = false;
+			willInstallFallbackDSP = (data.content.installDefaultDSP) ? true : false;
 			settingsCount = 0;
 			$(".apply-speaker-preset-button").removeClass("disabled");
 			
@@ -123,8 +123,6 @@ $(document).on("speaker-preset", function(event, data) {
 							if (presetPreview[2] && presetPreview[2] != "") {
 								//$(".speaker-preset-contents").append('<p class="warning">'+presetPreview[2]+'</p>');
 								menuOptions.customMarkup += '<p class="warning">'+presetPreview[2]+'</p>';
-								$(".speaker-preset-install-fallback-dsp").removeClass("hidden");
-								$(".install-fallback-dsp-toggle").addClass("on");
 								willInstallFallbackDSP = true;
 							}
 							$(".speaker-preset-contents").append(beo.createMenuItem(menuOptions));
@@ -141,6 +139,11 @@ $(document).on("speaker-preset", function(event, data) {
 					// Has settings, but no extension to handle it.
 					
 				}
+			}
+			
+			if (willInstallFallbackDSP) {
+				$(".speaker-preset-install-fallback-dsp").removeClass("hidden");
+				$(".install-fallback-dsp-toggle").addClass("on");
 			}
 			
 			beo.showPopupView("speaker-preset-preview-popup");
@@ -220,7 +223,7 @@ function closePreview() {
 }
 
 function applyPreset() {
-	beo.send({target: "speaker-preset", header: "applySpeakerPreset", content: {presetID: selectedSpeakerPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
+	beo.send({target: "speaker-preset", header: "applySpeakerPreset", content: {presetID: selectedSpeakerPreset, excludedSettings: excludedSettings, installDefault: willInstallFallbackDSP}});
 }
 
 function optionsForSelectedPreset() {

@@ -170,14 +170,14 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				
 				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "speaker-preset", settings: settings}});
 				
-				if (event.content.installFallback && fullPresetList[presetID]["speaker-preset"].fallbackDSP) {
+				if (event.content.installDefault && fullPresetList[presetID]["speaker-preset"].fallbackDSP) {
 					if (extensions["dsp-programs"] && extensions["dsp-programs"].installDSPProgram) {
 						extensions["dsp-programs"].installDSPProgram(fullPresetList[presetID]["speaker-preset"].fallbackDSP, function(result) {
 							if (result == true) {
 								beo.bus.emit("ui", {target: "speaker-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
-								if (debug) console.log("Installing fallback DSP program succeeded. Sound preset applied.");
+								if (debug) console.log("Installing default DSP program succeeded. Sound preset applied.");
 							} else {
-								if (debug) console.log("Installing fallback DSP program unsuccessful.");
+								if (debug) console.log("Installing default DSP program unsuccessful.");
 							}
 						});
 					}
@@ -262,11 +262,15 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					}
 					
 					programName = false;
+					metadataFromDSP = false;
 					if (extensions["dsp-programs"]) {
 						if (extensions["dsp-programs"].getCurrentProgramInfo.name != undefined) {
-							programName = extensions["dsp-programs"].getCurrentProgramInfo().name;
+							programInfo = extensions["dsp-programs"].getCurrentProgramInfo();
+							programName = programInfo.name;
+							metadataFromDSP = programInfo.metadataFromDSP;
 						}
 					}
+					installDefaultDSP = (!metadataFromDSP) ? true : false;
 					
 					preset.content = checkedPresetContent;
 					
@@ -277,7 +281,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					preset.bangOlufsenProduct = compactPresetList[presetID].bangOlufsenProduct;
 					
 					
-					beo.bus.emit("ui", {target: "speaker-preset", header: "presetPreview", content: {preset: preset, productIdentity: identity, currentDSPProgram: programName}});
+					beo.bus.emit("ui", {target: "speaker-preset", header: "presetPreview", content: {preset: preset, productIdentity: identity, currentDSPProgram: programName, installDefaultDSP: installDefaultDSP}});
 					
 				}
 			}

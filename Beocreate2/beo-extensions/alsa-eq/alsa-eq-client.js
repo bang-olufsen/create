@@ -40,10 +40,12 @@ $(".alsa-eq-slider").slider({
 	min: 0,
 	max: 100,
 	value: 66,
+	range: "min",
+	orientation: "vertical",
 	slide: function( event, ui ) {
 		sliderid = event.target.id.split("-").pop();
 		
-		beo.send({target: "alsa-eq", header: "setEq", content: {"hz": sliderid, "percent": ui.value}});
+		beo.sendToProduct("alsa-eq", {header: "setEq", content: {"hz": sliderid, "percent": ui.value}});
 	}
 });
 
@@ -59,9 +61,9 @@ function setEnabled(enable) {
 function toggleEnabled() {
 	enabled = (!alsaEqEnabled) ? true : false;
 	if (enabled) {
-		beo.notify({title: "Turning ALSA EQ on...", icon: "attention", timeout: 30});
+		beo.notify({title: "Turning equaliser on...", icon: "attention", timeout: 30});
 	} else {
-		beo.notify({title: "Turning ALSA EQ off...", icon: "attention", timeout: 30});
+		beo.notify({title: "Turning equaliser off...", icon: "attention", timeout: 30});
 	}
 	beo.send({target: "alsa-eq", header: "alsaEqEnable", content: {eqEnable: enabled}});
 }

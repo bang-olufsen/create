@@ -206,16 +206,16 @@ function generateSettingsPreview(identity, presetName) {
 			infoString += beo.translatedString("Manufactured", "manufactured", "product-information") + " " + produced;
 		}
 	}
-	$(".sound-preset-information p.product").text(infoString);
+	$(".speaker-preset-information p.product").text(infoString);
 	
 	if (identity.manufacturer) {
 		if (identity.modelName && identity.modelName != presetName) {
-			$(".sound-preset-information h2").text(identity.manufacturer+" "+identity.modelName).removeClass("hidden-2");
+			$(".speaker-preset-information h2").text(identity.manufacturer+" "+identity.modelName).removeClass("hidden-2");
 		} else {
-			$(".sound-preset-information h2").text(identity.manufacturer).removeClass("hidden-2");
+			$(".speaker-preset-information h2").text(identity.manufacturer).removeClass("hidden-2");
 		}
 	} else {
-		$(".sound-preset-information h2").text("").addClass("hidden-2");
+		$(".speaker-preset-information h2").text("").addClass("hidden-2");
 	}
 	previewString = "";
 	if (identity.manufacturer) previewString += identity.manufacturer+" ";
@@ -225,8 +225,8 @@ function generateSettingsPreview(identity, presetName) {
 }
 
 function clearPresetPreview() {
-	$(".sound-preset-information p.product").text("");
-	$(".sound-preset-information h2").text("").addClass("hidden-2");
+	$(".speaker-preset-information p.product").text("");
+	$(".speaker-preset-information h2").text("").addClass("hidden-2");
 }
 
 

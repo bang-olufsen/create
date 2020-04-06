@@ -530,12 +530,21 @@ var networkCore = require('../../beocreate_essentials/networking');
 		return networkCore.setCountry(countryCode);
 	}
 	
+interact = {
+	actions: {
+		startSetupNetwork: function() {
+			if (networkHardware.wifi) setupNetwork(true);
+		}
+	}
+}
+	
 module.exports = {
 	getCountry: getCountry,
 	setCountry: setCountry,
 	checkInternetConnection: checkInternetConnection,
 	checkLocalConnection: checkLocalConnection,
-	version: version
+	version: version,
+	interact: interact
 };
 
 

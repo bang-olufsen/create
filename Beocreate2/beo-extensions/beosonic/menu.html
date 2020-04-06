@@ -109,6 +109,24 @@
 			<p>Enhances bass and treble at low listening levels to compensate for sensitivity of the human ear.</p>
 		</div>
 	</div>-->
+	
+	<div class="ask-menu" id="select-beosonic-preset-setup">
+		<h2>Select listening mode</h2>
+		<p>When running the action, select listening mode...</p>
+		<div class="menu-item checkmark left icon" id="interact-beosonic-with-value" onclick="beosonic.interactSetup('option', false);">
+			<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+			<div class="menu-label">With Passed Trigger Value</div>
+		</div>
+		<p>Value can be the name or index number of the listening mode.</p>
+		<hr>
+		<div id="interact-beosonic-list">
+			
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black disabled default" id="select-beosonic-preset-save-button" onclick="beosonic.interactSetup('save');">Save Action</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/beosonic-client.js"></script>

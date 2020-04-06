@@ -670,16 +670,21 @@ var _ = require('underscore');
 	}
 	
 	function amplifierMute(mute) {
-		if (!settings.noGPIOMute) {
-			if (mute) {
+		
+		if (mute) {
+			if (!settings.noGPIOMute) {
 				execSync("gpio mode 2 out");
 				execSync("gpio write 2 1");
 				if (debug) console.log("Muted amplifier through GPIO.");
-			} else {
+				beo.bus.emit("dsp", {header: "amplifierMuted"});
+			}
+		} else {
+			if (!settings.noGPIOMute) {
 				execSync("gpio write 2 0");
 				execSync("gpio mode 2 in");
 				if (debug) console.log("Unmuted amplifier through GPIO.");
 			}
+			beo.bus.emit("dsp", {header: "amplifierUnmuted"});
 		}
 	}
 	

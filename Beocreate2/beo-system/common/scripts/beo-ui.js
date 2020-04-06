@@ -22,6 +22,8 @@ var selectedExtension = null;
 var stateRestored = false;
 var historyConstructed = false;
 var os = null;
+var debug = true;
+var developerMode = false;
 
 beo = (function() {
 
@@ -41,6 +43,7 @@ $( document ).ready(function() {
 		$("body").addClass("standalone");
 	}
 	if ($("body").hasClass("hifiberry-os")) hifiberryOS = true;
+	if (developerMode) $("body").addClass("developer");
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
 	prepareMenus();
@@ -53,6 +56,7 @@ $( document ).ready(function() {
 	$("body").css("opacity", "1");
 	
 	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "common/apple-touch-icon-hifiberry.png");
+	
 	
 	// File selected to upload.
 	$("input[type=file]#file-input").on('change',function(){
@@ -924,7 +928,6 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
-	console.log(menuState, deepMenuState);
 }
 
 

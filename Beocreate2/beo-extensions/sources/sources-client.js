@@ -348,12 +348,88 @@ function testSetActive(extension, active) {
 	}
 }
 
+// INTERACT
+
+interactSourceOption = null;
+function interactSetup(type, stage, data) {
+	switch (stage) {
+		case "setup":
+			if (data && data.source) {
+				interactSourceOption = data.source;
+			} else {
+				interactSourceOption = null;
+			}
+			$(".interact-source-list").empty();
+			for (extension in allSources) {
+				if (extensions[extension]) {
+					$(".interact-source-list").append(beo.createMenuItem({
+						label: extensions[extension].title,
+						iconRight: extensions[extension].assetPath+"/symbols-black/"+extensions[extension].icon,
+						checkmark: "left",
+						data: {"data-option": extension},
+						onclick: "sources.interactSetup('"+type+"', 'option', '"+extension+"');"
+					}));
+				}
+			}
+			interactSetup(type, "option", interactSourceOption);
+			if (data) $("#source-"+type+"-save-button").addClass("disabled");
+			beo.ask("source-"+type+"-setup");
+			break;
+		case "option":
+			$(".interact-source-list .menu-item").removeClass("checked");
+			$("#source-"+type+"-save-button").removeClass("disabled");
+			interactSourceOption = data;
+			if (!data) {
+				$("#source-"+type+"-any").addClass("checked");
+			} else {
+				$("#source-"+type+"-any").removeClass("checked");
+				$('.interact-source-list .menu-item[data-option="'+data+'"]').addClass("checked");
+			}
+			break;
+		case "save":
+			beo.ask();
+			if (type == "activated") window.interact.saveTrigger("sources", "sourceActivated", {source: interactSourceOption});
+			if (type == "deactivated") window.interact.saveTrigger("sources", "sourceDeactivated", {source: interactSourceOption});
+			break;
+		case "preview":
+			if (data.source) {
+				console.log(extensions[data.source].title);
+				return extensions[data.source].title;
+			} else {
+				if (type == "activated") return "Any source when leaving standby";
+				if (type == "deactivated") return "Any source when going to standby"
+			}
+			break;
+	}
+}
+
+interactDictionary = {
+	triggers: {
+		sourceActivated: {
+			name: "Source Started", 
+			icon: "extensions/now-playing/symbols-black/play.svg", 
+			setup: function(data) { interactSetup("activated", "setup", data) }, 
+			preview: function(data) { return interactSetup("activated", "preview", data) },
+			illegalWith: ["actions/now-playing/stop", "actions/now-playing/playPause"]
+		},
+		sourceDeactivated: {
+			name: "Source Stopped", 
+			icon: "extensions/now-playing/symbols-black/stop.svg", 
+			setup: function(data) { interactSetup("deactivated", "setup", data) }, 
+			preview: function(data) { return interactSetup("deactivated", "preview", data) },
+			illegalWith: ["actions/now-playing/stop", "actions/now-playing/playPause"]
+		}
+	}
+}
+
 return {
 	showStartableSources: showStartableSources,
 	startSource: startSource,
 	setAlias: setAlias,
 	toggleArrange: toggleArrange,
-	testSetActive: testSetActive
+	testSetActive: testSetActive,
+	interactSetup: interactSetup,
+	interactDictionary: interactDictionary
 }
 
 })();

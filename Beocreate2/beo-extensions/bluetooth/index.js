@@ -160,18 +160,6 @@ var fs = require("fs");
 	
 	var bluetoothDiscoveryTimeout = null;
 	
-	function startBluetoothDiscovery(callback) {
-		exec("bluetoothctl discoverable yes").on('exit', function(code) {
-			if (code == 0) {
-				settings.bluetoothDiscoverable = true;
-				callback(true)
-			} else {
-				settings.bluetoothDiscoverable = false;
-				callback(false)
-			}
-		});
-	}
-	
 	function setBluetoothDiscoverable(enabled, callback) {
 		clearTimeout(bluetoothDiscoveryTimeout);
 		if (enabled) {
@@ -328,9 +316,18 @@ var fs = require("fs");
 		}
 	}
 	
+interact = {
+	actions: {
+		startPairing: function() {
+			setBluetoothDiscoverable(true);
+		}
+	}
+}
+	
 module.exports = {
 	version: version,
 	isEnabled: getBluetoothStatus,
-	isDiscoveryRunning: getBluetoothDiscoveryStatus
+	isDiscoveryRunning: getBluetoothDiscoveryStatus,
+	interact: interact
 };
 

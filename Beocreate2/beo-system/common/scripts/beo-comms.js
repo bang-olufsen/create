@@ -24,7 +24,6 @@ var connected = false;
 var connectionAttempts = 0;
 var maxConnectionAttempts = 5;
 var noConnectionNotifications = false;
-var debug = true;
 
 beoCom = (function() {
 

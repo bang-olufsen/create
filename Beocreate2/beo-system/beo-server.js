@@ -44,6 +44,7 @@ var piSystem = require('../beocreate_essentials/pi_system_tools');
 var systemVersion = require("./package.json").version;
 var defaultSystemConfiguration = {
 	"cardType": "Beocreate 4-Channel Amplifier",
+	"cardFeatures": ["dsp"],
 	"port": 80,
 	"language": "en"
 };
@@ -153,6 +154,12 @@ beoBus.on('general', function(event) {
 		case "requestServerRestart":
 			if (event.content.extension) restartServer(event.content.extension);
 			break;
+	}
+});
+
+beoBus.on('dsp', function(event) {
+	if (event.header == "amplifierUnmuted") {
+		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") playProductSound("startup");
 	}
 });
 
@@ -315,7 +322,7 @@ expressServer.get("/", function (req, res) {
 	if (beoUI != false) {
 		res.status(200);
 		if (developerMode) {
-			console.log("Developer mode, reconstructing user interface...");
+			console.log("Developer mode, reloading user interface...");
 			res.send(assembleBeoUI()); // No cache - use in development/debug
 	  	} else {
 	  		res.send(beoUI); // Cached version - use this in production
@@ -327,7 +334,7 @@ expressServer.get("/", function (req, res) {
 });
 // REST API endpoint to talk to extensions.
 expressServer.use(express.json());
-expressServer.post("/:extension/:header", function (req, res) {
+expressServer.post("/:extension/:header/:extra*?", function (req, res) {
 	if (req.params.header == "upload") {
 		if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
 		if (debugMode) console.log("File upload for '"+req.params.extension+"':", req.header("fileName"));
@@ -352,8 +359,8 @@ expressServer.post("/:extension/:header", function (req, res) {
 			res.send("cannotReceive");
 		}
 	} else {
-		if (debugMode >= 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body);
-		beoBus.emit(req.params.extension, {header: req.params.header, content: req.body});
+		if (debugMode >= 3) console.log("API request received at /"+req.params.extension+"/"+req.params.header+":", req.body, req.params.extra);
+		beoBus.emit(req.params.extension, {header: req.params.header, content: {body: req.body, extra: req.params.extra}});
 		res.status(200);
 		res.send("OK");
 	}
@@ -384,10 +391,10 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 	}
 });
 
-expressServer.get("/:extension/:header/", function (req, res) {
+expressServer.get("/:extension/:header/:extra", function (req, res) {
 
 	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
-		extensions[req.params.extension].restAPI(req.params.header, function(response) {
+		extensions[req.params.extension].restAPI(req.params.header, req.params.extra, function(response) {
 			if (response) {
 				res.status(200);
 				res.send(response);
@@ -439,11 +446,8 @@ if (systemConfiguration.runAtStart) {
 console.log("System startup.");
 if (!quietMode) {
 	// Play startup sound:
-	if (systemConfiguration.cardType == "Beocreate 4-Channel Amplifier" || forceBeosounds) {
-		
-		setTimeout(function() {
-			playProductSound("startup");
-		}, 1500);
+	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" || forceBeosounds) {
+		playProductSound("startup");
 	}
 }
 
@@ -624,7 +628,7 @@ function assembleBeoUI() {
 			translations = "";
 		}
 		
-		if (debugMode) menus.push("<script>debug = true;</script>");
+		if (debugMode) menus.push("<script>debug = true; developerMode = "+(developerMode)+";</script>");
 		
 		extensionsLoaded = true;
 	} else {
@@ -657,9 +661,14 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 	
 	isSource = false;
 	if (fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() && fs.existsSync(fullPath+'/menu.html')) { 
-		if (debugMode == 2) console.log("Loading extension '"+extensionName+"'...");
+		if (debugMode == 2 && !extensionsLoaded) console.log("Loading extension '"+extensionName+"'...");
 		// A directory is a menu and its menu.html exists.
 		menu = fs.readFileSync(fullPath+'/menu.html', "utf8"); // Read the menu from file.
+		try {
+			packageJSON = require(fullPath+"/package.json");
+		} catch (error) {
+			packageJSON = null;
+		}
 		
 		// First check if this extension is included or excluded with this hardware.
 		
@@ -675,7 +684,50 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 		
 		shouldIncludeExtension = true;
 		
-		if (head["data-enable-with"] || head["data-disable-with"]) {
+		/*if (head["data-require-card-feature"] || head["data-reject-card-feature"]) {
+			shouldIncludeExtension = false;
+			if (head["data-require-card-feature"]) {
+				if (head["data-enable-with"].toLowerCase().split(",").indexOf(cardType) != -1) 
+					shouldIncludeExtension = true;
+			} else if (head["data-reject-card-feature"]) {
+				if (head["data-disable-with"].toLowerCase().split(", ").indexOf(cardType) == -1) 
+					shouldIncludeExtension = true;
+			}
+		}*/
+		
+		if (packageJSON && packageJSON.beocreate) {
+			// Check support/unsupport for card/features from package.json file.
+			if (packageJSON.beocreate.requireCardFeatures) {
+				shouldIncludeExtension = false;
+				missingFeatures = _.difference(packageJSON.beocreate.requireCardFeatures, settings.cardFeatures);
+				if (missingFeatures.length == 0) shouldIncludeExtension = true;
+			}
+			if (packageJSON.beocreate.rejectCardFeatures && shouldIncludeExtension) {
+				clearedFeatures = _.difference(packageJSON.beocreate.rejectCardFeatures, settings.cardFeatures);
+				if (clearedFeatures.length < packageJSON.beocreate.rejectCardFeatures) shouldIncludeExtension = false;
+			}
+			
+			cardType = systemConfiguration.cardType.toLowerCase();
+			if (packageJSON.beocreate.enableWith) {
+				shouldIncludeExtension = false;
+				if (typeof packageJSON.beocreate.enableWith == "string") {
+					if (packageJSON.beocreate.enableWith.toLowerCase() == cardType) shouldIncludeExtension = true;
+				} else {
+					for (c in packageJSON.beocreate.enableWith) {
+						if (packageJSON.beocreate.enableWith[c].toLowerCase() == cardType) shouldIncludeExtension = true;
+					}
+				}
+			} else if (packageJSON.beocreate.disableWith) {
+				shouldIncludeExtension = true;
+				if (typeof packageJSON.beocreate.disableWith == "string") {
+					if (packageJSON.beocreate.disableWith.toLowerCase() == cardType) shouldIncludeExtension = false;
+				} else {
+					for (c in packageJSON.beocreate.disableWith) {
+						if (packageJSON.beocreate.disableWith[c].toLowerCase() == cardType) shouldIncludeExtension = false;
+					}
+				}
+			}
+		} else if (head["data-enable-with"] || head["data-disable-with"]) {
 			shouldIncludeExtension = false;
 			cardType = systemConfiguration.cardType.toLowerCase();
 			if (head["data-enable-with"]) {
@@ -779,7 +831,9 @@ beoCom.on("data", function(data, connection) {
 		case "general":
 			if (data.header == "activatedExtension") {
 				selectedExtension = data.content.extension;
+				global.beo.selectedExtension = selectedExtension;
 				selectedDeepMenu = data.content.deepMenu;
+				global.beo.selectedDeepMenu = selectedDeepMenu;
 				eventType = "general";
 				eventHeader = "activatedExtension";
 				eventContent = {extension: data.content.extension, deepMenu: data.content.deepMenu};
@@ -808,6 +862,7 @@ beoCom.on("data", function(data, connection) {
 
 
 // PRODUCT SOUND EFFECTS
+var startupSoundPlayed = false;
 var productSound = null;
 function playProductSound(sound) {
 	if (debugMode) console.log("Playing sound: "+sound+"...");
@@ -817,6 +872,7 @@ function playProductSound(sound) {
 	switch (sound) {
 		case "startup":
 			soundFile = "startup.wav";
+			startupSoundPlayed = true;
 			break;
 	}
 	if (soundFile) productSound.play(soundPath+soundFile);

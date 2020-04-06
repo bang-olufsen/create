@@ -58,8 +58,12 @@ beo.bus.on('general', function(event) {
 	}
 	
 	if (event.header == "activatedExtension") {
-		if (event.content.extension == "beosonic" || event.content.extension == "sound") {
+		if (event.content.extension == "beosonic") {
 			beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, canDoToneControl: canDoToneControl, presets: compactPresetList}});
+		}
+		if (event.content.extension == "sound" ||
+			event.content.extension == "interact") {
+			beo.sendToUI("beosonic", {header: "beosonicPresets", content: {presets: compactPresetList, presetOrder: settings.presetOrder, selectedPreset: settings.selectedPreset}});
 		}
 	}
 });
@@ -182,6 +186,7 @@ beo.bus.on('beosonic', function(event) {
 		}
 		
 	}
+	
 });
 
 beo.bus.on('dsp', function(event) {
@@ -443,9 +448,52 @@ function generateFilename(name) {
 	n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
 	return n;
 }
+
+interact = {
+	actions: {
+		selectPreset: function(data, interactData) {
+			if (!interactData.preset) {
+				index = parseInt(data);
+				if (index != NaN) {
+					if (settings.presetOrder[index]) {
+						applyBeosonicPreset(settings.presetOrder[index]);
+						return compactPresetList[settings.presetOrder[index]].presetName;
+					} else {
+						return undefined;
+					}
+				} else if (compactPresetList[data]) {
+					applyBeosonicPreset(data);
+					return compactPresetList[data].presetName;
+				} else {
+					presetFound = false;
+					for (preset in compactPresetList) {
+						if (compactPresetList[preset].presetName == data) {
+							presetFound = preset;
+							break;
+						}
+					}
+					if (presetFound) {
+						applyBeosonicPreset(presetFound);
+						return compactPresetList[presetFound].presetName;
+					} else {
+						return undefined;
+					}
+				}
+			} else {
+				if (compactPresetList[data]) {
+					applyBeosonicPreset(data);
+					return compactPresetList[data].presetName;
+				} else {
+					return undefined;
+				}
+			}
+		}
+	}
+}
 	
 	
 module.exports = {
 	version: version,
-	tempDisable: tempDisable
+	tempDisable: tempDisable,
+	interact: interact
 };

@@ -1,0 +1,68 @@
+<div class="menu-screen" id="alsa-eq" data-icon="equaliser.svg" data-menu-title="Equaliser" data-built-in="1" data-context="sound/adjustments" data-disable-with="Beocreate 4-Channel Amplifier, DAC+ DSP">
+	<header>
+		<div class="back-button master"></div>
+		<h1 data-translation="headerTitle">Equaliser</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+		
+			<h2>Equaliser</h2>
+			
+			<div class="menu-item toggle" id="alsa-eq-enabled-toggle" onclick="alsa_eq.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p class="experiment">This is an experimental feature.</p>
+			<hr>
+			
+			<div id="alsa-eq-wrap">
+				<div class="slider-wrap">
+					<div>31Hz</div>
+					<div class="alsa-eq-slider black eq-slider-31" id="eq-slider-31"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>63Hz</div>
+					<div class="alsa-eq-slider black eq-slider-63" id="eq-slider-63"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>125Hz</div>
+					<div class="alsa-eq-slider black eq-slider-125" id="eq-slider-125"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>250Hz</div>
+					<div class="alsa-eq-slider black eq-slider-250" id="eq-slider-250"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>500Hz</div>
+					<div class="alsa-eq-slider black eq-slider-500" id="eq-slider-500"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>1kHz</div>
+					<div class="alsa-eq-slider black eq-slider-1000" id="eq-slider-1000"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>2kHz</div>
+					<div class="alsa-eq-slider black eq-slider-2000" id="eq-slider-2000"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>4kHz</div>
+					<div class="alsa-eq-slider black eq-slider-4000" id="eq-slider-4000"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>8kHz</div>
+					<div class="alsa-eq-slider black eq-slider-8000" id="eq-slider-8000"></div>
+				</div>
+				<div class="slider-wrap">
+					<div>16kHz</div>
+					<div class="alsa-eq-slider black eq-slider-16000" id="eq-slider-16000"></div>
+				</div>
+			</div>
+			
+			<div class="button pill grey" onclick="alsa_eq.resetEq();">Reset</div>
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/alsa-eq-client.js"></script>

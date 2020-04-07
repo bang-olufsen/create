@@ -313,7 +313,7 @@ var _ = require('underscore');
 							}
 						}
 					});
-				}, 500); // Delay getting XML.
+				}, 2000); // Delay getting XML.
 				
 			});
 		}

@@ -1,0 +1,98 @@
+/* @override 
+	http://beocreate-core.local/extensions/alsa-eq/alsa-eq.css
+	 */
+	 
+#alsa-eq-wrap {
+	border-bottom: 1px solid var(--menu-line);
+	height: 50%;
+	padding-top: 5%;
+	padding-bottom: 5%;
+	overflow-x: auto;
+}
+
+#alsa-eq-wrap-inner {
+	display: flex;
+	height: 100%;
+	justify-content: center;
+	position: relative;
+	min-width: 500px;
+}
+
+#alsa-eq-baseline {
+	position: absolute;
+	border-top: 1px solid;
+	border-color: var(--menu-line);
+	width: 100%;
+	position: absolute;
+	top: 33%;
+}
+
+.dark #alsa-eq-baseline {
+	border-color: rgba(255,255,255,0.3);
+}
+
+#alsa-eq-wrap .slider-wrap {
+	flex-direction: column;
+	align-items: center;
+	width: 8%;
+	min-width: 45px;
+	flex-shrink: 0;
+	margin-bottom: 0;
+}
+
+
+#alsa-eq-wrap .slider-wrap > span {
+	font-size: 0.8em;
+	opacity: 0.5;
+	text-align: center;
+	flex-shrink: 0;
+	height: 5%;
+}
+
+.ui-slider-vertical {
+	height: 100%;
+	width: 2px;
+	margin-top: 15px;
+	margin-bottom: 20px;
+}
+
+
+.ui-slider-vertical .ui-slider-range {
+	width: inherit;
+	bottom: 0;
+}
+
+.ui-slider-vertical .ui-slider-range:before {
+	width: inherit;
+	height: 15px;
+	left: 0;
+	bottom: -15px;
+}
+
+.no-touch .ui-slider-vertical .ui-slider-range:before {
+	height: 11px;
+	bottom: -11px;
+}
+
+.ui-slider-vertical:after {
+	width: 2px !important;
+	height: 15px;
+	left: 0;
+	top: -15px;
+}
+
+.no-touch .ui-slider-vertical:after {
+	height: 13px;
+	top: -13px;
+}
+
+.ui-slider-vertical span {
+	margin-bottom: -15px;
+	margin-left: -14px;
+	margin-top: 0 !important;
+}
+
+.no-touch .ui-slider-vertical span {
+	margin-bottom: -11px;
+	margin-left: -11px;
+}

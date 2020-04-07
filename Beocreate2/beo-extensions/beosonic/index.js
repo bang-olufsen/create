@@ -451,23 +451,23 @@ function generateFilename(name) {
 
 interact = {
 	actions: {
-		selectPreset: function(data, interactData) {
+		selectPreset: function(interactData, triggerResult) {
 			if (!interactData.preset) {
-				index = parseInt(data);
-				if (index != NaN) {
+				index = parseInt(triggerResult);
+				if (!isNaN(index)) {
 					if (settings.presetOrder[index]) {
 						applyBeosonicPreset(settings.presetOrder[index]);
 						return compactPresetList[settings.presetOrder[index]].presetName;
 					} else {
 						return undefined;
 					}
-				} else if (compactPresetList[data]) {
-					applyBeosonicPreset(data);
-					return compactPresetList[data].presetName;
+				} else if (compactPresetList[triggerResult]) {
+					applyBeosonicPreset(triggerResult);
+					return compactPresetList[triggerResult].presetName;
 				} else {
 					presetFound = false;
 					for (preset in compactPresetList) {
-						if (compactPresetList[preset].presetName == data) {
+						if (compactPresetList[preset].presetName == triggerResult) {
 							presetFound = preset;
 							break;
 						}
@@ -480,9 +480,9 @@ interact = {
 					}
 				}
 			} else {
-				if (compactPresetList[data]) {
-					applyBeosonicPreset(data);
-					return compactPresetList[data].presetName;
+				if (compactPresetList[triggerResult]) {
+					applyBeosonicPreset(triggerResult);
+					return compactPresetList[triggerResult].presetName;
 				} else {
 					return undefined;
 				}

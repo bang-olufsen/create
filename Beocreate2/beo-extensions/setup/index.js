@@ -28,8 +28,7 @@ SOFTWARE.*/
 	
 	var version = require("./package.json").version;
 	
-	var setupFinished = false;
-	var postSetupRun = false;
+	var doPostSetup = false;
 	
 	beo.bus.on('general', function(event) {
 		
@@ -43,7 +42,6 @@ SOFTWARE.*/
 		
 	});
 	
-	var restartAfter = false;
 	var setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
 	// Setup is in the flow by default and two times, because it shows both introduction and finish screens.
 	
@@ -61,13 +59,6 @@ SOFTWARE.*/
 				// No (actual) extensions in the setup flow.
 				beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: beo.setup, selectedExtension: selectedExtension}});
 				
-				if (setupFinished && !postSetupRun) {
-					postSetupRun = true;
-						setupFinished = false;
-					setTimeout(function() {
-						beo.bus.emit("setup", {header: "postSetup"});
-					}, 1000);
-				}
 			} else {
 				if (!beo.setup) {
 					// Setup will start with the first extension when the client connects for the first time.
@@ -76,10 +67,10 @@ SOFTWARE.*/
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, postSetup: doPostSetup firstTime: settings.firstTimeSetup}});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, restartAfter: restartAfter, firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, postSetup: doPostSetup, firstTime: settings.firstTimeSetup}});
 				}
 			}
 			
@@ -97,13 +88,13 @@ SOFTWARE.*/
 						setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
 						beo.setup = false;
 						beo.bus.emit("setup", {header: "finishingSetup"});
-						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
+						if (doPostSetup) {
+							beo.bus.emit("setup", {header: "postSetup"});
+						}
+						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension, postSetup: doPostSetup}});
 						settings.firstTimeSetup = false;
 						setupFinished = true;
 						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "setup", settings: settings}});
-						if (restartAfter) {
-							beo.bus.emit("general", {header: "requestReboot", content: {extension: "setup"}});
-						}
 					}
 					break;
 				}
@@ -204,20 +195,22 @@ SOFTWARE.*/
 			}
 		}
 	}
+
+	postSetupExtensions = [];
+	function requestPostSetup(extension) {
+		if (postSetupExtensions.indexOf(extension) == -1) postSetupExtensions.push(extension);
+		doPostSetup = true;
+		beo.bus.emit("ui", {target: "setup", header: "willDoPostSetup", content: {postSetup: doPostSetup}});
+	}
 	
-	function restartWhenComplete(extension, restart) {
-		// Allows an extension to request system reboot when the setup is complete.
-		restartAfterTemp = false;
-		for (var i = 0; i < setupFlow.length; i++) {
-			if (setupFlow[i].extension == extension) {
-				setupFlow[i].restart = restart;
-				break;
+	function postSetupDone(extension) {
+		index = postSetupExtensions.index(extension);
+		if (index != -1) {
+			postSetupExtensions.splice(index, 1);
+			if (postSetupExtensions.length == 0) {
+				doPostSetup = false;
+				beo.bus.emit("ui", {target: "setup", header: "willDoPostSetup", content: {postSetup: doPostSetup}});
 			}
-			if (setupFlow[i].restart) restartAfterTemp = true;
-		}
-		if (restartAfter != restartAfterTemp) {
-			restartAfter = restartAfterTemp;
-			beo.bus.emit("ui", {target: "setup", header: "restartAfter", content: {restartAfter: restartAfter}});
 		}
 	}
 	
@@ -266,7 +259,8 @@ module.exports = {
 	joinSetupFlow: joinSetupFlow,
 	leaveSetupFlow: leaveSetupFlow,
 	allowAdvancing: allowAdvancing,
-	restartWhenComplete: restartWhenComplete,
+	requestPostSetup: requestPostSetup,
+	postSetupDone: postSetupDone,
 	setupFlow: setupFlow,
 	version: version
 };

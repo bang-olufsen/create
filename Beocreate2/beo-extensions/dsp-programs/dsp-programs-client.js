@@ -234,7 +234,7 @@ $(document).on("dsp-programs", function(event, data) {
 	}
 	
 	if (data.header == "configuringSystem") {
-		beo.notify({title: "Finishing product setup...", message: "Please wait...", icon: "attention", timeout: false});
+		beo.notify({title: "Setting up...", message: "Please wait...", icon: "attention", timeout: false});
 		noConnectionNotifications = true;
 		maxConnectionAttempts = 10;
 	}

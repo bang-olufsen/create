@@ -261,7 +261,6 @@ var _ = require('underscore');
 		if (event.header == "postSetup") {
 			if (reconfigurePostSetup) {
 				reconfigurePostSetup = false;
-				beo.sendToUI("dsp-programs", {header: "configuringSystem"});
 				if (debug) console.log("Running HiFiBerry reconfigure script.");
 				configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
 				configureProcess.unref();
@@ -293,6 +292,9 @@ var _ = require('underscore');
 								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
 								if (beo.setup) {
 									reconfigurePostSetup = true;
+									if (extensions.setup && extension.setup.requestPostSetup) {
+										extensions.setup.requestPostSetup();
+									}
 								} else {
 									if (debug) console.log("Running HiFiBerry reconfigure script.");
 									beo.sendToUI("dsp-programs", {header: "configuringSystem"});

@@ -268,7 +268,7 @@ var _ = require('underscore');
 				clearTimeout(checksumTimeout);
 				currentChecksum = checksum;
 				setTimeout(function() {
-					beoDSP.getXML(function(response) {
+					getXML(function(response) {
 						// Reads the current program from the DSP.
 						metadata = (response != null) ? parseDSPMetadata(response).metadata : null;
 						
@@ -317,6 +317,16 @@ var _ = require('underscore');
 				
 			});
 		}
+	}
+	
+	function getXML(callback) {
+		exec("dsptoolkit get-xml", {maxBuffer: 256000}, function(error, stdout, stderr,) {
+			if (stdout && stdout.length > 10) {
+				if (callback) callback(stdout);
+			} else {
+				if (callback) callback(null); 
+			}
+		});
 	}
 	
 	function parseDSPMetadata(xml, fileref) {

@@ -127,11 +127,7 @@ $(document).on("setup", function(event, data) {
 	
 	if (data.header == "assistantButton") {
 		if (data.content.lastStep) {
-			if (!restartAfter) {
-				$("#assistant-button").text("Finish Setup");
-			} else {
-				$("#assistant-button").text("Finish & Restart");
-			}
+			$("#assistant-button").text("Finish Setup");
 		} else {
 			$("#assistant-button").text("Next Step");
 		}

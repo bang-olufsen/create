@@ -167,7 +167,7 @@ SOFTWARE.*/
 				tempFlow[theOrder.indexOf(setupFlow[i].extension)] = setupFlow[i];
 			}
 			index = theOrder.indexOf(extension);
-			tempFlow[index] = {extension: extension, before: options.before, after: options.after};
+			tempFlow[index] = newStep;
 			setupFlow = tempFlow.filter(function (el) {
 		  		return el != null;
 			});

@@ -28,6 +28,9 @@ SOFTWARE.*/
 	
 	var version = require("./package.json").version;
 	
+	var setupFinished = false;
+	var postSetupRun = false;
+	
 	beo.bus.on('general', function(event) {
 		
 		if (event.header == "activatedExtension") {
@@ -57,10 +60,15 @@ SOFTWARE.*/
 			if (setupFlow.length == 2) {
 				// No (actual) extensions in the setup flow.
 				beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: beo.setup, selectedExtension: selectedExtension}});
+				if (setupFinished && !postSetupRun) {
+					beo.bus.emit("setup", {header: "postSetup"});
+					postSetupRun = true;
+				}
 			} else {
 				if (!beo.setup) {
 					// Setup will start with the first extension when the client connects for the first time.
 					beo.setup = true;
+					setupFinished = false;
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});

@@ -36,6 +36,8 @@ var _ = require('underscore');
 	
 	var dspUpgrade = false;
 	
+	var reconfigurePostSetup = false;
+	
 	var version = require("./package.json").version;
 	
 	var dspPrograms = {};
@@ -254,6 +256,20 @@ var _ = require('underscore');
 		}
 	});
 	
+	beo.bus.on('setup', function(event) {
+	
+		if (event.header == "postSetup") {
+			if (reconfigurePostSetup) {
+				reconfigurePostSetup = false;
+				beo.sendToUI("dsp-programs", {header: "configuringSystem"});
+				if (debug) console.log("Running HiFiBerry reconfigure script.");
+				configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
+				configureProcess.unref();
+			}
+		}
+				
+	});
+	
 	function getCurrentChecksumAndMetadata(callback, startup) {
 		if (callback) {
 			amplifierMute(true);
@@ -275,13 +291,15 @@ var _ = require('underscore');
 						if (metadata) {
 							if (!metadataFromDSP && !startup) {
 								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
-								beo.sendToUI("dsp-programs", {header: "configuringSystem"});
-								/*if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
-									beo.extensions.setup.restartWhenComplete("speaker-preset", true);
-								}*/
-								if (debug) console.log("Running HiFiBerry reconfigure script.");
-								configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
-								configureProcess.unref();
+								if (beo.setup) {
+									reconfigurePostSetup = true;
+								} else {
+									if (debug) console.log("Running HiFiBerry reconfigure script.");
+									beo.sendToUI("dsp-programs", {header: "configuringSystem"});
+									configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
+									configureProcess.unref();
+								}
+								
 							}
 							metadataFromDSP = true;
 							amplifierMute(false);
@@ -313,7 +331,7 @@ var _ = require('underscore');
 							}
 						}
 					});
-				}, 2000); // Delay getting XML.
+				}, 500); // Delay getting XML.
 				
 			});
 		}

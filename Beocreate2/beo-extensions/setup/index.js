@@ -67,7 +67,7 @@ SOFTWARE.*/
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, postSetup: doPostSetup firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, postSetup: doPostSetup, firstTime: settings.firstTimeSetup}});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
 					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, postSetup: doPostSetup, firstTime: settings.firstTimeSetup}});

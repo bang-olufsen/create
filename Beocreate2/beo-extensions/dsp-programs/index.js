@@ -293,7 +293,7 @@ var _ = require('underscore');
 								if (beo.setup) {
 									reconfigurePostSetup = true;
 									if (extensions.setup && extension.setup.requestPostSetup) {
-										extensions.setup.requestPostSetup();
+										extensions.setup.requestPostSetup("dsp-programs");
 									}
 								} else {
 									if (debug) console.log("Running HiFiBerry reconfigure script.");

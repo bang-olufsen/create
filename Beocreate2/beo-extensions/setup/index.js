@@ -60,9 +60,13 @@ SOFTWARE.*/
 			if (setupFlow.length == 2) {
 				// No (actual) extensions in the setup flow.
 				beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: beo.setup, selectedExtension: selectedExtension}});
+				
 				if (setupFinished && !postSetupRun) {
-					beo.bus.emit("setup", {header: "postSetup"});
 					postSetupRun = true;
+						setupFinished = false;
+					setTimeout(function() {
+						beo.bus.emit("setup", {header: "postSetup"});
+					}, 1000);
 				}
 			} else {
 				if (!beo.setup) {
@@ -95,6 +99,7 @@ SOFTWARE.*/
 						beo.bus.emit("setup", {header: "finishingSetup"});
 						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
 						settings.firstTimeSetup = false;
+						setupFinished = true;
 						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "setup", settings: settings}});
 						if (restartAfter) {
 							beo.bus.emit("general", {header: "requestReboot", content: {extension: "setup"}});

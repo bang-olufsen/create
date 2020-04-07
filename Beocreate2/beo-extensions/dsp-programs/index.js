@@ -292,8 +292,8 @@ var _ = require('underscore');
 								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
 								if (beo.setup) {
 									reconfigurePostSetup = true;
-									if (extensions.setup && extension.setup.requestPostSetup) {
-										extensions.setup.requestPostSetup("dsp-programs");
+									if (beo.extensions.setup && beo.extensions.setup.requestPostSetup) {
+										beo.extensions.setup.requestPostSetup("dsp-programs");
 									}
 								} else {
 									if (debug) console.log("Running HiFiBerry reconfigure script.");

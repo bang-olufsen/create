@@ -1,7 +1,7 @@
 {
-  "name": "@beocreate/alsa-ttable",
+  "name": "@beocreate/alsa-eq",
   "version": "0.1.0",
-  "description": "ALSA volume limit control for HiFiBerryOS.",
+  "description": "ALSA equaliser for HiFiBerryOS.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +14,7 @@
     "volume",
     "limit",
     "sound",
-	"hifiberry",
+    "hifiberry",
     "alsa"
   ],
   "author": "HiFiBerry",

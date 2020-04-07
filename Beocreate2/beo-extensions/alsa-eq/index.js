@@ -22,8 +22,9 @@ SOFTWARE.
 var exec = require('child_process').exec;
 var execFile = require('child_process').execFile;
 var version = require("./package.json").version;
-
 var debug = beo.debug;
+var lastUsed = Date.now();
+var usagePrefix = "alsa-equalizer";
 
 var settings = {
 	"31": 66,
@@ -75,6 +76,15 @@ function setALSAEq(hz, percent) {
 		}
 	});
 	settings[hz.toString()]=percent;
+	timeLastUsed = Date.now() - lastUsed;
+	if (timeLastUsed > 10000) {
+		try {
+			beo.extensions["hifiberry-debug"].reportUsage(usagePrefix,1);
+		} catch (error) {
+			console.error("Exception reporting usage: ", error);
+		}
+		lastUsed = Date.now();
+	}
 } 
 
 function readALSAEq(hz) {
@@ -119,6 +129,11 @@ function enableEq(enabled) {
 			return false;
 		}
 	});
+	try {
+		beo.extensions["hifiberry-debug"].reportActivation(usagePrefix,enabled);
+	} catch (error) {
+		console.error("Exception reporting usage: ", error);
+	}
 	return true
 }
 

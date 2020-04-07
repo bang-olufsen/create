@@ -68,8 +68,8 @@ beo.bus.on('general', function(event) {
 		}
 		
 		if (event.content.extension != previousExtension) {
-			request.post("http://127.0.1.1:3141/api/activate/beo_"+event.content.extension);
-			if (previousExtension) request.post("http://127.0.1.1:3141/api/deactivate/beo_"+previousExtension);
+			request.post("http://127.0.1.1:3141/api/activate/beo_module_"+event.content.extension);
+			if (previousExtension) request.post("http://127.0.1.1:3141/api/deactivate/beoui_"+previousExtension);
 			previousExtension = event.content.extension;
 		}
 	}
@@ -134,10 +134,29 @@ function readState() {
 	}
 }
 
+function reportUsage(key, duration) {
+	try {
+		request.post("http://127.0.1.1:3141/api/use/beo_"+key+"/"+duration);
+	} catch (error) {
+		console.error("can't report usage: ", error);
+	}
+}
 
+function reportActivation(key, active) {
+	try {
+		if (active) {
+			request.post("http://127.0.1.1:3141/api/activate/"+key);
+		} else {
+			request.post("http://127.0.1.1:3141/api/deactivate/"+key);
+		}
+	} catch (error) {
+		console.error("can't report activation: ", error);
+	}
+}
 
-	
 module.exports = {
+	reportUsage: reportUsage,
+	reportActivation: reportActivation,
 	version: version
 };
 

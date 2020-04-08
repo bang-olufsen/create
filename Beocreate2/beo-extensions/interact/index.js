@@ -122,12 +122,18 @@ beo.bus.on('interact', function(event) {
 		sendInteractionList();
 	}
 	
-	if (event.header == "selectSerialPort" && event.content.path) {
-		settings.serialPortDevice = event.content.path;
-		beo.saveSettings("interact", settings);
+	if (event.header == "selectSerialPort") {
+		if (event.content && event.content.path) {
+			settings.serialPortDevice = event.content.path;
+			if (debug) console.log("Interact: selecting serial port '"+settings.serialPortDevice+"'.");
+			startSerialPort();
+		} else {
+			if (debug) console.log("Interact: turning serial port off.");
+			settings.serialPortDevice = null;
+			stopSerialPort();
+		}
 		beo.sendToUI("interact", {header: "serialPortSelected", content: {selectedPort: settings.serialPortDevice}});
-		if (debug) console.log("Interact: selecting serial port '"+settings.serialPortDevice+"'.");
-		startSerialPort();
+		beo.saveSettings("interact", settings);
 	}
 	
 	if (event.header == "reconnectSerialPort") {
@@ -194,6 +200,12 @@ function startSerialPort() {
 	}
 }
 
+function stopSerialPort() {
+	clearInterval(portReconnectInterval);
+	if (port && port.isOpen) {
+		port.close();
+	}
+}
 
 
 function serialSend(message, newLine = true) {

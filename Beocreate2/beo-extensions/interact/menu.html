@@ -201,12 +201,17 @@
 	<div class="scroll-area">
 		<div class="menu-content">
 			<p>Communicate with another device, such as an Arduino microcontroller, via a serial port.</p>
+			<div class="menu-item checkmark left icon" id="serial-port-off" onclick="interact.selectSerialPort(false);">
+				<div class="menu-icon left" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Serial Port Off</div>
+			</div>
+			<hr>
 			<div id="ghost-serial-port"></div>
-			<h2>Available serial ports</h2>
+			<h2 id="available-serial-ports-title">Available serial ports</h2>
 			<div id="available-serial-ports">
 			
 			</div>
-			<p>If the selected serial port disconnects, it will be automatically reopened soon after it becomes available again.</p>
+			<p class="margin-top">If the selected serial port disconnects, it will be automatically reopened soon after it becomes available again.</p>
 			
 		</div>
 	</div>

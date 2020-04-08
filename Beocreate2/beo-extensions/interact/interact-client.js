@@ -71,24 +71,32 @@ $(document).on("interact", function(event, data) {
 	if (data.header == "serialPorts") {
 		$("#available-serial-ports").empty();
 		selectedPortAvailable = false;
+		portCount = data.content.ports.length;
 		for (p in data.content.ports) {
 			port = data.content.ports[p];
-			description = "Unknown";
-			if (port.manufacturer) {
-				description = port.manufacturer;
+			if (port.path != "/dev/ttyAMA0") {
+				description = "Unknown";
+				if (port.manufacturer) {
+					description = port.manufacturer;
+				}
+				if (data.content.selectedPort && data.content.selectedPort == port.path) selectedPortAvailable = true;
+				$("#available-serial-ports").append(beo.createMenuItem({
+					label: port.path,
+					classes: ["serial-port-item"],
+					data: {"data-path": port.path},
+					description: description,
+					onclick: "interact.selectSerialPort('"+port.path+"');",
+					checkmark: "left",
+					checked: (data.content.selectedPort && data.content.selectedPort == port.path)
+				}));
 			} else {
-				if (port.path == "/dev/ttyAMA0") description = "PL011 UART";
+				portCount--;
 			}
-			if (data.content.selectedPort && data.content.selectedPort == port.path) selectedPortAvailable = true;
-			$("#available-serial-ports").append(beo.createMenuItem({
-				label: port.path,
-				classes: ["serial-port-item"],
-				data: {"data-path": port.path},
-				description: description,
-				onclick: "interact.selectSerialPort('"+port.path+"');",
-				checkmark: "left",
-				checked: (data.content.selectedPort && data.content.selectedPort == port.path)
-			}));
+		}
+		if (portCount > 0) {
+			$("#available-serial-ports-title").removeClass("hidden");
+		} else {
+			$("#available-serial-ports-title").addClass("hidden");
 		}
 		$("#ghost-serial-port").empty();
 		if (!selectedPortAvailable && data.content.selectedPort) {
@@ -97,15 +105,25 @@ $(document).on("interact", function(event, data) {
 				checkmark: "left",
 				value: "Reconnect",
 				valueAsButton: true,
-				onclick: "interact.selectSerialPort();",
+				onclick: "interact.selectSerialPort(true);",
 				checked: true
 			}));
+		}
+		if (!data.content.selectedPort) {
+			$("#serial-port-off").addClass("checked");
+		} else {
+			$("#serial-port-off").removeClass("checked");
 		}
 	}
 	
 	if (data.header == "serialPortSelected") {
 		$("#available-serial-ports .menu-item").removeClass("checked");
-		$('#available-serial-ports .menu-item[data-path="'+data.content.selectedPort+'"]').addClass("checked");
+		if (data.content.selectedPort) {
+			$('#available-serial-ports .menu-item[data-path="'+data.content.selectedPort+'"]').addClass("checked");
+			$("#serial-port-off").removeClass("checked");
+		} else {
+			$("#serial-port-off").addClass("checked");
+		}
 		$("#ghost-serial-port").empty();
 	}
 	
@@ -117,10 +135,12 @@ $(document).on("interact", function(event, data) {
 });
 
 function selectSerialPort(path = null) {
-	if (path) {
-		beo.sendToProduct("interact", {header: "selectSerialPort", content: {path: path}});
-	} else {
+	if (!path) {
+		beo.sendToProduct("interact", {header: "selectSerialPort"});
+	} else if (path == true) {
 		beo.sendToProduct("interact", {header: "reconnectSerialPort"});
+	} else {
+		beo.sendToProduct("interact", {header: "selectSerialPort", content: {path: path}});
 	}
 }
 

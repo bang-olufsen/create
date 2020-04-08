@@ -392,7 +392,7 @@ beo.bus.on('daisy-chain', function(event) {
 
 // Listen for "currentSettings" events from the equaliser extension, and use them to determine whether or not the current sound preset supports one-touch stereo.
 var equaliserSettings = {};
-beo.bus.on('sound-preset', function(event) {
+beo.bus.on('speaker-preset', function(event) {
 	
 	if (event.header == "currentSettings") {
 		

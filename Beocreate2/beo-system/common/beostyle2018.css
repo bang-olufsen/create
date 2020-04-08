@@ -3274,6 +3274,10 @@ input[type=text].menu-value {
 	-webkit-appearance: none;
 }
 
+.disabled input[type=text].menu-value {
+	pointer-events: none;
+}
+
 input[type=text].invalid {
 	color: var(--carnation);
 }

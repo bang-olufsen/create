@@ -153,7 +153,7 @@ $(document).on("speaker-preset", function(event, data) {
 	
 	if (data.header == "presetApplied" && data.content.presetID) {
 	
-		beo.notify({title: speakerPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
+		beo.notify({title: speakerPresets[data.content.presetID].presetName, message: "Speaker preset applied", icon: "common/symbols-black/checkmark-round.svg"});
 		beo.hidePopupView("speaker-preset-preview-popup");
 		
 		currentSpeakerPreset = data.content.presetID;

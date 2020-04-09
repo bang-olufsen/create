@@ -391,7 +391,7 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 	}
 });
 
-expressServer.get("/:extension/:header/:extra", function (req, res) {
+expressServer.get("/:extension/:header/:extra*?", function (req, res) {
 
 	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
 		extensions[req.params.extension].restAPI(req.params.header, req.params.extra, function(response) {

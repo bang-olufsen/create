@@ -116,14 +116,14 @@ var releaseNotes = "";
 
 function checkForUpdate(forceCheck) {
 	checkTime = new Date().getTime();
-	updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : (autoUpdate != false) ? autoUpdate : "latest";
+	updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false) ? autoUpdate : "latest");
 	if (checkTime - lastChecked > 300000 || forceCheck) {
 		exec("/opt/hifiberry/bin/update --"+updateTrack+" --check", function(error, stdout, stderr) {
 			lastChecked = checkTime;
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
 			if (newVersion) {
-				if (debug) console.log("Software update is available – release "+newVersion+" ('"+autoUpdate+"' track).");
+				if (debug) console.log("Software update is available – release "+newVersion+" ('"+updateTrack+"' track).");
 				updateLines.splice(0, 1);
 				releaseNotes = updateLines.join("\n").trim();
 				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
@@ -151,7 +151,7 @@ var previousProgress = -5;
 function installUpdate() {
 	if (!updateInProgress) {
 		updateInProgress = true;
-		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : (autoUpdate != false) ? autoUpdate : "latest";
+		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false) ? autoUpdate : "latest");
 		/*if (beo.developerMode) {
 			if (debug) console.log("Starting software update simulation.");
 			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--"+updateTrack]);

@@ -391,7 +391,7 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 	}
 });
 
-expressServer.get("/:extension/:header/:extra", function (req, res) {
+expressServer.get("/:extension/:header/:extra*?", function (req, res) {
 
 	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
 		extensions[req.params.extension].restAPI(req.params.header, req.params.extra, function(response) {
@@ -684,27 +684,24 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 		
 		shouldIncludeExtension = true;
 		
-		/*if (head["data-require-card-feature"] || head["data-reject-card-feature"]) {
-			shouldIncludeExtension = false;
-			if (head["data-require-card-feature"]) {
-				if (head["data-enable-with"].toLowerCase().split(",").indexOf(cardType) != -1) 
-					shouldIncludeExtension = true;
-			} else if (head["data-reject-card-feature"]) {
-				if (head["data-disable-with"].toLowerCase().split(", ").indexOf(cardType) == -1) 
-					shouldIncludeExtension = true;
-			}
-		}*/
+	
 		
 		if (packageJSON && packageJSON.beocreate) {
 			// Check support/unsupport for card/features from package.json file.
-			if (packageJSON.beocreate.requireCardFeatures) {
-				shouldIncludeExtension = false;
-				missingFeatures = _.difference(packageJSON.beocreate.requireCardFeatures, settings.cardFeatures);
-				if (missingFeatures.length == 0) shouldIncludeExtension = true;
+			if (packageJSON.beocreate.requireCardFeatures && 
+				typeof systemConfiguration.cardFeatures == "object") {
+				shouldIncludeExtension = true;
+				for (f in packageJSON.beocreate.requireCardFeatures) {
+					if (systemConfiguration.cardFeatures.indexOf(packageJSON.beocreate.requireCardFeatures[f]) == -1) shouldIncludeExtension = false;
+				}
 			}
-			if (packageJSON.beocreate.rejectCardFeatures && shouldIncludeExtension) {
-				clearedFeatures = _.difference(packageJSON.beocreate.rejectCardFeatures, settings.cardFeatures);
-				if (clearedFeatures.length < packageJSON.beocreate.rejectCardFeatures) shouldIncludeExtension = false;
+			if (packageJSON.beocreate.rejectCardFeatures && 
+				shouldIncludeExtension && 
+				typeof systemConfiguration.cardFeatures == "object") {
+				shouldIncludeExtension = true;
+				for (f in packageJSON.beocreate.rejectCardFeatures) {
+					if (systemConfiguration.cardFeatures.indexOf(packageJSON.beocreate.rejectCardFeatures[f]) != -1) shouldIncludeExtension = false;
+				}
 			}
 			
 			cardType = systemConfiguration.cardType.toLowerCase();

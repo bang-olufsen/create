@@ -32,6 +32,8 @@ var defaultSettings = {
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
 var autoUpdate = "latest";
+var previousVersionChecked = false;
+var previousVersion = null;
 
 beo.bus.on('general', function(event) {
 	
@@ -48,6 +50,7 @@ beo.bus.on('general', function(event) {
 		if (event.content.extension == "software-update") {
 			checkForUpdate();
 			autoUpdateMode();
+			checkForPreviousVersion();
 		}
 		
 		if (event.content == "general-settings") {
@@ -105,6 +108,20 @@ beo.bus.on('software-update', function(event) {
 	
 	if (event.header == "install") {
 		installUpdate();
+	}
+	
+	if (event.header == "restorePreviousVersion") {
+		beo.sendToUI("software-update", {header: "restoringPreviousVersion", content: {stage: "start"}});
+		exec("/opt/hifiberry/bin/reactivate-previous-release", function(error, stdout, stderr) {
+			if (stdout) {
+				if (stdout.indexOf("No previous release") != -1) {
+					beo.sendToUI("software-update", {header: "restoringPreviousVersion", content: {stage: "fail", reason: "notFound"}});
+				}
+				if (stdout.indexOf("Unknown partition") != -1) {
+					beo.sendToUI("software-update", {header: "restoringPreviousVersion", content: {stage: "fail", reason: "unknownPartition"}});
+				}
+			}
+		});
 	}
 	
 	
@@ -291,6 +308,20 @@ function autoUpdateMode(mode) {
 	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate, manualMode: settings.manualUpdateTrack}});
 }
 
+function checkForPreviousVersion() {
+	if (!previousVersionChecked) {
+		if (fs.existsSync("/boot/zImage.bak")) {
+			previousVersion = true;
+			if (fs.existsSync("/etc/hifiberry.version.previous")) {
+				previousVersion = fs.readFileSync("/etc/hifiberry.version.previous", "utf8").trim();
+			}
+		} else {
+			previousVersion = false;
+		}
+		previousVersionChecked = true;
+	}
+	beo.sendToUI("software-update", {header: "previousVersion", content: {previousVersion: previousVersion}});
+}
 
 
 	

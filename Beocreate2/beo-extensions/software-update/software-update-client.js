@@ -96,7 +96,6 @@ $(document).on("software-update", function(event, data) {
 		$("#update-release-notes").empty();
 		if (data.content.releaseNotes) {
 			releaseNotes = data.content.releaseNotes.split("\n");
-			console.log(releaseNotes);
 			openUL = "";
 			notesHTML = ""
 			for (var i = 0; i < releaseNotes.length; i++) {
@@ -162,6 +161,7 @@ $(document).on("software-update", function(event, data) {
 				beo.sendToProductView({header: "autoReconnect", content: {status: "updateComplete", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				noConnectionNotifications = true;
 				maxConnectionAttempts = 30;
+				reloadOnReconnect = true;
 				break;
 			case "doneSimulation":
 				notifyOptions.title = "Product updated";
@@ -185,6 +185,37 @@ $(document).on("software-update", function(event, data) {
 		}
 		beo.notify(notifyOptions, "software-update");
 	}
+	
+	if (data.header == "previousVersion") {
+		if (!data.content.previousVersion) {
+			$("#previous-version-information").text("Not available");
+			$("#restore-previous-version-button").addClass("disabled");
+		} else if (data.content.previousVersion == true) {
+			$("#previous-version-information").text("Available");
+			$("#restore-previous-version-button").removeClass("disabled");
+		} else {
+			$("#previous-version-information").text(data.content.previousVersion);
+			$("#restore-previous-version-button").removeClass("disabled");
+		}
+	}
+	
+	if (data.header == "restoringPreviousVersion") {
+		if (data.content.stage == "start") {
+			noConnectionNotifications = true;
+			maxConnectionAttempts = 30;
+			reloadOnReconnect = true;
+			beo.notify({title: "Restoring previous version...", message: "The product will restart with the previous software version and settings. If the product name or network settings have changed, you may need to reconnect to the product manually.", timeout: false, icon: "attention", "software-update");
+		}
+		if (data.content.stage == "fail") {
+			noConnectionNotifications = false;
+			maxConnectionAttempts = 5;
+			reloadOnReconnect = false;
+			notifyOptions = {title: "Restore unsuccesful", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"};
+			if (data.content.reason == "notFound") notifyOptions.message = "Previous version was not found.";
+			if (data.content.reason == "unknownPartition") notifyOptions.message = "Unknown backup partition.";
+			beo.notify(notifyOptions, "software-update");
+		}
+	}
 });
 
 
@@ -201,11 +232,21 @@ function setManualUpdateMode(mode) {
 	beo.sendToProduct("software-update", {header: "manualUpdateMode", content: {mode: mode}});
 }
 
+function restore(confirmed) {
+	if (!confirmed) {
+		beo.ask("restore-previous-version-prompt");
+	} else {
+		beo.ask();
+		beo.sendToProduct("software-update", {header: "restorePreviousVersion"});
+	}
+}
+
 
 return {
 	install: install,
 	setAutoUpdate: setAutoUpdate,
-	setManualUpdateMode: setManualUpdateMode
+	setManualUpdateMode: setManualUpdateMode,
+	restore: restore
 };
 
 })();

@@ -274,50 +274,51 @@ var exec = require("child_process").exec;
 				for (var i = 0; i < overview.players.length; i++) {
 					// Go through each source, see their status and update accordingly.
 					extension = matchAudioControlSourceToExtension(overview.players[i].name);
-					
-					if (overview.players[i].state == "unknown") overview.players[i].state = "stopped";
-					
-					if (allSources[extension].playerState != overview.players[i].state) {
-						allSources[extension].playerState = overview.players[i].state;
+					if (extension) {
+						if (overview.players[i].state == "unknown") overview.players[i].state = "stopped";
 						
-						if (overview.players[i].state == "playing") {
-							sourceActivated(extension);
-						} else {
-							if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
+						if (allSources[extension].playerState != overview.players[i].state) {
+							allSources[extension].playerState = overview.players[i].state;
+							
+							if (overview.players[i].state == "playing") {
+								sourceActivated(extension);
+							} else {
+								if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
+							}
+							
+							beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+							
+							
+							if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
+								// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
+								clearTimeout(sourceCheckTimeout);
+								sourceCheckTimeout = setTimeout(function() {
+									audioControlGet("status");
+								}, 15000);
+							}
 						}
 						
-						beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
-						
-						
-						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
-							// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
-							clearTimeout(sourceCheckTimeout);
-							sourceCheckTimeout = setTimeout(function() {
-								audioControlGet("status");
-							}, 15000);
-						}
-					}
-					
-					if (overview.players[i].supported_commands) {
-						if (allSources[extension].allowChangingTransportControls) {
-							allSources[extension].transportControls = overview.players[i].supported_commands;
-						}
-						if (overview.players[i].supported_commands.indexOf("play") != -1) {
-							allSources[extension].startable = true;
+						if (overview.players[i].supported_commands) {
+							if (allSources[extension].allowChangingTransportControls) {
+								allSources[extension].transportControls = overview.players[i].supported_commands;
+							}
+							if (overview.players[i].supported_commands.indexOf("play") != -1) {
+								allSources[extension].startable = true;
+							} else {
+								allSources[extension].startable = false;
+							}
 						} else {
 							allSources[extension].startable = false;
 						}
-					} else {
-						allSources[extension].startable = false;
-					}
-					
-					if (extension == "bluetooth") {
-						allSources[extension].aliasInNowPlaying = overview.players[i].name;
-					}
-					
-					if (!allSources[extension].metadata.title) {
-						if (overview.players[i].title) allSources[extension].metadata.title = overview.players[i].title;
-						if (overview.players[i].artist) allSources[extension].metadata.artist = overview.players[i].artist;
+						
+						if (extension == "bluetooth") {
+							allSources[extension].aliasInNowPlaying = overview.players[i].name;
+						}
+						
+						if (!allSources[extension].metadata.title) {
+							if (overview.players[i].title) allSources[extension].metadata.title = overview.players[i].title;
+							if (overview.players[i].artist) allSources[extension].metadata.artist = overview.players[i].artist;
+						}
 					}
 				}
 			//}

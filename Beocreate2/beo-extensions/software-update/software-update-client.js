@@ -204,7 +204,7 @@ $(document).on("software-update", function(event, data) {
 			noConnectionNotifications = true;
 			maxConnectionAttempts = 30;
 			reloadOnReconnect = true;
-			beo.notify({title: "Restoring previous version...", message: "The product will restart with the previous software version and settings. If the product name or network settings have changed, you may need to reconnect to the product manually.", timeout: false, icon: "attention", "software-update");
+			beo.notify({title: "Restoring previous version...", message: "The product will restart with the previous software version and settings. If the product name or network settings have changed, you may need to reconnect to the product manually.", timeout: false, icon: "attention"}, "software-update");
 		}
 		if (data.content.stage == "fail") {
 			noConnectionNotifications = false;

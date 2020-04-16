@@ -134,8 +134,7 @@ var beo4Directory = {
 	
 	
 		beo4Address = beo4Addresses[addressCode];
-		if (beo4Address == "LIGHT" ||
-			beo4Address == "SPEAKER") {
+		if (beo4Address == "LIGHT") {
 			beo4LastAVSource = beo4Source;
 		} else {
 			if (beo4LastAVSource) {

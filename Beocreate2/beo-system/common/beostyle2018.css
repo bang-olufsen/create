@@ -3921,6 +3921,7 @@ header .button.symbol:after {
 	position: absolute;
 	width: 100%;
 	bottom: 0;
+	max-height: 90%;
 }
 
 .popup-content {

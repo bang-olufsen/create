@@ -24,6 +24,7 @@ var connected = false;
 var connectionAttempts = 0;
 var maxConnectionAttempts = 5;
 var noConnectionNotifications = false;
+var reloadOnReconnect = false;
 
 beoCom = (function() {
 
@@ -78,6 +79,7 @@ function connectProduct() {
 		$(document).trigger("general", {header: "connection", content: {status: "connected"}});
 		beo.sendToProductView({header: "connection", content: {status: "connected"}});
 		//if (!stateRestored) beo.restoreState();
+		if (reloadOnReconnect) window.location.reload();
 	};
 	
 	// DISCONNECTED

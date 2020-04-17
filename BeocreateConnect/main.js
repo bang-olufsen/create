@@ -149,8 +149,10 @@ Menu.setApplicationMenu(menu);
 		frame: false,
 		show: false,
 		fullscreenWindowTitle: true,
+		//vibrancy: "sidebar",
 		//fullscreenable: false,
-		backgroundColor: '#fff', 
+		backgroundColor: '#FFFFFF', 
+		//transparent: true,
 		webPreferences: { experimentalFeatures: false, nodeIntegration: true}
 	});
 	

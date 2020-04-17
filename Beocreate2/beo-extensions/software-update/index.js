@@ -133,7 +133,7 @@ var releaseNotes = "";
 
 function checkForUpdate(forceCheck) {
 	checkTime = new Date().getTime();
-	updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false) ? autoUpdate : "latest");
+	updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false || autoUpdate != "critical") ? autoUpdate : "latest");
 	if (checkTime - lastChecked > 300000 || forceCheck) {
 		exec("/opt/hifiberry/bin/update --"+updateTrack+" --check", function(error, stdout, stderr) {
 			lastChecked = checkTime;
@@ -168,7 +168,7 @@ var previousProgress = -5;
 function installUpdate() {
 	if (!updateInProgress) {
 		updateInProgress = true;
-		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false) ? autoUpdate : "latest");
+		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false || autoUpdate != "critical") ? autoUpdate : "latest");
 		/*if (beo.developerMode) {
 			if (debug) console.log("Starting software update simulation.");
 			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--"+updateTrack]);

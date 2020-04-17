@@ -9,13 +9,21 @@
 		<div class="menu-content">
 			<p>Adapt the speakers to your listening space to improve sound. <a href="#" onclick="beo.ask('room-compensation-intro-prompt');">Learn more.</a></p>
 			
+			<div id="room-compensation-presets-wrap" class="hidden">
+				<h2>Presets</h2>
+				<div id="room-compensation-presets">
+				
+				</div>
+				<div class="button pill grey" onclick="room_compensation.newPreset();">New Preset...</div>
+			
+			</div>
 			<h2>Measurements</h2>
 			<div id="room-compensation-measurements">
 			
 			</div>
 			<div class="button pill grey" onclick="room_compensation.newMeasurement();">New Measurement...</div>
 			
-			<p class="experiment margin-top">This feature is experimental. Creating compensation filters based on measurements is not yet available.</p>
+			<p class="experiment margin-top">This feature is experimental..</p>
 		</div>
 	</div>
 	
@@ -82,7 +90,40 @@
 		</div>
 		
 		<footer>
-			<div class="button pill black disabled" id="room-compensation-measurement-assistant-button" onclick="room_compensation.nextStep();">Microphone Positioned</div>
+			<div class="button pill black disabled" id="room-compensation-measurement-assistant-button" onclick="room_compensation.nextStep('measurement');">Microphone Positioned</div>
+		</footer>
+	</div>
+	
+	
+	<div class="popup-content hidden" id="room-compensation-preset-assistant">
+		<header class="popup">
+			<div class="button symbol left" onclick="room_compensation.cancelCompensation();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Room Compensation</h1>
+			
+		</header>
+		<div class="scroll-area" id="room-compensation-preset-wizard">
+			<div id="room-compensation-select-measurement">
+				<div class="menu-content">
+					<h1>Select measurement</h1>
+					<p class="margin-top">Select a measurement to use for the new preset.</p>
+				</div>
+			</div>
+			
+			<div id="room-compensation-target-curve">
+				<div class="menu-content">
+					<h1>Compensation type</h1>
+					<p>Choose what kind of room compensation to apply.</p>
+					<div id="room-compensation-types">
+					
+					</div>
+					
+				</div>
+			</div>
+			
+		</div>
+		
+		<footer>
+			<div class="button pill black disabled" id="room-compensation-measurement-assistant-button" onclick="room_compensation.nextStep('compensation');">Use This Measurement</div>
 		</footer>
 	</div>
 	

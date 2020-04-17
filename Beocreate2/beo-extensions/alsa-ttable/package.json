@@ -18,5 +18,8 @@
     "alsa"
   ],
   "author": "HiFiBerry",
-  "license": "MIT"
+  "license": "MIT",
+  "beocreate": {
+     "rejectCardFeatures": ["dsp"]
+  }
 }

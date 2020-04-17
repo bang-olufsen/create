@@ -20,5 +20,8 @@
     "sound"
   ],
   "author": "Bang & Olufsen",
-  "license": "MIT"
+  "license": "MIT",
+  "beocreate": {
+    "requireCardFeatures": ["dsp"]
+  }
 }

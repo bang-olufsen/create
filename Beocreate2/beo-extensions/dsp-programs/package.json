@@ -23,5 +23,8 @@
   "dependencies": {
     "underscore": "^1.9.1",
     "xml-js": "^1.6.11"
+  },
+  "beocreate": {
+    "requireCardFeatures": ["dsp"]
   }
 }

@@ -78,6 +78,7 @@ beo.bus.on('room-compensation', function(event) {
 		newMeasurementName = event.content.name;
 		if (!measurements[generateFilename(newMeasurementName)] || event.content.override) {
 			detectMicrophone("start");
+			ping();
 		} else {
 			beo.sendToUI("room-compensation", {header: "measurementExists"});
 		}
@@ -85,6 +86,7 @@ beo.bus.on('room-compensation', function(event) {
 	
 	if (event.header == "measureLevel") {
 		measureLevel("start");
+		ping();
 	}
 	
 	if (event.header == "measureRoom") {
@@ -93,6 +95,7 @@ beo.bus.on('room-compensation', function(event) {
 	}
 	
 	if (event.header == "stopMeasurement") {
+		detectMicrophone("stop");
 		measureLevel("stop");
 		setOrRestoreVolume("restore");
 		measureRoom("stop");

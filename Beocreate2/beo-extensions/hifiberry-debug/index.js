@@ -17,7 +17,7 @@ SOFTWARE.*/
 
 // HIFIBERRY DEBUG INFORMATION COLLECTOR FOR BEOCREATE
 
-var request = require("request");
+const fetch = require("node-fetch");
 var exec = require("child_process").exec;
 var fs = require("fs");
 
@@ -68,8 +68,8 @@ beo.bus.on('general', function(event) {
 		}
 		
 		if (event.content.extension != previousExtension) {
-			request.post("http://127.0.1.1:3141/api/activate/beo_module_"+event.content.extension);
-			if (previousExtension) request.post("http://127.0.1.1:3141/api/deactivate/beoui_"+previousExtension);
+			fetch("http://127.0.1.1:3141/api/activate/beo_extension_"+event.content.extension, {method: "post"});
+			if (previousExtension) fetch("http://127.0.1.1:3141/api/deactivate/beo_extension_"+previousExtension, {method: "post"});
 			previousExtension = event.content.extension;
 		}
 	}
@@ -136,21 +136,21 @@ function readState() {
 
 function reportUsage(key, duration) {
 	try {
-		request.post("http://127.0.1.1:3141/api/use/beo_"+key+"/"+duration);
+		fetch("http://127.0.1.1:3141/api/use/beo_"+key+"/"+duration, {method: "post"});
 	} catch (error) {
-		console.error("can't report usage: ", error);
+		console.error("Can't report usage: ", error);
 	}
 }
 
 function reportActivation(key, active) {
 	try {
 		if (active) {
-			request.post("http://127.0.1.1:3141/api/activate/"+key);
+			fetch("http://127.0.1.1:3141/api/activate/"+key, {method: "post"});
 		} else {
-			request.post("http://127.0.1.1:3141/api/deactivate/"+key);
+			fetch("http://127.0.1.1:3141/api/deactivate/"+key, {method: "post"});
 		}
 	} catch (error) {
-		console.error("can't report activation: ", error);
+		console.error("Can't report activation: ", error);
 	}
 }
 

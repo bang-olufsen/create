@@ -1341,7 +1341,7 @@ nav.full .nav-content:before {
 	background-color: transparent;
 	border: 1px solid black;
 	transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-	z-index: 2;
+	z-index: 1;
 	position: relative;
 	overflow: hidden;
 	box-sizing: border-box;

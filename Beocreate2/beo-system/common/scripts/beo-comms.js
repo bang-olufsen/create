@@ -135,10 +135,15 @@ function send(data) {
 	}
 }
 
-function sendToProduct(target, data) {
+function sendToProduct(target, header, content = undefined) {
 	if (productConnection && connected) {
-		data.target = target;
-		send(data);
+		if (typeof header == "string") {
+			send({target: target, header: header, content: content});
+		} else {
+			// Legacy way of sending data, supported. 'Header' used to be 'data'.
+			header.target = target;
+			send(header);
+		}
 	} else {
 		return "Product is not connected, could not send data.";
 	}

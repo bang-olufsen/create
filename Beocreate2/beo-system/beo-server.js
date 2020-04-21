@@ -122,12 +122,17 @@ beoBus.on("ui", function(event) {
 	}
 });
 
-function sendToUI(target, event) {
+function sendToUI(target, header, content = undefined) {
 	// A direct "send to UI" method without going through BeoBus.
-	if (target && event.header && event.content) {
-		beoCom.send({header: event.header, target: target, content: event.content});
-	} else if (target && event.header) {
-		beoCom.send({header: event.header, target: target});
+	if (typeof header == "string") {
+		beoCom.send({header: header, target: target, content: content});
+	} else {
+		// Also supports legacy "target, event" syntax, where header and content are in the same object.
+		if (target && header.header && header.content) {
+			beoCom.send({header: header.header, target: target, content: header.content});
+		} else if (target && header.header) {
+			beoCom.send({header: header.header, target: target});
+		}
 	}
 }
 

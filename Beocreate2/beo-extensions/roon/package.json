@@ -22,6 +22,6 @@
   "homepage": "https://github.com/bang-olufsen/create#readme",
   "dependencies": {},
   "beocreate": {
-     "requireCardFeatures": ["pi3orlater"]
+     "requireCardFeatures": ["arm7"]
    }
 }

@@ -219,6 +219,7 @@ $(document).on("room-compensation", function(event, data) {
 	}
 	
 	if (data.header == "confirmApplyingCompensation") {
+		beo.notify(null, "room-compensation");
 		if (data.content.preset) {
 			beo.ask("room-compensation-confirmation-prompt", null, [function() {
 				beo.sendToProduct("room-compensation", {header: "applyCompensation", content: {preset: data.content.preset, confirm: true}});
@@ -273,7 +274,7 @@ $(document).on("room-compensation", function(event, data) {
 	
 		switch (data.content.phase) {
 			case "waiting":
-				notifyOptions.message = "This may take some time.";
+				notifyOptions.message = "Please wait.";
 				beo.notify(notifyOptions, "room-compensation");
 				break;
 			case "finish":

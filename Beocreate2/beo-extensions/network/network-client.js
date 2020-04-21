@@ -139,7 +139,18 @@ $(document).on("network", function(event, data) {
 	}
 	
 	if (data.header == "wifiStatus") {
+		
 		networkStatus.wifi = data.content.status;
+		
+		if (networkStatus.wifi.up) {
+			$(".wifi-on-wrap").removeClass("hidden");
+			$(".wifi-toggle").addClass("on");
+			$(".wifi-off-hr").addClass("hidden");
+		} else {
+			$(".wifi-on-wrap").addClass("hidden");
+			$(".wifi-toggle").removeClass("on");
+			$(".wifi-off-hr").removeClass("hidden");
+		}
 		
 		$(".wifi-ip").text("No address");
 		if (data.content.status.ipv4) {
@@ -167,6 +178,19 @@ $(document).on("network", function(event, data) {
 			}
 		}
 		
+	}
+	
+	if (data.header == "wirelessToggle") {
+		if (data.content.enabled) {
+			$(".wifi-toggle").addClass("on");
+		} else {
+			$(".available-networks-wrap").addClass("hidden");
+			$(".wifi-connected-wrap").addClass("hidden");
+			$(".wifi-on-wrap").addClass("hidden");
+			$(".wifi-off-hr").removeClass("hidden");
+			$(".wifi-toggle").removeClass("on");
+			networkStatus.wifi.up = false;
+		}
 	}
 	
 	if (data.header == "ethernetStatus") {
@@ -503,7 +527,20 @@ function showingEthernetTab() {
 }
 
 function refreshWifi() {
-	beo.send({target: "network", header: "scanWifi"});
+	beo.sendToProduct("network", "scanWifi");
+}
+
+function toggleWireless(confirmed) {
+	if (networkStatus.wifi.up) {
+		if (confirmed) {
+			beo.ask();
+			beo.sendToProduct("network", "toggleWireless", {enabled: false});
+		} else {
+			beo.ask("turn-off-wifi-prompt");
+		}
+	} else {
+		beo.sendToProduct("network", "toggleWireless", {enabled: true});
+	}
 }
 
 
@@ -577,6 +614,7 @@ interactDictionary = {
 return {
 	showingWifiTab: showingWifiTab,
 	showingEthernetTab: showingEthernetTab,
+	toggleWireless: toggleWireless,
 	refreshWifi: refreshWifi,
 	addOtherNetwork: addOtherNetwork,
 	addNetwork: addNetwork,

@@ -17,8 +17,8 @@ var Fs = null;
 
 var recognisedCurves = {
 	"room_only": {
-		"name": "Default",
-		"nameCaps": "Default",
+		"name": "Bass only",
+		"nameCaps": "Bass Only",
 		"description": "Optimise only bass frequencies, which are most affected by the room"
 	},
 	"weighted_flat": {
@@ -208,7 +208,8 @@ $(document).on("room-compensation", function(event, data) {
 					menuOptions = {
 						onclick: "room_compensation.newCompensation('"+data.content.fromMeasurement+"', '"+c+"');",
 						label: recognisedCurves[c].nameCaps,
-						description: recognisedCurves[c].description
+						description: recognisedCurves[c].description,
+						value: (c == "room_only") ? "Default" : null
 					};
 					$("#room-compensation-types").append(beo.createMenuItem(menuOptions));
 				}

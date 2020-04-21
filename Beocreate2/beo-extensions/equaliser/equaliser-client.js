@@ -311,7 +311,7 @@ function positionUIFilter(add, channel, index, type, filter, gainAtFc = null, ne
 			if (newIndex == null) newIndex = uiFilters[channel].length; // Add to the end.
 			if (newFilterIndex == index) autoSelectFilter = newIndex;
 			bypass = (filter.bypass) ? true : false;
-			uiFilters[channel].splice(newIndex, 0, {type: filter.type, index: index, frequency: filter.frequency, gain: filter.gain, bypass: bypass, separateRight: separateRight, gainAtFc: gainAtFc});
+			uiFilters[channel].splice(newIndex, 0, {type: filter.type, index: index, frequency: filter.frequency, gain: filter.gain, bypass: bypass, separateRight: separateRight, gainAtFc: gainAtFc, origin: filter.origin});
 			if (filter.crossoverType) uiFilters[channel][newIndex].crossoverType = filter.crossoverType;
 			if (filter.groupID) uiFilters[channel][newIndex].groupID = filter.groupID;
 		}
@@ -356,7 +356,7 @@ function populateFilterBar() {
 		}
 		classes = "";
 		if (uiFilters[selectedChannel][f].type != "coeffs") {
-			label = uiFilters[selectedChannel][f].frequency;
+			label = Math.round(uiFilters[selectedChannel][f].frequency);
 		} else {
 			label = "C "+coeffCount;
 		}
@@ -404,7 +404,7 @@ function updateFilterBarAndList(reposition) {
 			break;
 	}
 	if (uiFilters[selectedChannel][selectedFilter].type != "coeffs") {
-		label = uiFilters[selectedChannel][selectedFilter].frequency;
+		label = Math.round(uiFilters[selectedChannel][selectedFilter].frequency);
 	}
 	$('#equaliser-filters .ui-equaliser-item[data-ui-filter-index="'+selectedFilter+'"] .collection-row-item-text').text(label);
 	if (icon) {
@@ -566,7 +566,12 @@ function selectFilter(filter = selectedFilter, fromUI) {
 			} else {
 				updateFilterUI(false);
 			}
-	
+			if (uiFilters[selectedChannel][filter].origin &&
+				uiFilters[selectedChannel][filter].origin == "roomCompensation") {
+				$("#filter-from-room-compensation").removeClass("hidden");
+			} else {
+				$("#filter-from-room-compensation").addClass("hidden");
+			}
 		} else {
 			eqGraph.store([4], {show: false});
 			updateFilterUI(false);
@@ -1191,17 +1196,17 @@ function updateFilterUI(show = true, excludeParameter, tooltip, tooltipAutoHide)
 			if (tooltip == "gain") {
 				showGraphLabel([{unit: "dB", value: gain}], tooltipAutoHide);
 			} else if (tooltip == "frequency") {
-				showGraphLabel([{unit: "Hz", value: Fc}], tooltipAutoHide);
+				showGraphLabel([{unit: "Hz", value: Math.round(Fc)}], tooltipAutoHide);
 			} else if (tooltip == "gainAndFrequency") {
-				showGraphLabel([{unit: "Hz", value: Fc}, {unit: "dB", value: gain}], tooltipAutoHide);
+				showGraphLabel([{unit: "Hz", value: Math.round(Fc)}, {unit: "dB", value: Math.round(gain*10)/10}], tooltipAutoHide);
 			}
 			
 			
 			
 			$("#equaliser-graph-container .graph-tooltip").css("left", selectedFilterFcOffset+"%").css("top", (50-(gain*gainMultiplier/dBScale)*50)+"%");
 			
-			$(".filter-frequency").text(dspFilters[selectedChannel][index].frequency);
-			$(".filter-gain").text(dspFilters[selectedChannel][index].gain);
+			$(".filter-frequency").text(Math.round(dspFilters[selectedChannel][index].frequency));
+			$(".filter-gain").text(Math.round(dspFilters[selectedChannel][index].gain*10)/10);
 			
 			// Bandwidth.
 			if (dspFilters[selectedChannel][index].Q) {

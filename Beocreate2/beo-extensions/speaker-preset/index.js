@@ -483,10 +483,15 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			console.log("Sound presets have been migrated to speaker presets.");
 		}
 	}
+	
+	function getCurrentSpeakerPreset() {
+		return {id: settings.selectedSpeakerPreset, name: compactPresetList[settings.selectedSpeakerPreset]};
+	}
 
 	
 module.exports = {
 	version: version,
-	processUpload: processUpload
+	processUpload: processUpload,
+	getCurrentSpeakerPreset: getCurrentSpeakerPreset
 };
 

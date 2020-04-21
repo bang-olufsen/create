@@ -461,6 +461,11 @@ function createAndSaveCompensation(measurement, type, speakerModel = null) {
 		Fs) {
 		if (!speakerModel && measurements[measurement].speakerModel) {
 			speakerModel = measurements[measurement].speakerModel;
+		} else if (speakerModel) {
+			// Save speaker model to the measurement.
+			measurements[measurement].speakerModel = speakerModel;
+			fs.writeFileSync(arcDirectory+"/measurements/"+measurement+".json", JSON.stringify(measurements[measurement]));
+			if (debug) console.log("Updated measurement '"+measurement+" with speaker model '"+speakerModel+"'.");
 		}
 		uploadData = {
 			measurement: {

@@ -486,7 +486,7 @@ function createAndSaveCompensation(measurement, type, speakerModel = null) {
 			roomEQAPIRequest("optimise", uploadData, function(data, error) {
 				if (data) {
 					beo.sendToUI("room-compensation", {header: "creatingCompensation", content: {phase: "finish"}});
-					if (debug) console.log("Room compensation data was received. Saving and applying.");
+					if (debug) console.log("Room compensation data was received.");
 					// Data is received from the API. Deal with it.
 					if (data.eqs) {
 						compensationData = {
@@ -516,6 +516,7 @@ function createAndSaveCompensation(measurement, type, speakerModel = null) {
 						presets[measurement+"-"+type] = {name: measurements[measurement].name, type: type, measurement: measurement};
 						fs.writeFileSync(arcDirectory+"/presets/"+measurement+"-"+type+".json", JSON.stringify(compensationData));
 						compensationPresetName = measurement+"-"+type;
+						if (debug) console.log("Room compensation '"+measurement+"-"+type+"' was saved.");
 						beo.sendToUI("room-compensation", {header: "presets", content: {presets: presets}});
 						applyRoomCompensationPreset(compensationPresetName);
 					}

@@ -13,7 +13,7 @@ Beocreate 2 exposes several features that may be useful to your extension. These
 ### Features included in *beo*:
 
 - **bus**: *Beobus* is a system-wide communications channel that allows you to send and receive data from different parts of the system.
-- **sendToUI(target, event)**: A Beobus shortcut for sending information to the user interface.
+- **sendToUI(target, header, content)**: A Beobus shortcut for sending information to the user interface.
 - **extensions**: All loaded extensions on the system. If you need to call a public function of an extension, it is found here.
 - **selectedExtension**: A string indicating which extension is currently or was last displayed in the user interface.
 - **systemConfiguration**: Contains the sound card name (cardType), server port (port) and system language (language). cardType can be used to tailor a feature for a specific sound card, for example.
@@ -94,14 +94,15 @@ This channel broadcasts information about the DSP program that's running.
 
 ## Communicating with the User Interface
 
-To send data to the user interface, it is almost the same as sending Beobus events:
+To send data to the user interface, you can use the following shorthand:
 
-	beo.sendToUI("my-extension", {
-		header: "eventHeader", 
-		content: {anyData: true}
-	});
+	beo.sendToUI("my-extension", header, content);
+
+The first two arguments are mandatory. ***content*** argument is optional.
 
 This data then arrives in the user interface of connected clients. The method of accessing it is described in the document detailing user interface implementation.
+
+*Note:* The *sendToUI* syntax has been updated in April 2020 to be simpler to use. Old syntax will also continue to work.
 
 When data is received from the user interface for your extension, it will be broadcast on your extension's channel and you can handle it like a normal Beobus event:
 

@@ -37,30 +37,16 @@ $(document).on("setup", function(event, data) {
 			setupFlow = [];
 			// No setup flow, restore UI state.
 			if (data.content.setup == "finished") {
-				if (!data.content.postSetup) {
-					$("body").css("opacity", "0");
-					setTimeout(function() {
-						window.location.reload();
-					}, 550);
-				} else {
-					doingPostSetup = true;
-					beo.notify({title: "Finishing product setup", message: "Please wait...", icon: "attention", timeout: false});
-					noConnectionNotifications = true;
-					maxConnectionAttempts = 10;
-				}
+				$("body").css("opacity", "0");
+				setTimeout(function() {
+					window.location.reload();
+				}, 550);
 			} else {
-				if (doingPostSetup) {
-					$("body").css("opacity", "0");
-					setTimeout(function() {
-						window.location.reload();
-					}, 550);
+				$("body").removeClass("setup");
+				if (data.content.selectedExtension && data.content.selectedExtension != "setup" && data.content.selectedExtension != "setup-finish") {
+					beo.restoreState(data.content.selectedExtension);
 				} else {
-					$("body").removeClass("setup");
-					if (data.content.selectedExtension && data.content.selectedExtension != "setup" && data.content.selectedExtension != "setup-finish") {
-						beo.restoreState(data.content.selectedExtension);
-					} else {
-						beo.restoreState("product-information");
-					}
+					beo.restoreState("product-information");
 				}
 			}
 		} else {
@@ -73,6 +59,8 @@ $(document).on("setup", function(event, data) {
 						extensionHistory.push(setupFlow[i].extension);
 					}
 					beo.showExtensionWithHistory(extensionHistory, data.content.selectedExtension);
+				} else {
+					beo.showExtension(data.content.selectedExtension);
 				}
 			}
 			
@@ -108,19 +96,18 @@ $(document).on("setup", function(event, data) {
 		}
 	}
 	
-	if (data.header == "willDoPostSetup") {
-		if (data.content.postSetup) {
-			$("#setup-finish .post-setup").removeClass("hidden");
-			$("#setup-finish .no-post-setup").addClass("hidden");
+	if (data.header == "doingPostSetup") {
+		if (data.content.now) {
+			doingPostSetup = true;
+			beo.notify({title: "Setting up product...", message: "Please wait, this may take some time", icon: "attention", timeout: false});
+			noConnectionNotifications = true;
+			maxConnectionAttempts = 10;
 		} else {
 			if (doingPostSetup) {
 				$("body").css("opacity", "0");
 				setTimeout(function() {
 					window.location.reload();
 				}, 550);
-			} else {
-				$("#setup-finish .post-setup").addClass("hidden");
-				$("#setup-finish .no-post-setup").removeClass("hidden");
 			}
 		}
 	}

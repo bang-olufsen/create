@@ -58,8 +58,15 @@ SOFTWARE.*/
 			// The client always asks for this when it connects.
 			if (setupFlow.length == 2) {
 				// No (actual) extensions in the setup flow.
-				beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: beo.setup, selectedExtension: selectedExtension}});
-				
+				if (settings.doingPostSetup) {
+					settings.doingPostSetup = false;
+					beo.saveSettings("setup", settings);
+					beo.setup = true;
+					selectedExtension = "setup-finish";
+					beo.sendToUI("setup", "setupStatus", {setupFlow: [{extension: "setup-finish", shown: true, allowAdvancing: true}], setup: beo.setup, selectedExtension: selectedExtension, firstTime: settings.firstTimeSetup});
+				} else {
+					beo.sendToUI("setup", "setupStatus", {setupFlow: [], setup: beo.setup, selectedExtension: selectedExtension});
+				}
 			} else {
 				if (!beo.setup) {
 					// Setup will start with the first extension when the client connects for the first time.
@@ -68,10 +75,10 @@ SOFTWARE.*/
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, postSetup: doPostSetup, firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, firstTime: settings.firstTimeSetup}});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, postSetup: doPostSetup, firstTime: settings.firstTimeSetup}});
+					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, firstTime: settings.firstTimeSetup}});
 				}
 			}
 			
@@ -84,18 +91,23 @@ SOFTWARE.*/
 						// Command the next step.
 						beo.bus.emit("setup", {header: "advancing", content: {fromExtension: selectedExtension}});
 						beo.bus.emit("ui", {target: "setup", header: "showExtension", content: {extension: setupFlow[i+1].extension}});
+						if (setupFlow[i+1].extension == "setup-finish") {
+							if (doPostSetup) {
+								settings.doingPostSetup = true;
+								beo.saveSettings("setup", settings);
+								beo.bus.emit("setup", {header: "postSetup"});
+								beo.sendToUI("setup", "doingPostSetup", {now: true});
+							}
+						}
 					} else {
 						// No more extensions, finish.
 						setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
 						beo.setup = false;
 						beo.bus.emit("setup", {header: "finishingSetup"});
-						if (doPostSetup) {
-							beo.bus.emit("setup", {header: "postSetup"});
-						}
-						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension, postSetup: doPostSetup}});
+						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
 						settings.firstTimeSetup = false;
 						setupFinished = true;
-						beo.bus.emit("settings", {header: "saveSettings", content: {extension: "setup", settings: settings}});
+						beo.saveSettings("setup", settings);
 					}
 					break;
 				}
@@ -201,7 +213,7 @@ SOFTWARE.*/
 	function requestPostSetup(extension) {
 		if (postSetupExtensions.indexOf(extension) == -1) postSetupExtensions.push(extension);
 		doPostSetup = true;
-		beo.bus.emit("ui", {target: "setup", header: "willDoPostSetup", content: {postSetup: doPostSetup}});
+		beo.sendToUI("setup", "doingPostSetup", {postSetup: doPostSetup});
 	}
 	
 	function postSetupDone(extension) {
@@ -210,7 +222,9 @@ SOFTWARE.*/
 			postSetupExtensions.splice(index, 1);
 			if (postSetupExtensions.length == 0) {
 				doPostSetup = false;
-				beo.bus.emit("ui", {target: "setup", header: "willDoPostSetup", content: {postSetup: doPostSetup}});
+				settings.doingPostSetup = false;
+				beo.saveSettings("setup", settings);
+				beo.sendToUI("setup", "doingPostSetup", {postSetup: doPostSetup});
 			}
 		}
 	}

@@ -9,7 +9,7 @@ var systemID = "";
 var productImage = "";
 var cardType = "";
 var showFullSystemID = false;
-var systemVersion = 0;
+var systemVersion = null;
 var systemVersionReadable = "";
 var hifiberryVersion = null;
 
@@ -69,19 +69,28 @@ $(document).on("product-information", function(event, data) {
 		systemID = data.content.systemID;
 		beo.sendToProductView({header: "systemName", content: {name: systemName}});
 		document.title = systemName;
+		systemUpdated = false;
 		if (data.content.systemVersion) {
+			if (systemVersion != null && systemVersion != data.content.systemVersion) systemUpdated = true;
 			systemVersion = data.content.systemVersion;
 			$(".system-version").text(systemVersion);
 		}
 		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
+			if (cardType != "" && cardType != data.content.systemConfiguration.cardType) systemUpdated = true;
 			cardType = data.content.systemConfiguration.cardType;
 			$(".card-type").text(data.content.systemConfiguration.cardType);
 		}
 		if (data.content.hifiberryVersion) {
+			if (hifiberryVersion != null && hifiberryVersion != data.content.hifiberryVersion) systemUpdated = true;
 			hifiberryVersion = data.content.hifiberryVersion;
 			$(".hifiberry-version").text(hifiberryVersion);
 		}
 		cycleSystemInformation(true);
+		if (systemUpdated) { // If the system version has changed, reload the page.
+			setTimeout(function() {
+				window.location.reload();
+			}, 550);
+		}
 	}
 	
 	if (data.header == "showSystemName") {

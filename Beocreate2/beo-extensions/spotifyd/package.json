@@ -26,6 +26,6 @@
   "homepage": "https://github.com/bang-olufsen/create#readme",
   "beocreate": {
     "install": "./install-spotifyd.sh",
-    "requireCardFeatures": ["pi3orlater"]
+    "requireCardFeatures": ["arm7"]
   }
 }

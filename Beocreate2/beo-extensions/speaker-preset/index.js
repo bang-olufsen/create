@@ -184,6 +184,10 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				} else {
 					beo.bus.emit("ui", {target: "speaker-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
 				}
+				if (extensions["hifiberry-debug"] &&
+					extensions["hifiberry-debug"].reportActivation) {
+					extensions["hifiberry-debug"].reportActivation("beo-speaker-preset_"+event.content.presetID, true);
+				}
 				beo.bus.emit("daisy-chain", {header: "disableDaisyChaining", content: {reason: "speakerPresetSelected"}});
 			}
 			

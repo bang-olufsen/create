@@ -1,4 +1,4 @@
-<div class="menu-screen" id="privacy" data-icon="private.svg" data-menu-title="Privacy" data-built-in="1" data-context="general-settings/more">
+<div class="menu-screen setup-large-title" id="privacy" data-icon="private.svg" data-menu-title="Privacy" data-built-in="1" data-context="general-settings/more">
 	
 	<header>
 		<div class="back-button master setup"></div>
@@ -7,21 +7,20 @@
 	
 	<div class="scroll-area">
 		<div class="menu-content">
-			<p>Choose how the system uses your data.</p>
-			<!--
-			<div class="menu-item toggle" id="privacy-stats-toggle" onclick="privacy.toggle('stats');">
+			<p>Choose how the system uses your data.<span class="setup-only"> You can change these settings later at any time.</span></p>
+		
+			<div class="menu-item toggle" id="privacy-stats-toggle" onclick="privacy.toggle('usageData');">
 				<div class="menu-label">Anonymous Statistics</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p>Let HiFiBerry and Bang &amp; Olufsen know anonymously which product features are used. <a href="#" onclick="privacy.showInfo('stats');">Learn more.</a></p>
-			-->
+			<p>Let HiFiBerry and Bang &amp; Olufsen know anonymously which product features are used. <a href="#" onclick="privacy.showInfo('usageData');">Learn more.</a></p>
 			<div class="menu-item toggle" id="privacy-metadata-toggle" onclick="privacy.toggle('externalMetadata');">
 				<div class="menu-label">Metadata from Internet</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p>Find additional information about the tracks you listen to. Requires accessing third-party services <a href="#" onclick="privacy.showInfo('externalMetadata');">Learn more.</a></p>
+			<p>Use third-party services to find additional information about the music you listen to. <a href="#" onclick="privacy.showInfo('externalMetadata');">Learn more.</a></p>
 			<hr>
-			<p class="privacy margin-top">Other features may have their own privacy controls. This icon explains, how your data is used.</p>
+			<p class="privacy margin-top">This icon next to other features explains, how that feature uses your data.</p>
 		</div>
 	</div>
 	

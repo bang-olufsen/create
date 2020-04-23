@@ -11,6 +11,11 @@ $(document).on("privacy", function(event, data) {
 			} else {
 				$("#privacy-metadata-toggle").removeClass("on");
 			}
+			if (data.content.settings.usageData) {
+				$("#privacy-stats-toggle").addClass("on");
+			} else {
+				$("#privacy-stats-toggle").removeClass("on");
+			}
 			beo.notify(false, "privacy");
 		}
 		

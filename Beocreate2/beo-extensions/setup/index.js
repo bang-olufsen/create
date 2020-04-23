@@ -22,7 +22,8 @@ SOFTWARE.*/
 	var debug = beo.debug;
 	
 	var defaultSettings = {
-			"firstTimeSetup": true
+			"firstTimeSetup": true,
+			"doingPostSetup": false
 		};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
@@ -165,7 +166,7 @@ SOFTWARE.*/
 			setupFlow.splice(placedIndex, 0, newStep); // Add to the flow.*/
 			
 			// Temporary fixed sort.
-			theOrder = ["setup", "choose-country", "network", "speaker-preset", "product-information", "setup-finish"];
+			theOrder = ["setup", "choose-country", "network", "speaker-preset", "product-information", "privacy", "setup-finish"];
 			tempFlow = [];
 			for (i in setupFlow) {
 				tempFlow[theOrder.indexOf(setupFlow[i].extension)] = setupFlow[i];

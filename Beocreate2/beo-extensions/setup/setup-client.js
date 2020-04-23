@@ -104,10 +104,9 @@ $(document).on("setup", function(event, data) {
 			maxConnectionAttempts = 10;
 		} else {
 			if (doingPostSetup) {
-				$("body").css("opacity", "0");
-				setTimeout(function() {
-					window.location.reload();
-				}, 550);
+				beo.notify();
+				noConnectionNotifications = false;
+				maxConnectionAttempts = 5;
 			}
 		}
 	}

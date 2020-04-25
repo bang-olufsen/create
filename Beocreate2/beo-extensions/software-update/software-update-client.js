@@ -7,6 +7,7 @@ $(document).on("general", function(event, data) {
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "software-update") {
 			$(".checking-for-update").removeClass("hidden");
+			$(".update-check-error").addClass("hidden");
 		}
 	}
 	
@@ -90,6 +91,7 @@ $(document).on("software-update", function(event, data) {
 		
 		$(".no-update-available").addClass("hidden");
 		$(".software-update-available").removeClass("hidden");
+		$(".update-check-error").addClass("hidden");
 		$("#update-available-container").empty();
 		$("#update-available-container").append(beo.createMenuItem(menuOptions));
 		
@@ -132,6 +134,15 @@ $(document).on("software-update", function(event, data) {
 		$(".checking-for-update").addClass("hidden");
 		$(".no-update-available").removeClass("hidden");
 		$(".software-update-available").addClass("hidden");
+		$(".update-check-error").addClass("hidden");
+		newVersion = null;
+	}
+	
+	if (data.header == "errorChecking") {
+		$(".checking-for-update").addClass("hidden");
+		$(".no-update-available").addClass("hidden");
+		$(".software-update-available").addClass("hidden");
+		$(".update-check-error").removeClass("hidden");
 		newVersion = null;
 	}
 	

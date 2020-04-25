@@ -140,10 +140,18 @@ function checkForUpdate(forceCheck) {
 			updateLines = stdout.trim().split("\n");
 			newVersion = updateLines[0];
 			if (newVersion) {
-				if (debug) console.log("Software update is available – release "+newVersion+" ('"+updateTrack+"' track).");
-				updateLines.splice(0, 1);
-				releaseNotes = updateLines.join("\n").trim();
-				beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
+				if (newVersion.indexOf("Couldn't") != -1) { // Error checking for update.
+					console.error("There was an error checking for update ('"+updateTrack+"' track): "+newVersion);
+					lastChecked = 0;
+					newVersion = null;
+					releaseNotes = "";
+					beo.sendToUI("software-update", "errorChecking");
+				} else {
+					if (debug) console.log("Software update is available – release "+newVersion+" ('"+updateTrack+"' track).");
+					updateLines.splice(0, 1);
+					releaseNotes = updateLines.join("\n").trim();
+					beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
+				}
 			} else {
 				newVersion = null;
 				releaseNotes = "";

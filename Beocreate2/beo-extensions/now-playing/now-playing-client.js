@@ -801,6 +801,31 @@ $(document).on("ui", function(event, data) {
 	
 });
 
+interactDictionary = {
+	actions: {
+		playPause: {
+			name: "Play or Pause",
+			icon: "extensions/now-playing/symbols-black/play-pause.svg",
+			once: true,
+			illegalWith: ["actions/now-playing/playPause"]
+		},
+		pause: {
+			name: "Pause",
+			icon: "extensions/now-playing/symbols-black/pause.svg",
+			once: true,
+			illegalWith: ["actions/now-playing/playPause"]
+		},
+		next: {
+			name: "Next Track",
+			icon: "extensions/now-playing/symbols-black/next-track.svg"
+		},
+		previous: {
+			name: "Previous Track",
+			icon: "extensions/now-playing/symbols-black/previous-track.svg"
+		}
+	}
+}
+
 
 return {
 	showNowPlaying: showNowPlaying,
@@ -818,7 +843,8 @@ return {
 	functionRow: functionRow,
 	setUseExternalArtwork: setUseExternalArtwork,
 	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable},
-	loadPlaceholderArtwork: loadPlaceholderArtwork
+	loadPlaceholderArtwork: loadPlaceholderArtwork,
+	interactDictionary: interactDictionary
 }
 
 })();

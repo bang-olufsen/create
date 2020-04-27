@@ -1,0 +1,25 @@
+{
+  "name": "@beocreate/alsa-eq",
+  "version": "0.1.0",
+  "description": "ALSA equaliser for HiFiBerryOS.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "volume",
+    "limit",
+    "sound",
+    "hifiberry",
+    "alsa"
+  ],
+  "author": "HiFiBerry",
+  "license": "MIT",
+  "beocreate": {
+  		"rejectCardFeatures": ["dsp"]
+  }
+}

@@ -27,6 +27,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	var version = require("./package.json").version;
 	
 	var defaultSettings = {
+		"wireless": true,
 		"useHifiberryHotspot": true,
 		"setupNetworkWhenConnectionLost": false,
 		"testNoEthernet": false
@@ -42,7 +43,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	var cachedIPAddresses = {wifi: null, ethernet: null}; // If IP addresses change, the system should rebroadcast its zeroconf advertisement.
 	
 	var canStartSetupNetwork = false;
-	
+	var wirelessOn = false;
 	
 	beo.bus.on('general', function(event) {
 		
@@ -55,7 +56,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					setConnectionMode({mode: "initial"});
 					temporarilyAllowSetupNetwork();
 				}
-			});
+			}, true);
 		}
 		
 		if (event.header == "shutdown") {
@@ -95,15 +96,16 @@ var networkCore = require('../../beocreate_essentials/networking');
 					extensions["setup"].allowAdvancing("network", true);
 				}
 			}
-			beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
+			beo.sendToUI("network", "savedNetworks", {networks: networks});
+			
 			
 			wifiScan();
-			
 			networkCore.getWifiStatus(function(status, error) {
 				if (!error) {
-					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
+					wirelessOn = status.up;
+					beo.sendToUI("network", "wifiStatus", {status: status});
 				} else {
-					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
+					beo.sendToUI("network","wifiStatus", {status: null, error: error});
 				}
 			});
 			
@@ -114,12 +116,58 @@ var networkCore = require('../../beocreate_essentials/networking');
 			wifiScan();
 			networkCore.getWifiStatus(function(status, error) {
 				if (!error) {
+					wirelessOn = status.up;
 					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: status}});
 				} else {
 					beo.bus.emit("ui", {target: "network", header: "wifiStatus", content: {status: null, error: error}});
 				}
 			});
 			
+		}
+		
+		if (event.header == "toggleWireless") {
+			if (event.content.enabled != undefined && wirelessOn != event.content.enabled) {
+				networkCore.setWifiStatus(event.content.enabled, function(newStatus, err) {
+					if (!err) {
+						wirelessOn = newStatus;
+						settings.wireless = wirelessOn;
+						beo.sendToUI("network", "wirelessToggle", {enabled: wirelessOn, error: false});
+						beo.saveSettings("network", settings);
+						
+						if (wirelessOn) {
+							networks = networkCore.listSavedNetworks();
+							beo.sendToUI("network", "savedNetworks", {networks: networks});
+							networkCore.getWifiStatus(function(status, error) {
+								if (!error) {
+									wirelessOn = status.up;
+									beo.sendToUI("network", "wifiStatus", {status: status});
+								} else {
+									beo.sendToUI("network","wifiStatus", {status: null, error: error});
+								}
+							});
+							// Scan for networks after 2 and 10 seconds. After 10 seconds, send status again.
+							setTimeout(function() {
+								wifiScan();
+							}, 2000);
+							setTimeout(function() {
+								if (wirelessOn) {
+									wifiScan();
+									networkCore.getWifiStatus(function(status, error) {
+										if (!error) {
+											wirelessOn = status.up;
+											beo.sendToUI("network", "wifiStatus", {status: status});
+										} else {
+											beo.sendToUI("network","wifiStatus", {status: null, error: error});
+										}
+									});
+								}
+							}, 11000);
+						}
+					} else {
+						beo.sendToUI("network", "wirelessToggle", {enabled: wirelessOn, error: true});
+					}
+				});
+			}
 		}
 		
 		if (event.header == "populateEthernetUI") {
@@ -240,7 +288,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	
 	var wifiScanning = false;
 	function wifiScan(callback) {
-		if (!wifiScanning) {
+		if (!wifiScanning && wirelessOn) {
 			wifiScanning = true;
 			beo.bus.emit("ui", {target: "network", header: "scanning"});
 			networkCore.listAvailableNetworks(function(networks, error) {
@@ -305,7 +353,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					hotspotStartedOnce = true;
 					setupNetwork(true);
 					if (extensions["setup"] && extensions["setup"].joinSetupFlow) {
-						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["sound-preset", "product-information"]});
+						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["speaker-preset", "product-information"]});
 					}
 					interval = 30;
 					beo.bus.emit("led", {header: "blink", content: {options: {interval: 1, colour: "orange"}}});
@@ -445,7 +493,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	
 	setupNetworkAllowTimeout = null;
 	function temporarilyAllowSetupNetwork() {
-		canStartSetupNetwork = true;
+		if (settings.wireless) canStartSetupNetwork = true;
 		if (!settings.setupNetworkWhenConnectionLost) {
 			clearTimeout(setupNetworkAllowTimeout);
 			setupNetworkAllowTimeout = setTimeout(function() {
@@ -455,7 +503,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 	}
 	
 	
-	function checkLocalConnection(callback) {
+	function checkLocalConnection(callback, canTurnOffWireless = false) {
 		networkCore.getEthernetStatus(function(status, error) {
 			connection = false;
 			newIP = false;
@@ -479,14 +527,24 @@ var networkCore = require('../../beocreate_essentials/networking');
 			networkCore.getWifiStatus(function(status, error) {
 				if (!error) {
 					networkHardware.wifi = true;
-					if (status.connected) connection = true;
-					if (status.ipv4 && status.ipv4.address) {
-						if (status.ipv4.address != cachedIPAddresses.wifi) {
-							newIP = true;
-							cachedIPAddresses.wifi = status.ipv4.address;
-						}
-					} else {
+					wirelessOn = status.up;
+					if (!settings.wireless && 
+						canTurnOffWireless &&
+						wirelessOn) {
+						networkCore.setWifiStatus(false, function(newStatus, err) {
+							wirelessOn = newStatus;
+						});
 						cachedIPAddresses.wifi = null;
+					} else {
+						if (status.connected) connection = true;
+						if (status.ipv4 && status.ipv4.address) {
+							if (status.ipv4.address != cachedIPAddresses.wifi) {
+								newIP = true;
+								cachedIPAddresses.wifi = status.ipv4.address;
+							}
+						} else {
+							cachedIPAddresses.wifi = null;
+						}
 					}
 					//if (status.connected) console.log("Wlan connected.");
 				} else {
@@ -530,12 +588,21 @@ var networkCore = require('../../beocreate_essentials/networking');
 		return networkCore.setCountry(countryCode);
 	}
 	
+interact = {
+	actions: {
+		startSetupNetwork: function() {
+			if (networkHardware.wifi) setupNetwork(true);
+		}
+	}
+}
+	
 module.exports = {
 	getCountry: getCountry,
 	setCountry: setCountry,
 	checkInternetConnection: checkInternetConnection,
 	checkLocalConnection: checkLocalConnection,
-	version: version
+	version: version,
+	interact: interact
 };
 
 

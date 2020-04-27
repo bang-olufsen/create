@@ -20,6 +20,7 @@ const spawn = require("child_process").spawn;
 const exec = require("child_process").exec;
 const fs = require("fs");
 const path = require("path");
+const fetch = require("node-fetch");
 
 var version = require("./package.json").version;
 var arcDirectory = beo.dataDirectory+"/beo-room-compensation"; // Sound presets directory.
@@ -36,18 +37,27 @@ var settings = JSON.parse(JSON.stringify(defaultSettings));
 
 var measurements = {};
 var compactMeasurementList = {};
+
+var presets = {};
+
+var roomEQURL = null;
+var xUUID = null;
+
+var Fs = null;
 	
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
+		
 		readMeasurements();
+		readPresets();
 	}
 	
 	
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "room-compensation") {
 			
-			beo.sendToUI("room-compensation", {header: "measurements", content: {measurements: compactMeasurementList}});
+			beo.sendToUI("room-compensation", {header: "measurementsAndPresets", content: {measurements: compactMeasurementList, presets: presets}});
 		}
 	}
 });
@@ -61,10 +71,14 @@ beo.bus.on('room-compensation', function(event) {
 	}
 	
 	if (event.header == "newMeasurement" && event.content.name) {
-		if (!fs.existsSync(arcDirectory)) fs.mkdirSync(arcDirectory);
+		if (!fs.existsSync(arcDirectory)) {
+			fs.mkdirSync(arcDirectory);
+			fs.mkdirSync(arcDirectory+"/measurements");
+		}
 		newMeasurementName = event.content.name;
 		if (!measurements[generateFilename(newMeasurementName)] || event.content.override) {
 			detectMicrophone("start");
+			ping();
 		} else {
 			beo.sendToUI("room-compensation", {header: "measurementExists"});
 		}
@@ -72,6 +86,7 @@ beo.bus.on('room-compensation', function(event) {
 	
 	if (event.header == "measureLevel") {
 		measureLevel("start");
+		ping();
 	}
 	
 	if (event.header == "measureRoom") {
@@ -80,6 +95,7 @@ beo.bus.on('room-compensation', function(event) {
 	}
 	
 	if (event.header == "stopMeasurement") {
+		detectMicrophone("stop");
 		measureLevel("stop");
 		setOrRestoreVolume("restore");
 		measureRoom("stop");
@@ -100,8 +116,66 @@ beo.bus.on('room-compensation', function(event) {
 			if (debug) console.log("Deleting room compensation measurement '"+measurements[event.content.measurementID].name+"'...");
 			delete measurements[event.content.measurementID];
 			delete compactMeasurementList[event.content.measurementID];
-			if (fs.existsSync(arcDirectory+"/"+event.content.measurementID+".json")) fs.unlinkSync(arcDirectory+"/"+event.content.measurementID+".json");
-			beo.sendToUI("room-compensation", {header: "measurements", content: {measurements: compactMeasurementList}});
+			if (fs.existsSync(arcDirectory+"/measurements/"+event.content.measurementID+".json")) fs.unlinkSync(arcDirectory+"/measurements/"+event.content.measurementID+".json");
+			for (preset in presets) { // Delete presets that use this measurement.
+				if (presets[preset].measurement == event.content.measurementID) {
+					deletePreset(preset, true);
+				}
+			}
+			beo.sendToUI("room-compensation", {header: "measurementsAndPresets", content: {measurements: compactMeasurementList, presets: presets}});
+		}
+	}
+	
+	if (event.header == "newCompensation") {
+		if (event.content.compensationType && event.content.fromMeasurement) {
+			if (!fs.existsSync(arcDirectory+"/presets")) fs.mkdirSync(arcDirectory+"/presets");
+			createAndSaveCompensation(event.content.fromMeasurement, event.content.compensationType, event.content.speakerModel);
+		} else {
+			if (measurements[event.content.fromMeasurement]) {
+				askForSpeakerModel = (!measurements[event.content.fromMeasurement].speakerModel) ? true : false;
+				roomEQAPIRequest("curves", null, function(data, error) {
+					if (data) beo.sendToUI("room-compensation", {header: "compensationOptions", content: {curves: data, fromMeasurement: event.content.fromMeasurement, askForSpeakerModel: askForSpeakerModel}});
+				});
+			}
+		}
+	}
+	
+	if (event.header == "getCompensation") {
+		if (event.content.preset && presets[event.content.preset]) {
+			if (getRoomCompensationPreset(event.content.preset) == true) {
+				beo.sendToUI("room-compensation", {header: "compensationData", content: {preset: event.content.preset, data: compensationData, Fs: Fs, measurementData: measurements[compensationData.measurement]}});
+			}
+		}
+	}
+	
+	if (event.header == "applyCompensation") {
+		if (event.content.preset && presets[event.content.preset]) {
+			applyRoomCompensationPreset(event.content.preset, event.content.confirm);
+		}
+	}
+	
+	if (event.header == "disableCompensation") {
+		applyRoomCompensationPreset(null);
+	}
+	
+	if (event.header == "deleteCompensation") {
+		if (event.content.preset && presets[event.content.preset]) {
+			deletePreset(event.content.preset);
+		}
+	}
+	
+});
+
+beo.bus.on('dsp', function(event) {
+	if (event.header == "metadata") {
+		if (event.content.metadata) {
+			if (event.content.metadata.sampleRate) {
+				Fs = parseInt(event.content.metadata.sampleRate.value[0]);
+			} else {
+				Fs = null;
+			}
+		} else {
+			Fs = null;
 		}
 	}
 });
@@ -296,11 +370,13 @@ function setOrRestoreVolume(stage) {
 	}
 }
 
+
+
 function convertAndSaveMeasurement(path, newName, details = null, send) {
 	if (fs.existsSync(path)) {
 		filename = generateFilename(newName);
 		csvLines = fs.readFileSync(path, "utf8").split("\n");
-		measurement = {name: newName, magData: [], phaseData: [], offset: 0};
+		measurement = {name: newName, magData: [], phaseData: [], offset: 0, speakerModel: null};
 		for (var i = 0; i < csvLines.length; i++) {
 			items = csvLines[i].split(",");
 			if (items.length == 3) { 
@@ -314,9 +390,16 @@ function convertAndSaveMeasurement(path, newName, details = null, send) {
 			if (details.samples) measurement.samples = details.samples;
 			if (details.recordingLevel) measurement.recordingLevel = details.recordingLevel;
 		}
+		if (beo.extensions["speaker-preset"] &&
+			beo.extensions["speaker-preset"].getCurrentSpeakerPreset) {
+			currentSpeakerPreset = beo.extensions["speaker-preset"].getCurrentSpeakerPreset();
+			if (currentSpeakerPreset.id && currentSpeakerPreset.id != "other-speaker") {
+				measurement.speakerModel = currentSpeakerPreset.name;
+			}
+		}
 		measurements[filename] = measurement;
 		compactMeasurementList[filename] = newName;
-		fs.writeFileSync(arcDirectory+"/"+filename+".json", JSON.stringify(measurement));
+		fs.writeFileSync(arcDirectory+"/measurements/"+filename+".json", JSON.stringify(measurement));
 		if (debug) console.log("Room measurement saved as '"+newName+"' ("+filename+".json).");
 		beo.sendToUI("room-compensation", {header: "measurements", content: {measurements: compactMeasurementList}});
 		if (send) {
@@ -335,19 +418,30 @@ function generateFilename(name) {
 }
 
 function readMeasurements() {
-	if (fs.existsSync(arcDirectory)) {
+	if (fs.existsSync(arcDirectory) && !fs.existsSync(arcDirectory+"/measurements")) {
+		// Move existing measurements to a subfolder.
+		if (debug) console.log("Migrating existing room compensation measurements to a subdirectory...");
 		measurementFiles = fs.readdirSync(arcDirectory);
+		fs.mkdirSync(arcDirectory+"/measurements");
+		for (var i = 0; i < measurementFiles.length; i++) {
+			if (measurementFiles[i].substr(-4) == "json") {
+				fs.renameSync(arcDirectory+"/"+measurementFiles[i], arcDirectory+"/measurements/"+measurementFiles[i]);
+			}
+		}
+	}
+	if (fs.existsSync(arcDirectory+"/measurements")) {
+		measurementFiles = fs.readdirSync(arcDirectory+"/measurements");
 		for (var i = 0; i < measurementFiles.length; i++) {
 			if (measurementFiles[i].substr(-4) == "json") {
 				try {
-					measurement = JSON.parse(fs.readFileSync(arcDirectory+"/"+measurementFiles[i], "utf8"));
-					measurementID = path.basename(arcDirectory+"/"+measurementFiles[i], path.extname(arcDirectory+"/"+measurementFiles[i]));
+					measurement = JSON.parse(fs.readFileSync(arcDirectory+"/measurements/"+measurementFiles[i], "utf8"));
+					measurementID = path.basename(arcDirectory+"/measurements/"+measurementFiles[i], path.extname(arcDirectory+"/measurements/"+measurementFiles[i]));
 					if (measurement.magData &&
 					 	measurement.phaseData && 
 					 	measurement.name) {
 						measurements[measurementID] = measurement;
 						compactMeasurementList[measurementID] = measurement.name;
-						if (debug >= 2) console.log("Loaded room compensation measurement '"+measurement.name+"'.");
+						if (debug >= 2) console.log("Read in room compensation measurement '"+measurement.name+"'.");
 					} else {
 						console.error("Data or name for room compensation measurement '"+measurementID+"' is missing. Skipping.");
 					}
@@ -359,6 +453,223 @@ function readMeasurements() {
 		}
 	}
 }
+
+function createAndSaveCompensation(measurement, type, speakerModel = null) {
+	if (measurement && 
+		measurements[measurement] &&
+		type &&
+		Fs) {
+		if (!speakerModel && measurements[measurement].speakerModel) {
+			speakerModel = measurements[measurement].speakerModel;
+		} else if (speakerModel) {
+			// Save speaker model to the measurement.
+			measurements[measurement].speakerModel = speakerModel;
+			fs.writeFileSync(arcDirectory+"/measurements/"+measurement+".json", JSON.stringify(measurements[measurement]));
+			if (debug) console.log("Updated measurement '"+measurement+" with speaker model '"+speakerModel+"'.");
+		}
+		uploadData = {
+			measurement: {
+				f: [], db: [], phase: []
+			},
+			curve: type,
+			optimizer: "smooth",
+			filtercount: 10,
+			"speaker-model": speakerModel,
+			samplerate: Fs,
+			settings: {
+				add_highpass: false
+			}
+		};
+		if (measurements[measurement].magData && 
+			measurements[measurement].phaseData) {
+			for (i in measurements[measurement].magData) {
+				uploadData.measurement.f.push(measurements[measurement].magData[i][0]);
+				uploadData.measurement.db.push(measurements[measurement].magData[i][1]);
+				uploadData.measurement.phase.push(measurements[measurement].phaseData[i][1]);
+			}
+			beo.sendToUI("room-compensation", {header: "creatingCompensation", content: {phase: "waiting"}});
+			roomEQAPIRequest("optimise", uploadData, function(data, error) {
+				if (data) {
+					beo.sendToUI("room-compensation", {header: "creatingCompensation", content: {phase: "finish"}});
+					if (debug) console.log("Room compensation data was received.");
+					// Data is received from the API. Deal with it.
+					if (data.eqs) {
+						compensationData = {
+							name: measurements[measurement].name,
+							compensationID: data.id,
+							rawData: data,
+							speakerModel: speakerModel,
+							measurement: measurement,
+							type: type,
+							filters: []
+						};
+						
+						for (f in data.eqs) {
+							if (data.eqs[f].type == "eq") {
+								if (data.eqs[f].db != 0) {
+									compensationData.filters.push({
+										type: "peak",
+										Q: data.eqs[f].q,
+										frequency: data.eqs[f].f0,
+										gain: data.eqs[f].db,
+										origin: "roomCompensation"
+									});
+								}
+							}
+						}
+						
+						presets[measurement+"-"+type] = {name: measurements[measurement].name, type: type, measurement: measurement};
+						fs.writeFileSync(arcDirectory+"/presets/"+measurement+"-"+type+".json", JSON.stringify(compensationData));
+						compensationPresetName = measurement+"-"+type;
+						if (debug) console.log("Room compensation '"+measurement+"-"+type+"' was saved.");
+						beo.sendToUI("room-compensation", {header: "presets", content: {presets: presets}});
+						applyRoomCompensationPreset(compensationPresetName);
+					}
+				} else {
+					beo.sendToUI("room-compensation", {header: "creatingCompensation", content: {phase: "error", reason: "serverError"}});
+				}
+			});
+			if (debug) console.log("Sent room compensation measurement '"+measurement+"' for optimisation with option '"+type+"'. Waiting for results.");
+		} else {
+			console.error("Measurement '"+measurement+"' is missing magnitude or phase data.");
+			beo.sendToUI("room-compensation", {header: "creatingCompensation", content: {phase: "error", reason: "missingData"}});
+		}
+		
+	}
+}
+
+
+function applyRoomCompensationPreset(presetName, userConfirmation = false) {
+	if (beo.extensions.equaliser &&
+		beo.extensions.equaliser.applyRoomCompensation) {
+		if (presetName && getRoomCompensationPreset(presetName) == true) {
+			if (compensationData.filters) {
+				presetApplied = beo.extensions.equaliser.applyRoomCompensation(presetName, {l: compensationData.filters, r: compensationData.filters}, userConfirmation);
+				if (!presetApplied)  {
+					beo.sendToUI("room-compensation", {header: "confirmApplyingCompensation", content: {preset: presetName}});
+				}
+			}
+		} else {
+			beo.extensions.equaliser.applyRoomCompensation(null, null);
+		}
+	}
+}
+
+var compensationData = null;
+var compensationPresetName = null;
+
+function getRoomCompensationPreset(withName) {
+	if (withName != compensationPresetName) {
+		try {
+			compensationData = JSON.parse(fs.readFileSync(arcDirectory+"/presets/"+withName+".json", "utf8"));
+			compensationPresetName = withName;
+			return true;
+		} catch (error) {
+			console.error("Unable to read room compensation data:", error);
+			return error;
+		}
+	} else {
+		return true;
+	}
+}
+
+function readPresets() {
+	if (fs.existsSync(arcDirectory+"/presets")) {
+		presetFiles = fs.readdirSync(arcDirectory+"/presets");
+		for (var i = 0; i < presetFiles.length; i++) {
+			if (presetFiles[i].substr(-4) == "json") {
+				presetReadResult = getRoomCompensationPreset(path.basename(arcDirectory+"/presets/"+presetFiles[i], path.extname(arcDirectory+"/presets/"+presetFiles[i])));
+				if (presetReadResult == true) {
+					presets[compensationPresetName] = {name: compensationData.name, type: compensationData.type, measurement: compensationData.measurement};
+					if (debug >= 2) console.log("Read in room compensation preset '"+compensationPresetName+"'.");
+				} else {
+					console.error("Error reading room compensation preset:", presetReadResult);
+				}				
+			}
+		}
+	}
+}
+
+function deletePreset(preset, noUpdate = false) {
+	if (beo.extensions.equaliser &&
+		beo.extensions.equaliser.getCurrentRoomCompensation) {
+		currentCompensation = beo.extensions.equaliser.getCurrentRoomCompensation();
+		if (currentCompensation.preset == preset) {
+			if (debug) console.log("Disabling room compensation and deleting preset '"+presets[preset].name+"'...");
+			applyRoomCompensationPreset(null);
+		} else {
+			if (debug) console.log("Deleting room compensation preset '"+presets[preset].name+"'...");
+		}
+	}
+	delete presets[preset];
+	if (fs.existsSync(arcDirectory+"/presets/"+preset+".json")) fs.unlinkSync(arcDirectory+"/presets/"+preset+".json");
+	if (!noUpdate) beo.sendToUI("room-compensation", {header: "presets", content: {presets: presets}});
+}
+
+
+function roomEQAPIRequest(endpoint, data, callback) {
+	if (!roomEQURL) getRoomEQConfig();
+	headers = {'Content-Type': "application/json"};
+	type = "post";
+	switch (endpoint) {
+		case "optimise":
+		case "optimize":
+			endpoint = "optimize";
+			headers["X-UUID"] = xUUID;
+			break;
+		case "curves":
+			type = "get";
+			break;
+	}
+	if (type == "post") {
+		fetch(roomEQURL+"/"+endpoint, {
+			method: "post",
+			headers: headers,
+			body: JSON.stringify(data)}).then(res => {
+			if (res.status == 200) {
+				res.json().then(json => {
+					if (callback) callback(json);
+				});
+			} else {
+				console.error("Could not send or receive data from HiFiBerry room equaliser API: " + res.status, res.statusText);
+				if (callback) callback(null, res.statusText);
+			}
+		});
+	} else if (type == "get") {
+		fetch(roomEQURL+"/"+endpoint).then(res => {
+			if (res.status == 200) {
+				res.json().then(json => {
+					if (callback) callback(json);
+				});
+			} else {
+				console.error("Could not get data from HiFiBerry room equaliser API: " + res.status, res.statusText);
+				if (callback) callback(null, res.statusText);
+			}
+		});
+	}
+}
+
+function getRoomEQConfig() {
+	configuration = {};
+	if (fs.existsSync("/etc/roomeq.conf")) {
+		config = fs.readFileSync("/etc/roomeq.conf", "utf8").split('\n');
+		section = null;
+		for (var i = 0; i < config.length; i++) {
+			// Find settings sections.
+			
+			line = config[i].trim();
+			lineItems = line.split("=");
+			if (lineItems.length == 2) {
+				configuration[lineItems[0].trim()] = lineItems[1].trim();
+			}
+		}
+	}
+	if (configuration.ROOMEQURL) roomEQURL = configuration.ROOMEQURL;
+	if (fs.existsSync("/etc/uuid")) {
+		xUUID = fs.readFileSync("/etc/uuid", "utf8").trim();
+	}
+}
+
 	
 module.exports = {
 	version: version

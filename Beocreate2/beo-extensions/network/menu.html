@@ -1,4 +1,4 @@
-<div class="menu-screen large-title" id="network" data-icon="wifi-3.svg" data-menu-title="Network" data-built-in="1">
+<div class="menu-screen large-title" id="network" data-icon="wifi-3.svg" data-menu-title="Network" data-built-in="1" data-namespace="network">
 	<header>
 		<div class="back-button master setup"></div>
 		<h1>Network</h1>
@@ -23,49 +23,56 @@
 				<img class="menu-icon" src="€/symbols-black/wired-network.svg">
 				<div class="menu-label">Set Up Wired...</div>
 			</div>-->
-			<div class="wifi-connected-wrap hidden">
-				<div class="wifi-connected-container">
-					<!--<h2>Connected</h2>-->
-					<div class="menu-item icon wifi-connected-item">						<div class="menu-icon wifi-connected-signal" style="-webkit-mask-image: url(€/symbols-black/wifi.svg); mask-image: url(€/symbols-black/wifi.svg);"></div>
-							<div class="menu-label wifi-connected-ssid">Network</div>
-							<div class="menu-value">Connected</div>
-							<div class="menu-icon right wifi-connected-lock hidden" style="-webkit-mask-image: url(€/symbols-black/lock.svg); mask-image: url(€/symbols-black/lock.svg);"></div>
-						<!--<div class="menu-custom-markup">
-							<p>Connected</p>
-						</div>-->
+			<div class="menu-item icon toggle on setup-hide wifi-toggle" onclick="network.toggleWireless();">
+				<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/wifi.svg); mask-image: url(€/symbols-black/wifi.svg);"></div>
+				<div class="menu-label">Wi-Fi</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<div class="wifi-on-wrap hidden">
+				<div class="wifi-connected-wrap hidden">
+					<div class="wifi-connected-container">
+						<!--<h2>Connected</h2>-->
+						<div class="menu-item icon wifi-connected-item">						<div class="menu-icon wifi-connected-signal" style="-webkit-mask-image: url(€/symbols-black/wifi.svg); mask-image: url(€/symbols-black/wifi.svg);"></div>
+								<div class="menu-label wifi-connected-ssid">Network</div>
+								<div class="menu-value">Connected</div>
+								<div class="menu-icon right wifi-connected-lock hidden" style="-webkit-mask-image: url(€/symbols-black/lock.svg); mask-image: url(€/symbols-black/lock.svg);"></div>
+							<!--<div class="menu-custom-markup">
+								<p>Connected</p>
+							</div>-->
+						</div>
 					</div>
+				</div>
+				
+				<div class="available-networks-wrap">
 					<hr>
-				</div>
-			</div>
-			
-			<div class="available-networks-wrap">
-				
-				<div class="available-networks">
+					<div class="available-networks">
+						
+					</div>
 					
 				</div>
 				
-			</div>
-			
-			<div class="menu-item icon" onclick="network.addOtherNetwork();">
-				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(commom/symbols-black/add.svg);"></div>
-				<div class="menu-label">Add Other Network...</div>
-			</div>
-				
-			<div class="saved-networks-wrap">
-				<h2 class="disclosure on" data-disclosure=".saved-networks">Saved Networks</h2>
-				<div class="saved-networks">
+				<!--<div class="menu-item icon" onclick="network.addOtherNetwork();">
+					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/add.svg); mask-image: url(commom/symbols-black/add.svg);"></div>
+					<div class="menu-label">Add Other Network...</div>
+				</div>-->
+				<div class="button pill grey" onclick="network.addOtherNetwork();">Add Other Network...</div>
 					
+				<div class="saved-networks-wrap">
+					<h2>Saved Networks</h2>
+					<div class="saved-networks">
+						
+					</div>
+				</div>
+				
+				<hr class="setup-hide">
+				
+				<div class="menu-item icon setup-hide" onclick="network.showIPAddressSettings('wifi');">
+					<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/network.svg); mask-image: url(€/symbols-black/network.svg);"></div>
+					<div class="menu-label">IP Address</div>
+					<div class="menu-value wifi-ip">N/A</div>
 				</div>
 			</div>
-			
-			<hr class="setup-hide">
-			
-			<div class="menu-item icon setup-hide" onclick="network.showIPAddressSettings('wifi');">
-				<div class="menu-icon" style="-webkit-mask-image: url(€/symbols-black/network.svg); mask-image: url(€/symbols-black/network.svg);"></div>
-				<div class="menu-label">IP Address</div>
-				<div class="menu-value wifi-ip">N/A</div>
-			</div>
-			
+			<hr class="wifi-off-hr">
 			<div class="beo-dynamic-menu setup-hide wi-fi"></div>
 		</div>
 	</div>
@@ -138,6 +145,15 @@
 		<p>The product may temporarily lose connection to the network.</p>
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="network.applyIPSettings(true);">Apply Settings</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="turn-off-wifi-prompt">
+		<h2>Turn off wireless networking?</h2>
+		<p>After turning off Wi-Fi, the product will only connect to network over Ethernet.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="network.toggleWireless(true);">Turn Off Wireless</div>
 			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>

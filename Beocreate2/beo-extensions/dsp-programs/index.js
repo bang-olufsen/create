@@ -21,6 +21,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 var xmlJS = require('xml-js');
 var execSync = require("child_process").execSync;
 var exec = require("child_process").exec;
+var spawn = require("child_process").spawn;
 var fs = require("fs");
 var _ = require('underscore');
 
@@ -34,6 +35,8 @@ var _ = require('underscore');
 	var dspResponding = false;
 	
 	var dspUpgrade = false;
+	
+	var reconfigurePostSetup = false;
 	
 	var version = require("./package.json").version;
 	
@@ -253,6 +256,19 @@ var _ = require('underscore');
 		}
 	});
 	
+	beo.bus.on('setup', function(event) {
+	
+		if (event.header == "postSetup") {
+			if (reconfigurePostSetup) {
+				reconfigurePostSetup = false;
+				if (debug) console.log("Running HiFiBerry reconfigure script.");
+				configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
+				configureProcess.unref();
+			}
+		}
+				
+	});
+	
 	function getCurrentChecksumAndMetadata(callback, startup) {
 		if (callback) {
 			amplifierMute(true);
@@ -267,16 +283,25 @@ var _ = require('underscore');
 				clearTimeout(checksumTimeout);
 				currentChecksum = checksum;
 				setTimeout(function() {
-					beoDSP.getXML(function(response) {
+					getXML(function(response) {
 						// Reads the current program from the DSP.
 						metadata = (response != null) ? parseDSPMetadata(response).metadata : null;
 						
 						if (metadata) {
 							if (!metadataFromDSP && !startup) {
 								// Metadata was not received from DSP at startup, but is now (possibly because this is a fresh setup). This should be used to trigger reconfiguration of sources in HiFiBerryOS.
-								if (beo.extensions.setup && beo.extensions.setup.restartWhenComplete) {
-									beo.extensions.setup.restartWhenComplete("sound-preset", true);
+								if (beo.setup) {
+									reconfigurePostSetup = true;
+									if (beo.extensions.setup && beo.extensions.setup.requestPostSetup) {
+										beo.extensions.setup.requestPostSetup("dsp-programs");
+									}
+								} else {
+									if (debug) console.log("Running HiFiBerry reconfigure script.");
+									beo.sendToUI("dsp-programs", {header: "configuringSystem"});
+									configureProcess = spawn("/opt/hifiberry/bin/reconfigure-players", {detached: true, stdio: "ignore"});
+									configureProcess.unref();
 								}
+								
 							}
 							metadataFromDSP = true;
 							amplifierMute(false);
@@ -312,6 +337,16 @@ var _ = require('underscore');
 				
 			});
 		}
+	}
+	
+	function getXML(callback) {
+		exec("dsptoolkit get-xml", {maxBuffer: 256000}, function(error, stdout, stderr,) {
+			if (stdout && stdout.length > 10) {
+				if (callback) callback(stdout);
+			} else {
+				if (callback) callback(null); 
+			}
+		});
 	}
 	
 	function parseDSPMetadata(xml, fileref) {
@@ -396,7 +431,7 @@ var _ = require('underscore');
 			version = null;
 		}
 		name = getProgramName(currentMetadata);
-		return {name: name, version: version};
+		return {name: name, version: version, metadataFromDSP: metadataFromDSP};
 	}
 	
 	
@@ -670,16 +705,21 @@ var _ = require('underscore');
 	}
 	
 	function amplifierMute(mute) {
-		if (!settings.noGPIOMute) {
-			if (mute) {
+		
+		if (mute) {
+			if (!settings.noGPIOMute) {
 				execSync("gpio mode 2 out");
 				execSync("gpio write 2 1");
 				if (debug) console.log("Muted amplifier through GPIO.");
-			} else {
+				beo.bus.emit("dsp", {header: "amplifierMuted"});
+			}
+		} else {
+			if (!settings.noGPIOMute) {
 				execSync("gpio write 2 0");
 				execSync("gpio mode 2 in");
 				if (debug) console.log("Unmuted amplifier through GPIO.");
 			}
+			beo.bus.emit("dsp", {header: "amplifierUnmuted"});
 		}
 	}
 	

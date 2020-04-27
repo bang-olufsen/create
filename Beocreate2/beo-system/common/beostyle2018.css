@@ -19,8 +19,8 @@ Z-INDEX
 Keep track of layers in the UI
 
 11 - Notify
-10 - Ask + plexi
-9  - Text input + plexi
+10 - Text input + plexi
+9  - Ask + plexi
 8  - Popup views + plexi
 +
 +
@@ -161,7 +161,7 @@ body {
 }
 
 
-.no-touch .reload-button {
+.reload-button {
 	display: none;
 }
 
@@ -1029,8 +1029,14 @@ nav.full .nav-content:before {
 	display: block;
 }
 
+.menu-item .menu-custom-markup {
+	pointer-events: none;
+}
+
 .menu-item .menu-custom-markup > p {
 	margin-bottom: 0em;
+	user-select: none;
+	-webkit-user-select: none;
 }
 
 .menu-item .menu-custom-markup > p:first-child {
@@ -1335,7 +1341,7 @@ nav.full .nav-content:before {
 	background-color: transparent;
 	border: 1px solid black;
 	transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-	z-index: 2;
+	z-index: 1;
 	position: relative;
 	overflow: hidden;
 	box-sizing: border-box;
@@ -1611,6 +1617,10 @@ a {
 p strong, 
 p .bold {
 	font-weight: 500;
+}
+
+span.light {
+	opacity: 0.5;
 }
 
 p .channel-dot {
@@ -2219,6 +2229,10 @@ footer .button.pill {
 	color: black;
 }
 
+.button.pill.black.disabled {
+	color: gray;
+}
+
 .no-touch .button.pill.black:hover, .button.pill.black:active,
 .no-touch .button.pill.selected:hover, .button.pill.selected:active {
 	background-color: #444;
@@ -2592,6 +2606,7 @@ footer .button.pill {
 	display: flex;
 	align-items: flex-end;
 	margin-bottom: 20px;
+	transition: opacity 0.5s ease;
 }
 
 .slider-wrap .symbol {
@@ -2653,7 +2668,7 @@ footer .button.pill {
 .ui-slider-range {
 	position: absolute;
 	height: 100%;
-	background-color: black;
+	background-color: currentColor;
 }
 
 .ui-slider-range:before,
@@ -2693,9 +2708,9 @@ footer .button.pill {
 	height: 30px;
 	display: block;
 	position: absolute;
-	background-color: black;
+	background-color: currentColor;
 	border-radius: 50%;
-	outline: none !important;
+	outline: none;
 	transition: background-color 0.5s ease, box-shadow 0.5s ease, filter 0.3s ease, left 0.3s ease;
 	box-sizing: border-box;
 	filter: brightness(1);
@@ -2706,6 +2721,7 @@ footer .button.pill {
 	z-index: 1;
 }
 
+
 .no-touch .ui-slider span {
 	width: 24px;
 	height: 24px;
@@ -2713,66 +2729,47 @@ footer .button.pill {
 	margin-left: -11px;
 }
 
+
 .ui-slider.white,
 .dark .ui-slider {
 	background-color: rgba(255,255,255,0.3);
 }
 
-.ui-slider.white span,
-.dark .ui-slider.black span {
-	background-color: white;
+.ui-slider.white,
+.dark .ui-slider.black {
+	color: white;
 }
 
-.ui-slider.white .ui-slider-range,
-.dark .ui-slider.black .ui-slider-range {
-	background-color: white;
+.red.ui-slider {
+	color: var(--carnation);
 }
 
-.red .ui-slider-range,
-.red.ui-slider span {
-	background-color: var(--carnation);
+.green.ui-slider {
+	color: var(--turquoise);
 }
 
-.green .ui-slider-range,
-.green.ui-slider span {
-	background-color: var(--turquoise);
+.blue.ui-slider {
+	color: var(--mariner);
 }
 
-.blue .ui-slider-range,
-.blue.ui-slider span {
-	background-color: var(--mariner);
-}
-
-.yellow .ui-slider-range,
-.yellow.ui-slider span
- {
-	background-color: var(--yellow);
+.yellow.ui-slider {
+	color: var(--yellow);
 }
 
 .ui-slider.disabled span {
 	pointer-events: none;
 }
 
-.ui-slider span:active {
-	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+.no-touch .ui-slider span.ui-state-focus {
+	box-shadow: 0 0px 5px currentColor;
+}
+
+.ui-slider span:active,
+.no-touch .ui-slider span:active {
 	transition: none;
+	box-shadow: 0 3px 8px currentColor;
 }
 
-.red.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--carnation);
-}
-
-.green.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--turquoise);
-}
-
-.blue.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--mariner);
-}
-
-.yellow.ui-slider span:active {
-	box-shadow: 0 3px 8px var(--yellow);
-}
 
 .ui-slider span:first-of-type {
 	text-align: left;
@@ -2784,6 +2781,7 @@ footer .button.pill {
 
 .ui-slider span:after {
 	content: attr(data-content);
+	color: var(--main-font-colour);
 	position: absolute;
 	font-size: 0.8em;
 	font-weight: 500;
@@ -2813,15 +2811,11 @@ footer .button.pill {
 }
 
 .range-from-centre.ui-slider {
-	background-color: black;
-}
-
-.dark .range-from-centre.ui-slider {
-	background-color: white;
+	background-color: currentColor;
 }
 
 .range-from-centre .ui-slider-range {
-	background-color: black;
+	background-color: currentColor;
 	z-index: 1;
 }
 
@@ -2967,7 +2961,7 @@ footer .button.pill {
 }
 
 .plexi#text-input-back-plate {
-	z-index: 9;
+	z-index: 10;
 }
 
 .plexi#open-popup-back-plate {
@@ -2975,7 +2969,7 @@ footer .button.pill {
 }
 
 .plexi#ask-back-plate {
-	z-index: 10;
+	z-index: 9;
 }
 
 .plexi.block {
@@ -3027,7 +3021,7 @@ footer .button.pill {
 	top: 0;
 	right: 0;
 	left: 0;
-	z-index: 10;
+	z-index: 9;
 	display: none;
 	justify-content: center;
 	align-items: center;
@@ -3234,7 +3228,7 @@ input[type=file]#file-input {
 /* @group Text Input */
 
 #text-input {
-	z-index: 9;
+	z-index: 10;
 }
 
 input[type=text]:not(.menu-value), 
@@ -3275,8 +3269,13 @@ input[type=text].menu-value {
 	border: 2px solid var(--ultra-light-grey);
 	background-color: var(--ultra-light-grey);
 	height: 30px;
+	pointer-events: all;
 	transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 	-webkit-appearance: none;
+}
+
+.disabled input[type=text].menu-value {
+	pointer-events: none;
 }
 
 input[type=text].invalid {
@@ -3750,7 +3749,7 @@ h2 .channel-dot {
 	transform: translateX(-50px);
 }
 
-.touch .reload-button {
+.touch .developer .reload-button {
 	display: block;
 	z-index: 11;
 }
@@ -3922,6 +3921,7 @@ header .button.symbol:after {
 	position: absolute;
 	width: 100%;
 	bottom: 0;
+	max-height: 90%;
 }
 
 .popup-content {

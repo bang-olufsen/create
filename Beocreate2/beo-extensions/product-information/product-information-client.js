@@ -9,7 +9,7 @@ var systemID = "";
 var productImage = "";
 var cardType = "";
 var showFullSystemID = false;
-var systemVersion = 0;
+var systemVersion = null;
 var systemVersionReadable = "";
 var hifiberryVersion = null;
 
@@ -69,19 +69,28 @@ $(document).on("product-information", function(event, data) {
 		systemID = data.content.systemID;
 		beo.sendToProductView({header: "systemName", content: {name: systemName}});
 		document.title = systemName;
+		systemUpdated = false;
 		if (data.content.systemVersion) {
+			if (systemVersion != null && systemVersion != data.content.systemVersion) systemUpdated = true;
 			systemVersion = data.content.systemVersion;
 			$(".system-version").text(systemVersion);
 		}
 		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
+			if (cardType != "" && cardType != data.content.systemConfiguration.cardType) systemUpdated = true;
 			cardType = data.content.systemConfiguration.cardType;
 			$(".card-type").text(data.content.systemConfiguration.cardType);
 		}
 		if (data.content.hifiberryVersion) {
+			if (hifiberryVersion != null && hifiberryVersion != data.content.hifiberryVersion) systemUpdated = true;
 			hifiberryVersion = data.content.hifiberryVersion;
 			$(".hifiberry-version").text(hifiberryVersion);
 		}
 		cycleSystemInformation(true);
+		if (systemUpdated) { // If the system version has changed, reload the page.
+			setTimeout(function() {
+				window.location.reload();
+			}, 550);
+		}
 	}
 	
 	if (data.header == "showSystemName") {
@@ -206,16 +215,16 @@ function generateSettingsPreview(identity, presetName) {
 			infoString += beo.translatedString("Manufactured", "manufactured", "product-information") + " " + produced;
 		}
 	}
-	$(".sound-preset-information p.product").text(infoString);
+	$(".speaker-preset-information p.product").text(infoString);
 	
 	if (identity.manufacturer) {
 		if (identity.modelName && identity.modelName != presetName) {
-			$(".sound-preset-information h2").text(identity.manufacturer+" "+identity.modelName).removeClass("hidden-2");
+			$(".speaker-preset-information h2").text(identity.manufacturer+" "+identity.modelName).removeClass("hidden-2");
 		} else {
-			$(".sound-preset-information h2").text(identity.manufacturer).removeClass("hidden-2");
+			$(".speaker-preset-information h2").text(identity.manufacturer).removeClass("hidden-2");
 		}
 	} else {
-		$(".sound-preset-information h2").text("").addClass("hidden-2");
+		$(".speaker-preset-information h2").text("").addClass("hidden-2");
 	}
 	previewString = "";
 	if (identity.manufacturer) previewString += identity.manufacturer+" ";
@@ -225,8 +234,8 @@ function generateSettingsPreview(identity, presetName) {
 }
 
 function clearPresetPreview() {
-	$(".sound-preset-information p.product").text("");
-	$(".sound-preset-information h2").text("").addClass("hidden-2");
+	$(".speaker-preset-information p.product").text("");
+	$(".speaker-preset-information h2").text("").addClass("hidden-2");
 }
 
 
@@ -253,7 +262,49 @@ function shutdownProduct() {
 function jumpToSoundAdjustments() {
 	beo.hidePopupView("customise-product-popup");
 	beo.showExtension("sound");
-	console.log(systemID);
+}
+
+interactPowerOption = null;
+function interactSetup(stage, data) {
+	switch (stage) {
+		case "setup":
+			if (data && data.option) {
+				interactSetup("option", data.option);
+			} else {
+				interactSetup("option", null);
+			}
+			$("#interact-power-setup-save").addClass("disabled");
+			beo.ask("interact-power-setup");
+			break;
+		case "option":
+			interactPowerOption = data;
+			$("#interact-power-setup-options .menu-item").removeClass("checked");
+			if (data) {
+				$('#interact-power-setup-options .menu-item[data-option="'+data+'"]').addClass("checked");
+				$("#interact-power-setup-save").removeClass("disabled");
+			}
+			break;
+		case "save":
+			beo.ask();
+			window.interact.saveAction("product-information", "power", {option: interactPowerOption});
+			break;
+		case "preview":
+			if (data.option == "shutdown") return "Shut down Raspberry Pi";
+			if (data.option == "restart") return "Restart Raspberry Pi";
+			break;
+	}
+}
+
+interactDictionary = {
+	actions: {
+		power: {
+			name: "Power",
+			icon: "common/symbols-black/power.svg",
+			once: true,
+			setup: function(data) { interactSetup("setup", data) }, 
+			preview: function(data) { return interactSetup("preview", data) }
+		}
+	}
 }
 
 return {
@@ -275,7 +326,9 @@ return {
 	restartProduct: restartProduct,
 	shutdownProduct: shutdownProduct,
 	jumpToSoundAdjustments: jumpToSoundAdjustments,
-	cycleSystemInformation: cycleSystemInformation
+	cycleSystemInformation: cycleSystemInformation,
+	interactDictionary: interactDictionary,
+	interactSetup: interactSetup
 };
 
 })();

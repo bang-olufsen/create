@@ -1,7 +1,7 @@
 var setup = (function() {
 
 setupFlow = [];
-restartAfter = false;
+doingPostSetup = false;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -40,14 +40,6 @@ $(document).on("setup", function(event, data) {
 				$("body").css("opacity", "0");
 				setTimeout(function() {
 					window.location.reload();
-					/*beo.showExtension("product-information");
-					delete menuState.setup.submenu;
-					$(".back-button.master").removeClass("visible");
-					$("section.top-level .menu-screen").removeClass("block");
-					$("section.top-level .menu-screen:first-child").addClass("block");
-					$("#setup-finish").removeClass("block").addClass("hidden-right");
-					$("#setup").removeClass("hidden-left").addClass("block");
-					$("body").removeClass("setup").css("opacity", "1");*/
 				}, 550);
 			} else {
 				$("body").removeClass("setup");
@@ -67,6 +59,8 @@ $(document).on("setup", function(event, data) {
 						extensionHistory.push(setupFlow[i].extension);
 					}
 					beo.showExtensionWithHistory(extensionHistory, data.content.selectedExtension);
+				} else {
+					beo.showExtension(data.content.selectedExtension);
 				}
 			}
 			
@@ -77,6 +71,12 @@ $(document).on("setup", function(event, data) {
 				$("#setup .menu-content.first-time").addClass("hidden");
 				$("#setup .menu-content.additional-setup").removeClass("hidden");
 			}
+			
+			if (data.content.postSetup) {
+				$("#setup-finish .post-setup").removeClass("hidden");
+				$("#setup-finish .no-post-setup").addClass("hidden");
+			}
+			
 			$(".setup-list").empty();
 			for (var i = 1; i < setupFlow.length-1; i++) {
 				$(".setup-list").append("<li>"+extensions[setupFlow[i].extension].title+"</li>");
@@ -96,25 +96,24 @@ $(document).on("setup", function(event, data) {
 		}
 	}
 	
-	if (data.header == "restartAfter") {
-		if (data.content.restartAfter) {
-			restartAfter = true;
-			$("#setup-finish .will-restart").removeClass("hidden");
-			$("#setup-finish .no-restart").addClass("hidden");
+	if (data.header == "doingPostSetup") {
+		if (data.content.now) {
+			doingPostSetup = true;
+			beo.notify({title: "Setting up product...", message: "Please wait, this may take some time", icon: "attention", timeout: false});
+			noConnectionNotifications = true;
+			maxConnectionAttempts = 10;
 		} else {
-			restartAfter = false;
-			$("#setup-finish .will-restart").addClass("hidden");
-			$("#setup-finish .no-restart").removeClass("hidden");
+			if (doingPostSetup) {
+				beo.notify();
+				noConnectionNotifications = false;
+				maxConnectionAttempts = 5;
+			}
 		}
 	}
 	
 	if (data.header == "assistantButton") {
 		if (data.content.lastStep) {
-			if (!restartAfter) {
-				$("#assistant-button").text("Finish Setup");
-			} else {
-				$("#assistant-button").text("Finish & Restart");
-			}
+			$("#assistant-button").text("Finish Setup");
 		} else {
 			$("#assistant-button").text("Next Step");
 		}

@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/dsp-programs",
-  "version": "0.6.0",
+  "version": "0.6.2",
   "description": "DSP program manager for Beocreate sound systems",
   "main": "index.js",
   "scripts": {
@@ -23,5 +23,8 @@
   "dependencies": {
     "underscore": "^1.9.1",
     "xml-js": "^1.6.11"
+  },
+  "beocreate": {
+    "requireCardFeatures": ["dsp"]
   }
 }

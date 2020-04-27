@@ -22,6 +22,8 @@ var selectedExtension = null;
 var stateRestored = false;
 var historyConstructed = false;
 var os = null;
+var debug = true;
+var developerMode = false;
 
 beo = (function() {
 
@@ -41,6 +43,7 @@ $( document ).ready(function() {
 		$("body").addClass("standalone");
 	}
 	if ($("body").hasClass("hifiberry-os")) hifiberryOS = true;
+	if (developerMode) $("body").addClass("developer");
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
 	prepareMenus();
@@ -53,6 +56,7 @@ $( document ).ready(function() {
 	$("body").css("opacity", "1");
 	
 	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "common/apple-touch-icon-hifiberry.png");
+	
 	
 	// File selected to upload.
 	$("input[type=file]#file-input").on('change',function(){
@@ -924,7 +928,6 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
-	console.log(menuState, deepMenuState);
 }
 
 
@@ -1598,58 +1601,51 @@ function updateSliderWidths() {
 var currentPopup = null;
 var currentPopupParent = null;
 var popupCancelAction = null;
+var popupCancelTimeout;
 function showPopupView(popupContentID, overridePopup, cancelAction) {
-	if (!currentPopup) {
-		popupCancelAction = null;
-		if (popupContentID) {
-			if (!currentPopup || overridePopup == currentPopup) {
-				if (currentPopup) {
-					$("#open-popup .popup-content").addClass("hidden");
-					currentPopupParent.append($("#open-popup .popup-content").detach());
-				}
-				currentPopup = popupContentID;
-				currentPopupParent = $("#"+popupContentID).parent();
-				$("#open-popup").append($("#"+popupContentID).detach());
-				$("#open-popup .popup-content").removeClass("hidden");
-				
-				// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
-				showPopupViewInternal("#open-popup", "#open-popup-back-plate");
-				if (cancelAction != undefined) popupCancelAction = cancelAction;
+	popupCancelAction = null;
+	if (popupContentID) {
+		if (!currentPopup || overridePopup == currentPopup) {
+			if (currentPopupParent) {
+				clearTimeout(popupCancelTimeout);
+				$("#open-popup .popup-content").addClass("hidden");
+				currentPopupParent.append($("#open-popup .popup-content").detach());
 			}
+			currentPopup = popupContentID;
+			currentPopupParent = $("#"+popupContentID).parent();
+			$("#open-popup").append($("#"+popupContentID).detach());
+			$("#open-popup .popup-content").removeClass("hidden");
+			
+			// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
+			$("#open-popup, #open-popup-back-plate").addClass("block");
+			setTimeout(function() {
+				$("#open-popup, #open-popup-back-plate").addClass("visible");
+				updatePopupHeight();
+			}, 100);
+			if (cancelAction != undefined) popupCancelAction = cancelAction;
 		}
 	}
 }
 
-function hidePopupView(popupContentID) {
-	hidePopupViewInternal("#open-popup", "#open-popup-back-plate", true);
-}
 
-function showPopupViewInternal(view, backplate) {
-	$(view+", "+backplate).addClass("block");
-	setTimeout(function() {
-		$(view+", "+backplate).addClass("visible");
-		updatePopupHeight();
-	}, 100);
-}
-
-function hidePopupViewInternal(view, backplate, universalOverride) {
-	if (view == "#open-popup" && universalOverride) {
-		currentPopup = null;
+function hidePopupView(view = null, universalOverride = false) {
+	if (currentPopupParent) {
+		if (view == currentPopup || universalOverride) {
+			currentPopup = null;
+			$("#open-popup, #open-popup-back-plate").removeClass("visible");
+			popupCancelTimeout = setTimeout(function() {
+				$("#open-popup .popup-content").addClass("hidden");
+				currentPopupParent.append($("#open-popup .popup-content").detach());
+				$("#open-popup, #open-popup-back-plate").removeClass("block");
+				currentPopupParent = null;
+			}, 500);
+		}
 	}
-	$(view+", "+backplate).removeClass("visible");
-	setTimeout(function() {
-		$("#open-popup .popup-content").addClass("hidden");
-		currentPopupParent.append($("#open-popup .popup-content").detach());
-		$(view+", "+backplate).removeClass("block");
-	}, 500);
 }
 
-function popupBackplateClick(view, backplate, universalOverride) {
-	if (popupCancelAction != null && view == "#open-popup") {
-		popupCancelAction();
-	} else {
-		hidePopupViewInternal(view, backplate, universalOverride);
-	}
+function popupBackplateClick() {
+	hidePopupView(null, true);
+	if (popupCancelAction) popupCancelAction();
 }
 
 function updatePopupHeight() {

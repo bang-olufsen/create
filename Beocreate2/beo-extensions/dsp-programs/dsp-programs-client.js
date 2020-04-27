@@ -232,6 +232,16 @@ $(document).on("dsp-programs", function(event, data) {
 			}
 		}
 	}
+	
+	if (data.header == "configuringSystem") {
+		beo.notify({title: "Setting up...", message: "Please wait...", icon: "attention", timeout: false});
+		noConnectionNotifications = true;
+		maxConnectionAttempts = 10;
+	}
+	
+	if (data.header == "systemConfigured") {
+		beo.notify(false);
+	}
 
 });
 

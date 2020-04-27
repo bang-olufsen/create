@@ -71,24 +71,28 @@
 			"level": 100,
 			"enabled": true,
 			"delay": 0,
+			"role": "mono",
 			"invert": false
 		},
 		"b": {
 			"level": 100,
 			"enabled": true,
 			"delay": 0,
+			"role": "mono",
 			"invert": false
 		},
 		"c": {
 			"level": 100,
 			"enabled": true,
 			"delay": 0,
+			"role": "mono",
 			"invert": false
 		},
 		"d": {
 			"level": 100,
 			"enabled": true,
 			"delay": 0,
+			"role": "mono",
 			"invert": false
 		}
 	}

@@ -1,4 +1,4 @@
-<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css" data-namespace="equaliser">
+<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-stylesheet="equaliser.css" data-namespace="equaliser">
 
 
 	
@@ -104,11 +104,11 @@
 				
 				<div class="menu-icon right button symbol" id="equaliser-channel-settings-button" style="-webkit-mask-image: url(extensions/channels/symbols-black/channels.svg); mask-image: url(extensions/channels/symbols-black/channels.svg);" onclick="equaliser.showChannelSettings();" title="Adjust channel level, role and more"></div>
 				
-				<div class="menu-icon right button symbol" id="equaliser-compare-button" style="-webkit-mask-image: url(€/symbols-black/ear.svg); mask-image: url(€/symbols-black/ear.svg);" onmousedown="equaliser.compare(true);" onmouseup="equaliser.compare(false);" ontouchstart="equaliser.compare(true, true);" ontouchend="equaliser.compare(false, true);" title="Hold to compare with all filters off"></div>
+				<div class="menu-icon right button symbol" id="equaliser-compare-button" style="-webkit-mask-image: url(€/symbols-black/ear.svg); mask-image: url(€/symbols-black/ear.svg);" onmousedown="equaliser.compare(true);" onmouseup="equaliser.compare(false);" ontouchstart="equaliser.compare(true, true);" ontouchend="equaliser.compare(false, true);" title="Press and hold to compare with all filters off"></div>
 				
 				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="beo.ask('equaliser-options-prompt');" title="More filter options"></div>
 			</div>
-			<hr class="no-margin-top">
+			<!--<hr class="no-margin-top">-->
 			<div class="collection-row-scroller" id="equaliser-collection-scroller">
 				<div class="collection-row-wrap">
 					<div id="equaliser-filters" class="collection-row-view">
@@ -120,7 +120,7 @@
 			</div>
 			
 			<h2 id="equaliser-filter-name" class="common-filter-controls hidden">High-Pass</h2>
-			
+			<p id="filter-from-room-compensation" class="hidden">Part of the selected room compensation preset.</p>
 			<div id="parametric-controls" class="filter-controls">
 				<div class="control-squares">
 					<div class="control-square horizontal equaliser-fc-control" data-label="Frequency">

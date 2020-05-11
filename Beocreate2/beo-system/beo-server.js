@@ -451,7 +451,7 @@ if (systemConfiguration.runAtStart) {
 console.log("System startup.");
 if (!quietMode) {
 	// Play startup sound:
-	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" || forceBeosounds) {
+	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" && forceBeosounds) {
 		playProductSound("startup");
 	}
 }

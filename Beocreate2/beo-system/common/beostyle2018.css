@@ -2957,7 +2957,8 @@ footer .button.pill {
 	right: 0;
 	display: none;
 	transition: -webkit-backdrop-filter 0.5s ease, background-color 0.5s ease;
-	z-index: 6;
+	/*-webkit-backdrop-filter: blur(0);*/
+	z-index: 7;
 }
 
 .plexi#text-input-back-plate {

@@ -3895,14 +3895,14 @@ header.transparent h1 {
 
 .large-title header.compact .back-button, 
 .setup .setup-large-title header.compact .back-button, 
-.menu-screen:not(.large-title, .setup-large-title) header .back-button, 
+.menu-screen:not(.large-title):not(.setup-large-title) header .back-button, 
 body:not(.setup) .menu-screen.setup-large-title header .back-button {
 	opacity: 1;
 }
 
 .large-title header.compact .back-button:after, 
 .setup .setup-large-title header.compact .back-button:after, 
-.menu-screen:not(.large-title, .setup-large-title) header .back-button:not(.no-collapse):after, 
+.menu-screen:not(.large-title):not(.setup-large-title) header .back-button:not(.no-collapse):after, 
 body:not(.setup) .menu-screen.setup-large-title header .back-button:after {
 	opacity: 0;
 	transform: translateX(-20px);
@@ -4017,10 +4017,13 @@ nav.bar {
 	min-height: 100%;
 }
 
-section header:not(.always-top) {
-	/*background-color: #fcfcfc;*/
+section header {
 	background-color: var(--ultra-light-grey);
 	color: currentColor;
+}
+
+section header:not(.always-top) {
+	/*background-color: #fcfcfc;*/
 	display: flex;
 	align-items: flex-start;
 	flex-direction: column;
@@ -4039,7 +4042,7 @@ section header:not(.always-top):after {
 	box-shadow: 1px 0 var(--menu-line);
 }
 
-.dark section header:not(.always-top) {
+.dark section header {
 	background-color: #2a2a2a;
 }
 
@@ -4357,6 +4360,52 @@ div:not(#text-input) .popup-content {
 	width: 100%;
 	margin-bottom: 5%;
 	margin-top: 0;
+}
+	
+}
+
+@media only screen and (min-width: 900px) {
+
+
+.menu-screen .menu-content, 
+.popup-view:not(#text-input) .menu-content {
+	padding-top: 30px;
+	padding-bottom: 30px;
+	padding-left: 20%;
+	padding-right: 20%;
+}
+
+.tabs:not(.no-top-margin) {
+	margin-top: 40px;
+}
+
+.menu-content:not(.no-padding-top):before,
+.ask-menu.menu-content.no-padding-top:before {
+	margin-bottom: 0;
+}
+
+
+.menu-spacer.top {
+	display: none;
+}
+
+.as-sidebar, 
+.menu-screen header:not(.always-top) {
+	width: 330px;
+}
+
+.menu-screen header:not(.always-top) {
+	padding: 45px 45px 45px;
+}
+
+.menu-screen:not(.full-width),
+.menu-content-wrap.no-full-width {
+	padding-left: 330px;
+}
+
+
+.setup .setup-navigation {
+	left: 330px;
 }
 	
 }

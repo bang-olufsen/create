@@ -107,20 +107,21 @@ function showActiveSources() {
 	if (currentSource != null) {
 		sourceIcon = null;
 		sourceName = null;
-		if (allSources[currentSource].aliasInNowPlaying) {
-			sourceName = allSources[currentSource].aliasInNowPlaying;
-		} else if (allSources[currentSource].alias) {
-			if (allSources[currentSource].alias.icon) {
-				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
+		cSource = (allSources[currentSource].childSource) ? allSources[currentSource].childSource : currentSource;
+		if (allSources[cSource].aliasInNowPlaying) {
+			sourceName = allSources[cSource].aliasInNowPlaying;
+		} else if (allSources[cSource].alias) {
+			if (allSources[cSource].alias.icon) {
+				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[cSource].alias.icon;
 			}
-			sourceName = allSources[currentSource].alias.name;
+			sourceName = allSources[cSource].alias.name;
 		}
 		if (!sourceIcon && 
-			extensions[currentSource].icon && 
-			extensions[currentSource].assetPath) {
-				sourceIcon = extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon;
+			extensions[cSource].icon && 
+			extensions[cSource].assetPath) {
+				sourceIcon = extensions[cSource].assetPath+"/symbols-black/"+extensions[cSource].icon;
 		}
-		if (!sourceName) sourceName = extensions[currentSource].title;
+		if (!sourceName) sourceName = extensions[cSource].title;
 		if (sourceIcon) {
 			beo.setSymbol(".active-source-icon", sourceIcon);
 			$(".active-source-icon").removeClass("hidden");
@@ -128,7 +129,7 @@ function showActiveSources() {
 			$(".active-source-icon").addClass("hidden");
 		}
 		$(".active-source-name").text(sourceName);
-		$('.source-menu-item[data-extension-id="'+currentSource+'"]').removeClass("hide-icon-right");
+		$('.source-menu-item[data-extension-id="'+cSource+'"]').removeClass("hide-icon-right");
 		setTimeout(function() {
 			$(".active-source").addClass("visible");
 		}, 50);
@@ -140,20 +141,21 @@ function showActiveSources() {
 	if (focusedSource != null) {
 		sourceIcon = null;
 		sourceName = null;
-		if (allSources[focusedSource].aliasInNowPlaying) {
-			sourceName = allSources[focusedSource].aliasInNowPlaying;
-		} else if (allSources[focusedSource].alias) {
-			if (allSources[focusedSource].alias.icon) {
-				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[focusedSource].alias.icon;
+		fSource = (allSources[focusedSource].childSource) ? allSources[focusedSource].childSource : focusedSource;
+		if (allSources[fSource].aliasInNowPlaying) {
+			sourceName = allSources[fSource].aliasInNowPlaying;
+		} else if (allSources[fSource].alias) {
+			if (allSources[fSource].alias.icon) {
+				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[fSource].alias.icon;
 			}
-			sourceName = allSources[focusedSource].alias.name;
+			sourceName = allSources[fSource].alias.name;
 		}
 		if (!sourceIcon && 
-			extensions[focusedSource].icon && 
-			extensions[focusedSource].assetPath) {
-				sourceIcon = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
+			extensions[fSource].icon && 
+			extensions[fSource].assetPath) {
+				sourceIcon = extensions[fSource].assetPath+"/symbols-black/"+extensions[fSource].icon;
 		}
-		if (!sourceName) sourceName = extensions[focusedSource].title;
+		if (!sourceName) sourceName = extensions[fSource].title;
 		if (sourceIcon) {
 			beo.setSymbol(".focused-source-icon", sourceIcon);
 			$(".focused-source-icon").removeClass("hidden");
@@ -238,6 +240,7 @@ function toggleArrange() {
 								elements[e].style.transform = null;
 								elements[e].style.transition = null;
 							}
+							console.log(sourceOrder);
 							updateSourceOrder(true);
 						}, 300);
 					}
@@ -288,6 +291,13 @@ function updateAliases() {
 
 function showStartableSources() {
 	$(".startable-sources").empty();
+	for (source in allSources) {
+		if (allSources[source].parentSource) {
+			if (allSources[allSources[source].parentSource].startable) {
+				allSources[source].startable = true;
+			}
+		}
+	}
 	for (s in sourceOrder) {
 		source = sourceOrder[s];
 		if (allSources[source].startable) {

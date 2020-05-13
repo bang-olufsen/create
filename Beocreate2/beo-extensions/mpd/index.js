@@ -18,114 +18,150 @@ SOFTWARE.*/
 // MPD CONTROL FOR BEOCREATE
 
 var exec = require("child_process").exec;
+var mpdAPI = require("mpd-api");
 
-	var debug = beo.debug;
+var debug = beo.debug;
+
+var version = require("./package.json").version;
+
+
+var sources = null;
+
+var mpdEnabled = false;
+
+var mpdConfig = {
+	host: 'localhost',
+	port: 6600
+}
+var client;
+
+beo.bus.on('general', function(event) {
 	
-	var version = require("./package.json").version;
-	
-	
-	var sources = null;
-	
-	var mpdEnabled = false;
-	
-	beo.bus.on('general', function(event) {
+	if (event.header == "startup") {
 		
-		if (event.header == "startup") {
-			
-			if (beo.extensions.sources &&
-				beo.extensions.sources.setSourceOptions &&
-				beo.extensions.sources.sourceDeactivated) {
-				sources = beo.extensions.sources;
-			}
-			
-			if (sources) {
-				getMPDStatus(function(enabled) {
-					/*sources.setSourceOptions("mpd", {
-						enabled: enabled,
-						transportControls: true,
-						usesHifiberryControl: true
-					});*/
-					sources.setSourceOptions("radio", {
-						enabled: enabled,
-						aka: ["mpd"],
-						transportControls: ["play", "stop"],
-						allowChangingTransportControls: false,
-						usesHifiberryControl: true
+		if (beo.extensions.sources &&
+			beo.extensions.sources.setSourceOptions &&
+			beo.extensions.sources.sourceDeactivated) {
+			sources = beo.extensions.sources;
+		}
+		
+		if (sources) {
+			getMPDStatus(function(enabled) {
+				sources.setSourceOptions("mpd", {
+					enabled: enabled,
+					usesHifiberryControl: true,
+					transportControls: true,
+					backgroundService: true,
+					childSources: ["radio", "music"],
+					determineChildSource: determineChildSource
+				});
+				
+				sources.setSourceOptions("radio", {
+					enabled: enabled,
+					transportControls: ["play", "stop"],
+					allowChangingTransportControls: false
+				});
+				
+				if (mpdEnabled) {
+					mpdAPI.connect(mpdConfig)
+					.then(res => {
+						client = res;
+						console.log("Client connected.");
+					})
+					.catch(error => {
+						console.error(error);
 					});
-				});
-			}
-			
-			
+				}
+			});
 		}
 		
-		if (event.header == "activatedExtension") {
-			if (event.content.extension == "mpd") {
-				beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
-			}
+		
+	}
+	
+	if (event.header == "activatedExtension") {
+		if (event.content.extension == "mpd") {
+			beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
+		}
+	}
+});
+
+beo.bus.on('mpd', function(event) {
+	
+	if (event.header == "mpdEnabled") {
+		
+		if (event.content.enabled != undefined) {
+			setMPDStatus(event.content.enabled, function(newStatus, error) {
+				beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: newStatus}});
+				if (sources) {
+					//sources.setSourceOptions("mpd", {enabled: newStatus});
+					sources.setSourceOptions("radio", {enabled: newStatus});
+				}
+				if (newStatus == false) {
+					//if (sources) sources.sourceDeactivated("mpd");
+					if (sources) sources.sourceDeactivated("radio");
+				}
+				if (error) {
+					beo.bus.emit("ui", {target: "mpd", header: "errorTogglingMPD", content: {}});
+				}
+			});
+		}
+	
+	}
+});
+
+
+function getMPDStatus(callback) {
+	exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
+		if (code == 0) {
+			mpdEnabled = true;
+			callback(true);
+		} else {
+			mpdEnabled = false;
+			callback(false);
 		}
 	});
-	
-	beo.bus.on('mpd', function(event) {
-		
-		if (event.header == "mpdEnabled") {
-			
-			if (event.content.enabled != undefined) {
-				setMPDStatus(event.content.enabled, function(newStatus, error) {
-					beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: newStatus}});
-					if (sources) {
-						//sources.setSourceOptions("mpd", {enabled: newStatus});
-						sources.setSourceOptions("radio", {enabled: newStatus});
-					}
-					if (newStatus == false) {
-						//if (sources) sources.sourceDeactivated("mpd");
-						if (sources) sources.sourceDeactivated("radio");
-					}
-					if (error) {
-						beo.bus.emit("ui", {target: "mpd", header: "errorTogglingMPD", content: {}});
-					}
-				});
-			}
-		
-		}
-	});
-	
-	
-	function getMPDStatus(callback) {
-		exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
+}
+
+function setMPDStatus(enabled, callback) {
+	if (enabled) {
+		exec("systemctl enable --now mpd.service mpd-mpris.service ympd.service").on('exit', function(code) {
 			if (code == 0) {
 				mpdEnabled = true;
+				if (debug) console.log("MPD enabled.");
 				callback(true);
 			} else {
 				mpdEnabled = false;
+				callback(false, true);
+			}
+		});
+	} else {
+		exec("systemctl disable --now mpd.service mpd-mpris.service ympd.service").on('exit', function(code) {
+			mpdEnabled = false;
+			if (code == 0) {
 				callback(false);
+				if (debug) console.log("MPD disabled.");
+			} else {
+				callback(false, true);
 			}
 		});
 	}
-	
-	function setMPDStatus(enabled, callback) {
-		if (enabled) {
-			exec("systemctl enable --now mpd.service mpd-mpris.service ympd.service").on('exit', function(code) {
-				if (code == 0) {
-					mpdEnabled = true;
-					if (debug) console.log("MPD enabled.");
-					callback(true);
-				} else {
-					mpdEnabled = false;
-					callback(false, true);
-				}
-			});
+}
+
+function determineChildSource(data) {
+	if (data && data.streamUrl) {
+		if (data.streamUrl.indexOf("http") == 0) {
+			return "radio";
 		} else {
-			exec("systemctl disable --now mpd.service mpd-mpris.service ympd.service").on('exit', function(code) {
-				mpdEnabled = false;
-				if (code == 0) {
-					callback(false);
-					if (debug) console.log("MPD disabled.");
-				} else {
-					callback(false, true);
-				}
-			});
+			return "music";
 		}
+	} else {
+		return null;
 	}
+}
+
+
+
+
 	
 module.exports = {
 	version: version,

@@ -128,6 +128,7 @@ var exec = require("child_process").exec;
 			case "startSource":
 				if (event.content.sourceID) {
 					extension = event.content.sourceID;
+					if (allSources[extension].parentSource) extension = allSources[extension].parentSource;
 					if (allSources[extension].startable) {
 						beo.sendToUI("sources", {header: "starting", content: {extension: extension}});
 						if (allSources[extension].usesHifiberryControl) {
@@ -247,21 +248,6 @@ var exec = require("child_process").exec;
 		}
 	}
 	
-	sampleData = {
-		"artist": "Nimanty & Solarsoul", 
-		"title": "The Starry Sky (Original Space Ambient Mix)", 
-		"albumArtist": "None", 
-		"albumTitle": "The Starry Sky (Original Space Ambient Mix) - EP", 
-		"artUrl": "artwork/cover-96fcd96903c89e62dc6e68d41eace55f.jpg", 
-		"discNumber": null, 
-		"tracknumber": null, 
-		"playerName": "ShairportSync", 
-		"playerState": "playing", 
-		"playCount": null, 
-		"mbid": null, 
-		"loved": null, 
-		"wiki": null
-	};
 	
 	
 	audioControlLastUpdated = null;
@@ -269,59 +255,59 @@ var exec = require("child_process").exec;
 	
 	function processAudioControlStatus(overview) {
 		if (overview.players && overview.last_updated) {
-			//if (overview.last_updated != audioControlLastUdpated) {
-				audioControlLastUpdated = overview.last_updated;
-				for (var i = 0; i < overview.players.length; i++) {
-					// Go through each source, see their status and update accordingly.
-					extension = matchAudioControlSourceToExtension(overview.players[i].name);
-					if (extension) {
-						if (overview.players[i].state == "unknown") overview.players[i].state = "stopped";
+			audioControlLastUpdated = overview.last_updated;
+			for (var i = 0; i < overview.players.length; i++) {
+				// Go through each source, see their status and update accordingly.
+				[extension, childSource] = matchAudioControlSourceToExtension(overview.players[i].name, overview.players[i]);
+				if (extension) {
+					allSources[extension].childSource = childSource;
+					if (childSource && allSources[childSource]) allSources[childSource].parentSource = extension;
+					if (overview.players[i].state == "unknown") overview.players[i].state = "stopped";
+					
+					if (allSources[extension].playerState != overview.players[i].state) {
+						allSources[extension].playerState = overview.players[i].state;
 						
-						if (allSources[extension].playerState != overview.players[i].state) {
-							allSources[extension].playerState = overview.players[i].state;
-							
-							if (overview.players[i].state == "playing") {
-								sourceActivated(extension);
-							} else {
-								if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
-							}
-							
-							beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
-							
-							
-							if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
-								// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
-								clearTimeout(sourceCheckTimeout);
-								sourceCheckTimeout = setTimeout(function() {
-									audioControlGet("status");
-								}, 15000);
-							}
+						if (overview.players[i].state == "playing") {
+							sourceActivated(extension);
+						} else {
+							if (allSources[extension].active) sourceDeactivated(extension, overview.players[i].state);
 						}
 						
-						if (overview.players[i].supported_commands) {
-							if (allSources[extension].allowChangingTransportControls) {
-								allSources[extension].transportControls = overview.players[i].supported_commands;
-							}
-							if (overview.players[i].supported_commands.indexOf("play") != -1) {
-								allSources[extension].startable = true;
-							} else {
-								allSources[extension].startable = false;
-							}
+						beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
+						
+						
+						if (overview.players[i].state != "paused" && extension != currentAudioControlSource) {
+							// This is not the current AudioControl source but because it is paused, check again after 15 seconds to see if it has changed.
+							clearTimeout(sourceCheckTimeout);
+							sourceCheckTimeout = setTimeout(function() {
+								audioControlGet("status");
+							}, 15000);
+						}
+					}
+					
+					if (overview.players[i].supported_commands) {
+						if (allSources[extension].allowChangingTransportControls) {
+							allSources[extension].transportControls = overview.players[i].supported_commands;
+						}
+						if (overview.players[i].supported_commands.indexOf("play") != -1) {
+							allSources[extension].startable = true;
 						} else {
 							allSources[extension].startable = false;
 						}
-						
-						if (extension == "bluetooth") {
-							allSources[extension].aliasInNowPlaying = overview.players[i].name;
-						}
-						
-						if (!allSources[extension].metadata.title) {
-							if (overview.players[i].title) allSources[extension].metadata.title = overview.players[i].title;
-							if (overview.players[i].artist) allSources[extension].metadata.artist = overview.players[i].artist;
-						}
+					} else {
+						allSources[extension].startable = false;
+					}
+					
+					if (extension == "bluetooth") {
+						allSources[extension].aliasInNowPlaying = overview.players[i].name;
+					}
+					
+					if (!allSources[extension].metadata.title) {
+						if (overview.players[i].title) allSources[extension].metadata.title = overview.players[i].title;
+						if (overview.players[i].artist) allSources[extension].metadata.artist = overview.players[i].artist;
 					}
 				}
-			//}
+			}
 		}
 	}
 	
@@ -329,11 +315,24 @@ var exec = require("child_process").exec;
 	
 	function processAudioControlMetadata(metadata) {
 
-		extension = matchAudioControlSourceToExtension(metadata.playerName);
+		[extension, childSource] = matchAudioControlSourceToExtension(metadata.playerName, metadata);
 		if (extension) {
+			if (allSources[extension].childSource && allSources[extension].childSource != childSource) {
+				sourceDeactivated(allSources[extension].childSource, "stopped");
+				allSources[allSources[extension].childSource].parentSource = null;
+			}
+			allSources[extension].childSource = childSource;
+			if (childSource && allSources[childSource]) allSources[childSource].parentSource = extension;
 			if (metadata.playerState == "unknown") metadata.playerState = "stopped";
 			
-			if (!focusedSource) focusedSource = extension;
+			if (!focusedSource) {
+				if (childSource && allSources[childSource]) {
+					focusedSource = childSource;
+				} else if (!allSources[extension].backgroundService) {
+					focusedSource = extension;
+				}
+			}
+			
 			if (extension == "bluetooth") {
 				allSources[extension].aliasInNowPlaying = metadata.playerName;
 			}
@@ -360,16 +359,27 @@ var exec = require("child_process").exec;
 				if (allSources[extension].canLove != metadata.loveSupported) {
 					setSourceOptions(extension, {canLove: metadata.loveSupported});
 				}
+				
+				if (childSource && allSources[childSource]) {
+					allSources[childSource].metadata = JSON.parse(JSON.stringify(allSources[extension].metadata));
+					if (allSources[childSource].canLove != metadata.loveSupported) {
+						setSourceOptions(childSource, {canLove: metadata.loveSupported});
+					}
+				}
 			}
 			
-			if (metadata.playerState != allSources[extension].playerState) {
+			if (metadata.playerState != allSources[extension].playerState ||
+				(childSource && allSources[childSource] && allSources[childSource].playerState != metadata.playerState)) {
 				// Player state updated _for this source_.
 				allSources[extension].playerState = metadata.playerState;
+				if (childSource && allSources[childSource]) {
+					allSources[childSource].playerState = metadata.playerState;
+				}
 
 				if (metadata.playerState == "playing") {
-					sourceActivated(extension);
+					sourceActivated((childSource && allSources[childSource]) ? childSource : extension);
 				} else {
-					sourceDeactivated(extension);
+					sourceDeactivated((childSource && allSources[childSource]) ? childSource : extension);
 				}
 				
 				//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
@@ -378,7 +388,7 @@ var exec = require("child_process").exec;
 			
 			if (metadataChanged && !playerStateChanged) { // If player state has changed, this info will be sent by the function that keeps track of active sources. If only metadata changes, send it here.
 				beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
-				beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+				beo.sendToUI("sources", "sources", {sources: allSources, currentSource: currentSource, focusedSource: focusedSource});
 			}
 			
 			if (extension != currentAudioControlSource) {
@@ -391,46 +401,60 @@ var exec = require("child_process").exec;
 		}
 	}
 	
-	function matchAudioControlSourceToExtension(acSource) {
+	function matchAudioControlSourceToExtension(acSource, data = null) {
 		// Determine which extension this belongs to.
 		extension = null;
+		childSource = null;
 		if (acSource) {
 			if (allSources[acSource.toLowerCase()]) {
 				extension = acSource.toLowerCase();
+				if (allSources[extension].determineChildSource) {
+					childSource = allSources[extension].determineChildSource(data);
+				}
 			} else {
 				for (source in allSources) {
 					if (allSources[source].aka && allSources[source].aka.indexOf(acSource) != -1) {
 						extension = source;
+						if (allSources[extension].determineChildSource) {
+							childSource = allSources[extension].determineChildSource(data);
+						}
 						break;
 					}
 				}
 				if (!extension) extension = "bluetooth"; // Bluetooth sources can have various names.
 			}
 		}
-		return extension;
+		return [extension, childSource];
 	}
 	
 	
 	// TRANSPORT
 	
 	function transport(action, overrideHifiberry = false) {
-		if (focusedSource && allSources[focusedSource].transportControls) {
-			if (allSources[focusedSource].usesHifiberryControl && !overrideHifiberry) {
-				audioControl(action, null, function(success) {
-					if (!success) {
-						transport(action, true);
-					}
-				});
+		if (focusedSource) {
+			if (allSources[focusedSource].parentSource) {
+				controlSource = allSources[focusedSource].parentSource;
 			} else {
-				switch (action) {
-					case "playPause":
-					case "play":
-					case "pause":
-					case "stop":
-					case "next":
-					case "previous":
-						beo.bus.emit(focusedSource, {header: "transport", content: {action: action}});
-						break;
+				controlSource = focusedSource;
+			}
+			if (allSources[controlSource].transportControls) {
+				if (allSources[controlSource].usesHifiberryControl && !overrideHifiberry) {
+					audioControl(action, null, function(success) {
+						if (!success) {
+							transport(action, true);
+						}
+					});
+				} else {
+					switch (action) {
+						case "playPause":
+						case "play":
+						case "pause":
+						case "stop":
+						case "next":
+						case "previous":
+							beo.bus.emit(controlSource, {header: "transport", content: {action: action}});
+							break;
+					}
 				}
 			}
 		}
@@ -441,7 +465,9 @@ var exec = require("child_process").exec;
 	
 	
 	function sourceActivated(extension, playerState) {
-		if (allSources[extension] && allSources[extension].enabled) {
+		if (allSources[extension] && 
+			allSources[extension].enabled && 
+			!allSources[extension].backgroundService) {
 			if (allSources[extension].focusIndex)  {
 				// Source reactivates, recalculate activation indexes.
 				reactivatedSourceFocusIndex = allSources[extension].focusIndex;
@@ -477,13 +503,15 @@ var exec = require("child_process").exec;
 			}
 			if (playerState) {
 				allSources[extension].playerState = playerState;
-				//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: playerState, extension: extension}});
 			}
 			
 			fromStandby = (currentSource == null);
 			
 			determineCurrentSource();
-			if (debug) console.log("Source '"+extension+"' has activated (index "+focusIndex+").");
+			if (debug) {
+				childMsg = (allSources[extension].parentSource) ? " (as child source of '"+allSources[extension].parentSource+"')" : "";
+				console.log("Source '"+extension+"' has activated"+childMsg+".");
+			}
 			
 			if (beo.extensions.interact) beo.extensions.interact.runTrigger("sources", "sourceActivated", {source: extension, fromStandby: fromStandby});
 	
@@ -588,7 +616,10 @@ var exec = require("child_process").exec;
 					startable: false,
 					metadata: {},
 					alias: null,
-					aliasInNowPlaying: null
+					aliasInNowPlaying: null,
+					determineChildSource: false,
+					childSources: [],
+					backgroundService: false
 				};
 				if (debug) console.log("Registering source '"+extension+"'...");
 			}
@@ -609,7 +640,10 @@ var exec = require("child_process").exec;
 			if (options.aka) allSources[extension].aka = options.aka; // Other variations of the name the source might be called (by HiFiBerry Audiocontrol).
 			if (options.canLove) allSources[extension].canLove = options.canLove; // Display or don't display the "love" button.
 			if (options.startable) allSources[extension].startable = options.startable; // Can this source be started from Beocreate 2?
-			if (options.playerState) allSources[extension].playerState = options.playerState;
+			if (options.playerState) allSources[extension].playerState = options.playerState; // Player state.
+			if (options.determineChildSource) allSources[extension].determineChildSource = options.determineChildSource; // Custom function to determine the current source from Audiocontrol metadata. Must return name of the source extension.
+			if (options.childSources) allSources[extension].childSources = options.childSources; // Child sources this source can pose as.
+			if (options.backgroundService) allSources[extension].backgroundService = options.backgroundService; // Sources marked as background services won't be included in source order.
 			if (options.alias != undefined) { // An alias is an alternate name and icon for the source in Sources and Now Playing. Within the source's own menu the original name is shown for clarity. Alias is read from settings further below.
 				if (options.alias) {
 					allSources[extension].alias = {name: options.alias.name, icon: options.alias.icon};
@@ -653,7 +687,9 @@ var exec = require("child_process").exec;
 					orderChanged = false;
 					// Check if any sources have been removed from the system.
 					for (o in settings.sourceOrder) {
-						if (!allSources[settings.sourceOrder[o]] || !beo.extensions[settings.sourceOrder[o]]) {
+						if (!allSources[settings.sourceOrder[o]] ||
+						 	!beo.extensions[settings.sourceOrder[o]] ||
+						 	allSources[settings.sourceOrder[o]].backgroundService) {
 							// Remove this source from source order.
 							delete settings.sourceOrder[o];
 							orderChanged = true;
@@ -666,7 +702,7 @@ var exec = require("child_process").exec;
 					}
 					// Check if any new sources exist in the system.
 					for (source in allSources) {
-						if (settings.sourceOrder.indexOf(source) == -1) {
+						if (settings.sourceOrder.indexOf(source) == -1 && !allSources[source].backgroundService) {
 							// This source doesn't exist. Add it to the mix alphabetically (by display name), preserving user order.
 							titles = [];
 							for (o in settings.sourceOrder) {

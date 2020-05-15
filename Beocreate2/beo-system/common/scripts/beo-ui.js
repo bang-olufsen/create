@@ -178,7 +178,7 @@ document.onkeydown = function(evt) {
 };
 
 
-var interfaceMode = 1; // 1 = normal, 2 = compact
+var interfaceMode = 2; // 1 = normal, 2 = compact
 
 function prepareMenus() {
 	// Find every top level menu
@@ -388,13 +388,25 @@ function updateInterfaceMode() {
 	breakpoint = 620;
 	
 	if (windowWidth < breakpoint && interfaceMode == 1) {
-		// Change to compact mode
-		
+		// Change to compact mode.
+		// Move main tabs to the "sidebar" to the top.
+		$('.tabs-container.main').each(function(index){
+			if ($(this).parent().is("header")) {
+				$(this).parents(".menu-screen").find(".tab-placeholder").replaceWith($(this).detach());
+			}
+		});
 		interfaceMode = 2;
 	} else if (windowWidth >= breakpoint && interfaceMode == 2) {
-		// Change to normal mode
+		// Change to normal mode.
+		// Move main tabs from the top to the "sidebar".
 		if (mainMenuVisible) toggleMainMenu();
 		interfaceMode = 1;
+		$('.tabs-container.main').each(function(index){
+			if (!$(this).parent().is("header")) {
+				$(this).after('<div class="tab-placeholder"></div>');
+				$(this).parents(".menu-screen").find("header h1").first().after($(this).detach());
+			}
+		});
 	}
 }
 

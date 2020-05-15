@@ -678,14 +678,22 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 		// First check if this extension is included or excluded with this hardware.
 		
 		menuParts = menu.split("\">\n");
-		headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
-		menuParts.shift();
+		if (menuParts[0].indexOf("menu-screen") != -1) {
+			headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
+			preHead = "";
+			menuParts.shift();
+		} else {
+			headItems = menuParts[1].substring(5).split(/"\s|"\n/g);
+			preHead = menuParts[0]+"\">";
+			menuParts.splice(0, 2);
+		}
 		body = menuParts.join("\">\n");
 		head = {};
 		for (l in headItems) {
 			lineItems = headItems[l].split("=\"");
-			head[lineItems[0]] = lineItems[1];
+			head[lineItems[0].trim()] = lineItems[1];
 		};
+		
 		
 		shouldIncludeExtension = true;
 		
@@ -793,7 +801,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 				headString += " "+headItem+'="'+head[headItem]+'"';
 			}
 			headString += ">";
-			menu = ([headString, body]).join("\n");
+			menu = ([preHead, headString, body]).join("\n");
 			return {menu: menu, scripts: extensionScripts, context: context, sortAs: sortAs, isSource: isSource};
 		} else {
 			return null;

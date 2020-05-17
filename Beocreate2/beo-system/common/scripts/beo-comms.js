@@ -54,7 +54,7 @@ function connectProduct() {
 		wsProtocol = "wss://";
 	} else {
 		// Use unencrypted websockets:
-		wsProtocol = "ws://"
+		wsProtocol = "ws://";
 	}
 	
 	console.log("Connecting to " + productAddress + "...");

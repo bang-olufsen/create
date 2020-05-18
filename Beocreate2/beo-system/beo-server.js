@@ -164,7 +164,15 @@ beoBus.on('general', function(event) {
 
 beoBus.on('dsp', function(event) {
 	if (event.header == "amplifierUnmuted") {
-		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") playProductSound("startup");
+		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") {
+			if (!fs.existsSync("/etc/quiet_start")) {
+				setTimeout(function() {
+					playProductSound("startup");
+				}, 500);
+			} else {
+				fs.writeFileSync("/etc/quiet_start", "Used.");
+			}
+		}
 	}
 });
 
@@ -452,7 +460,11 @@ console.log("System startup.");
 if (!quietMode) {
 	// Play startup sound:
 	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" && forceBeosounds) {
-		playProductSound("startup");
+		if (!fs.existsSync("/etc/quiet_start")) {
+			playProductSound("startup");
+		} else {
+			fs.writeFileSync("/etc/quiet_start", "Used.");
+		}
 	}
 }
 

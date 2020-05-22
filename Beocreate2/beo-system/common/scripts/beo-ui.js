@@ -389,8 +389,8 @@ function updateInterfaceMode() {
 	
 	if (windowWidth < breakpoint && interfaceMode == 1) {
 		// Change to compact mode.
-		// Move main tabs to the "sidebar" to the top.
-		$('.tabs-container.main').each(function(index){
+		// Move main tabs from the "sidebar" to the top.
+		$('.tabs-container.move').each(function(index){
 			if ($(this).parent().is("header")) {
 				$(this).parents(".menu-screen").find(".tab-placeholder").replaceWith($(this).detach());
 			}
@@ -401,7 +401,7 @@ function updateInterfaceMode() {
 		// Move main tabs from the top to the "sidebar".
 		if (mainMenuVisible) toggleMainMenu();
 		interfaceMode = 1;
-		$('.tabs-container.main').each(function(index){
+		$('.tabs-container.move').each(function(index){
 			if (!$(this).parent().is("header")) {
 				$(this).after('<div class="tab-placeholder"></div>');
 				$(this).parents(".menu-screen").find("header h1").first().after($(this).detach());
@@ -1168,12 +1168,20 @@ function createCollectionItem(options) {
 
 document.addEventListener("scroll", function(event) {
 	if (event.target != document) {
-		targetScreen = event.target.offsetParent.id;
-		if ($("#"+targetScreen).hasClass("large-title") || $("#"+targetScreen).hasClass("setup-large-title")) {
-			if ($("#"+targetScreen+" .scroll-area").scrollTop() > 45) {
-				$("#"+targetScreen+" header").addClass("compact");
+		targetScreen = event.target.parentNode;
+		if (targetScreen.classList.contains("large-title") ||
+		 	targetScreen.classList.contains("setup-large-title")) {
+			if (targetScreen.querySelector(".scroll-area").scrollTop > 45) {
+				targetScreen.querySelector("header").classList.add("compact");
 			} else {
-				$("#"+targetScreen+" header").removeClass("compact");
+				targetScreen.querySelector("header").classList.remove("compact");
+			}
+		}
+		if (targetScreen.querySelector("header").classList.contains("opaque-scroll")) {
+			if (targetScreen.querySelector(".scroll-area").scrollTop > 50) {
+				targetScreen.querySelector("header").classList.add("opaque");
+			} else {
+				targetScreen.querySelector("header").classList.remove("opaque");
 			}
 		}
 	}
@@ -1636,7 +1644,7 @@ function popupBackplateClick() {
 }
 
 function updatePopupHeight() {
-	if (interfaceMode == 1) {
+/*	if (interfaceMode == 1) {
 		if ((windowHeight - 100) == $("#open-popup .popup-content").innerHeight()) {
 			$("#open-popup .popup-content").css("height", "100%");
 		} else {
@@ -1644,7 +1652,7 @@ function updatePopupHeight() {
 		}
 	} else {
 		$("#open-popup .popup-content").css("height", "");
-	}
+	}*/
 }
 
 

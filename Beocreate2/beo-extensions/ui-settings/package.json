@@ -1,0 +1,22 @@
+{
+  "name": "@beocreate/ui-settings",
+  "version": "0.6.0",
+  "description": "Display settings for Beocreate sound systems.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/bang-olufsen/create"
+  },
+  "keywords": [
+    "display",
+    "darkmode",
+    "beocreate",
+    "bang",
+    "olufsen"
+  ],
+  "author": "Bang & Olufsen",
+  "license": "MIT"
+}

@@ -638,6 +638,8 @@ var newFirstRow = "";
 var newSecondRow = "";
 var sourceNameTimeout;
 
+var nowPlayingNotificationTimeout;
+
 function setNowPlayingTitles(firstRow, secondRow, temp) {
 	/* Value interpretation
     text: change text to this
@@ -715,6 +717,14 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 				setNowPlayingTitles(previousFirstRow, previousSecondRow);
 			}, 2000);
 		}
+	}
+	
+	if (changed) {
+		document.getElementById("player-bar-info-area").classList.add("notification");
+		clearTimeout(nowPlayingNotificationTimeout);
+		nowPlayingNotificationTimeout = setTimeout(function() {
+			document.getElementById("player-bar-info-area").classList.remove("notification");
+		}, 5000);
 	}
 }
 

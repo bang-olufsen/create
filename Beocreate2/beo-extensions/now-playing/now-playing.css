@@ -408,7 +408,7 @@
 	background-color: var(--ultra-light-grey);
 }
 
-.artwork-placeholder {
+.artwork-wrap-inner .artwork-placeholder {
 	position: absolute;
 	background-color: rgba(180,180,180,0.2);
 	background-size: contain;

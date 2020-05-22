@@ -17,23 +17,32 @@ SOFTWARE.*/
 
 // MPD CONTROL FOR BEOCREATE
 
+var express = require('express');
 var exec = require("child_process").exec;
+var path = require("path");
+var fs = require("fs");
 var mpdAPI = require("mpd-api");
+var mpdCmd = mpdAPI.mpd;
 
 var debug = beo.debug;
 
 var version = require("./package.json").version;
 
 
+var defaultSettings = {
+	coverNames: ["artwork", "folder", "cover", "front", "albumart"],
+	mpdSocketPath: "/var/run/mpd/socket"
+};
+var settings = JSON.parse(JSON.stringify(defaultSettings));
+
 var sources = null;
 
 var mpdEnabled = false;
 
-var mpdConfig = {
-	host: 'localhost',
-	port: 6600
-}
 var client;
+var netClient;
+
+var libraryPath = null;
 
 beo.bus.on('general', function(event) {
 	
@@ -44,6 +53,8 @@ beo.bus.on('general', function(event) {
 			beo.extensions.sources.sourceDeactivated) {
 			sources = beo.extensions.sources;
 		}
+		
+		if (beo.extensions.music && beo.extensions.music.registerProvider) beo.extensions.music.registerProvider("mpd");
 		
 		if (sources) {
 			getMPDStatus(function(enabled) {
@@ -63,13 +74,27 @@ beo.bus.on('general', function(event) {
 				});
 				
 				if (mpdEnabled) {
-					mpdAPI.connect(mpdConfig)
+					mpdAPI.connect({path: settings.mpdSocketPath})
 					.then(res => {
 						client = res;
-						console.log("Client connected.");
+						if (debug >= 2) console.log("Connected to Music Player Daemon.");
+						client.api.reflection.config().then(config => {
+							if (config.music_directory) {
+								libraryPath = config.music_directory;
+								// Create a route for serving album covers (and ONLY album covers):
+								beo.expressServer.use('/mpd/covers/', (req, res, next) => {
+									if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
+									next();
+								});
+								beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
+							}
+						})
+						.catch(error => {
+							console.error("Couldn't get MPD music library path:", error);
+						});
 					})
 					.catch(error => {
-						console.error(error);
+						console.error("Failed to connect to Music Player Daemon:", error);
 					});
 				}
 			});
@@ -106,6 +131,28 @@ beo.bus.on('mpd', function(event) {
 			});
 		}
 	
+	}
+	
+	if (event.header == "list") {
+		if (client && event.content) {
+			client.api.db.list(event.content.type).then(results => {
+				beo.sendToUI("mpd", "list", results);
+			})
+			.catch(error => {
+				console.error(error);
+			});
+		}
+	}
+	
+	if (event.header == "find") {
+		if (client && event.content) {
+			client.api.db.find(event.content.filter, "window", "0:1").then(results => {
+				beo.sendToUI("mpd", "find", results);
+			})
+			.catch(error => {
+				console.error(error);
+			});
+		}
 	}
 });
 
@@ -160,11 +207,153 @@ function determineChildSource(data) {
 }
 
 
+async function getMusic(type, context) {
+	
+	if (client) {
+		switch (type) {
+			case "albums":
+				if (context && context.artist) {
+					mpdAlbums = await client.api.db.list("album", '(albumartist == "'+escapeString(context.artist)+'")', "albumartist");
+				} else {
+					mpdAlbums = await client.api.db.list("album", null, "albumartist");
+				}
+				albums = [];
+				for (artist in mpdAlbums) {
+					for (album in mpdAlbums[artist].album) {
+						
+						// Get a song from the album to get album art and other data.
+						track = [];
+						try {
+							track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
+						} catch (error) {
+							console.error('Error getting track with filter ((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', error);
+						}
+						album = {
+							name: mpdAlbums[artist].album[album].album, 
+							artist: mpdAlbums[artist].albumartist, 
+							date: null, 
+							provider: "mpd"
+						};
+						if (track[0]) {
+							if (track[0].date) album.date = track[0].date;
+							album.img = await getCover(track[0].file);
+						}
+						albums.push(album);
+					}
+				}
+				return albums;
+				break;
+			case "album":
+				if (context && context.artist && context.album) {
+					mpdTracks = [];
+					album = {discs: 1, 
+							name: context.album, 
+							time: 0,
+							artist: context.artist, 
+							date: null, 
+							tracks: [], 
+							provider: "mpd"
+					};
+					mpdTracks = await client.api.db.find("((album == '"+escapeString(context.album)+"') AND (albumartist == '"+escapeString(context.artist)+"'))");
+					for (track in mpdTracks) {
+						if (!album.date && mpdTracks[track].date) album.date = mpdTracks[track].date;
+						if (track == 0) {
+							album.img = await getCover(mpdTracks[track].file);
+						}
+						trackData = {
+							id: track,
+							path: mpdTracks[track].file,
+							number: mpdTracks[track].track,
+							artist: mpdTracks[track].artist,
+							name: mpdTracks[track].title,
+							time: mpdTracks[track].time,
+							provider: "mpd"
+						}
+						album.time += mpdTracks[track].time;
+						if (mpdTracks[track].disc) {
+							trackData.disc = mpdTracks[track].disc;
+							if (mpdTracks[track].disc > album.discs) album.discs = mpdTracks[track].disc;
+						}
+						album.tracks.push(trackData);
+					}
+					return album;
+				} else {
+					return false;
+				}
+				break;
+			case "artists":
+				mpdAlbums = await client.api.db.list("album", null, "albumartist");
+				artists = [];
+				for (artist in mpdAlbums) {
+					artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+				}
+				return artists;
+				break;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function playMusic(index, context) {
+	if (client && index != undefined && context) {
+		queueTracks = [];
+		mpdTracks = [];
+		if (context.artist && context.album) {
+			mpdTracks = await client.api.db.find("((album == '"+escapeString(context.album)+"') AND (albumartist == '"+escapeString(context.artist)+"'))");
+		}
+		for (track in mpdTracks) {
+			queueTracks.push({
+				id: track,
+				file: mpdTracks[track].file
+			});
+		}
+		await client.api.queue.clear();
+		queueCommands = [];
+		queueTracks.forEach(track => {
+			queueCommands.push(client.api.queue.addid(track.file));
+		});
+		
+		newQueue = await Promise.all(queueCommands);
+		await client.api.playback.playid(newQueue[index]);
+		return true;
+	}
+}
+
+
+async function getCover(trackPath) {
+	// If cover exists on the file system, return its path.
+	if (libraryPath) {
+		albumPath = path.dirname(trackPath);
+		files = fs.readdirSync(libraryPath+"/"+albumPath);
+		for (file in files) {
+			if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
+				// Is image file.
+				if (settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
+					encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/"+files[file]);
+					return encoded; //, escapeStringLight(encoded)];
+				}
+			}
+		}
+		// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
+		// This feature is not yet available in MPD.
+		
+	}
+	return null;
+}
+
+
+
+function escapeString(string) {
+	return string.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"').replace(/\\/g, '\\');
+}
 
 
 	
 module.exports = {
 	version: version,
-	isEnabled: getMPDStatus
+	isEnabled: getMPDStatus,
+	getMusic: getMusic,
+	playMusic: playMusic
 };
 

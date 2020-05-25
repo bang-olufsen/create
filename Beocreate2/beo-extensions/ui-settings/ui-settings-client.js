@@ -5,7 +5,7 @@ var externalDisplayOn = false;
 $(document).on("ui-settings", function(event, data) {
 	
 	if (data.header == "externalDisplay") {
-		if (canUseExternalDisplay) {
+		if (data.content.canUseExternalDisplay) {
 			document.querySelector(".external-display-settings").classList.remove("hidden");
 			if (data.content.enabled) {
 				externalDisplayOn = true;

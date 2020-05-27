@@ -353,6 +353,7 @@ var exec = require("child_process").exec;
 				allSources[extension].metadata.picture = metadata.artUrl;
 				allSources[extension].metadata.externalPicture = metadata.externalArtUrl;
 				allSources[extension].metadata.picturePort = settings.port;
+				allSources[extension].metadata.uri = metadata.streamUrl;
 				//beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[extension].metadata, extension: extension}});
 				metadataChanged = true;
 				// "Love track" support.
@@ -486,10 +487,14 @@ var exec = require("child_process").exec;
 			
 			// Stop currently active sources, if the source demands it.
 			if (allSources[extension].stopOthers) {
-				if (allSources[currentSource] && allSources[currentSource].usesHifiberryControl && !allSources[extension].usesHifiberryControl) {
-					// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
-					if (debug) console.log("Pausing sources under HiFiBerry control...");
-					audioControl("pause");
+				if (allSources[currentSource] && 
+					allSources[currentSource].usesHifiberryControl && 
+					!allSources[extension].usesHifiberryControl) {
+					if (!allSources[extension].parentSource || !allSources[allSources[extension].parentSource].usesHifiberryControl) {
+						// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
+						if (debug) console.log("Pausing sources under HiFiBerry control...");
+						audioControl("pause");
+					}
 				}
 				for (source in allSources) {
 					if (source != extension && 

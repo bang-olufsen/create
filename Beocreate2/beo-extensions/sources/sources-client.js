@@ -307,7 +307,7 @@ function showStartableSources() {
 				icon: extensions[source].assetPath+"/symbols-black/"+extensions[source].icon,
 				onclick: "sources.startSource('"+source+"');"
 			}
-			if (source == focusedSource) {
+			if (source == currentSource) {
 				menuOptions.iconRight = "common/symbols-black/volume.svg";
 			} else {
 				//menuOptions.value = "Play";

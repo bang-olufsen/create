@@ -723,8 +723,11 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 		document.getElementById("player-bar-info-area").classList.add("notification");
 		clearTimeout(nowPlayingNotificationTimeout);
 		nowPlayingNotificationTimeout = setTimeout(function() {
-			document.getElementById("player-bar-info-area").classList.remove("notification");
-		}, 5000);
+			document.getElementById("player-bar-info-area").classList.add("text-visible");
+			nowPlayingNotificationTimeout = setTimeout(function() {
+				document.getElementById("player-bar-info-area").classList.remove("notification", "text-visible");
+			}, 5000);
+		}, 700);
 	}
 }
 

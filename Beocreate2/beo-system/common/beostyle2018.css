@@ -3441,6 +3441,7 @@ input[type=search] {
 
 .search-container {
 	position: relative;
+	margin-bottom: 20px;
 }
 
 input::-webkit-search-decoration {
@@ -4116,7 +4117,7 @@ header.aux {
 	transition: opacity 0.5s ease;
 }
 
-#player-bar-info-area.text-visible > * {
+#player-bar-info-area.text-visible .now-playing-titles:not(.logo) {
 	opacity: 1;
 }
 

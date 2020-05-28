@@ -207,7 +207,7 @@ function determineChildSource(data) {
 }
 
 
-async function getMusic(type, context) {
+async function getMusic(type, context, noArt = false) {
 	
 	if (client) {
 		switch (type) {
@@ -257,7 +257,7 @@ async function getMusic(type, context) {
 					mpdTracks = await client.api.db.find("((album == '"+escapeString(context.album)+"') AND (albumartist == '"+escapeString(context.artist)+"'))");
 					for (track in mpdTracks) {
 						if (!album.date && mpdTracks[track].date) album.date = mpdTracks[track].date;
-						if (track == 0) {
+						if (track == 0 && !noArt) {
 							album.img = await getCover(mpdTracks[track].file);
 						}
 						trackData = {
@@ -289,34 +289,59 @@ async function getMusic(type, context) {
 				}
 				return artists;
 				break;
+			case "search":
+				id = 0;
+				trackPaths = [];
+				tracks = [];
+				artists = [];
+				albums = [];
+				escapedString = escapeString(context.searchString);
+				mpdTracks = [];
+				mpdTracks = await client.api.db.search("(title contains '"+escapedString+"')");
+				mpdTracks = mpdTracks.concat(await client.api.db.search("(artist contains '"+escapedString+"')"));
+				mpdTracks = mpdTracks.concat(await client.api.db.search("(album contains '"+escapedString+"')"));
+				for (track in mpdTracks) {
+					if (trackPaths.indexOf(mpdTracks[track].file) == -1) {
+						trackPaths.push(mpdTracks[track].file);
+						trackData = {
+							id: id,
+							path: mpdTracks[track].file,
+							artist: mpdTracks[track].artist,
+							name: mpdTracks[track].title,
+							time: mpdTracks[track].time,
+							provider: "mpd"
+						}
+						id++;
+						tracks.push(trackData);
+					}
+				}
+				return {tracks: tracks, artists: artists, albums: albums};
+				break;
 		}
 	} else {
 		return false;
 	}
 }
 
-async function playMusic(index, context) {
-	if (client && index != undefined && context) {
-		queueTracks = [];
-		mpdTracks = [];
-		if (context.artist && context.album) {
-			mpdTracks = await client.api.db.find("((album == '"+escapeString(context.album)+"') AND (albumartist == '"+escapeString(context.artist)+"'))");
-		}
-		for (track in mpdTracks) {
-			queueTracks.push({
-				id: track,
-				file: mpdTracks[track].file
+async function playMusic(index, type, context) {
+	if (client && 
+		index != undefined && 
+		type && 
+		context) {
+		content = await getMusic(type, context, true);
+		if (content.tracks) {
+			await client.api.queue.clear();
+			queueCommands = [];
+			content.tracks.forEach(track => {
+				queueCommands.push(client.api.queue.addid(track.path));
 			});
-		}
-		await client.api.queue.clear();
-		queueCommands = [];
-		queueTracks.forEach(track => {
-			queueCommands.push(client.api.queue.addid(track.file));
-		});
-		
-		newQueue = await Promise.all(queueCommands);
-		await client.api.playback.playid(newQueue[index]);
+			
+			newQueue = await Promise.all(queueCommands);
+			await client.api.playback.playid(newQueue[index]);
 		return true;
+		} else {
+			return false;
+		}
 	}
 }
 
@@ -337,7 +362,6 @@ async function getCover(trackPath) {
 		}
 		// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
 		// This feature is not yet available in MPD.
-		
 	}
 	return null;
 }

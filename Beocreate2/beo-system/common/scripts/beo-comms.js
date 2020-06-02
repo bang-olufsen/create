@@ -49,8 +49,16 @@ function connectProduct() {
 	connected = false;
 	connecting = true;
 	
+	if (window.location.protocol.indexOf("https") != -1) {
+		// Use secure websockets:
+		wsProtocol = "wss://";
+	} else {
+		// Use unencrypted websockets:
+		wsProtocol = "ws://";
+	}
+	
 	console.log("Connecting to " + productAddress + "...");
-	productConnection = new WebSocket('ws://' + productAddress, ["beocreate"]);
+	productConnection = new WebSocket(wsProtocol + productAddress, ["beocreate"]);
 	
 	productConnectionNotificationTimeout = setTimeout(function() {
 		// Show "Connecting..." with a timeout so that it doesn't flash every time the UI loads.

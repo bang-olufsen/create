@@ -114,6 +114,7 @@ $(document).on("room-compensation", function(event, data) {
 	if (data.header == "singleMeasurement") {
 		beo.showPopupView("room-compensation-measurement-preview", null, function() {
 			selectedMeasurement = null;
+			beo.hidePopupView("room-compensation-measurement-preview");
 		});
 		selectedMeasurement = data.content.measurementID;
 		if (!measurementGraph) {

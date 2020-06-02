@@ -13,9 +13,8 @@
 .speaker-preset-beo-logo {
 	width: 32px;
 	height: 32px;
-	margin-left: 18px;
-	margin-top: 20px;
-	opacity: 0.5;
+	margin: 20px;
+	opacity: 0.3;
 	pointer-events: none;
 	display: inline-block;
 	position: absolute;
@@ -28,8 +27,8 @@
 	mask-repeat: no-repeat;
 	-webkit-mask-position: center;
 	mask-position: center;
-	left: 0;
-	top: 0;
+	bottom: 0;
+	right: 0;
 }
 
 .speaker-preset-information {
@@ -123,14 +122,6 @@
 
 
 .header-image.speaker-preset-product-image {
-	bottom: 10px;
-	top: 10px;
-}
-
-@media only screen and (min-width: 621px) {
-	
-	.speaker-preset-product-image-wrap {
-		height: 30vh;
-	}
-	
+	bottom: 20px;
+	top: 20px;
 }

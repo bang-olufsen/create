@@ -74,6 +74,7 @@ $(document).on("interact", function(event, data) {
 		portCount = data.content.ports.length;
 		for (p in data.content.ports) {
 			port = data.content.ports[p];
+			if (!port.path && port.comName) port.path = port.comName;
 			if (port.path != "/dev/ttyAMA0") {
 				description = "Unknown";
 				if (port.manufacturer) {

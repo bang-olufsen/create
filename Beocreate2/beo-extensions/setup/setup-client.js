@@ -2,6 +2,7 @@ var setup = (function() {
 
 setupFlow = [];
 doingPostSetup = false;
+simulatingSetup = false;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -155,7 +156,27 @@ function changeExtension(extension) {
 }
 
 function nextStep() {
-	beo.send({target: "setup", header: "nextStep"});
+	if (!simulatingSetup) {
+		beo.send({target: "setup", header: "nextStep"});
+	} else {
+		beo.showExtension("speaker-preset", "right");
+		$("#assistant-button").text("Next Step");
+		$("#assistant-button").removeClass("disabled");
+	}
+}
+
+function simulateSetup() {
+	if (!document.body.classList.contains("setup")) {
+		beo.showExtension("setup");
+		$("#assistant-button").text("Begin Setup");
+		$("#assistant-button").removeClass("disabled");
+		document.body.classList.add("setup");
+		simulatingSetup = true;
+	} else {
+		document.body.classList.remove("setup");
+		beo.showExtension("product-information");
+		simulatingSetup = false;
+	}
 }
 
 
@@ -175,7 +196,8 @@ function generateDotBackground() {
 }
 
 return {
-	nextStep: nextStep
+	nextStep: nextStep,
+	simulateSetup: simulateSetup
 }
 
 })();

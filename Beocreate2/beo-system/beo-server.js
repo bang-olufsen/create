@@ -164,7 +164,15 @@ beoBus.on('general', function(event) {
 
 beoBus.on('dsp', function(event) {
 	if (event.header == "amplifierUnmuted") {
-		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") playProductSound("startup");
+		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") {
+			if (!fs.existsSync("/etc/quiet_start")) {
+				setTimeout(function() {
+					playProductSound("startup");
+				}, 500);
+			} else {
+				fs.writeFileSync("/etc/quiet_start", "Used.");
+			}
+		}
 	}
 });
 
@@ -267,6 +275,9 @@ if (tempUISettings != null) uiSettings = Object.assign(uiSettings, tempUISetting
 var extensions = {}; // Import Node logic from extensions into this object.
 var extensionsList = {};
 var extensionsLoaded = false;
+
+var expressServer = express(); // Create Express instance.
+
 global.beo = {
 	bus: beoBus,
 	systemDirectory: systemDirectory+"/..",
@@ -290,7 +301,8 @@ global.beo = {
 	downloadJSON: downloadJSON,
 	addDownloadRoute: addDownloadRoute,
 	removeDownloadRoute: removeDownloadRoute,
-	underscore: _
+	underscore: _,
+	expressServer: expressServer
 };
 var beoUI = assembleBeoUI();
 if (beoUI == false) console.log("User interface could not be constructed. 'index.html' is missing.");
@@ -299,7 +311,6 @@ var selectedDeepMenu = null;
 
 
 // HTTP & EXPRESS SERVERS
-var expressServer = express();
 var beoServer = http.createServer(expressServer);
 beoServer.on("error", function(error) {
 	switch (error.code) {
@@ -396,25 +407,7 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 	}
 });
 
-expressServer.get("/:extension/:header/:extra*?", function (req, res) {
 
-	if (extensions[req.params.extension] && extensions[req.params.extension].restAPI) {
-		extensions[req.params.extension].restAPI(req.params.header, req.params.extra, function(response) {
-			if (response) {
-				res.status(200);
-				res.send(response);
-			} else {
-				console.error("'"+req.params.extension+"' can't respond to '"+req.params.header+"' request.");
-				res.status(404);
-				res.send("Notfound");
-			}
-		});
-	} else {
-		console.error("'"+req.params.extension+"' can't respond to GET requests.");
-		res.status(404);
-		res.send("Notfound");
-	}
-});
 
 function addDownloadRoute(extension, urlPath, filePath, permanent = false) {
 	if (extension && urlPath && filePath) {
@@ -451,8 +444,12 @@ if (systemConfiguration.runAtStart) {
 console.log("System startup.");
 if (!quietMode) {
 	// Play startup sound:
-	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" || forceBeosounds) {
-		playProductSound("startup");
+	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" && forceBeosounds) {
+		if (!fs.existsSync("/etc/quiet_start")) {
+			playProductSound("startup");
+		} else {
+			fs.writeFileSync("/etc/quiet_start", "Used.");
+		}
 	}
 }
 
@@ -678,14 +675,22 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 		// First check if this extension is included or excluded with this hardware.
 		
 		menuParts = menu.split("\">\n");
-		headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
-		menuParts.shift();
+		if (menuParts[0].indexOf("menu-screen") != -1) {
+			headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
+			preHead = "";
+			menuParts.shift();
+		} else {
+			headItems = menuParts[1].substring(5).split(/"\s|"\n/g);
+			preHead = menuParts[0]+"\">";
+			menuParts.splice(0, 2);
+		}
 		body = menuParts.join("\">\n");
 		head = {};
 		for (l in headItems) {
 			lineItems = headItems[l].split("=\"");
-			head[lineItems[0]] = lineItems[1];
+			head[lineItems[0].trim()] = lineItems[1];
 		};
+		
 		
 		shouldIncludeExtension = true;
 		
@@ -793,7 +798,7 @@ function loadExtensionWithPath(extensionName, fullPath, basePath) {
 				headString += " "+headItem+'="'+head[headItem]+'"';
 			}
 			headString += ">";
-			menu = ([headString, body]).join("\n");
+			menu = ([preHead, headString, body]).join("\n");
 			return {menu: menu, scripts: extensionScripts, context: context, sortAs: sortAs, isSource: isSource};
 		} else {
 			return null;

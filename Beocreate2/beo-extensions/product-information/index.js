@@ -581,6 +581,13 @@ var fs = require("fs");
 		}
 	}
 	
+beo.expressServer.get("/product-information/discovery", function (req, res) {
+
+	res.status(200);
+	res.send({name: systemName.ui, serviceType: "beocreate", advertisePort: beo.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
+		
+});
+	
 	
 interact = {
 	actions: {
@@ -602,7 +609,6 @@ module.exports = {
 	getProductImage: getProductImage,
 	addProductIdentity: checkAndAddProductIdentity,
 	deleteProductIdentity: deleteProductIdentity,
-	restAPI: restAPI,
 	version: version,
 	interact: interact
 };

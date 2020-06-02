@@ -80,17 +80,23 @@ $(document).on("sources", function(event, data) {
 	
 });
 
-function updateTransportControls() {
+function updateTransportControls(withState = playerState) {
 	$(".play-button, .next-track-button, .previous-track-button").addClass("disabled");
+	controls = false;
 	if (allSources[focusedSource]) {
-		if (playerState == "playing") {
-			if (allSources[focusedSource].transportControls) {
-				if (allSources[focusedSource].transportControls.indexOf("pause") != -1) {
+		if (allSources[focusedSource].transportControls == "inherit" && allSources[focusedSource].parentSource) {
+			controls = allSources[allSources[focusedSource].parentSource].transportControls;
+		} else {
+			controls = allSources[focusedSource].transportControls;
+		}
+		if (withState == "playing") {
+			if (controls) {
+				if (controls.indexOf("pause") != -1) {
 					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/pause.svg");
 					$(".play-button").removeClass("disabled");
 				} else {
 					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
-					if (allSources[focusedSource].transportControls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
+					if (controls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
 				}
 			} else {
 				$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
@@ -100,9 +106,9 @@ function updateTransportControls() {
 			$(".play-button").removeClass("disabled");
 		}
 		
-		if (allSources[focusedSource].transportControls) {
-			if (allSources[focusedSource].transportControls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
-			if (allSources[focusedSource].transportControls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
+		if (controls) {
+			if (controls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
+			if (controls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
 		}
 	} else {
 		$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
@@ -316,25 +322,13 @@ function playButtonPress() {
 	if (focusedSource) {
 		// Change the symbol immediately to improve responsiveness. But change it to the real symbol after two seconds if nothing has happened.
 		if (playerState == "playing") {
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
+			updateTransportControls("stopped");
 		} else {
-			if (allSources[focusedSource].transportControls && allSources[focusedSource].transportControls.indexOf("pause") != -1) {
-				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
-			} else {
-				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/stop.svg");
-			}
+			updateTransportControls("playing");
 		}
 		clearTimeout(playButtonSymbolTimeout);
 		playButtonSymbolTimeout = setTimeout(function() {
-			if (playerState == "playing") {
-				if (allSources[focusedSource].transportControls && allSources[focusedSource].transportControls.indexOf("pause") != -1) {
-					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/pause.svg");
-				} else {
-					$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/stop.svg");
-				}
-			} else {
-				$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
-			}
+			updateTransportControls();
 		}, 2000);
 		transport("playPause");
 	} else if (canStartSources) {
@@ -375,7 +369,7 @@ function loadArtwork(url, port, testExternal) {
 			if (!testExternal) hasPicture = true;
 		} else {
 			// Load appropriately branded placeholder artwork or source icon, if available.
-			if (focusedSource && 
+			if (focusedSource &&
 				extensions[focusedSource] && 
 				extensions[focusedSource].assetPath && 
 				extensions[focusedSource].icon) {
@@ -644,6 +638,8 @@ var newFirstRow = "";
 var newSecondRow = "";
 var sourceNameTimeout;
 
+var nowPlayingNotificationTimeout;
+
 function setNowPlayingTitles(firstRow, secondRow, temp) {
 	/* Value interpretation
     text: change text to this
@@ -721,6 +717,17 @@ function setNowPlayingTitles(firstRow, secondRow, temp) {
 				setNowPlayingTitles(previousFirstRow, previousSecondRow);
 			}, 2000);
 		}
+	}
+	
+	if (changed) {
+		document.getElementById("player-bar-info-area").classList.add("notification");
+		clearTimeout(nowPlayingNotificationTimeout);
+		nowPlayingNotificationTimeout = setTimeout(function() {
+			document.getElementById("player-bar-info-area").classList.add("text-visible");
+			nowPlayingNotificationTimeout = setTimeout(function() {
+				document.getElementById("player-bar-info-area").classList.remove("notification", "text-visible");
+			}, 5000);
+		}, 700);
 	}
 }
 

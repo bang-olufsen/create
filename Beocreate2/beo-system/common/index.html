@@ -36,8 +36,10 @@
 			<img src="common/hifiberry-wait-animate.svg">
 			<img src="common/symbols-black/wait-star.svg">
 		</div>
-		<div class="nav-content">
-			
+		<div class="nav-content-wrap">
+			<div class="nav-content">
+				
+			</div>
 		</div>
 		<div class="reload-button" onclick="window.location.reload();"></div>
 	</nav>
@@ -154,6 +156,11 @@
 		</div>
 	</div>
 	<beo-now-playing></beo-now-playing>
+	
+	<div id="standalone-call-to-action" class="hidden" onclick="beo.showStandaloneCallToAction(false);">
+		<p>Tap Share and Add to Home Screen for quick access.</p>
+		<div class="button pill outline">Don't Show Again</div>
+	</div>
 	
 	
 	<beo-translations></beo-translations>

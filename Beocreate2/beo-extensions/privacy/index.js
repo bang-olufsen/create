@@ -118,7 +118,7 @@ var fs = require("fs");
 			if (event.content.setting) {
 				if (event.content.setting == "externalMetadata" && audioControl) {
 					beo.sendToUI("privacy", {header: "updatingSettings"});
-					inferredSettings.externalMetadata = (!inferredSsettings.externalMetadata) ? true : false;
+					inferredSettings.externalMetadata = (!inferredSettings.externalMetadata) ? true : false;
 					enabled = (settings.externalMetadata) ? "1" : "0";
 					audioControl.configure([{section: "privacy", option: "external_metadata", value: enabled}], true, function() {
 						beo.sendToUI("privacy", {header: "privacySettings", content: {settings: inferredSettings}});

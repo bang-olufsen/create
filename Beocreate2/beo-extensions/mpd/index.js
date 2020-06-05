@@ -212,6 +212,7 @@ async function getMusic(type, context, noArt = false) {
 	if (client) {
 		switch (type) {
 			case "albums":
+				mpdAlbums = [];
 				if (context && context.artist) {
 					mpdAlbums = await client.api.db.list("album", '(albumartist == "'+escapeString(context.artist)+'")', "albumartist");
 				} else {
@@ -220,13 +221,12 @@ async function getMusic(type, context, noArt = false) {
 				albums = [];
 				for (artist in mpdAlbums) {
 					for (album in mpdAlbums[artist].album) {
-						
 						// Get a song from the album to get album art and other data.
 						track = [];
 						try {
 							track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
 						} catch (error) {
-							console.error('Error getting track with filter ((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', error);
+							console.error('Error getting a track from album "'+mpdAlbums[artist].album[album].album+'" by "'+mpdAlbums[artist].albumartist+'".', error);
 						}
 						album = {
 							name: mpdAlbums[artist].album[album].album, 
@@ -236,7 +236,7 @@ async function getMusic(type, context, noArt = false) {
 						};
 						if (track[0]) {
 							if (track[0].date) album.date = track[0].date;
-							album.img = await getCover(track[0].file);
+							if (!noArt) album.img = await getCover(track[0].file);
 						}
 						albums.push(album);
 					}
@@ -313,6 +313,37 @@ async function getMusic(type, context, noArt = false) {
 						}
 						id++;
 						tracks.push(trackData);
+						albumFound = false;
+						for (a in albums) {
+							if (albums[a].artist == mpdTracks[track].albumartist &&
+								albums[a].name == mpdTracks[track].album) {
+								albumFound = true;
+								break;
+							}
+						}
+						if (!albumFound) {
+							album = {
+								name: mpdTracks[track].album, 
+								artist: (mpdTracks[track].albumartist) ? mpdTracks[track].albumartist : mpdTracks[track].artist, 
+								date: null, 
+								provider: "mpd"
+							};
+							if (mpdTracks[track].date) album.date = mpdTracks[track].date;
+							if (!noArt) album.img = await getCover(mpdTracks[track].file);
+							albums.push(album);
+							
+							artistFound = false;
+							theArtist = (mpdTracks[track].albumartist) ? mpdTracks[track].albumartist : mpdTracks[track].artist;
+							for (ar in artists) {
+								if (artists[ar].artist == theArtist) {
+									artistFound = true;
+									break;
+								}
+							}
+							if (!artistFound) {
+								artists.push({artist: theArtist, provider: "mpd"});
+							}
+						}
 					}
 				}
 				return {tracks: tracks, artists: artists, albums: albums};

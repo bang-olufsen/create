@@ -940,6 +940,14 @@ section.animating {
 	pointer-events: none;
 }
 
+.menu-screen.hidden-left {
+	z-index: -1;
+}
+
+.menu-screen.hidden-right {
+	z-index: 1;
+}
+
 .touch .menu-screen.hidden-right {
 	transform: translateX(100%);
 	/*filter: blur(20px);*/
@@ -1003,7 +1011,7 @@ section.faded-out .menu-screen {
 
 .menu-content:after,
 .menu-content-wrap:after {
-	margin-top: 7px;
+	margin-top: 20px;
 	height: 1px;
 }
 
@@ -3096,11 +3104,11 @@ header .tabs > div.selected:after {
 }
 
 .dark .plexi.visible {
-	background-color: rgba(34, 34, 34, 0.9);
+	background-color: rgba(0,0,0, 0.9);
 }
 
 .dark.disconnected .plexi.visible {
-	background-color: rgba(34, 34, 34, 1);
+	background-color: #000;
 }
 
 

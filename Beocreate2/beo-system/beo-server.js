@@ -298,7 +298,6 @@ global.beo = {
 	daemon: daemonMode,
 	sendToUI: sendToUI,
 	download: download,
-	downloadJSON: downloadJSON,
 	addDownloadRoute: addDownloadRoute,
 	removeDownloadRoute: removeDownloadRoute,
 	underscore: _,
@@ -890,83 +889,43 @@ function playProductSound(sound) {
 // General-purpose download and upload functions available to extensions.
 
 // Modified from https://stackoverflow.com/questions/11944932/how-to-download-a-file-with-node-js-without-using-third-party-libraries
-function download(url, destination, destinationFilename, callback) {
-	if (url) {
-		filename = url.substring(url.lastIndexOf('/') + 1);
-		if (destinationFilename) filename = destinationFilename;
-		if (debugMode) console.log("Downloading '"+filename+"' to '"+destination+"'...");
-		if (destination.charAt(destination.length-1) == "/") destination = destination.slice(0, -1);
-		var file = fs.createWriteStream(destination+"/"+filename);
-		protocol = null;
-		if (url.indexOf("https") != -1) {
-			protocol = https;
-		} else if (url.indexOf("http") != -1) {
-			protocol = http;
-		}
-		if (protocol) {
-			var request = protocol.get(url, function(response) {
-				response.pipe(file);
-				file.on('finish', function() {
-					if (debugMode) console.log("Download of '"+filename+"' complete.");
-					file.close(function(err) {
-						if (!err) {
-							if (callback) callback(true);
-						} else {
-							if (callback) callback(null, err);
-						}
+function download(url, destination, filename = null) {
+	return new Promise(function(resolve, reject) {
+		if (url) {
+			if (!filename) filename = url.substring(url.lastIndexOf('/') + 1);
+			var file = fs.createWriteStream(destination+"/"+filename);
+			protocol = null;
+			if (url.indexOf("https") != -1) {
+				protocol = https;
+			} else if (url.indexOf("http") != -1) {
+				protocol = http;
+			}
+			if (protocol) {
+				var request = protocol.get(url, function(response) {
+					response.pipe(file);
+					file.on('finish', function() {
+						file.close(function(err) {
+							if (!err) {
+								resolve(destination+"/"+filename);
+							} else {
+								fs.unlink(destination+"/"+filename); // Delete the file asynchronously.
+								reject(err);
+							}
+						});
 					});
+				}).on('error', function(error) { // Handle errors
+					fs.unlink(destination+"/"+filename); // Delete the file asynchronously.
+					reject(error);
 				});
-			}).on('error', function(error) { // Handle errors
-				//console.log(err)
-				if (debugMode) console.log("Download of '"+filename+"' failed.");
-				fs.unlink(destination+"/"+filename); // Delete the file async. (But we don't check the result)
-				if (callback) callback(error.message);
-			});
+			} else {
+				reject("The URL has no valid protocol.");
+			}
+		} else {
+			reject("No URL specified for download.");
 		}
-	} else {
-		if (debugMode) console.log("No URL specified for download.")
-	}
+	});
 }
 
-// Adapted from https://usefulangle.com/post/109/nodejs-read-json
-function downloadJSON(url, callback) {
-	protocol = null;
-	if (url.indexOf("https") != -1) {
-		protocol = https;
-	} else if (url.indexOf("http") != -1) {
-		protocol = http;
-	}
-	if (protocol) {
-		var request = protocol.get(url, function(response) {
-			var data = '';
-			var jsonData;
-			
-			response.on('data', function(stream) {
-				data += stream;
-			});
-			response.on('end', function() {
-				err = null;
-				try {
-					jsonData = JSON.parse(data);
-					//if (callback) callback(jsonData);
-				} catch (error) {
-					err = error;
-					//if (callback) callback(null, error);
-				}
-				if (!err) {
-					if (callback) callback(jsonData);
-				} else {
-					if (callback) callback(null, err);
-				}
-			});
-		}).on('error', function(error) { // Handle errors
-			if (debugMode) console.log("Download of '"+url+"' failed.");
-			if (callback) callback(null, error.message);
-		});
-	} else {
-		if (callback) callback(null, false);
-	}
-}
 
 
 // SERVER SHUTDOWN

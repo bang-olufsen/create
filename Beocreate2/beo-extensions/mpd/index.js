@@ -218,10 +218,16 @@ async function getMusic(type, context, noArt = false) {
 				} else {
 					mpdAlbums = await client.api.db.list("album", null, "albumartist");
 				}
+				if (debug > 1) {
+					console.log("Unprocessed MPD output:", mpdAlbums);
+					beo.sendToUI("mpd", "rawOutput", mpdAlbums);
+				}
 				albums = [];
 				for (artist in mpdAlbums) {
+					
 					for (album in mpdAlbums[artist].album) {
 						// Get a song from the album to get album art and other data.
+						if (debug > 1) console.log(mpdAlbums[artist].album[album]);
 						track = [];
 						try {
 							track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');

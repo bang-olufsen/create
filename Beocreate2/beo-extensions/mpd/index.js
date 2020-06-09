@@ -121,6 +121,12 @@ beo.bus.on('general', function(event) {
 
 beo.bus.on('mpd', function(event) {
 	
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+		}
+	}
+	
 	if (event.header == "mpdEnabled") {
 		
 		if (event.content.enabled != undefined) {
@@ -224,7 +230,7 @@ async function updateCache() {
 			// Start updating cache.
 			updatingCache = true;
 			if (debug) console.log("Updating MPD album cache.");
-			cache = {
+			newCache = {
 				data: {},
 				lastUpdate: stats.db_update
 			};
@@ -232,7 +238,7 @@ async function updateCache() {
 			mpdAlbums = await client.api.db.list("album", null, "albumartist");
 
 			for (artist in mpdAlbums) {
-				cache.data[mpdAlbums[artist].albumartist] = [];
+				newCache.data[mpdAlbums[artist].albumartist] = [];
 				for (album in mpdAlbums[artist].album) {
 					// Get a song from the album to get album art and other data.
 					if (debug > 1) console.log(mpdAlbums[artist].album[album]);
@@ -250,13 +256,14 @@ async function updateCache() {
 						img: null
 					};
 					if (track[0]) {
-						if (track[0].date) album.date = track[0].date.substring(0,4);
+						if (track[0].date) album.date = track[0].date.toString().substring(0,4);
 						album.img = await getCover(track[0].file);
 					}
-					cache.data[mpdAlbums[artist].albumartist].push(album);
+					newCache.data[mpdAlbums[artist].albumartist].push(album);
 				}
 			}
-				
+			
+			cache = Object.assign({}, newCache);
 			fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
 			if (debug) console.log("MPD album cache update has finished.");
 			updatingCache = false;

@@ -43,6 +43,7 @@ var client;
 var netClient;
 
 var libraryPath = null;
+var cache = {};
 
 beo.bus.on('general', function(event) {
 	
@@ -87,6 +88,14 @@ beo.bus.on('general', function(event) {
 									next();
 								});
 								beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
+								if (fs.existsSync(libraryPath+"/beo-cache.json")) {
+									try {
+										cache = require(libraryPath+"/beo-cache.json");
+									} catch (error) {
+										cache = {};
+									}
+								}
+								updateCache();
 							}
 						})
 						.catch(error => {
@@ -206,48 +215,74 @@ function determineChildSource(data) {
 	}
 }
 
+updatingCache = false;
+async function updateCache() {
+	if (client && !updatingCache) {
+		status = await client.api.status.get();
+		stats = await client.api.status.stats();
+		if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) && !status.updating_db) {
+			// Start updating cache.
+			updatingCache = true;
+			if (debug) console.log("Updating MPD album cache.");
+			cache = {
+				data: {},
+				lastUpdate: stats.db_update
+			};
+			
+			mpdAlbums = await client.api.db.list("album", null, "albumartist");
+
+			for (artist in mpdAlbums) {
+				cache.data[mpdAlbums[artist].albumartist] = [];
+				for (album in mpdAlbums[artist].album) {
+					// Get a song from the album to get album art and other data.
+					if (debug > 1) console.log(mpdAlbums[artist].album[album]);
+					track = [];
+					try {
+						track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
+					} catch (error) {
+						console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
+					}
+					album = {
+						name: mpdAlbums[artist].album[album].album, 
+						artist: mpdAlbums[artist].albumartist, 
+						date: null, 
+						provider: "mpd",
+						img: null
+					};
+					if (track[0]) {
+						if (track[0].date) album.date = track[0].date.substring(0,4);
+						album.img = await getCover(track[0].file);
+					}
+					cache.data[mpdAlbums[artist].albumartist].push(album);
+				}
+			}
+				
+			fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+			if (debug) console.log("MPD album cache update has finished.");
+			updatingCache = false;
+		}
+	}
+}
+
 
 async function getMusic(type, context, noArt = false) {
 	
 	if (client) {
 		switch (type) {
 			case "albums":
-				mpdAlbums = [];
 				if (context && context.artist) {
-					mpdAlbums = await client.api.db.list("album", '(albumartist == "'+escapeString(context.artist)+'")', "albumartist");
-				} else {
-					mpdAlbums = await client.api.db.list("album", null, "albumartist");
-				}
-				if (debug > 1) {
-					console.log("Unprocessed MPD output:", mpdAlbums);
-					beo.sendToUI("mpd", "rawOutput", mpdAlbums);
-				}
-				albums = [];
-				for (artist in mpdAlbums) {
-					
-					for (album in mpdAlbums[artist].album) {
-						// Get a song from the album to get album art and other data.
-						if (debug > 1) console.log(mpdAlbums[artist].album[album]);
-						track = [];
-						try {
-							track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
-						} catch (error) {
-							console.error('Error getting a track from album "'+mpdAlbums[artist].album[album].album+'" by "'+mpdAlbums[artist].albumartist+'".', error);
-						}
-						album = {
-							name: mpdAlbums[artist].album[album].album, 
-							artist: mpdAlbums[artist].albumartist, 
-							date: null, 
-							provider: "mpd"
-						};
-						if (track[0]) {
-							if (track[0].date) album.date = track[0].date;
-							if (!noArt) album.img = await getCover(track[0].file);
-						}
-						albums.push(album);
+					if (cache.data[context.artist]) {
+						return cache.data[context.artist];
+					} else {
+						return [];
 					}
+				} else {
+					albums = [];
+					for (artist in cache.data) {
+						albums = albums.concat(cache.data[artist]);
+					}
+					return albums;
 				}
-				return albums;
 				break;
 			case "album":
 				if (context && context.artist && context.album) {

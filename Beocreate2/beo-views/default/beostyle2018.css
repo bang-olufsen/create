@@ -1,5 +1,5 @@
 /* @override 
-	http://beocreate-core.local/common/beostyle2018.css
+	http://beocreate-core.local/views/default/beostyle2018.css
 	http://olohuone.local/common/beostyle2018.css */
 /* 
 
@@ -34,7 +34,7 @@ Keep track of layers in the UI
 
 */
 
-@import "fonts/metropolis.css";
+@import "/common/fonts/metropolis.css";
 
 html {
 	font-size: 18px;
@@ -768,8 +768,8 @@ header .back-button:before {
 	background-color: currentColor;
 	width: 23px;
 	height: 23px;
-	-webkit-mask-image: url(symbols-black/back.svg);
-	mask-image: url(symbols-black/back.svg);
+	-webkit-mask-image: url(/common/symbols-black/back.svg);
+	mask-image: url(/common/symbols-black/back.svg);
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	margin-right: max(var(--sidebar-padding) - 43px, -3px);
@@ -1168,8 +1168,8 @@ section.faded-out .menu-screen {
 	margin-top: -11px;
 	opacity: 0.3;
 	transition: opacity 0.5s ease, background-color 0.5s ease;
-	-webkit-mask-image: url(symbols-black/chevron.svg);
-	mask-image: url(symbols-black/chevron.svg);
+	-webkit-mask-image: url(/common/symbols-black/chevron.svg);
+	mask-image: url(/common/symbols-black/chevron.svg);
 	-webkit-mask-size: 21px;
 	mask-size: 21px;
 	-webkit-mask-repeat: no-repeat;
@@ -1437,8 +1437,8 @@ section.faded-out .menu-screen {
 	-webkit-mask-position: center;
 	mask-position: center;
 	background-color: currentColor;
-	mask-image: url(symbols-black/checkmark.svg);
-	-webkit-mask-image: url(symbols-black/checkmark.svg);
+	mask-image: url(/common/symbols-black/checkmark.svg);
+	-webkit-mask-image: url(/common/symbols-black/checkmark.svg);
 	transition: opacity 0.3s ease, transform 0.3s ease;
 	right: 20px;
 	transform: scale(0.5);
@@ -1487,7 +1487,7 @@ section.faded-out .menu-screen {
 
 .menu-toggle:after {
 	content: "";
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-position: left;
 	background-size: 23px 23px;
@@ -1504,7 +1504,7 @@ section.faded-out .menu-screen {
 }
 
 .dark .menu-toggle:after {
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 }
 
 .on .menu-toggle:after {
@@ -1589,8 +1589,8 @@ h2.sticky-header {
 }
 
 .dark h2.sticky-header {
-	background-color: rgba(51, 51, 51, 0.95);
-	box-shadow: 0 -1px rgba(51, 51, 51, 0.95);
+	box-shadow: 0 -1px rgba(34, 34, 34, 0.95);
+	background-color: rgba(34, 34, 34, 0.95);
 }
 
 .no-touch h2.disclosure:hover,
@@ -1824,28 +1824,28 @@ p.experiment:before {
 }
 
 p.success:before {
-	mask-image: url(symbols-colour/checkmark-green.svg);
-	-webkit-mask-image: url(symbols-colour/checkmark-green.svg);
+	mask-image: url(/common/symbols-colour/checkmark-green.svg);
+	-webkit-mask-image: url(/common/symbols-colour/checkmark-green.svg);
 }
 
 p.warning:before {
-	mask-image: url(symbols-colour/warning-yellow.svg);
-	-webkit-mask-image: url(symbols-colour/warning-yellow.svg);
+	mask-image: url(/common/symbols-colour/warning-yellow.svg);
+	-webkit-mask-image: url(/common/symbols-colour/warning-yellow.svg);
 }
 
 p.loading:before {
-	mask-image: url(symbols-black/wait-star.svg);
-	-webkit-mask-image: url(symbols-black/wait-star.svg);
+	mask-image: url(/common/symbols-black/wait-star.svg);
+	-webkit-mask-image: url(/common/symbols-black/wait-star.svg);
 }
 
 p.privacy:before {
-	mask-image: url(symbols-black/private.svg);
-	-webkit-mask-image: url(symbols-black/private.svg);
+	mask-image: url(/common/symbols-black/private.svg);
+	-webkit-mask-image: url(/common/symbols-black/private.svg);
 }
 
 p.experiment:before {
-	mask-image: url(symbols-black/experiment.svg);
-	-webkit-mask-image: url(symbols-black/experiment.svg);
+	mask-image: url(/common/symbols-black/experiment.svg);
+	-webkit-mask-image: url(/common/symbols-black/experiment.svg);
 }
 
 p.warning {
@@ -1984,7 +1984,7 @@ p.success {
 	width: 18px;
 	height: 18px;
 	position: absolute;
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-color: black;
 	background-position: center;
@@ -2094,7 +2094,7 @@ p.success {
 	width: 21px;
 	height: 21px;
 	position: absolute;
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-color: black;
 	background-position: center;
@@ -2163,7 +2163,7 @@ a.button {
 
 .button.text-chevron:after {
 	content: "";
-	background: url(symbols-black/chevron.svg);
+	background: url(/common/symbols-black/chevron.svg);
 	width: 22px;
 	height: 22px;
 	position: absolute;
@@ -2236,8 +2236,8 @@ a.button {
 	height: 21px;
 	position: absolute;
 	right: 0;
-	-webkit-mask-image: url(symbols-black/chevron-thin-updown.svg);
-	mask-image: url(symbols-black/chevron-thin-updown.svg);
+	-webkit-mask-image: url(/common/symbols-black/chevron-thin-updown.svg);
+	mask-image: url(/common/symbols-black/chevron-thin-updown.svg);
 	-webkit-mask-size: 23px;
 	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
@@ -3465,8 +3465,8 @@ input::-webkit-search-decoration {
 	-webkit-mask-position: center;
 	mask-position: center;
 	background-color: currentColor;
-	mask-image: url(symbols-black/search.svg);
-	-webkit-mask-image: url(symbols-black/search.svg);
+	mask-image: url(/common/symbols-black/search.svg);
+	-webkit-mask-image: url(/common/symbols-black/search.svg);
 	height: 21px;
 	position: absolute;
 	left: 13px;

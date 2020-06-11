@@ -22,5 +22,8 @@
     "url": "https://github.com/bang-olufsen/create/issues"
   },
   "homepage": "https://github.com/bang-olufsen/create#readme",
+  "beocreate": {
+  	"enableWith": ["Beocreate 4-Channel Amplifier"]
+  },
   "dependencies": {}
 }

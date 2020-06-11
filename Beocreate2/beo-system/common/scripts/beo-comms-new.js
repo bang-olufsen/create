@@ -1,4 +1,4 @@
-/*Copyright 2018 Bang & Olufsen A/S
+/*Copyright 2020 Bang & Olufsen A/S
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -64,7 +64,7 @@ function connectProduct() {
 		// Show "Connecting..." with a timeout so that it doesn't flash every time the UI loads.
 		if (!noConnectionNotifications && beo.notify) beo.notify({title: "Connecting...", icon: "attention", timeout: false, id: "connection"});
 	}, 1000);
-	$(document).trigger("general", {header: "connection", content: {status: "connecting"}});
+	document.dispatchEvent(new CustomEvent("general", {detail: {content: {status: "connecting"}, header: "connection"}}));
 	if (beo.sendToProductView) beo.sendToProductView({header: "connection", content: {status: "connecting"}});
 	
 	productConnectionTimeout = setTimeout(function() {
@@ -81,12 +81,11 @@ function connectProduct() {
 		clearTimeout(productConnectionTimeout);
 		clearTimeout(productConnectionNotificationTimeout);
 		console.log("Succesfully connected to " + productAddress + ".");
-		//$("body").addClass("connected").removeClass("disconnected connecting");
 		document.body.classList.add("connected");
 		document.body.classList.remove("disconnected", "connecting");
 		if (beo.notify) beo.notify(false, "connection");
 		noConnectionNotifications = false;
-		$(document).trigger("general", {header: "connection", content: {status: "connected"}});
+		document.dispatchEvent(new CustomEvent("general", {detail: {content: {status: "connected"}, header: "connection"}}));
 		if (beo.sendToProductView) beo.sendToProductView({header: "connection", content: {status: "connected"}});
 		//if (!stateRestored) beo.restoreState();
 		if (reloadOnReconnect) window.location.reload();
@@ -94,12 +93,11 @@ function connectProduct() {
 	
 	// DISCONNECTED
 	productConnection.onclose = function() {
-		$(document).trigger("general", {header: "connection", content: {status: "disconnected"}});
+		document.dispatchEvent(new CustomEvent("general", {detail: {content: {status: "disconnected"}, header: "connection"}}));
 		if (connected) {
 			connected = false;
 			console.log("Disconnected from " + productAddress + ", reconnecting...");
 			if (beo.sendToProductView) beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: true}});
-			//$("body").addClass("connecting").removeClass("connected disconnected");
 			document.body.classList.add("connecting");
 			document.body.classList.remove("disconnected", "connected");
 			connectProduct();
@@ -113,7 +111,6 @@ function connectProduct() {
 			} else {
 				console.log("Stopping attempts to connect to " + productAddress + ".");
 				clearTimeout(productConnectionNotificationTimeout);
-				//$("body").addClass("disconnected").removeClass("connecting connected");
 				document.body.classList.add("disconnected");
 				document.body.classList.remove("disconnected", "connected");
 				if (beo.sendToProductView) beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: false}});
@@ -139,43 +136,32 @@ function connectProduct() {
 function processReceivedData(data) {
 	if (debug) console.log(data);
 	if (data.target && data.header && data.content) {
-		$(document).trigger(data.target, {header: data.header, content: data.content});
+		document.dispatchEvent(new CustomEvent(data.target, {detail: {content: data.content, header: data.header}}));
 		if (data.target == "general" && data.header == "reload" && beo.appearance) {
 			if (data.content == beo.appearance) window.location.reload();
 		}
 	} else if (data.target && data.header) {
-		$(document).trigger(data.target, {header: data.header});
+		document.dispatchEvent(new CustomEvent(data.target, {detail: {header: data.header}}));
 		if (data.target == "general" && data.header == "reload") window.location.reload();
 	}
 }
 
-function send(data) {
+
+function sendToProduct(target, header, content = undefined) {
 	if (productConnection && connected) {
-		productConnection.send(JSON.stringify(data));
+		productConnection.send(JSON.stringify({target: target, header: header, content: content}));
 	} else if (simulation) {
-		console.log("Simulated send of data:"+data);
+		console.log("Simulated send of data:"+{target: target, header: header, content: content});
 	} else {
 		return "Product is not connected, could not send data.";
 	}
 }
 
-function sendToProduct(target, header, content = undefined) {
-	if (typeof header == "string") {
-		send({target: target, header: header, content: content});
-	} else {
-		// Legacy way of sending data, supported. 'Header' used to be 'data'.
-		header.target = target;
-		send(header);
-	}
-}
 
-
-beo.send = send;
 beo.sendToProduct = sendToProduct
 
 return {
 	connectToCurrentProduct: connectToCurrentProduct,
-	send: send,
 	sendToProduct: sendToProduct
 }
 

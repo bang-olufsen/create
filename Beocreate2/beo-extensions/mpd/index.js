@@ -40,7 +40,7 @@ var sources = null;
 var mpdEnabled = false;
 
 var client;
-var netClient;
+var connected = false;
 
 var libraryPath = null;
 var cache = {};
@@ -75,36 +75,7 @@ beo.bus.on('general', function(event) {
 				});
 				
 				if (mpdEnabled) {
-					mpdAPI.connect({path: settings.mpdSocketPath})
-					.then(res => {
-						client = res;
-						if (debug >= 2) console.log("Connected to Music Player Daemon.");
-						client.api.reflection.config().then(config => {
-							if (config.music_directory) {
-								libraryPath = config.music_directory;
-								// Create a route for serving album covers (and ONLY album covers):
-								beo.expressServer.use('/mpd/covers/', (req, res, next) => {
-									if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
-									next();
-								});
-								beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
-								if (fs.existsSync(libraryPath+"/beo-cache.json")) {
-									try {
-										cache = require(libraryPath+"/beo-cache.json");
-									} catch (error) {
-										cache = {};
-									}
-								}
-								updateCache();
-							}
-						})
-						.catch(error => {
-							console.error("Couldn't get MPD music library path:", error);
-						});
-					})
-					.catch(error => {
-						console.error("Failed to connect to Music Player Daemon:", error);
-					});
+					connectMPD();
 				}
 			});
 		}
@@ -191,6 +162,7 @@ function setMPDStatus(enabled, callback) {
 				mpdEnabled = true;
 				if (debug) console.log("MPD enabled.");
 				callback(true);
+				connectMPD();
 			} else {
 				mpdEnabled = false;
 				callback(false, true);
@@ -221,51 +193,104 @@ function determineChildSource(data) {
 	}
 }
 
+firstConnect = true;
+async function connectMPD() {
+	try {
+		client = await mpdAPI.connect({path: settings.mpdSocketPath});
+		if (debug >= 2) console.log("Connected to Music Player Daemon.");
+		if (firstConnect) {
+			try {
+				config = await client.api.reflection.config();
+				if (config.music_directory) {
+					libraryPath = config.music_directory;
+					// Create a route for serving album covers (and ONLY album covers):
+					beo.expressServer.use('/mpd/covers/', (req, res, next) => {
+						if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
+						next();
+					});
+					beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
+					if (fs.existsSync(libraryPath+"/beo-cache.json")) {
+						try {
+							cache = require(libraryPath+"/beo-cache.json");
+						} catch (error) {
+							cache = {};
+						}
+					}
+					firstConnect = false;
+					updateCache();
+				} else {
+					console.log("MPD music library path is not available. Can't build a cache.");
+				}
+			} catch(error) {
+				console.error("Couldn't get MPD music library path:", error);
+			}
+		}
+	} catch(error) {
+		client = null;
+		console.error("Failed to connect to Music Player Daemon:", error);
+	}
+}
+
+
 updatingCache = false;
 async function updateCache() {
 	if (client && !updatingCache) {
 		status = await client.api.status.get();
 		stats = await client.api.status.stats();
+		if (status.updating_db) console.log("MPD is currently updating its database, album cache will not be built at this time.");
 		if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) && !status.updating_db) {
 			// Start updating cache.
 			updatingCache = true;
+			if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", true);
 			if (debug) console.log("Updating MPD album cache.");
 			newCache = {
 				data: {},
 				lastUpdate: stats.db_update
 			};
 			
-			mpdAlbums = await client.api.db.list("album", null, "albumartist");
-
-			for (artist in mpdAlbums) {
-				newCache.data[mpdAlbums[artist].albumartist] = [];
-				for (album in mpdAlbums[artist].album) {
-					// Get a song from the album to get album art and other data.
-					if (debug > 1) console.log(mpdAlbums[artist].album[album]);
-					track = [];
-					try {
-						track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
-					} catch (error) {
-						console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
+			try {
+				mpdAlbums = await client.api.db.list("album", null, "albumartist");
+	
+				for (artist in mpdAlbums) {
+					newCache.data[mpdAlbums[artist].albumartist] = [];
+					for (album in mpdAlbums[artist].album) {
+						// Get a song from the album to get album art and other data.
+						addAlbum = true;
+						if (debug > 1) console.log(mpdAlbums[artist].album[album]);
+						track = [];
+						try {
+							track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
+						} catch (error) {
+							console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
+						}
+						album = {
+							name: mpdAlbums[artist].album[album].album, 
+							artist: mpdAlbums[artist].albumartist, 
+							date: null, 
+							provider: "mpd",
+							img: null
+						};
+						if (track[0]) {
+							if (track[0].date) album.date = track[0].date.toString().substring(0,4);
+							cover = await getCover(track[0].file);
+							if (cover[1] != null) { // Cover fetching had errors, likely due to folder not existing.
+								addAlbum = false;
+							} else {
+								album.img = cover[0];
+							}
+						}
+						if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
 					}
-					album = {
-						name: mpdAlbums[artist].album[album].album, 
-						artist: mpdAlbums[artist].albumartist, 
-						date: null, 
-						provider: "mpd",
-						img: null
-					};
-					if (track[0]) {
-						if (track[0].date) album.date = track[0].date.toString().substring(0,4);
-						album.img = await getCover(track[0].file);
-					}
-					newCache.data[mpdAlbums[artist].albumartist].push(album);
 				}
+				
+				cache = Object.assign({}, newCache);
+				fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+				if (debug) console.log("MPD album cache update has finished.");
+				if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
+			} catch (error) {
+				console.error("Couldn't update MPD album cache:", error);
+				if (error.code == "ENOTCONNECTED") client = null;
 			}
-			
-			cache = Object.assign({}, newCache);
-			fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
-			if (debug) console.log("MPD album cache update has finished.");
 			updatingCache = false;
 		}
 	}
@@ -274,6 +299,7 @@ async function updateCache() {
 
 async function getMusic(type, context, noArt = false) {
 	
+	if (!client) await connectMPD();
 	if (client) {
 		switch (type) {
 			case "albums":
@@ -302,11 +328,17 @@ async function getMusic(type, context, noArt = false) {
 							tracks: [], 
 							provider: "mpd"
 					};
-					mpdTracks = await client.api.db.find("((album == '"+escapeString(context.album)+"') AND (albumartist == '"+escapeString(context.artist)+"'))");
+					try {
+						mpdTracks = await client.api.db.find("((album == '"+escapeString(context.album)+"') AND (albumartist == '"+escapeString(context.artist)+"'))", 'sort', 'track');
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not get album from MPD:", error);
+					}
 					for (track in mpdTracks) {
 						if (!album.date && mpdTracks[track].date) album.date = mpdTracks[track].date;
 						if (track == 0 && !noArt) {
-							album.img = await getCover(mpdTracks[track].file);
+							cover = await getCover(mpdTracks[track].file);
+							if (cover[0]) album.img = cover[0];
 						}
 						trackData = {
 							id: track,
@@ -330,12 +362,18 @@ async function getMusic(type, context, noArt = false) {
 				}
 				break;
 			case "artists":
-				mpdAlbums = await client.api.db.list("album", null, "albumartist");
-				artists = [];
-				for (artist in mpdAlbums) {
-					artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+				try {
+					mpdAlbums = await client.api.db.list("album", null, "albumartist");
+					artists = [];
+					for (artist in mpdAlbums) {
+						artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+					}
+					return artists;
+				} catch (error) {
+					if (error.code == "ENOTCONNECTED") client = null;
+					console.error("Could not get artists from MPD:", error);
+					return false
 				}
-				return artists;
 				break;
 			case "search":
 				id = 0;
@@ -345,56 +383,62 @@ async function getMusic(type, context, noArt = false) {
 				albums = [];
 				escapedString = escapeString(context.searchString);
 				mpdTracks = [];
-				mpdTracks = await client.api.db.search("(title contains '"+escapedString+"')");
-				mpdTracks = mpdTracks.concat(await client.api.db.search("(artist contains '"+escapedString+"')"));
-				mpdTracks = mpdTracks.concat(await client.api.db.search("(album contains '"+escapedString+"')"));
-				for (track in mpdTracks) {
-					if (trackPaths.indexOf(mpdTracks[track].file) == -1) {
-						trackPaths.push(mpdTracks[track].file);
-						trackData = {
-							id: id,
-							path: mpdTracks[track].file,
-							artist: mpdTracks[track].artist,
-							name: mpdTracks[track].title,
-							time: mpdTracks[track].time,
-							provider: "mpd"
-						}
-						id++;
-						tracks.push(trackData);
-						albumFound = false;
-						for (a in albums) {
-							if (albums[a].artist == mpdTracks[track].albumartist &&
-								albums[a].name == mpdTracks[track].album) {
-								albumFound = true;
-								break;
-							}
-						}
-						if (!albumFound) {
-							album = {
-								name: mpdTracks[track].album, 
-								artist: (mpdTracks[track].albumartist) ? mpdTracks[track].albumartist : mpdTracks[track].artist, 
-								date: null, 
+				try {
+					mpdTracks = await client.api.db.search("(title contains '"+escapedString+"')");
+					mpdTracks = mpdTracks.concat(await client.api.db.search("(artist contains '"+escapedString+"')"));
+					mpdTracks = mpdTracks.concat(await client.api.db.search("(album contains '"+escapedString+"')"));
+					for (track in mpdTracks) {
+						if (trackPaths.indexOf(mpdTracks[track].file) == -1) {
+							trackPaths.push(mpdTracks[track].file);
+							trackData = {
+								id: id,
+								path: mpdTracks[track].file,
+								artist: mpdTracks[track].artist,
+								name: mpdTracks[track].title,
+								time: mpdTracks[track].time,
 								provider: "mpd"
-							};
-							if (mpdTracks[track].date) album.date = mpdTracks[track].date;
-							if (!noArt) album.img = await getCover(mpdTracks[track].file);
-							albums.push(album);
-							
-							artistFound = false;
-							theArtist = (mpdTracks[track].albumartist) ? mpdTracks[track].albumartist : mpdTracks[track].artist;
-							for (ar in artists) {
-								if (artists[ar].artist == theArtist) {
-									artistFound = true;
+							}
+							id++;
+							tracks.push(trackData);
+							albumFound = false;
+							for (a in albums) {
+								if (albums[a].artist == mpdTracks[track].albumartist &&
+									albums[a].name == mpdTracks[track].album) {
+									albumFound = true;
 									break;
 								}
 							}
-							if (!artistFound) {
-								artists.push({artist: theArtist, provider: "mpd"});
+							if (!albumFound) {
+								album = {
+									name: mpdTracks[track].album, 
+									artist: (mpdTracks[track].albumartist) ? mpdTracks[track].albumartist : mpdTracks[track].artist, 
+									date: null, 
+									provider: "mpd"
+								};
+								if (mpdTracks[track].date) album.date = mpdTracks[track].date;
+								if (!noArt) album.img = await getCover(mpdTracks[track].file);
+								albums.push(album);
+								
+								artistFound = false;
+								theArtist = (mpdTracks[track].albumartist) ? mpdTracks[track].albumartist : mpdTracks[track].artist;
+								for (ar in artists) {
+									if (artists[ar].artist == theArtist) {
+										artistFound = true;
+										break;
+									}
+								}
+								if (!artistFound) {
+									artists.push({artist: theArtist, provider: "mpd"});
+								}
 							}
 						}
 					}
+					return {tracks: tracks, artists: artists, albums: albums};
+				} catch (error) {
+					if (error.code == "ENOTCONNECTED") client = null;
+					console.error("Could not get search results from MPD:", error);
+					return false;
 				}
-				return {tracks: tracks, artists: artists, albums: albums};
 				break;
 		}
 	} else {
@@ -403,21 +447,28 @@ async function getMusic(type, context, noArt = false) {
 }
 
 async function playMusic(index, type, context) {
+	if (!client) await connectMPD();
 	if (client && 
 		index != undefined && 
 		type && 
 		context) {
 		content = await getMusic(type, context, true);
 		if (content.tracks) {
-			await client.api.queue.clear();
-			queueCommands = [];
-			content.tracks.forEach(track => {
-				queueCommands.push(client.api.queue.addid(track.path));
-			});
-			
-			newQueue = await Promise.all(queueCommands);
-			await client.api.playback.playid(newQueue[index]);
-		return true;
+			try {
+				await client.api.queue.clear();
+				queueCommands = [];
+				content.tracks.forEach(track => {
+					queueCommands.push(client.api.queue.addid(track.path));
+				});
+				
+				newQueue = await Promise.all(queueCommands);
+				await client.api.playback.playid(newQueue[index]);
+				return true;
+			} catch (error) {
+				if (error.code == "ENOTCONNECTED") client = null;
+				console.error("Could not get start playback with MPD:", error);
+				return false;
+			}
 		} else {
 			return false;
 		}
@@ -429,20 +480,26 @@ async function getCover(trackPath) {
 	// If cover exists on the file system, return its path.
 	if (libraryPath) {
 		albumPath = path.dirname(trackPath);
-		files = fs.readdirSync(libraryPath+"/"+albumPath);
-		for (file in files) {
-			if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
-				// Is image file.
-				if (settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
-					encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/"+files[file]);
-					return encoded; //, escapeStringLight(encoded)];
+		try {
+			files = fs.readdirSync(libraryPath+"/"+albumPath);
+			for (file in files) {
+				if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
+					// Is image file.
+					if (settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
+						encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/"+files[file]);
+						return [encoded, null]; //, escapeStringLight(encoded)];
+					}
 				}
 			}
+			// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
+			// This feature is not yet available in MPD.
+		} catch (error) {
+			// The track/album probably doesn't exist on the file system.
+			console.error(error);
+			return [null, 404];
 		}
-		// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
-		// This feature is not yet available in MPD.
 	}
-	return null;
+	return [null, null];
 }
 
 

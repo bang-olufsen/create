@@ -140,6 +140,10 @@ beo.bus.on('mpd', function(event) {
 			});
 		}
 	}
+	
+	if (event.header == "update") {
+		updateCache();
+	}
 });
 
 
@@ -211,7 +215,7 @@ async function connectMPD() {
 					beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
 					if (fs.existsSync(libraryPath+"/beo-cache.json")) {
 						try {
-							cache = require(libraryPath+"/beo-cache.json");
+							cache = JSON.parse(fs.readFileSync(libraryPath+"/beo-cache.json", "utf8"));
 						} catch (error) {
 							cache = {};
 						}
@@ -219,7 +223,7 @@ async function connectMPD() {
 					firstConnect = false;
 					updateCache();
 				} else {
-					console.log("MPD music library path is not available. Can't build a cache.");
+					console.error("MPD music library path is not available. Can't build a cache.");
 				}
 			} catch(error) {
 				console.error("Couldn't get MPD music library path:", error);
@@ -235,9 +239,11 @@ async function connectMPD() {
 updatingCache = false;
 async function updateCache() {
 	if (client && !updatingCache) {
+		if (!client) await connectMPD();
 		status = await client.api.status.get();
 		stats = await client.api.status.stats();
-		if (status.updating_db) console.log("MPD is currently updating its database, album cache will not be built at this time.");
+		if (status.updating_db && debug) console.log("MPD is currently updating its database, album cache will not be built at this time.");
+		if (cache.lastUpdate == stats.db_update && debug) console.log("MPD album cache appears to be up to date.");
 		if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) && !status.updating_db) {
 			// Start updating cache.
 			updatingCache = true;

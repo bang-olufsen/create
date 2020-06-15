@@ -860,6 +860,7 @@ header.aux {
 	top: 0;
 	z-index: 2;
 	background-color: var(--main-bg);
+	justify-content: flex-start;
 }
 
 /* @end */
@@ -2119,7 +2120,7 @@ p.success {
 /* @group Buttons */
 
 .button, 
-.segmented-control, 
+.segmented-control:not(.minimal), 
 .tabs {
 	font-size: 0.7em;
 	text-transform: uppercase;
@@ -2450,8 +2451,11 @@ footer .button.pill {
 /* @group Segmented Control */
 
 .segmented-control {
-	height: 35px;
 	display: flex;
+}
+
+.segmented-control:not(.minimal) {
+	height: 35px;
 	width: 100%;
 	background-color: var(--menu-line-opaque);
 	box-sizing: border-box;
@@ -2459,6 +2463,13 @@ footer .button.pill {
 	margin-top: 10px;
 	padding: 1px;
 }
+
+.segmented-control.minimal {
+	height: 30px;
+	cursor: default;
+	font-size: 0.8em;
+}
+
 
 .segmented-control > div {
 	flex-basis: 30px;
@@ -2475,28 +2486,49 @@ footer .button.pill {
 	transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, outline-color 0.3s ease;
 }
 
-.no-touch .segmented-control > div:hover, 
-.segmented-control > div:active {
+.segmented-control.minimal > div {
+	padding-right: 0.3em;
+	padding-left: 0.3em;
+	font-weight: 500;
+	white-space: nowrap;
+	color: silver;
+	position: relative;
+}
+
+.segmented-control.minimal > span {
+	display: flex;
+	align-items: center;
+	margin-right: 0.3em;
+	color: silver;
+}
+
+.dark .segmented-control.minimal > div,
+.dark .segmented-control.minimal > span {
+	color: rgba(255,255,255,0.5);
+}
+
+.no-touch .segmented-control:not(.minimal) > div:hover, 
+.segmented-control:not(.minimal) > div:active {
 	background-color: silver;
 	outline-color: silver;
 	color: white;
 }
 
-.no-touch .dark .segmented-control > div:hover, 
-.dark .segmented-control > div:active {
+.no-touch .dark .segmented-control:not(.minimal) > div:hover, 
+.dark .segmented-control:not(.minimal) > div:active {
 	background-color: #666;
 	outline-color: #666;
 	color: white;
 }
 
-.no-touch .segmented-control > div.selected:hover, 
-.segmented-control > div.selected:active {
+.no-touch .segmented-control:not(.minimal) > div.selected:hover, 
+.segmented-control:not(.minimal) > div.selected:active {
 	background-color: #444;
 	outline-color: #444;
 }
 
-.no-touch .dark .segmented-control > div.selected:hover, 
-.dark .segmented-control > div.selected:active {
+.no-touch .dark .segmented-control:not(.minimal) > div.selected:hover, 
+.dark .segmented-control:not(.minimal) > div.selected:active {
 	background-color: white;
 	outline-color: white;
 	color: black;
@@ -2507,14 +2539,37 @@ footer .button.pill {
 	margin-right: 0;
 }
 
-.segmented-control > .selected {
+.segmented-control:not(.minimal) > .selected {
 	background-color: black;
 	color: white;
 	outline-color: black;
 	z-index: 1;
 }
 
-.dark .segmented-control > .selected {
+.segmented-control.minimal > .selected,
+.dark .segmented-control.minimal > .selected,
+.no-touch .segmented-control.minimal > div:hover,
+.touch .segmented-control.minimal > div:active {
+	color: var(--main-font-colour);
+}
+
+.segmented-control.minimal > div:after {
+	content: "";
+	width: 12px;
+	border-bottom: 2px solid currentColor;
+	position: absolute;
+	bottom: 0;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	left: 50%;
+	margin-left: -6px;
+}
+
+.segmented-control.minimal > .selected:after {
+	opacity: 1;
+}
+
+.dark .segmented-control:not(.minimal) > .selected {
 	background-color: #ddd;
 	color: black;
 	outline-color: #ddd;

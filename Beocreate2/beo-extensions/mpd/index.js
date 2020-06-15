@@ -290,12 +290,10 @@ async function updateCache(force = false) {
 					}
 					newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
 						if (a.date && b.date) {
-							if (a.date > b.date) {
+							if (a.date >= b.date) {
 								return 1;
 							} else if (a.date < b.date) {
 								return -1;
-							} else {
-								return 0;
 							}
 						} else {
 							return 0;

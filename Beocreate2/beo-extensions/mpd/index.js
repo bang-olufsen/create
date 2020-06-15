@@ -142,7 +142,8 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "update") {
-		updateCache();
+		force = (event.content && event.content.force) ? true : false;
+		updateCache(force);
 	}
 });
 
@@ -237,14 +238,14 @@ async function connectMPD() {
 
 
 updatingCache = false;
-async function updateCache() {
+async function updateCache(force = false) {
 	if (client && !updatingCache) {
 		if (!client) await connectMPD();
 		status = await client.api.status.get();
 		stats = await client.api.status.stats();
 		if (status.updating_db && debug) console.log("MPD is currently updating its database, album cache will not be built at this time.");
-		if (cache.lastUpdate == stats.db_update && debug) console.log("MPD album cache appears to be up to date.");
-		if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) && !status.updating_db) {
+		if (cache.lastUpdate == stats.db_update && !force && debug) console.log("MPD album cache appears to be up to date.");
+		if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update || force) && !status.updating_db) {
 			// Start updating cache.
 			updatingCache = true;
 			if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", true);
@@ -287,6 +288,19 @@ async function updateCache() {
 						}
 						if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
 					}
+					newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
+						if (a.date && b.date) {
+							if (a.date > b.date) {
+								return 1;
+							} else if (a.date < b.date) {
+								return -1;
+							} else {
+								return 0;
+							}
+						} else {
+							return 0;
+						}
+					});
 				}
 				
 				cache = Object.assign({}, newCache);

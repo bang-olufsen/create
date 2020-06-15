@@ -118,7 +118,7 @@ $(".master-volume-slider").slider({
 	max: 100,
 	value: 0,
 	slide: function( event, ui ) {	
-		beo.send({target: "sound", header: "setVolume", content: ui.value});
+		beo.sendToProduct("sound", "setVolume", ui.value);
 	},
 	start: function(event, ui) {
 		adjustingSystemVolume = true;

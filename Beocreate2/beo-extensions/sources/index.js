@@ -799,6 +799,15 @@ var exec = require("child_process").exec;
 		}
 	}
 	
+	
+	function getCurrentSource() {
+		if (currentSource) {
+			return {currentSource: currentSource, data: allSources[currentSource]};
+		} else {
+			return null
+		}
+	}
+	
 	interact = {
 		triggers: {
 				sourceActivated: function(data, interactData) {
@@ -828,6 +837,7 @@ module.exports = {
 	allSources: allSources,
 	settings: settings,
 	stopAllSources: stopAllSources,
+	getCurrentSource: getCurrentSource,
 	transport: transport,
 	interact: interact
 };

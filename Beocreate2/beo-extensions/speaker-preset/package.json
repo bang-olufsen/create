@@ -19,5 +19,8 @@
     "olufsen"
   ],
   "author": "Bang & Olufsen",
-  "license": "MIT"
+  "license": "MIT",
+  "beocreate": {
+  	"enableWith": ["Beocreate 4-Channel Amplifier"]
+  }
 }

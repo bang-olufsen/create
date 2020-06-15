@@ -157,9 +157,6 @@ function sendToProduct(target, header, content = undefined) {
 	}
 }
 
-
-beo.sendToProduct = sendToProduct
-
 return {
 	connectToCurrentProduct: connectToCurrentProduct,
 	sendToProduct: sendToProduct

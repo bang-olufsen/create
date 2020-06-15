@@ -276,6 +276,8 @@ if (tempUISettings != null) uiSettings = Object.assign(uiSettings, tempUISetting
 var extensions = {}; // Import Node logic from extensions into this object.
 var extensionsList = {};
 var extensionsLoaded = false;
+var extensionsPath = systemDirectory+"/../beo-extensions";
+var userExtensionsPath = dataDirectory+"/beo-extensions";
 
 var expressServer = express(); // Create Express instance.
 
@@ -355,10 +357,10 @@ expressServer.get("/", function (req, res) {
 expressServer.get("/view/:appearance", function (req, res) {
 	// Serve an alternate appearance.
 	if (debugMode) console.log("Loading user interface for appearance '"+req.params.appearance+"'...");
-	ui = assembleBeoUI(req.params.appearance);
+	ui = loadAppearance(req.params.appearance);
 	if (ui) {
 		res.status(200);
-		res.send(assembleBeoUI(req.params.appearance));
+		res.send(ui);
 	} else {
 		res.status(404);
 		res.sendFile(systemDirectory+"/common/appearance-not-found.html");
@@ -472,15 +474,10 @@ if (!quietMode) {
 if (!fs.existsSync(dataDirectory+"/beo-extensions")) fs.mkdirSync(dataDirectory+"/beo-extensions");
 
 function assembleBeoUI(appearance = "default") {
-	extensionsPath = systemDirectory+"/../beo-extensions";
-	userExtensionsPath = dataDirectory+"/beo-extensions";
+	
 	menus = [];
 	masterList = {};
-	if (appearance == "default") {
-		menuName = "menu";
-	} else {
-		menuName = appearance;
-	}
+
 	if (fs.existsSync(dataDirectory+"/beo-views/"+appearance)) {
 		appearancePath = dataDirectory+"/beo-views/"+appearance;
 	} else if (fs.existsSync(systemDirectory+"/../beo-views/"+appearance)) {
@@ -493,7 +490,7 @@ function assembleBeoUI(appearance = "default") {
 		extensionsNames = fs.readdirSync(extensionsPath);
 		for (var i = 0; i < extensionsNames.length; i++) {
 			if (extensionsNames[i].charAt(0) != ".") {
-				masterList[extensionsNames[i]] = {path: extensionsPath+"/"+extensionsNames[i], basePath: extensionsPath};
+				masterList[extensionsNames[i]] = {userExtension: false, basePath: extensionsPath};
 			}
 		}
 	}
@@ -504,7 +501,7 @@ function assembleBeoUI(appearance = "default") {
 			if (extensionsNames[i].charAt(0) != ".") {
 				if (!masterList[extensionsNames[i]] || systemConfiguration.preferUserExtensions) {
 					// If user extensions are preferred, extensions in the user directory will replace system extensions with the same name.
-					masterList[extensionsNames[i]] = {path: userExtensionsPath+"/"+extensionsNames[i], basePath: userExtensionsPath};
+					masterList[extensionsNames[i]] = {userExtension: true, basePath: userExtensionsPath};
 				}
 			}
 		}
@@ -513,10 +510,14 @@ function assembleBeoUI(appearance = "default") {
 		
 	if (Object.keys(masterList).length > 0) {
 		
-		if (fs.existsSync(__dirname+'/navigation.txt')) {
-			navigationItems = fs.readFileSync(__dirname+'/navigation.txt', "utf8").split("\n");
-		} else {
+		try {
+			manifest = require(appearancePath+'/manifest.json');
+			navigationItems = manifest.navigation;
+			menuName = manifest.extensionMarkupFileName;
+		} catch (error) {
+			manifest = {};
 			navigationItems = [];
+			menuName = "menu";
 		}
 		
 		allExtensions = {};
@@ -524,13 +525,13 @@ function assembleBeoUI(appearance = "default") {
 		scripts = [];
 		translations = {};
 		
-		for (var i = 0; i < navigationItems.length; i++) {
+		for (i in navigationItems) {
 			// Add top-level navigation to the menu structure.
-			if (navigationItems[i].trim() != "-") {
+			if (navigationItems[i].kind != "separator") {
 				// Navigation item.
-				if (masterList[navigationItems[i]]) {
+				if (masterList[navigationItems[i].name]) {
 					// Check that this extension exists.
-					menuStructure.push({kind: "menu", menu: navigationItems[i], submenus: []});
+					menuStructure.push({kind: "menu", menu: navigationItems[i].name, submenus: []});
 				}
 			} else {
 				// Separator.
@@ -540,11 +541,11 @@ function assembleBeoUI(appearance = "default") {
 		
 		// Load all extensions.
 		for (extensionName in masterList) {
-			extension = loadExtensionWithPath(1, extensionName, masterList[extensionName].path, menuName, "extensions");
+			extension = loadExtensionWithPath(1, extensionName, masterList[extensionName].userExtension, menuName, "extensions");
 			if (extension != null) {
 				allExtensions[extensionName] = extension;
 			} else {
-				for (var i = 0; i < menuStructure.length; i++) {
+				for (i in menuStructure) {
 					if (menuStructure[i].menu == extensionName) {
 						menuStructure.splice(i, 1);
 						break;
@@ -644,9 +645,9 @@ function assembleBeoUI(appearance = "default") {
 		
 		extensionsLoaded = true;
 	} else {
-		menus.push("<script>\n\n// NO EXTENSIONS\n\n beo.notify({title: 'Extensions folder missing', message: 'If you did not deliberately disable extensions, contact Bang & Olufsen Create support team.', id: 'noExtensions'});\nnoExtensions = true;\n\n</script>");
+		menus.push("<script>\n\n// NO EXTENSIONS\n\n if (beo && beo.notify) beo.notify({title: 'Extensions folder missing', message: 'If you did not deliberately disable extensions, contact Bang & Olufsen Create support.', id: 'noExtensions'});\nnoExtensions = true;\n\n</script>");
 		translations = "";
-		scripts = "";
+		scripts = [];
 	}
 	
 	if (fs.existsSync(appearancePath+'/index.html')) {
@@ -669,15 +670,16 @@ function findMenuPlacement(inNames, forName) {
 }
 
 function loadAllServerExtensions() {
-	extensionsPath = systemDirectory+"/../beo-extensions";
-	userExtensionsPath = dataDirectory+"/beo-extensions";
+	
+	menuName = "menu";
+		
 	masterList = {};
 	
 	if (fs.existsSync(extensionsPath)) {
 		extensionsNames = fs.readdirSync(extensionsPath);
 		for (var i = 0; i < extensionsNames.length; i++) {
 			if (extensionsNames[i].charAt(0) != ".") {
-				masterList[extensionsNames[i]] = {path: extensionsPath+"/"+extensionsNames[i], basePath: extensionsPath};
+				masterList[extensionsNames[i]] = {userExtension: false, basePath: extensionsPath};
 			}
 		}
 	}
@@ -691,7 +693,7 @@ function loadAllServerExtensions() {
 						if (debugMode) console.log("Loading user extension '"+extensionsNames[i]+"' instead of equivalent system extension.");
 					}
 					// If user extensions are preferred, extensions in the user directory will replace system extensions with the same name.
-					masterList[extensionsNames[i]] = {path: userExtensionsPath+"/"+extensionsNames[i], basePath: userExtensionsPath};
+					masterList[extensionsNames[i]] = {userExtension: true, basePath: userExtensionsPath};
 				}
 			}
 		}
@@ -699,16 +701,99 @@ function loadAllServerExtensions() {
 	
 	// Load all extensions.
 	for (extensionName in masterList) {
-		loadExtensionWithPath(0, extensionName, masterList[extensionName].path, null, "extensions");
+		loadExtensionWithPath(0, extensionName, masterList[extensionName].userExtension, menuName, "extensions");
 	}
 }
 
 
-function loadExtensionWithPath(mode, extensionName, fullPath, menuName, basePath) {
+function loadExtensionWithPath(mode, extensionName, userExtension, menuName, basePath) {
 	
 	// Mode 0: Load only server-side code.
 	// Mode 1: Load UI for this appearance.
 	
+	shouldLoad = shouldLoadExtension(mode, extensionName, userExtension, menuName);
+	
+	if (!shouldLoad) return null;
+	
+	isSource = false;
+	
+	extensionsList[extensionName] = {loadedSuccessfully: false, isSource: false, menuTitle: null};
+	if (mode == 1) {
+		menu = fs.readFileSync(shouldLoad.path, "utf8"); // Read the menu from file.
+		menuParts = menu.split("\">\n");
+		if (menuParts[0].indexOf("menu-screen") != -1) {
+			headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
+			preHead = "";
+			menuParts.shift();
+		} else {
+			headItems = menuParts[1].substring(5).split(/"\s|"\n/g);
+			preHead = menuParts[0]+"\">";
+			menuParts.splice(0, 2);
+		}
+		head = {};
+		for (l in headItems) {
+			lineItems = headItems[l].split("=\"");
+			head[lineItems[0].trim()] = lineItems[1];
+		};
+		
+		body = menuParts.join("\">\n");
+		head["data-asset-path"] = basePath+'/'+extensionName; // Add asset path.
+		if (head.class && head.class.indexOf('source') != -1) isSource = true; 
+		body = body.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path
+		
+		
+		context = (head["data-context"]) ? head["data-context"].split("/")[0] : null; // Get menu context (who it wants as a parent menu, if any).
+		sortAs = (head["data-sort-as"]) ? head["data-sort-as"] : null; // Sort this extension with another name?
+		
+		// Load a translation array, if it exists.
+		if (systemConfiguration.language != "en" && fs.existsSync(fullPath+'/translations/'+systemConfiguration.language+'.json')) {
+			translations[menuPath] = JSON.parse(fs.readFileSync(fullPath+'/translations/'+systemConfiguration.language+'.json', "utf8"));
+		}
+		
+		stylesheet = (head["data-stylesheet"]) ? head["data-stylesheet"] : null;
+		
+		// Extract scripts into a separate array.
+		extensionScripts = body.match(/^<script.*/gm);
+		body = body.replace(/^<script.*/gm, "");
+		
+		headString = "<div";
+		for (headItem in head) {
+			headString += " "+headItem+'="'+head[headItem]+'"';
+		}
+		headString += ">";
+		menu = ([preHead, headString, body]).join("\n");
+		if (head['data-menu-title']) extensionsList[extensionName].menuTitle = head["data-menu-title"];
+		extensionsList[extensionName].isSource = isSource;
+	}
+	// Load the Node code for this extension.
+	if (mode == 0) {
+		try {
+			extensions[extensionName] = require(fullPath);
+			extensionsList[extensionName].loadedSuccessfully = true;
+			extensionLoadedSuccessfully = true;
+		}
+		catch (error) {
+			console.error("Error loading extension '"+extensionName+"':", error);
+			extensionLoadedSuccesfully = false;
+		}
+		
+	}
+	
+	if (mode == 1) {
+		return {menu: menu, scripts: extensionScripts, context: context, stylesheet: stylesheet, sortAs: sortAs, isSource: isSource};
+	} else {
+		return extensionLoadedSuccessfully;
+	}
+	
+}
+
+
+function shouldLoadExtension(mode, extensionName, userExtension, menuName = null) {
+	
+	// Mode 0: Load check for server-side code.
+	// Mode 1: Check for UI existence.
+	
+	if (menuName == null) menuName = "menu";
 	excludedBySystemConfig = false;
 	
 	if (systemConfiguration.enabledExtensions && systemConfiguration.enabledExtensions.length > 0) {
@@ -724,156 +809,225 @@ function loadExtensionWithPath(mode, extensionName, fullPath, menuName, basePath
 		}
 	}
 	
-	if (mode == 0) menuName = "menu";
+	if (excludedBySystemConfig) return false;
 	
-	isSource = false;
-	if (fs.existsSync(fullPath) && 
-		fs.statSync(fullPath).isDirectory() && 
-		fs.existsSync(fullPath+'/'+menuName+'.html') &&
-		!excludedBySystemConfig) { 
-		if (debugMode > 1 && mode == 0) console.log("Loading extension '"+extensionName+"'...");
-		// A directory is a menu and its menu.html exists.
-		
+	paths = [
+		(!userExtension) ? extensionsPath+"/"+extensionName : userExtensionsPath+"/"+extensionName,
+		(userExtension) ? extensionsPath+"/"+extensionName : userExtensionsPath+"/"+extensionName
+	];
+	
+	try {
+		packageJSON = require(paths[0]+"/package.json");
+	} catch (error) {
 		try {
-			packageJSON = require(fullPath+"/package.json");
+			packageJSON = require(paths[1]+"/package.json");
 		} catch (error) {
 			packageJSON = null;
 		}
-		
-		// First check if this extension is included or excluded with this product.
-		
-		
-		shouldIncludeExtension = true;
-		
-		if (packageJSON && packageJSON.beocreate) {
-			// Check support/unsupport for card/features from package.json file.
-			if (packageJSON.beocreate.requireCardFeatures && 
-				typeof systemConfiguration.cardFeatures == "object") {
-				shouldIncludeExtension = true;
-				for (f in packageJSON.beocreate.requireCardFeatures) {
-					if (systemConfiguration.cardFeatures.indexOf(packageJSON.beocreate.requireCardFeatures[f]) == -1) shouldIncludeExtension = false;
-				}
+	}
+	
+	// First check if this extension is included or excluded with this product.
+	
+	shouldIncludeExtension = true;
+	
+	if (packageJSON && packageJSON.beocreate) {
+		// Check support/unsupport for card/features from package.json file.
+		if (packageJSON.beocreate.requireCardFeatures && 
+			typeof systemConfiguration.cardFeatures == "object") {
+			shouldIncludeExtension = true;
+			for (f in packageJSON.beocreate.requireCardFeatures) {
+				if (systemConfiguration.cardFeatures.indexOf(packageJSON.beocreate.requireCardFeatures[f]) == -1) shouldIncludeExtension = false;
 			}
-			if (packageJSON.beocreate.rejectCardFeatures && 
-				shouldIncludeExtension && 
-				typeof systemConfiguration.cardFeatures == "object") {
-				shouldIncludeExtension = true;
-				for (f in packageJSON.beocreate.rejectCardFeatures) {
-					if (systemConfiguration.cardFeatures.indexOf(packageJSON.beocreate.rejectCardFeatures[f]) != -1) shouldIncludeExtension = false;
-				}
-			}
-			
-			cardType = systemConfiguration.cardType.toLowerCase();
-			if (packageJSON.beocreate.enableWith) {
-				shouldIncludeExtension = false;
-				if (typeof packageJSON.beocreate.enableWith == "string") {
-					if (packageJSON.beocreate.enableWith.toLowerCase() == cardType) shouldIncludeExtension = true;
-				} else {
-					for (c in packageJSON.beocreate.enableWith) {
-						if (packageJSON.beocreate.enableWith[c].toLowerCase() == cardType) shouldIncludeExtension = true;
-					}
-				}
-			} else if (packageJSON.beocreate.disableWith) {
-				shouldIncludeExtension = true;
-				if (typeof packageJSON.beocreate.disableWith == "string") {
-					if (packageJSON.beocreate.disableWith.toLowerCase() == cardType) shouldIncludeExtension = false;
-				} else {
-					for (c in packageJSON.beocreate.disableWith) {
-						if (packageJSON.beocreate.disableWith[c].toLowerCase() == cardType) shouldIncludeExtension = false;
-					}
-				}
+		}
+		if (packageJSON.beocreate.rejectCardFeatures && 
+			shouldIncludeExtension && 
+			typeof systemConfiguration.cardFeatures == "object") {
+			shouldIncludeExtension = true;
+			for (f in packageJSON.beocreate.rejectCardFeatures) {
+				if (systemConfiguration.cardFeatures.indexOf(packageJSON.beocreate.rejectCardFeatures[f]) != -1) shouldIncludeExtension = false;
 			}
 		}
 		
-		
-		
-		if (shouldIncludeExtension) {
-			menu = fs.readFileSync(fullPath+'/'+menuName+'.html', "utf8"); // Read the menu from file.
-			menuParts = menu.split("\">\n");
-			if (menuParts[0].indexOf("menu-screen") != -1) {
-				headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
-				preHead = "";
-				menuParts.shift();
+		cardType = systemConfiguration.cardType.toLowerCase();
+		if (packageJSON.beocreate.enableWith) {
+			shouldIncludeExtension = false;
+			if (typeof packageJSON.beocreate.enableWith == "string") {
+				if (packageJSON.beocreate.enableWith.toLowerCase() == cardType) shouldIncludeExtension = true;
 			} else {
-				headItems = menuParts[1].substring(5).split(/"\s|"\n/g);
-				preHead = menuParts[0]+"\">";
-				menuParts.splice(0, 2);
+				for (c in packageJSON.beocreate.enableWith) {
+					if (packageJSON.beocreate.enableWith[c].toLowerCase() == cardType) shouldIncludeExtension = true;
+				}
 			}
-			head = {};
-			for (l in headItems) {
-				lineItems = headItems[l].split("=\"");
-				head[lineItems[0].trim()] = lineItems[1];
-			};
-			
-			if (mode == 1) {
-				body = menuParts.join("\">\n");
-				head["data-asset-path"] = basePath+'/'+extensionName; // Add asset path.
-				if (head.class && head.class.indexOf('source') != -1) isSource = true; 
-				body = body.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path
-				
-				
-				context = (head["data-context"]) ? head["data-context"].split("/")[0] : null; // Get menu context (who it wants as a parent menu, if any).
-				sortAs = (head["data-sort-as"]) ? head["data-sort-as"] : null; // Sort this extension with another name?
-				
-				// Load a translation array, if it exists.
-				if (systemConfiguration.language != "en" && fs.existsSync(fullPath+'/translations/'+systemConfiguration.language+'.json')) {
-					translations[menuPath] = JSON.parse(fs.readFileSync(fullPath+'/translations/'+systemConfiguration.language+'.json', "utf8"));
-				}
-				
-				// Extract scripts into a separate array.
-				extensionScripts = body.match(/^<script.*/gm);
-				body = body.replace(/^<script.*/gm, "");
-				
-				headString = "<div";
-				for (headItem in head) {
-					headString += " "+headItem+'="'+head[headItem]+'"';
-				}
-				headString += ">";
-				menu = ([preHead, headString, body]).join("\n");
-			}
-			// Load the Node code for this extension.
-			extensionLoadedSuccesfully = false;
-			if (mode == 0) {
-				try {
-					require.resolve(fullPath);
-					try {
-						extensions[extensionName] = require(fullPath);
-						extensionLoadedSuccesfully = true;
-					}
-					catch (error) {
-						console.error("Error loading extension '"+extensionName+"':", error);
-						extensionLoadedSuccesfully = false;
-					}
-				}
-				catch (error) {
-					if (debugMode > 2) {
-						console.error("Extension '"+extensionName+"' has no server-side code:", error);
-					} else if (debugMode) {
-						console.log("Extension '"+extensionName+"' has no server-side code.");
-					}
-					extensionLoadedSuccesfully = true;
-				}
-				extensionsList[extensionName] = {isSource: isSource, loadedSuccesfully: extensionLoadedSuccesfully};
-			}
-			extensionsList[extensionName].menuTitle = head["data-menu-title"];
-			
-			if (mode == 1) {
-				return {menu: menu, scripts: extensionScripts, context: context, sortAs: sortAs, isSource: isSource};
+		} else if (packageJSON.beocreate.disableWith) {
+			shouldIncludeExtension = true;
+			if (typeof packageJSON.beocreate.disableWith == "string") {
+				if (packageJSON.beocreate.disableWith.toLowerCase() == cardType) shouldIncludeExtension = false;
 			} else {
-				return extensionLoadedSuccesfully;
+				for (c in packageJSON.beocreate.disableWith) {
+					if (packageJSON.beocreate.disableWith[c].toLowerCase() == cardType) shouldIncludeExtension = false;
+				}
 			}
-		} else {
-			return null;
 		}
-	} else {
-		if (mode == 0) {
-			console.error("'"+extensionName+"' is not a Beocreate 2 extension. Skipping.");
+	}
+	
+	if (!shouldIncludeExtension) return false;
+	
+	
+	if (mode == 0) {
+		fullPath = paths[0];
+		try {
+			require.resolve(fullPath);
 		}
-		return null;
+		catch (error) {
+			fullPath = paths[1];
+			try {
+				require.resolve(fullPath);
+			}
+			catch (error) {
+				if (debugMode > 2) {
+					console.error("Extension '"+extensionName+"' has no server-side code:", error);
+				} else if (debugMode) {
+					console.log("Extension '"+extensionName+"' has no server-side code.");
+				}
+				return false;
+			}
+		}
+	} 
+	if (mode == 1) {
+		extensionExists = false;
+		
+		for (p in paths) {
+			if (!extensionExists) {
+				fullPath = paths[p];
+				if (fs.existsSync(fullPath) && 
+					fs.statSync(fullPath).isDirectory()) { 
+					if (menuName.charAt(0) != "*") {
+						if (fs.existsSync(fullPath+'/'+menuName+'.html')){
+							extensionExists = true;
+							menuName += ".html";
+						}
+					} else {
+						// Wildcard matching.
+						files = fs.readdirSync(fullPath).filter(fn => fn.endsWith(menuName.substring(1)+".html"));
+						if (files.length == 1) {
+							menuName = files[0];
+							extensionExists = true;
+						}
+					}
+				}
+			}
+		}
+		if (!extensionExists) return false;
 	}
 	
 	
+	if (packageJSON) {
+		return {packageJSON: packageJSON, path: fullPath+"/"+menuName, directory: fullPath};
+	} else {
+		return {packageJSON: null, path: fullPath+"/"+menuName};
+	}
 	
+}
+
+
+// The new method to load UI. Not (yet?) used for the standard Beocreate 2 UI.
+function loadAppearance(appearance) {
+
+	if (fs.existsSync(dataDirectory+"/beo-views/"+appearance)) {
+		appearancePath = dataDirectory+"/beo-views/"+appearance;
+	} else if (fs.existsSync(systemDirectory+"/../beo-views/"+appearance)) {
+		appearancePath = systemDirectory+"/../beo-views/"+appearance;
+	} else {
+		return false;
+	}
+	
+	masterList = [];
+	// Check if some extensions are excluded or exlusively included.
+	if (fs.existsSync(extensionsPath)) {
+		extensionsNames = fs.readdirSync(extensionsPath);
+		for (var i = 0; i < extensionsNames.length; i++) {
+			if (extensionsNames[i].charAt(0) != ".") {
+				masterList[extensionsNames[i]] = {userExtension: false};
+			}
+		}
+	}
+	
+	if (fs.existsSync(userExtensionsPath)) {
+		extensionsNames = fs.readdirSync(userExtensionsPath);
+		for (var i = 0; i < extensionsNames.length; i++) {
+			if (extensionsNames[i].charAt(0) != ".") {
+				if (!masterList[extensionsNames[i]] || systemConfiguration.preferUserExtensions) {
+					// If user extensions are preferred, extensions in the user directory will replace system extensions with the same name.
+					masterList[extensionsNames[i]] = {userExtension: true};
+				}
+			}
+		}
+	}
+	
+	menus = [];
+	scripts = [];
+	stylesheets = [];
+	
+	if (Object.keys(masterList).length > 0) {
+		
+		navigation = [];
+		menuName = "menu";
+		try {
+			manifest = JSON.parse(fs.readFileSync(appearancePath+'/manifest.json', "utf8"));
+			if (manifest.navigation) navigation = manifest.navigation;
+			if (manifest.extensionMarkupFileName) menuName = manifest.extensionMarkupFileName;
+		} catch (error) {
+			console.error("Error loading manifest.json for appearance '"+appearance+"':",error);
+			manifest = {};
+		}
+		
+		// Load the markup for all extensions.
+		for (extensionName in masterList) {
+			shouldLoad = shouldLoadExtension(1, extensionName, masterList[extensionName].userExtension, menuName);
+			if (shouldLoad) {
+				menus.push(fs.readFileSync(shouldLoad.path, "utf8")); // Read the menu from file.
+				// Read scripts and stylesheets.
+				if (manifest.extensionScriptFileName || manifest.extensionStylesheetFileName) {
+					files = fs.readdirSync(shouldLoad.directory);
+					if (manifest.extensionScriptFileName.charAt(0) != "*") {
+						i = files.indexOf(manifest.extensionScriptFileName+".js");
+						if (i != -1) scripts.push("/extensions/"+extensionName+"/"+files.i);
+					} else {
+						filtered = files.filter(fn => fn.endsWith(manifest.extensionScriptFileName.substring(1)+".js"));
+						if (filtered.length == 1) scripts.push("/extensions/"+extensionName+"/"+filtered[0]);
+					}
+					if (manifest.extensionStylesheetFileName.charAt(0) != "*") {
+						i = files.indexOf(manifest.extensionStylesheetFileName+".css");
+						if (i != -1) stylesheets.push("/extensions/"+extensionName+"/"+files.i);
+					} else {
+						filtered = files.filter(fn => fn.endsWith(manifest.extensionStylesheetFileName.substring(1)+".css"));
+						if (filtered.length == 1) stylesheets.push("/extensions/"+extensionName+"/"+filtered[0]);
+					}
+				}
+			}
+		}
+	}
+	
+	// Read appearance from disk.
+	if (fs.existsSync(appearancePath+'/index.html')) {
+		
+		stylesheetMarkup = "";
+		for (s in stylesheets) {
+			stylesheetMarkup += '<link rel="stylesheet" href="'+stylesheets[s]+'">\n';
+		}
+		
+		scriptMarkup = "";
+		for (s in scripts) {
+			scriptMarkup += '<script type="text/javascript" charset="utf-8" src="'+scripts[s]+'"></script>\n';
+		}
+		
+		bodyClass = (systemConfiguration.cardType && systemConfiguration.cardType.indexOf("Beocreate") == -1) ? '<body class="hifiberry-os ' : '<body class=" ';
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClass).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>navigation = "+JSON.stringify(navigation)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";</script>\n").replace("</beo-scripts>", scriptMarkup);
+		
+		return completeUI;
+	} else {
+		return false;
+	}
 	
 }
 

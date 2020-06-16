@@ -279,7 +279,7 @@ async function updateCache(force = false) {
 						};
 						if (track[0]) {
 							if (track[0].date) album.date = track[0].date.toString().substring(0,4);
-							cover = await getCover(track[0].file);
+							cover = await getCover(track[0].file, true);
 							if (cover[1] != null) { // Cover fetching had errors, likely due to folder not existing.
 								addAlbum = false;
 							} else {
@@ -494,27 +494,32 @@ async function playMusic(index, type, context) {
 }
 
 
-async function getCover(trackPath) {
+async function getCover(trackPath, thumbnail = false) {
 	// If cover exists on the file system, return its path.
 	if (libraryPath) {
 		albumPath = path.dirname(trackPath);
-		try {
-			files = fs.readdirSync(libraryPath+"/"+albumPath);
-			for (file in files) {
-				if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
-					// Is image file.
-					if (settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
-						encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/"+files[file]);
-						return [encoded, null]; //, escapeStringLight(encoded)];
+		if (thumbnail && fs.existsSync(albumPath+"/cover-thumb.jpg")) {
+			encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/cover-thumb.jpg");
+			return [encoded, null];
+		} else {
+			try {
+				files = fs.readdirSync(libraryPath+"/"+albumPath);
+				for (file in files) {
+					if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
+						// Is image file.
+						if (settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
+							encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/"+files[file]);
+							return [encoded, null]; //, escapeStringLight(encoded)];
+						}
 					}
 				}
+				// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
+				// This feature is not yet available in MPD.
+			} catch (error) {
+				// The track/album probably doesn't exist on the file system.
+				console.error(error);
+				return [null, 404];
 			}
-			// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
-			// This feature is not yet available in MPD.
-		} catch (error) {
-			// The track/album probably doesn't exist on the file system.
-			console.error(error);
-			return [null, 404];
 		}
 	}
 	return [null, null];

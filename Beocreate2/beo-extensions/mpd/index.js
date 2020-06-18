@@ -23,6 +23,8 @@ var path = require("path");
 var fs = require("fs");
 var mpdAPI = require("mpd-api");
 var mpdCmd = mpdAPI.mpd;
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 var debug = beo.debug;
 
@@ -30,7 +32,7 @@ var version = require("./package.json").version;
 
 
 var defaultSettings = {
-	coverNames: ["artwork", "folder", "cover", "front", "albumart"],
+	coverNames: ["cover", "artwork", "folder", "front", "albumart"],
 	mpdSocketPath: "/var/run/mpd/socket"
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
@@ -254,7 +256,7 @@ async function updateCache(force = false) {
 				data: {},
 				lastUpdate: stats.db_update
 			};
-			
+			createTiny = (beo.extensions["beosound-5"]) ? true : false;
 			try {
 				mpdAlbums = await client.api.db.list("album", null, "albumartist");
 	
@@ -279,11 +281,13 @@ async function updateCache(force = false) {
 						};
 						if (track[0]) {
 							if (track[0].date) album.date = track[0].date.toString().substring(0,4);
-							cover = await getCover(track[0].file, true);
-							if (cover[1] != null) { // Cover fetching had errors, likely due to folder not existing.
+							cover = await getCover(track[0].file, createTiny);
+							if (cover.error != null) { // Cover fetching had errors, likely due to folder not existing.
 								addAlbum = false;
 							} else {
-								album.img = cover[0];
+								album.img = cover.img;
+								album.thumbnail = cover.thumbnail;
+								album.tinyThumbnail = cover.tiny;
 							}
 						}
 						if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
@@ -310,10 +314,35 @@ async function updateCache(force = false) {
 				if (error.code == "ENOTCONNECTED") client = null;
 			}
 			updatingCache = false;
+			if ((albumsRequested || artistsRequested) &&
+				beo.extensions.music &&
+				beo.extensions.music.returnMusic) {
+					if (albumsRequested) {
+						if (debug) console.log("Sending updated list of albums from MPD.");
+						albums = [];
+						for (artist in cache.data) {
+							albums = albums.concat(cache.data[artist]);
+						}
+						beo.extensions.music.returnMusic("mpd", "albums", albums, null);
+					}
+					if (artistsRequested) {
+						if (debug) console.log("Sending updated list of artists from MPD.");
+						mpdAlbums = await client.api.db.list("album", null, "albumartist");
+						artists = [];
+						for (artist in mpdAlbums) {
+							artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+						}
+						beo.extensions.music.returnMusic("mpd", "artists", artists, null);
+					}
+			}
+			albumsRequested = false;
+			artistsRequested = false;
 		}
 	}
 }
 
+var albumsRequested = false;
+var artistsRequested = false;
 
 async function getMusic(type, context, noArt = false) {
 	
@@ -321,14 +350,17 @@ async function getMusic(type, context, noArt = false) {
 	if (client) {
 		switch (type) {
 			case "albums":
+				
 				if (context && context.artist) {
 					if (cache.data[context.artist]) {
 						return cache.data[context.artist];
 					} else {
 						return [];
 					}
+	
 				} else {
 					albums = [];
+					albumsRequested = true;
 					for (artist in cache.data) {
 						albums = albums.concat(cache.data[artist]);
 					}
@@ -356,7 +388,11 @@ async function getMusic(type, context, noArt = false) {
 						if (!album.date && mpdTracks[track].date) album.date = mpdTracks[track].date;
 						if (track == 0 && !noArt) {
 							cover = await getCover(mpdTracks[track].file);
-							if (cover[0]) album.img = cover[0];
+							if (!cover.error) {
+								album.img = cover.img;
+								album.thumbnail = cover.thumbnail;
+								album.tinyThumbnail = cover.thumbnail;
+							}
 						}
 						trackData = {
 							id: track,
@@ -381,6 +417,7 @@ async function getMusic(type, context, noArt = false) {
 				break;
 			case "artists":
 				try {
+					artistsRequested = true;
 					mpdAlbums = await client.api.db.list("album", null, "albumartist");
 					artists = [];
 					for (artist in mpdAlbums) {
@@ -434,7 +471,14 @@ async function getMusic(type, context, noArt = false) {
 									provider: "mpd"
 								};
 								if (mpdTracks[track].date) album.date = mpdTracks[track].date;
-								if (!noArt) album.img = await getCover(mpdTracks[track].file);
+								if (!noArt) {
+									cover = await getCover(mpdTracks[track].file);
+									if (!cover.error) {
+										album.img = cover.img;
+										album.thumbnail = cover.thumbnail;
+										album.tinyThumbnail = cover.thumbnail;
+									}
+								}
 								albums.push(album);
 								
 								artistFound = false;
@@ -494,35 +538,56 @@ async function playMusic(index, type, context) {
 }
 
 
-async function getCover(trackPath, thumbnail = false) {
+async function getCover(trackPath, createTiny = false) {
 	// If cover exists on the file system, return its path.
 	if (libraryPath) {
 		albumPath = path.dirname(trackPath);
-		if (thumbnail && fs.existsSync(albumPath+"/cover-thumb.jpg")) {
-			encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/cover-thumb.jpg");
-			return [encoded, null];
-		} else {
-			try {
-				files = fs.readdirSync(libraryPath+"/"+albumPath);
-				for (file in files) {
-					if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
-						// Is image file.
-						if (settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
-							encoded = ("/mpd/covers/"+encodeURIComponent(albumPath).replace(/[!'()*]/g, escape)+"/"+files[file]);
-							return [encoded, null]; //, escapeStringLight(encoded)];
-						}
+		
+		try {
+			files = fs.readdirSync(libraryPath+"/"+albumPath);
+			img = null;
+			thumbnail = null;
+			tiny = null;
+			for (file in files) {
+				if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
+					// Is image file.
+					if (!img && settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
+						img = files[file];
 					}
+					if (files[file] == "cover-thumb.jpg") thumbnail = "cover-thumb.jpg";
+					if (files[file] == "cover-tiny.jpg") tiny = "cover-tiny.jpg";
 				}
-				// If we've gotten this far, there was no cover. Try to extract it from the file and put it onto the folder, then return its path.
-				// This feature is not yet available in MPD.
-			} catch (error) {
-				// The track/album probably doesn't exist on the file system.
-				console.error(error);
-				return [null, 404];
 			}
+			if (!tiny && 
+				img &&
+				createTiny) {
+				try {
+					if (debug) console.log("Creating tiny album artwork for '"+albumPath+"'...");
+					await execPromise("convert \""+libraryPath+"/"+albumPath+"/"+img+"\" -resize 100x100\\> \""+libraryPath+"/"+albumPath+"/cover-tiny.jpg\"");
+					tiny = "cover-tiny.jpg";
+				} catch (error) {
+					console.log("Error creating tiny album cover:", error);
+				}
+			}
+			if (img || thumbnail || tiny) {
+				encodedAlbumPath = encodeURIComponent(albumPath).replace(/[!'()*]/g, escape);
+				return {error: null, 
+						img: ((img) ? "/mpd/covers/"+encodedAlbumPath+"/"+img : null), 
+						thumbnail: ((thumbnail) ? "/mpd/covers/"+encodedAlbumPath+"/"+thumbnail : null),
+						tiny: ((tiny) ? "/mpd/covers/"+encodedAlbumPath+"/"+tiny : null)
+					};
+			} else {
+				return {error: null};
+			}
+			
+			
+		} catch (error) {
+			// The track/album probably doesn't exist on the file system.
+			console.error(error);
+			return {error: 404};
 		}
 	}
-	return [null, null];
+	return {error: 503};
 }
 
 

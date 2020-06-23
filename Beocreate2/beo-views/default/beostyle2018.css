@@ -646,6 +646,7 @@ nav.favourites div:active img {
 }
 
 .player-bar h3 {
+	color: white;
 	font-weight: 500;
 	font-size: 0.9em;
 	margin-bottom: 0.2em;
@@ -1570,7 +1571,16 @@ h2 {
 	margin-top: 20px;
 }
 
-.dark h2 {
+h3 {
+	font-size: 1em;
+	font-weight: 500;
+	margin-bottom: 20px;
+	margin-top: 0;
+	color: gray;
+}
+
+.dark h2,
+.dark h3 {
 	/*color: white;*/
 	color: rgba(255,255,255,0.5);
 }
@@ -2559,15 +2569,13 @@ footer .button.pill {
 	border-bottom: 2px solid currentColor;
 	position: absolute;
 	bottom: 0;
-	transition: transform 0.5s ease, opacity 0.5s ease;
+	transition: opacity 0.5s ease;
 	opacity: 0;
-	transform: translateY(5px);
 	left: 50%;
 	margin-left: -6px;
 }
 
 .segmented-control.minimal > .selected:after {
-	transform: translateY(0);
 	opacity: 1;
 }
 
@@ -4398,6 +4406,11 @@ header.aux .search-container {
 .menu-content-wrap:before,
 .menu-content-wrap:after {
 	height: calc(var(--sidebar-padding) - 15px);
+}
+
+.ask-content .menu-content:before,
+.ask-content .menu-content:after {
+	height: 0;
 }
 
 div:not(#text-input) .popup-content {

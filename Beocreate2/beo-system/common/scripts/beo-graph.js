@@ -26,6 +26,7 @@
 		{data: [], show: true, fill: false, lineWidth: 1, offset: 0}
 	];
 	this.pi = Math.PI;
+	this.Fs = 48000;
 	
 	this.palette = [];
 	this.darkPalette = [];
@@ -134,6 +135,9 @@ Beograph.prototype.setOptions = function(options, autoDraw) {
 		this.resolution = options.resolution;
 	}
 	
+	if (options.Fs != undefined) {
+		this.Fs = options.Fs;
+	}
 	
 	function hexToRGB(hex) {
 	    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
@@ -155,7 +159,6 @@ Beograph.prototype.setOptions = function(options, autoDraw) {
 
 Beograph.prototype.store = function(target, options, autoDraw) {
 	
-	Fs = 48000;
 	points = null;
 	if (options.coefficients) {
 		// Plot these coefficients.
@@ -170,7 +173,7 @@ Beograph.prototype.store = function(target, options, autoDraw) {
 		
 		for (var i = 0; i < this.resolution; i++) {
 			freq = logScale(i / this.resolution, 0.0001, 0.5);
-			z = freq*Fs;
+			z = freq*this.Fs;
 			w = freq * 2 * this.pi;
 			fi = Math.pow(Math.sin(w/2), 2);
 			y = Math.log(Math.pow(b0+b1+b2, 2) - 4 * (b0*b1 + 4*b0*b2 + b1*b2) * fi + 16*b0*b2*fi*fi) - Math.log(Math.pow(1+a1+a2, 2) - 4 * (a1 + 4*a2 + a1*a2)*fi + 16*a2*fi*fi);

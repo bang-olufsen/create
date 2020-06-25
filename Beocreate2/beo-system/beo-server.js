@@ -1125,18 +1125,23 @@ function download(url, destination, filename = null) {
 			}
 			if (protocol) {
 				var request = protocol.get(url, function(response) {
-					response.pipe(file);
-					file.on('finish', function() {
-						file.close(function(err) {
-							if (!err) {
-								resolve(destination+"/"+filename);
-							} else {
-								fs.unlink(destination+"/"+filename); // Delete the file asynchronously.
-								reject(err);
-							}
+					if (response.statusCode == 200) {
+						response.pipe(file);
+						file.on('finish', function() {
+							file.close(function(err) {
+								if (!err) {
+									resolve(destination+"/"+filename);
+								} else {
+									fs.unlink(destination+"/"+filename); // Delete the file asynchronously.
+									reject(err);
+								}
+							});
 						});
-					});
-				}).on('error', function(error) { // Handle errors
+					} else {
+						throw "Server response was "+response.statusCode+".";
+					}
+				}).on('error', function(error) { // Handle errors.
+					console.error("Error in downloading file:", error);
 					fs.unlink(destination+"/"+filename); // Delete the file asynchronously.
 					reject(error);
 				});

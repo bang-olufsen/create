@@ -706,7 +706,13 @@ var _ = require('underscore');
 	
 	function amplifierMute(mute) {
 		if (!settings.noGPIOMute) {
-			if (!isNaN(execSync("pigs t", {encoding: "utf8"}).trim())) {
+			try {
+				pigpioRunning = !isNaN(execSync("pigs t", {encoding: "utf8"}).trim());
+			} catch (error) {
+				console.error("PiGPIO is not running.");
+				pigpioRunning = false;
+			}
+			if (pigpioRunning) {
 				if (mute) {
 					
 					try {
@@ -730,6 +736,8 @@ var _ = require('underscore');
 					beo.bus.emit("dsp", {header: "amplifierUnmuted"});
 				}
 			}
+		} else if (!mute) {
+			beo.bus.emit("dsp", {header: "amplifierUnmuted"});
 		}
 	}
 	

@@ -79,26 +79,11 @@ var fs = require("fs");
 					}
 				}
 
-				
-				if (audioControl) {
-					configuration = audioControl.getSettings();
-					if (configuration.privacy) {
-						inferredSettings.externalMetadata = (!configuration.privacy.external_metadata ||
-							(!configuration.privacy.external_metadata.comment &&
-							configuration.privacy.external_metadata.value == "1")) ? true : false;
-					} else {
-						inferredSettings.externalMetadata = true;
-					}
-				}
-				
-				exec("systemctl is-active --quiet pushdata.timer").on('exit', function(code) {
-					if (code == 0) {
-						inferredSettings.usageData = true;
-					} else {
-						inferredSettings.usageData = false;
-					}
+				getPrivacySetting("externalMetadata");
+				getPrivacySetting("usageData").then(function() {
 					beo.sendToUI("privacy", {header: "privacySettings", content: {settings: inferredSettings, descriptions: descriptions}});
 				});
+				
 			}
 		}
 	});
@@ -119,7 +104,7 @@ var fs = require("fs");
 				if (event.content.setting == "externalMetadata" && audioControl) {
 					beo.sendToUI("privacy", {header: "updatingSettings"});
 					inferredSettings.externalMetadata = (!inferredSettings.externalMetadata) ? true : false;
-					enabled = (settings.externalMetadata) ? "1" : "0";
+					enabled = (inferredSettings.externalMetadata) ? "1" : "0";
 					audioControl.configure([{section: "privacy", option: "external_metadata", value: enabled}], true, function() {
 						beo.sendToUI("privacy", {header: "privacySettings", content: {settings: inferredSettings}});
 					});
@@ -151,7 +136,52 @@ var fs = require("fs");
 	
 	
 	
+	function getPrivacySetting(setting) {
+		switch (setting) {
+			case "externalMetadata":
+				if (audioControl) {
+					configuration = audioControl.getSettings();
+					if (configuration.privacy) {
+						inferredSettings.externalMetadata = (!configuration.privacy.external_metadata ||
+							(!configuration.privacy.external_metadata.comment &&
+							configuration.privacy.external_metadata.value == "1")) ? true : false;
+						return inferredSettings.externalMetadata;
+					} else {
+						inferredSettings.externalMetadata = true;
+						return true;
+					}
+				} else {
+					return false;
+				}
+				break;
+			case "usageData":
+				return new Promise(function(resolve, reject) {
+					try {
+						exec("systemctl is-active --quiet pushdata.timer").on('exit', function(code) {
+							if (code == 0) {
+								inferredSettings.usageData = true;
+								resolve(true);
+							} else {
+								inferredSettings.usageData = false;
+								resolve(false);
+							}
+						});
+					} catch (error) {
+						reject(false);
+					}
+				});
+				break;
+			default:
+				return null;
+				break;
+		}
+	}
+	
+	
+	
+	
 module.exports = {
-	version: version
+	version: version,
+	getPrivacySetting: getPrivacySetting
 };
 

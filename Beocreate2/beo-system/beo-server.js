@@ -1116,7 +1116,6 @@ function download(url, destination, filename = null) {
 	return new Promise(function(resolve, reject) {
 		if (url) {
 			if (!filename) filename = url.substring(url.lastIndexOf('/') + 1);
-			var file = fs.createWriteStream(destination+"/"+filename);
 			protocol = null;
 			if (url.indexOf("https") != -1) {
 				protocol = https;
@@ -1126,6 +1125,7 @@ function download(url, destination, filename = null) {
 			if (protocol) {
 				var request = protocol.get(url, function(response) {
 					if (response.statusCode == 200) {
+						var file = fs.createWriteStream(destination+"/"+filename);
 						response.pipe(file);
 						file.on('finish', function() {
 							file.close(function(err) {
@@ -1138,7 +1138,8 @@ function download(url, destination, filename = null) {
 							});
 						});
 					} else {
-						throw "Server response was "+response.statusCode+".";
+						console.error("Error in downloading file. Server response was "+response.statusCode+".");
+						reject(error);
 					}
 				}).on('error', function(error) { // Handle errors.
 					console.error("Error in downloading file:", error);

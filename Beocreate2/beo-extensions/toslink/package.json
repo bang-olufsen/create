@@ -1,7 +1,7 @@
 {
-  "name": "@beocreate/speaker-preset",
+  "name": "@beocreate/toslink",
   "version": "0.6.0",
-  "description": "Speaker preset management for Beocreate sound systems.",
+  "description": "Toslink settings for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,9 +11,8 @@
     "url": "github.com/bang-olufsen/create"
   },
   "keywords": [
-    "sound",
-    "preset",
-    "dsp",
+    "display",
+    "darkmode",
     "beocreate",
     "bang",
     "olufsen"
@@ -21,6 +20,6 @@
   "author": "Bang & Olufsen",
   "license": "MIT",
   "beocreate": {
-  	"enableWith": ["Beocreate 4-Channel Amplifier"]
+  	"enableWith": ["Beocreate 4-Channel Amplifier", "DAC+ DSP"]
   }
 }

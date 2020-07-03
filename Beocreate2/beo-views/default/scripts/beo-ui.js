@@ -55,7 +55,7 @@ $( document ).ready(function() {
 	
 	$("body").css("opacity", "1");
 	
-	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "common/apple-touch-icon-hifiberry.png");
+	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "views/default/apple-touch-icon-hifiberry.png");
 	
 	
 	// File selected to upload.
@@ -108,7 +108,6 @@ function sendToProductView(data) {
 }
 
 $(document).on("general", function(event, data) {
-	
 	
 	if (data.header == "powerStatus" && !data.content.overrideUIActions) {
 		if (product_information && product_information.systemID && product_information.systemName) {
@@ -2096,6 +2095,7 @@ function showStandaloneCallToAction(show, force) {
 
 
 return {
+	appearance: "default",
 	ask: ask,
 	askOption: askOption,
 	showPopupView: showPopupView,

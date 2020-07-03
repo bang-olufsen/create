@@ -75,6 +75,12 @@ const mathPI = Math.PI;
 $(document).on("equaliser", function(event, data) {
 	
 	if (data.header == "previews" && data.content.filterResponses) {
+		if (data.content.Fs) {
+			Fs = data.content.Fs;
+			eqPreviewGraphSpeaker.setOptions({Fs: Fs});
+			eqPreviewGraphSoundDesign.setOptions({Fs: Fs});
+			eqGraph.setOptions({Fs: Fs});
+		}
 		eqPreviewGraphSpeaker.store([0], {data: data.content.filterResponses.a.master, colour: 0});
 		eqPreviewGraphSpeaker.store([1], {data: data.content.filterResponses.b.master, colour: 1});
 		eqPreviewGraphSpeaker.store([2], {data: data.content.filterResponses.c.master, colour: 2});
@@ -86,7 +92,11 @@ $(document).on("equaliser", function(event, data) {
 	
 	if (data.header == "settings") {
 		
-		if (data.content.Fs) Fs = data.content.Fs;
+		if (data.content.Fs) {
+			Fs = data.content.Fs;
+			eqGraph.setOptions({Fs: Fs});
+		}
+			
 		
 		if (data.content.canControl) canControlEqualiser = data.content.canControl;
 		

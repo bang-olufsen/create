@@ -1,5 +1,5 @@
 /* @override 
-	http://beocreate-core.local/common/beostyle2018.css
+	http://beocreate-core.local/views/default/beostyle2018.css
 	http://olohuone.local/common/beostyle2018.css */
 /* 
 
@@ -34,7 +34,7 @@ Keep track of layers in the UI
 
 */
 
-@import "fonts/metropolis.css";
+@import "/common/fonts/metropolis.css";
 
 html {
 	font-size: 18px;
@@ -646,6 +646,7 @@ nav.favourites div:active img {
 }
 
 .player-bar h3 {
+	color: white;
 	font-weight: 500;
 	font-size: 0.9em;
 	margin-bottom: 0.2em;
@@ -768,8 +769,8 @@ header .back-button:before {
 	background-color: currentColor;
 	width: 23px;
 	height: 23px;
-	-webkit-mask-image: url(symbols-black/back.svg);
-	mask-image: url(symbols-black/back.svg);
+	-webkit-mask-image: url(/common/symbols-black/back.svg);
+	mask-image: url(/common/symbols-black/back.svg);
 	-webkit-mask-repeat: no-repeat;
 	mask-repeat: no-repeat;
 	margin-right: max(var(--sidebar-padding) - 43px, -3px);
@@ -860,6 +861,7 @@ header.aux {
 	top: 0;
 	z-index: 2;
 	background-color: var(--main-bg);
+	justify-content: flex-start;
 }
 
 /* @end */
@@ -940,6 +942,14 @@ section.animating {
 	pointer-events: none;
 }
 
+.menu-screen.hidden-left {
+	z-index: -1;
+}
+
+.menu-screen.hidden-right {
+	z-index: 1;
+}
+
 .touch .menu-screen.hidden-right {
 	transform: translateX(100%);
 	/*filter: blur(20px);*/
@@ -1003,7 +1013,7 @@ section.faded-out .menu-screen {
 
 .menu-content:after,
 .menu-content-wrap:after {
-	margin-top: 7px;
+	margin-top: 20px;
 	height: 1px;
 }
 
@@ -1160,8 +1170,8 @@ section.faded-out .menu-screen {
 	margin-top: -11px;
 	opacity: 0.3;
 	transition: opacity 0.5s ease, background-color 0.5s ease;
-	-webkit-mask-image: url(symbols-black/chevron.svg);
-	mask-image: url(symbols-black/chevron.svg);
+	-webkit-mask-image: url(/common/symbols-black/chevron.svg);
+	mask-image: url(/common/symbols-black/chevron.svg);
 	-webkit-mask-size: 21px;
 	mask-size: 21px;
 	-webkit-mask-repeat: no-repeat;
@@ -1429,8 +1439,8 @@ section.faded-out .menu-screen {
 	-webkit-mask-position: center;
 	mask-position: center;
 	background-color: currentColor;
-	mask-image: url(symbols-black/checkmark.svg);
-	-webkit-mask-image: url(symbols-black/checkmark.svg);
+	mask-image: url(/common/symbols-black/checkmark.svg);
+	-webkit-mask-image: url(/common/symbols-black/checkmark.svg);
 	transition: opacity 0.3s ease, transform 0.3s ease;
 	right: 20px;
 	transform: scale(0.5);
@@ -1479,7 +1489,7 @@ section.faded-out .menu-screen {
 
 .menu-toggle:after {
 	content: "";
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-position: left;
 	background-size: 23px 23px;
@@ -1496,7 +1506,7 @@ section.faded-out .menu-screen {
 }
 
 .dark .menu-toggle:after {
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 }
 
 .on .menu-toggle:after {
@@ -1561,7 +1571,16 @@ h2 {
 	margin-top: 20px;
 }
 
-.dark h2 {
+h3 {
+	font-size: 1em;
+	font-weight: 500;
+	margin-bottom: 20px;
+	margin-top: 0;
+	color: gray;
+}
+
+.dark h2,
+.dark h3 {
 	/*color: white;*/
 	color: rgba(255,255,255,0.5);
 }
@@ -1581,8 +1600,8 @@ h2.sticky-header {
 }
 
 .dark h2.sticky-header {
-	background-color: rgba(51, 51, 51, 0.95);
-	box-shadow: 0 -1px rgba(51, 51, 51, 0.95);
+	box-shadow: 0 -1px rgba(34, 34, 34, 0.95);
+	background-color: rgba(34, 34, 34, 0.95);
 }
 
 .no-touch h2.disclosure:hover,
@@ -1816,28 +1835,28 @@ p.experiment:before {
 }
 
 p.success:before {
-	mask-image: url(symbols-colour/checkmark-green.svg);
-	-webkit-mask-image: url(symbols-colour/checkmark-green.svg);
+	mask-image: url(/common/symbols-colour/checkmark-green.svg);
+	-webkit-mask-image: url(/common/symbols-colour/checkmark-green.svg);
 }
 
 p.warning:before {
-	mask-image: url(symbols-colour/warning-yellow.svg);
-	-webkit-mask-image: url(symbols-colour/warning-yellow.svg);
+	mask-image: url(/common/symbols-colour/warning-yellow.svg);
+	-webkit-mask-image: url(/common/symbols-colour/warning-yellow.svg);
 }
 
 p.loading:before {
-	mask-image: url(symbols-black/wait-star.svg);
-	-webkit-mask-image: url(symbols-black/wait-star.svg);
+	mask-image: url(/common/symbols-black/wait-star.svg);
+	-webkit-mask-image: url(/common/symbols-black/wait-star.svg);
 }
 
 p.privacy:before {
-	mask-image: url(symbols-black/private.svg);
-	-webkit-mask-image: url(symbols-black/private.svg);
+	mask-image: url(/common/symbols-black/private.svg);
+	-webkit-mask-image: url(/common/symbols-black/private.svg);
 }
 
 p.experiment:before {
-	mask-image: url(symbols-black/experiment.svg);
-	-webkit-mask-image: url(symbols-black/experiment.svg);
+	mask-image: url(/common/symbols-black/experiment.svg);
+	-webkit-mask-image: url(/common/symbols-black/experiment.svg);
 }
 
 p.warning {
@@ -1976,7 +1995,7 @@ p.success {
 	width: 18px;
 	height: 18px;
 	position: absolute;
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-color: black;
 	background-position: center;
@@ -2086,7 +2105,7 @@ p.success {
 	width: 21px;
 	height: 21px;
 	position: absolute;
-	background-image: url(symbols-white/checkmark.svg);
+	background-image: url(/common/symbols-white/checkmark.svg);
 	background-repeat: no-repeat;
 	background-color: black;
 	background-position: center;
@@ -2111,7 +2130,7 @@ p.success {
 /* @group Buttons */
 
 .button, 
-.segmented-control, 
+.segmented-control:not(.minimal), 
 .tabs {
 	font-size: 0.7em;
 	text-transform: uppercase;
@@ -2155,7 +2174,7 @@ a.button {
 
 .button.text-chevron:after {
 	content: "";
-	background: url(symbols-black/chevron.svg);
+	background: url(/common/symbols-black/chevron.svg);
 	width: 22px;
 	height: 22px;
 	position: absolute;
@@ -2228,8 +2247,8 @@ a.button {
 	height: 21px;
 	position: absolute;
 	right: 0;
-	-webkit-mask-image: url(symbols-black/chevron-thin-updown.svg);
-	mask-image: url(symbols-black/chevron-thin-updown.svg);
+	-webkit-mask-image: url(/common/symbols-black/chevron-thin-updown.svg);
+	mask-image: url(/common/symbols-black/chevron-thin-updown.svg);
 	-webkit-mask-size: 23px;
 	mask-size: 23px;
 	-webkit-mask-repeat: no-repeat;
@@ -2442,8 +2461,11 @@ footer .button.pill {
 /* @group Segmented Control */
 
 .segmented-control {
-	height: 35px;
 	display: flex;
+}
+
+.segmented-control:not(.minimal) {
+	height: 35px;
 	width: 100%;
 	background-color: var(--menu-line-opaque);
 	box-sizing: border-box;
@@ -2451,6 +2473,13 @@ footer .button.pill {
 	margin-top: 10px;
 	padding: 1px;
 }
+
+.segmented-control.minimal {
+	height: 30px;
+	cursor: default;
+	font-size: 0.8em;
+}
+
 
 .segmented-control > div {
 	flex-basis: 30px;
@@ -2467,28 +2496,49 @@ footer .button.pill {
 	transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease, outline-color 0.3s ease;
 }
 
-.no-touch .segmented-control > div:hover, 
-.segmented-control > div:active {
+.segmented-control.minimal > div {
+	padding-right: 0.3em;
+	padding-left: 0.3em;
+	font-weight: 500;
+	white-space: nowrap;
+	color: silver;
+	position: relative;
+}
+
+.segmented-control.minimal > span {
+	display: flex;
+	align-items: center;
+	margin-right: 0.3em;
+	color: silver;
+}
+
+.dark .segmented-control.minimal > div,
+.dark .segmented-control.minimal > span {
+	color: rgba(255,255,255,0.5);
+}
+
+.no-touch .segmented-control:not(.minimal) > div:hover, 
+.segmented-control:not(.minimal) > div:active {
 	background-color: silver;
 	outline-color: silver;
 	color: white;
 }
 
-.no-touch .dark .segmented-control > div:hover, 
-.dark .segmented-control > div:active {
+.no-touch .dark .segmented-control:not(.minimal) > div:hover, 
+.dark .segmented-control:not(.minimal) > div:active {
 	background-color: #666;
 	outline-color: #666;
 	color: white;
 }
 
-.no-touch .segmented-control > div.selected:hover, 
-.segmented-control > div.selected:active {
+.no-touch .segmented-control:not(.minimal) > div.selected:hover, 
+.segmented-control:not(.minimal) > div.selected:active {
 	background-color: #444;
 	outline-color: #444;
 }
 
-.no-touch .dark .segmented-control > div.selected:hover, 
-.dark .segmented-control > div.selected:active {
+.no-touch .dark .segmented-control:not(.minimal) > div.selected:hover, 
+.dark .segmented-control:not(.minimal) > div.selected:active {
 	background-color: white;
 	outline-color: white;
 	color: black;
@@ -2499,14 +2549,37 @@ footer .button.pill {
 	margin-right: 0;
 }
 
-.segmented-control > .selected {
+.segmented-control:not(.minimal) > .selected {
 	background-color: black;
 	color: white;
 	outline-color: black;
 	z-index: 1;
 }
 
-.dark .segmented-control > .selected {
+.segmented-control.minimal > .selected,
+.dark .segmented-control.minimal > .selected,
+.no-touch .segmented-control.minimal > div:hover,
+.touch .segmented-control.minimal > div:active {
+	color: var(--main-font-colour);
+}
+
+.segmented-control.minimal > div:after {
+	content: "";
+	width: 12px;
+	border-bottom: 2px solid currentColor;
+	position: absolute;
+	bottom: 0;
+	transition: opacity 0.5s ease;
+	opacity: 0;
+	left: 50%;
+	margin-left: -6px;
+}
+
+.segmented-control.minimal > .selected:after {
+	opacity: 1;
+}
+
+.dark .segmented-control:not(.minimal) > .selected {
 	background-color: #ddd;
 	color: black;
 	outline-color: #ddd;
@@ -3096,11 +3169,11 @@ header .tabs > div.selected:after {
 }
 
 .dark .plexi.visible {
-	background-color: rgba(34, 34, 34, 0.9);
+	background-color: rgba(0,0,0, 0.9);
 }
 
 .dark.disconnected .plexi.visible {
-	background-color: rgba(34, 34, 34, 1);
+	background-color: #000;
 }
 
 
@@ -3457,8 +3530,8 @@ input::-webkit-search-decoration {
 	-webkit-mask-position: center;
 	mask-position: center;
 	background-color: currentColor;
-	mask-image: url(symbols-black/search.svg);
-	-webkit-mask-image: url(symbols-black/search.svg);
+	mask-image: url(/common/symbols-black/search.svg);
+	-webkit-mask-image: url(/common/symbols-black/search.svg);
 	height: 21px;
 	position: absolute;
 	left: 13px;
@@ -4333,6 +4406,11 @@ header.aux .search-container {
 .menu-content-wrap:before,
 .menu-content-wrap:after {
 	height: calc(var(--sidebar-padding) - 15px);
+}
+
+.ask-content .menu-content:before,
+.ask-content .menu-content:after {
+	height: 0;
 }
 
 div:not(#text-input) .popup-content {

@@ -299,7 +299,7 @@ async function updateCache(force = false) {
 									}
 									if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(newAlbum);
 								} catch (error) {
-									console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
+									console.error("Could not fetch data for an album (index "+album+") from artist '"+artist+"'.", error);
 								}
 							}
 						} else {

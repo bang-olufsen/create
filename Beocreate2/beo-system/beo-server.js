@@ -1138,7 +1138,8 @@ function download(url, destination, filename = null) {
 							});
 						});
 					} else {
-						console.error("Error in downloading file. Server response was "+response.statusCode+".");
+						error = new Error("Error in downloading file. Server response was "+response.statusCode+".");
+						console.error(error);
 						reject(error);
 					}
 				}).on('error', function(error) { // Handle errors.

@@ -310,7 +310,6 @@ function delay(channel, value) {
 		channelSettings[channel].delay = value;
 		beo.sendToProduct("channels", {header: "setDelay", content: {channel: channel, delay: value}});
 	}
-	
 	$(".channel-item-"+channel+" .channel-delay .symbol-value").text((channelSettings[channel].delay == 0) ? "" : Math.round(channelSettings[channel].delay*100)/100);
 	if (adjustingDelayForChannel != null) {
 		$("#channel-delay-adjustment .fine-adjust-value").text(Math.round(channelSettings[channel].delay*100)/100);
@@ -386,7 +385,7 @@ function generateSettingsPreview(settings) {
 	compatibilityNote = "";
 	
 	level = [];
-	delay = [];
+	delays = [];
 	muted = [];
 	role = [];
 	
@@ -402,7 +401,7 @@ function generateSettingsPreview(settings) {
 				roleIssues.push(channel.toUpperCase());
 			}
 			if (settings.compatibilityIssues[channel].delay == 0) {
-				delay.push(channel.toUpperCase());
+				delays.push(channel.toUpperCase());
 			}
 			if (settings.compatibilityIssues[channel].level == 0) {
 				level.push(channel.toUpperCase());

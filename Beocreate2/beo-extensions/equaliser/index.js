@@ -37,6 +37,7 @@ var _ = beo.underscore;
 		"l": [],
 		"r": [],
 		"roomCompensationPreset": null,
+		"roomCompensationModified": false,
 		"ui": {
 			showAllChannels: true,
 			dBScale: 20,
@@ -96,7 +97,14 @@ var _ = beo.underscore;
 				
 				//beo.sendToUI("equaliser", {header: "settings", content: {uiSettings: settings.ui, channels: {a: settings.a, b: settings.b, c: settings.c, d: settings.d}, canControl: canControlEqualiser, Fs: Fs}});
 			}
+			
+			if (event.content.extension == "room-compensation") {
+			
+				beo.sendToUI("room-compensation", {header: "currentPreset", content: {preset: settings.roomCompensationPreset, modified: settings.roomCompensationModified}});
+			}
 		}
+		
+		
 	});
 	
 	beo.bus.on('equaliser', function(event) {
@@ -296,6 +304,10 @@ var _ = beo.underscore;
 						channel = setChannel.charAt(c);
 						if (debug >= 3) console.log("Setting filter "+item.index+" on channel "+channel.toUpperCase()+".");
 						settings[channel][item.index] = item.filter;
+						if (settings[channel][item.index].origin &&
+							settings[channel][item.index].origin == "roomCompensation") {
+							roomCompensationModified = true;
+						}
 						applyFilterFromSettings(channel, item.index);
 					}
 				}
@@ -795,18 +807,79 @@ function getSettingsForBeosonic() {
 	return {
 		l: settings.l, 
 		r: settings.r, 
-		roomCompensationPreset: settings.roomCompensationPreset
+		roomCompensationPreset: settings.roomCompensationPreset,
+		roomCompensationModified: settings.roomCompensationModified
 	};
 }
 
 function applyBeosonicPreset(fromSettings) {
 	settings = Object.assign(settings, checkSettings(fromSettings, null, "lr").validatedSettings);
 	settings.roomCompensationPreset = fromSettings.roomCompensationPreset;
+	settings.roomCompensationModified = (fromSettings.roomCompensationModified) ? true : false;
 	applyAllFiltersFromSettings("l", true);
 	applyAllFiltersFromSettings("r", true);
 	importChannelGroups("soundDesign");
 	sendCurrentSettingsToSoundPreset(10);
 	beo.saveSettings("equaliser", settings);
+}
+
+
+function applyRoomCompensation(preset, filters, userConfirmation = false) {
+	chString = "lr";
+	hasCustomFilters = false;
+	for (var c = 0; c < 2; c++) {
+		// Check if there are any custom sound design filters.
+		channel = chString.charAt(c);
+		for (var f = 0; f < settings[channel].length; f++) {
+			if (!settings[channel][f].origin ||
+				settings[channel][f].origin != "roomCompensation") {
+				hasCustomFilters = true;
+			}
+		}
+	}
+	if (preset && filters) {
+		if (hasCustomFilters && !userConfirmation) {
+			// Return false, room compensation will ask the user to confirm removal of custom filters and .
+			return false;
+		} else {
+			settings = Object.assign(settings, checkSettings(filters, null, "lr").validatedSettings);
+			settings.roomCompensationPreset = preset;
+			settings.roomCompensationModified = false;
+			applyAllFiltersFromSettings("l", true);
+			applyAllFiltersFromSettings("r", true);
+			importChannelGroups("soundDesign");
+			sendCurrentSettingsToSoundPreset(10);
+			beo.saveSettings("equaliser", settings);
+			beo.sendToUI("room-compensation", {header: "currentPreset", content: {preset: settings.roomCompensationPreset, modified: settings.roomCompensationModified, applied: true}});
+			return true;
+		}
+	} else {
+		applied = (settings.roomCompensationPreset) ? true : false;
+		settings.roomCompensationPreset = null;
+		settings.roomCompensationModified = false;
+		for (var c = 0; c < 2; c++) {
+			// Remove all filters on channel put in place by room compensation.
+			channel = chString.charAt(c);
+			for (var f = 0; f < settings[channel].length; f++) {
+				if (settings[channel][f].origin &&
+					settings[channel][f].origin == "roomCompensation") {
+					delete settings[channel][f];
+				}
+			}
+			cleaned = settings[channel].filter(function (el) {
+				return el != null;
+			});
+			settings[channel] = cleaned;
+		}
+		applyAllFiltersFromSettings("l", true);
+		applyAllFiltersFromSettings("r", true);
+		importChannelGroups("soundDesign");
+		sendCurrentSettingsToSoundPreset(10);
+		beo.saveSettings("equaliser", settings);
+		beo.sendToUI("room-compensation", {header: "currentPreset", content: {preset: null, modified: false, applied: applied}});
+		return true;
+	}
+	
 }
 
 function calculateFilterResponse(channel, filter, coeffs) {
@@ -887,6 +960,7 @@ function getDriverType(low, high) {
 	}
 	return driverType;
 }
+
 		
 	
 module.exports = {
@@ -896,6 +970,8 @@ module.exports = {
 	applyBeosonicPreset: applyBeosonicPreset,
 	applySpeakerPreset: applySpeakerPreset,
 	tempDisable: tempDisable,
+	applyRoomCompensation: applyRoomCompensation,
+	getCurrentRoomCompensation: function() {return {preset: settings.roomCompensationPreset, modified: settings.roomCompensationModified}},
 	version: version
 };
 

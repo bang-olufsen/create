@@ -73,8 +73,12 @@
 	
 	this.calculateMasterGraph = function(fromGraph, withOffset) {
 		// Sum all subgraphs.
+		res = 0;
+		for (var a = 0; a < this.graphs[fromGraph].data.length; a++) {
+			if (this.graphs[fromGraph].data[a] && this.graphs[fromGraph].data[a].length > res) res = this.graphs[fromGraph].data[a].length;
+		}
 		master = [];
-		for (var i = 0; i < this.resolution; i++) {
+		for (var i = 0; i < res; i++) {
 			plotPoint = 0;
 			plotPhasePoint = 0;
 			plotFreq = null;
@@ -124,6 +128,10 @@ Beograph.prototype.setOptions = function(options, autoDraw) {
 		this.scale = options.scale;
 		$("#"+this.container+" .graph-labels-y .y-a-0").text('+'+this.scale+' dB');
 		$("#"+this.container+" .graph-labels-y .y-a-1").text('-'+this.scale+' dB');
+	}
+	
+	if (options.resolution != undefined) {
+		this.resolution = options.resolution;
 	}
 	
 	

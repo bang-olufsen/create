@@ -93,7 +93,7 @@ $(document).on("speaker-preset", function(event, data) {
 			}
 			
 			excludedSettings = [];
-			willInstallFallbackDSP = false;
+			willInstallFallbackDSP = (data.content.installDefaultDSP) ? true : false;
 			settingsCount = 0;
 			$(".apply-speaker-preset-button").removeClass("disabled");
 			
@@ -123,8 +123,6 @@ $(document).on("speaker-preset", function(event, data) {
 							if (presetPreview[2] && presetPreview[2] != "") {
 								//$(".speaker-preset-contents").append('<p class="warning">'+presetPreview[2]+'</p>');
 								menuOptions.customMarkup += '<p class="warning">'+presetPreview[2]+'</p>';
-								$(".speaker-preset-install-fallback-dsp").removeClass("hidden");
-								$(".install-fallback-dsp-toggle").addClass("on");
 								willInstallFallbackDSP = true;
 							}
 							$(".speaker-preset-contents").append(beo.createMenuItem(menuOptions));
@@ -143,6 +141,11 @@ $(document).on("speaker-preset", function(event, data) {
 				}
 			}
 			
+			if (willInstallFallbackDSP) {
+				$(".speaker-preset-install-fallback-dsp").removeClass("hidden");
+				$(".install-fallback-dsp-toggle").addClass("on");
+			}
+			
 			beo.showPopupView("speaker-preset-preview-popup");
 		}
 		
@@ -150,7 +153,7 @@ $(document).on("speaker-preset", function(event, data) {
 	
 	if (data.header == "presetApplied" && data.content.presetID) {
 	
-		beo.notify({title: speakerPresets[data.content.presetID].presetName, message: "Sound preset applied", icon: "common/symbols-black/checkmark-round.svg"});
+		beo.notify({title: speakerPresets[data.content.presetID].presetName, message: "Speaker preset in use", icon: "common/symbols-black/checkmark-round.svg"});
 		beo.hidePopupView("speaker-preset-preview-popup");
 		
 		currentSpeakerPreset = data.content.presetID;
@@ -160,10 +163,10 @@ $(document).on("speaker-preset", function(event, data) {
 	if (data.header == "presetImport") {
 		switch (data.content.message) {
 			case "invalidJSON":
-				beo.notify({title: "Faulty preset data", message: "There was a problem with reading JSON data from the sound preset file. Make sure the data is formatted correctly and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				beo.notify({title: "Faulty preset data", message: "There was a problem with reading JSON data from the speaker preset file. Make sure the data is formatted correctly and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "noPresetName":
-				beo.notify({title: "Incomplete preset", message: "Sound preset did not contain a preset name. Please refer to documentation on sound presets.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
+				beo.notify({title: "Incomplete preset", message: "Speaker preset did not contain a preset name. Please refer to documentation on speaker presets.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
 				break;
 			case "existingPresetReadOnly":
 				beo.notify({title: "Preset already exists", message: "'"+data.content.existingPresetName+"' has the same file name, but can't be replaced because it is a system preset. Rename your preset file and try again.", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"});
@@ -220,7 +223,7 @@ function closePreview() {
 }
 
 function applyPreset() {
-	beo.send({target: "speaker-preset", header: "applySpeakerPreset", content: {presetID: selectedSpeakerPreset, excludedSettings: excludedSettings, installFallback: willInstallFallbackDSP}});
+	beo.send({target: "speaker-preset", header: "applySpeakerPreset", content: {presetID: selectedSpeakerPreset, excludedSettings: excludedSettings, installDefault: willInstallFallbackDSP}});
 }
 
 function optionsForSelectedPreset() {

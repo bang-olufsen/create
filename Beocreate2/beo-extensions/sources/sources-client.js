@@ -107,20 +107,21 @@ function showActiveSources() {
 	if (currentSource != null) {
 		sourceIcon = null;
 		sourceName = null;
-		if (allSources[currentSource].aliasInNowPlaying) {
-			sourceName = allSources[currentSource].aliasInNowPlaying;
-		} else if (allSources[currentSource].alias) {
-			if (allSources[currentSource].alias.icon) {
-				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[currentSource].alias.icon;
+		cSource = (allSources[currentSource].childSource) ? allSources[currentSource].childSource : currentSource;
+		if (allSources[cSource].aliasInNowPlaying) {
+			sourceName = allSources[cSource].aliasInNowPlaying;
+		} else if (allSources[cSource].alias) {
+			if (allSources[cSource].alias.icon) {
+				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[cSource].alias.icon;
 			}
-			sourceName = allSources[currentSource].alias.name;
+			sourceName = allSources[cSource].alias.name;
 		}
 		if (!sourceIcon && 
-			extensions[currentSource].icon && 
-			extensions[currentSource].assetPath) {
-				sourceIcon = extensions[currentSource].assetPath+"/symbols-black/"+extensions[currentSource].icon;
+			extensions[cSource].icon && 
+			extensions[cSource].assetPath) {
+				sourceIcon = extensions[cSource].assetPath+"/symbols-black/"+extensions[cSource].icon;
 		}
-		if (!sourceName) sourceName = extensions[currentSource].title;
+		if (!sourceName) sourceName = extensions[cSource].title;
 		if (sourceIcon) {
 			beo.setSymbol(".active-source-icon", sourceIcon);
 			$(".active-source-icon").removeClass("hidden");
@@ -128,7 +129,7 @@ function showActiveSources() {
 			$(".active-source-icon").addClass("hidden");
 		}
 		$(".active-source-name").text(sourceName);
-		$('.source-menu-item[data-extension-id="'+currentSource+'"]').removeClass("hide-icon-right");
+		$('.source-menu-item[data-extension-id="'+cSource+'"]').removeClass("hide-icon-right");
 		setTimeout(function() {
 			$(".active-source").addClass("visible");
 		}, 50);
@@ -140,20 +141,21 @@ function showActiveSources() {
 	if (focusedSource != null) {
 		sourceIcon = null;
 		sourceName = null;
-		if (allSources[focusedSource].aliasInNowPlaying) {
-			sourceName = allSources[focusedSource].aliasInNowPlaying;
-		} else if (allSources[focusedSource].alias) {
-			if (allSources[focusedSource].alias.icon) {
-				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[focusedSource].alias.icon;
+		fSource = (allSources[focusedSource].childSource) ? allSources[focusedSource].childSource : focusedSource;
+		if (allSources[fSource].aliasInNowPlaying) {
+			sourceName = allSources[fSource].aliasInNowPlaying;
+		} else if (allSources[fSource].alias) {
+			if (allSources[fSource].alias.icon) {
+				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[fSource].alias.icon;
 			}
-			sourceName = allSources[focusedSource].alias.name;
+			sourceName = allSources[fSource].alias.name;
 		}
 		if (!sourceIcon && 
-			extensions[focusedSource].icon && 
-			extensions[focusedSource].assetPath) {
-				sourceIcon = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
+			extensions[fSource].icon && 
+			extensions[fSource].assetPath) {
+				sourceIcon = extensions[fSource].assetPath+"/symbols-black/"+extensions[fSource].icon;
 		}
-		if (!sourceName) sourceName = extensions[focusedSource].title;
+		if (!sourceName) sourceName = extensions[fSource].title;
 		if (sourceIcon) {
 			beo.setSymbol(".focused-source-icon", sourceIcon);
 			$(".focused-source-icon").removeClass("hidden");
@@ -238,6 +240,7 @@ function toggleArrange() {
 								elements[e].style.transform = null;
 								elements[e].style.transition = null;
 							}
+							console.log(sourceOrder);
 							updateSourceOrder(true);
 						}, 300);
 					}
@@ -288,6 +291,13 @@ function updateAliases() {
 
 function showStartableSources() {
 	$(".startable-sources").empty();
+	for (source in allSources) {
+		if (allSources[source].parentSource) {
+			if (allSources[allSources[source].parentSource].startable) {
+				allSources[source].startable = true;
+			}
+		}
+	}
 	for (s in sourceOrder) {
 		source = sourceOrder[s];
 		if (allSources[source].startable) {
@@ -297,7 +307,7 @@ function showStartableSources() {
 				icon: extensions[source].assetPath+"/symbols-black/"+extensions[source].icon,
 				onclick: "sources.startSource('"+source+"');"
 			}
-			if (source == focusedSource) {
+			if (source == currentSource) {
 				menuOptions.iconRight = "common/symbols-black/volume.svg";
 			} else {
 				//menuOptions.value = "Play";
@@ -348,12 +358,88 @@ function testSetActive(extension, active) {
 	}
 }
 
+// INTERACT
+
+interactSourceOption = null;
+function interactSetup(type, stage, data) {
+	switch (stage) {
+		case "setup":
+			if (data && data.source) {
+				interactSourceOption = data.source;
+			} else {
+				interactSourceOption = null;
+			}
+			$(".interact-source-list").empty();
+			for (extension in allSources) {
+				if (extensions[extension]) {
+					$(".interact-source-list").append(beo.createMenuItem({
+						label: extensions[extension].title,
+						iconRight: extensions[extension].assetPath+"/symbols-black/"+extensions[extension].icon,
+						checkmark: "left",
+						data: {"data-option": extension},
+						onclick: "sources.interactSetup('"+type+"', 'option', '"+extension+"');"
+					}));
+				}
+			}
+			interactSetup(type, "option", interactSourceOption);
+			if (data) $("#source-"+type+"-save-button").addClass("disabled");
+			beo.ask("source-"+type+"-setup");
+			break;
+		case "option":
+			$(".interact-source-list .menu-item").removeClass("checked");
+			$("#source-"+type+"-save-button").removeClass("disabled");
+			interactSourceOption = data;
+			if (!data) {
+				$("#source-"+type+"-any").addClass("checked");
+			} else {
+				$("#source-"+type+"-any").removeClass("checked");
+				$('.interact-source-list .menu-item[data-option="'+data+'"]').addClass("checked");
+			}
+			break;
+		case "save":
+			beo.ask();
+			if (type == "activated") window.interact.saveTrigger("sources", "sourceActivated", {source: interactSourceOption});
+			if (type == "deactivated") window.interact.saveTrigger("sources", "sourceDeactivated", {source: interactSourceOption});
+			break;
+		case "preview":
+			if (data.source) {
+				console.log(extensions[data.source].title);
+				return extensions[data.source].title;
+			} else {
+				if (type == "activated") return "Any source when leaving standby";
+				if (type == "deactivated") return "Any source when going to standby"
+			}
+			break;
+	}
+}
+
+interactDictionary = {
+	triggers: {
+		sourceActivated: {
+			name: "Source Started", 
+			icon: "extensions/now-playing/symbols-black/play.svg", 
+			setup: function(data) { interactSetup("activated", "setup", data) }, 
+			preview: function(data) { return interactSetup("activated", "preview", data) },
+			illegalWith: ["actions/now-playing/stop", "actions/now-playing/playPause"]
+		},
+		sourceDeactivated: {
+			name: "Source Stopped", 
+			icon: "extensions/now-playing/symbols-black/stop.svg", 
+			setup: function(data) { interactSetup("deactivated", "setup", data) }, 
+			preview: function(data) { return interactSetup("deactivated", "preview", data) },
+			illegalWith: ["actions/now-playing/stop", "actions/now-playing/playPause"]
+		}
+	}
+}
+
 return {
 	showStartableSources: showStartableSources,
 	startSource: startSource,
 	setAlias: setAlias,
 	toggleArrange: toggleArrange,
-	testSetActive: testSetActive
+	testSetActive: testSetActive,
+	interactSetup: interactSetup,
+	interactDictionary: interactDictionary
 }
 
 })();

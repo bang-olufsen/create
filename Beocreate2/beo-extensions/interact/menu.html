@@ -1,0 +1,220 @@
+<div class="menu-screen large-title" id="interact" data-icon="interact.svg" data-menu-title="Interact" data-stylesheet="interact.css">
+	
+	<header>
+		<div class="back-button master setup"></div>
+		<h1>Interact</h1>
+	</header>
+	
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>Connect triggers with actions to create an interactive sound system.</p>
+			
+			<div id="interactions-header" class="hidden">
+				<div class="menu-item toggle" id="enable-interactions" onclick="interact.enableInteractions();">
+					<div class="menu-label">Interactions On</div>
+					<div class="menu-toggle"></div>
+				</div>
+				<hr>
+			</div>
+			<div id="all-interactions">
+			
+			</div>
+			<div class="button pill grey" onclick="interact.newInteraction();">New Interaction...</div>
+			<h2>Settings</h2>
+			<div class="menu-item icon chevron" onclick="beo.showDeepMenu('serial-port')">
+				<div class="menu-icon left" style="-webkit-mask-image: url(€/symbols-black/serial-port.svg); mask-image: url(€/symbols-black/serial-port.svg);"></div>
+				<div class="menu-text-wrap">
+				<div class="menu-label">Serial Port</div>
+				</div>
+			</div>
+			<div class="beo-dynamic-menu">
+					
+			</div>
+			<p class="experiment margin-top">Interact is an experimental feature.</p>
+		</div>
+	</div>
+	
+	
+	<div class="popup-content hidden" id="interaction-editor">
+		<header class="popup">
+			<div class="button symbol left" onclick="interact.cancelEditing();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Interaction</h1>
+			<div class="button symbol right" id="interact-options-button" onclick="beo.ask('interaction-options-menu');" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
+		</header>
+		<div class="scroll-area">
+			<div class="menu-content">
+				<h1 class="centre" id="interaction-name">New interaction</h1>
+				<hr>
+				
+				<h2>When</h2>
+				<div id="interact-trigger">
+				
+				</div>
+				<div class="button pill grey" id="choose-trigger-button" onclick="interact.chooseTrigger();">Choose Trigger...</div>
+				
+				<h2>Do</h2>
+				<div id="interact-actions">
+				
+				</div>
+				<div class="button pill grey" onclick="interact.addAction();">Add Action...</div>
+			</div>
+		</div>
+		
+		<footer>
+			<div class="button pill black disabled" id="save-interaction-button" onclick="interact.saveInteraction();">Save Interaction</div>
+		</footer>
+	</div>
+	
+	<div class="ask-menu" id="interact-trigger-chooser">
+		<h2>Choose trigger</h2>
+		<div id="interact-trigger-list">
+		
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="interact-action-chooser">
+		<h2>Choose action</h2>
+		<div id="interact-action-list">
+		
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="interact-trigger-menu">
+		<div class="ask-buttons">
+			<div class="button pill grey" id="interact-edit-trigger-button" onclick="interact.editTrigger();">Edit Trigger...</div>
+			<div class="button pill grey" onclick="interact.chooseTrigger();">Choose Other Trigger...</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="interact-action-menu">
+		<div class="ask-buttons">
+			<div class="button pill grey" id="interact-edit-action-button" onclick="interact.editAction();">Edit Action...</div>
+			<div class="button pill grey" onclick="interact.deleteAction();">Remove Action</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="interact-unsaved-changes">
+		<h2>Unsaved interaction</h2>
+		<p>The changes will be lost if they are not saved.</p>
+		<div class="ask-buttons">
+			<div class="button pill black default" onclick="interact.saveInteraction();">Save Interaction</div>
+			<div class="button pill grey" onclick="interact.cancelEditing(true);">Don't Save</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="interact-cannot-save-yet">
+		<h2>Unsaved interaction</h2>
+		<p>An interaction needs to have a trigger and at least one action before it can be saved.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="interact.cancelEditing(true);">Don't Save</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Keep Editing</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="interaction-options-menu">
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="interact.nameInteraction();">Rename Interaction...</div>
+			<div class="button pill grey" onclick="interact.deleteInteraction();">Remove Interaction...</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="delete-interaction-prompt">
+		<h2>Remove <span class="ask-dynamic-0"></span>?</h2>
+		<p>This cannot be undone.</p>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="interact.deleteInteraction(true);">Remove Interaction</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Don't Remove</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="serial-receive-setup">
+		<h2>Serial message received</h2>
+		<p>Run actions, when message...</p>
+		<div class="segmented-control" id="interact-serial-receive-match">
+			<div class="selected" onclick="interact.serialReceive('matchAll');" id="serial-receive-match-all">Is</div>
+			<div onclick="interact.serialReceive('matchBeginning');" id="serial-receive-match-beginning">Begins With</div>
+		</div>
+		<div class="menu-item" onclick="interact.serialReceive('set');">
+			<div class="menu-label">Matched Text</div>
+			<div class="menu-value button" id="interact-serial-receive-value">Set...</div>
+		</div>
+		<div class="button pill grey" id="interact-serial-capture-button" onclick="interact.serialReceive('capture');">Learn Message...</div>
+		<p class="margin-top">Received message is passed to the actions when they run.</p>
+		<div class="menu-item toggle off" id="serial-receive-remove-beginning" onclick="interact.serialReceive('setRemoveBeginning');">
+			<div class="menu-label">Pass Without Beginning</div>
+			<div class="menu-toggle"></div>
+		</div>
+		<p id="serial-receive-passed-text"></p>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="interact.serialReceive('save');" id="interact-serial-receive-save">Save Trigger</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="serial-send-setup">
+		<h2>Send serial message</h2>
+		<p>When running the action, send...</p>
+		<div class="menu-item" onclick="interact.serialSend('set');">
+			<div class="menu-label">Text</div>
+			<div class="menu-value button" id="interact-serial-send-value">Set...</div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="interact.serialSend('save');" id="interact-serial-send-save">Save Action</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="http-api-received-setup">
+		<h2>Web request received</h2>
+		<p>Run actions, when a POST request is received at...</p>
+		<p><span class="light">http://<span id="http-api-received-domain">domain</span></span><strong>/interact/trigger/<span class="light" id="http-api-received-key">???</span></strong></p>
+		<div class="menu-item" onclick="interact.httpAPISetup('received', 'set');">
+			<div class="menu-label">Address End</div>
+			<div class="menu-value button" id="http-api-received-key-set">Set...</div>
+		</div>
+		<p>If the request JSON body includes "data" property, the value is passed to the actions when they run.</p>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="interact.httpAPISetup('received', 'save');" id="http-api-received-save">Save Trigger</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+</div>
+
+<div class="menu-screen" id="serial-port" data-parent-extension="interact" data-menu-title="Serial Port">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Serial Port</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>Communicate with another device, such as an Arduino microcontroller, via a serial port.</p>
+			<div class="menu-item checkmark left icon" id="serial-port-off" onclick="interact.selectSerialPort(false);">
+				<div class="menu-icon left" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Serial Port Off</div>
+			</div>
+			<hr>
+			<div id="ghost-serial-port"></div>
+			<h2 id="available-serial-ports-title">Available serial ports</h2>
+			<div id="available-serial-ports">
+			
+			</div>
+			<p class="margin-top">If the selected serial port disconnects, it will be automatically reopened soon after it becomes available again.</p>
+			
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/interact-client.js"></script>

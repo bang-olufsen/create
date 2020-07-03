@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/network",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Wi-Fi and Ethernet setup for BeoCreate systems",
   "main": "index.js",
   "scripts": {

@@ -193,10 +193,11 @@ p#copy-hifiberry-os {
 	border: none;
 	box-shadow: none;
 }
-
-
 .setup #product-information header {
 	display: block;
+	top: 0;
+	right: 0;
+	left: 0;
 }
 
 #product-information header > * {

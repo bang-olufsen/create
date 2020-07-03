@@ -1,4 +1,4 @@
-<div class="menu-screen large-title" id="sound" data-icon="sound-signature.svg" data-menu-title="Sound" data-stylesheet="sound.css" data-built-in="1">
+<div class="menu-screen large-title" id="sound" data-icon="sound-signature.svg" data-menu-title="Sound" data-namespace="sound" data-stylesheet="sound.css" data-built-in="1">
 	<header>
 		<div class="back-button master setup"></div>
 		<h1 data-translation="headerTitle">Sound</h1>
@@ -26,6 +26,62 @@
 			</div>
 		</div>
 		
+	</div>
+	
+	<div class="ask-menu" id="set-volume-setup">
+		<h2>Set volume</h2>
+		<p>When running the action...</p>
+		<div id="interact-set-volume-options">
+			<div class="menu-item checkmark left icon" data-option="up" onclick="sound.interactSetup('setVolume', 'option', 'up');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Step Volume Up</div>
+			</div>
+			<div class="menu-item checkmark left icon" data-option="down" onclick="sound.interactSetup('setVolume', 'option', 'down');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Step Volume Down</div>
+			</div>
+			<div class="menu-item checkmark left icon" data-option="result" onclick="sound.interactSetup('setVolume', 'option', 'result');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Set to Trigger Value</div>
+			</div>
+			<div class="menu-item checkmark left icon" data-option="slider" onclick="sound.interactSetup('setVolume', 'option', 'slider');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Set to...</div>
+			</div>
+		</div>
+		<div class="slider-wrap disabled" id="interact-volume-slider-wrap">
+			<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume-mute.svg); mask-image: url(common/symbols-black/volume-mute.svg);"></div>
+			<div class="interact-volume-slider black"></div>
+			<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="sound.interactSetup('setVolume', 'save');" id="sound-set-volume-save">Save Action</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="volume-changed-setup">
+		<h2>Volume changed</h2>
+		<p>Run actions, when...</p>
+		<div id="interact-volume-changed-options">
+			<div class="menu-item checkmark left icon" data-option="any" onclick="sound.interactSetup('volumeChanged', 'option', 'any');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Any Change</div>
+			</div>
+			<div class="menu-item checkmark left icon" data-option="up" onclick="sound.interactSetup('volumeChanged', 'option', 'up');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Volume Increases</div>
+			</div>
+			<div class="menu-item checkmark left icon" data-option="down" onclick="sound.interactSetup('volumeChanged', 'option', 'down');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Volume Decreases</div>
+			</div>
+		</div>
+		<p>Volume level is passed to the actions when they run.</p>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="sound.interactSetup('volumeChanged', 'save');" id="sound-volume-changed-save">Save Trigger</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
 	</div>
 </div>
 

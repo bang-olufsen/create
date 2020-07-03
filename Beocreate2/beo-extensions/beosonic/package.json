@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/beosonic",
-  "version": "0.5.1",
+  "version": "0.6",
   "description": "Tone controls for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {
@@ -20,5 +20,8 @@
     "olufsen"
   ],
   "author": "Bang & Olufsen",
-  "license": "MIT"
+  "license": "MIT",
+  "beocreate": {
+    "requireCardFeatures": ["dsp"]
+  }
 }

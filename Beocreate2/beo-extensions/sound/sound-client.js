@@ -129,14 +129,145 @@ $(".master-volume-slider").slider({
 			adjustingSystemVolume = false;
 			updateSystemVolumeSliders();
 		}, 300);
-		
 	}
 });
+
+
+$(".interact-volume-slider").slider({
+	range: "min",
+	min: 0,
+	max: 100,
+	value: 0,
+	slide: function( event, ui ) {	
+		beo.send({target: "sound", header: "setVolume", content: ui.value});
+	},
+	start: function(event, ui) {
+		adjustingSystemVolume = true;
+		clearTimeout(adjustingReleaseTimeout);
+	},
+	stop: function(event, ui) {
+		adjustingReleaseTimeout = setTimeout(function() {
+			adjustingSystemVolume = false;
+			updateSystemVolumeSliders();
+		}, 300);
+		interactSetup("setVolume", "set", ui.value);
+	}
+});
+
+
+// INTERACT
+
+volumeToSet = null;
+volumeOption = null;
+function interactSetup(type, stage, data = null) {
+	switch (stage) {
+		case "setup":
+			if (data) {
+				volumeOption = (data.option) ? data.option : null;
+				volumeToSet = (data.volume) ? data.volume : systemVolume;
+			} else {
+				volumeOption = null;
+				volumeToSet = systemVolume;
+			}
+			if (type == "setVolume") {
+				$(".interact-volume-slider").slider("value", volumeToSet);
+				interactSetup("setVolume", "option", volumeOption);
+				$("#sound-set-volume-save").addClass("disabled");
+				beo.ask("set-volume-setup");
+			} else {
+				interactSetup("volumeChanged", "option", volumeOption);
+				$("#sound-volume-changed-save").addClass("disabled");
+				beo.ask("volume-changed-setup");
+			}
+			break;
+		case "option":
+			if (type == "setVolume") {
+				$("#interact-set-volume-options .menu-item").removeClass("checked");
+				volumeOption = data;
+				if (data) {
+					$('#interact-set-volume-options .menu-item[data-option="'+data+'"]').addClass("checked");
+					if (data == "slider") {
+						$("#interact-volume-slider-wrap").removeClass("disabled");
+					} else {
+						$("#interact-volume-slider-wrap").addClass("disabled");
+					}
+					$("#sound-set-volume-save").removeClass("disabled");
+				} else {
+					$("#interact-volume-slider-wrap").addClass("disabled");
+					$("#sound-set-volume-save").addClass("disabled");
+				}
+			} else {
+				$("#interact-volume-changed-options .menu-item").removeClass("checked");
+				volumeOption = data;
+				if (data) {
+					$('#interact-volume-changed-options .menu-item[data-option="'+data+'"]').addClass("checked");
+					$("#sound-volume-changed-save").removeClass("disabled");
+				} else {
+					$("#sound-volume-changed-save").addClass("disabled");
+				}
+			}
+			break;
+		case "set":
+			if (type == "setVolume") {
+				volumeToSet = data;
+				$("#sound-set-volume-save").removeClass("disabled");
+			}
+			break;
+		case "save":
+			beo.ask();
+			if (type == "setVolume") {
+				window.interact.saveAction("sound", "setVolume", {option: volumeOption, volume: volumeToSet});
+			} else {
+				window.interact.saveTrigger("sound", "volumeChanged", {option: volumeOption});
+			}
+			break;
+		case "preview":
+			if (type == "setVolume") {
+				if (data.option == "up") return "Step volume up";
+				if (data.option == "down") return "Step volume down";
+				if (data.option == "result") return "Set to result value from trigger";
+				if (data.option == "slider") return "Set to "+data.volume+" %";
+			} else {
+				if (data.option == "up") return "Volume increases";
+				if (data.option == "down") return "Volume decreases";
+				if (data.option == "any") return "Any change";
+			}
+			break;
+	}
+}
+
+interactDictionary = {
+	triggers: {
+		volumeChanged: {
+			name: "Volume Changed", 
+			icon: "common/symbols-black/volume.svg", 
+			setup: function(data) { interactSetup("volumeChanged", "setup", data) }, 
+			preview: function(data) { return interactSetup("volumeChanged", "preview", data) },
+			illegalWith: ["actions/sound/setVolume", "actions/sound/mute"]
+		}
+	},
+	actions: {
+		setVolume: {
+			name: "Set Volume", 
+			icon: "common/symbols-black/volume.svg", 
+			setup: function(data) { interactSetup("setVolume", "setup", data) }, 
+			preview: function(data) { return interactSetup("setVolume", "preview", data) },
+			illegalWith: ["triggers/sound/volumeChanged"]
+		},
+		mute: {
+			name: "Mute or Unmute", 
+			icon: "common/symbols-black/volume-mute.svg", 
+			illegalWith: ["triggers/sound/volumeChanged"]
+		}
+	}
+}
 
 return {
 	unmute: unmute,
 	mute: mute,
-	toggleAdvancedSoundAdjustments: toggleAdvancedSoundAdjustments
+	toggleAdvancedSoundAdjustments: toggleAdvancedSoundAdjustments,
+	interactDictionary: interactDictionary,
+	interactSetup: interactSetup
 }
 
 })();

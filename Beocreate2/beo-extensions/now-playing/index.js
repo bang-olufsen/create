@@ -69,11 +69,7 @@ SOFTWARE.*/
 		
 		
 		if (event.header == "transport") {
-			if (event.content.action &&
-				beo.extensions.sources && 
-				beo.extensions.sources.transport) {
-				beo.extensions.sources.transport(event.content.action);
-			}
+			transport(event.content.action);
 		}
 		
 		if (event.header == "toggleLove") {
@@ -81,10 +77,35 @@ SOFTWARE.*/
 		}
 	});
 	
+function transport(action) {
+	if (action &&
+		beo.extensions.sources && 
+		beo.extensions.sources.transport) {
+		beo.extensions.sources.transport(action);
+	}
+}
+	
+interact = {
+	actions: {
+		playPause: function() {
+			transport("playPause");
+		},
+		next: function() {
+			transport("next");
+		},
+		previous: function() {
+			transport("previous");
+		},
+		pause: function() {
+			transport("pause");
+		}
+	}
+}
 	
 	
 module.exports = {
-	version: version
+	version: version,
+	interact: interact
 };
 
 

@@ -1,0 +1,68 @@
+<div class="menu-screen" id="alsa-eq" data-icon="equaliser.svg" data-menu-title="Equaliser" data-built-in="1" data-context="sound/adjustments" data-stylesheet="alsa-eq.css">
+	<header>
+		<div class="back-button master"></div>
+		<h1 data-translation="headerTitle">Equaliser</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div id="alsa-eq-wrap">
+			<div id="alsa-eq-wrap-inner">
+				<div id="alsa-eq-baseline"></div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-31" id="eq-slider-31"></div>
+					<span>31 Hz</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-63" id="eq-slider-63"></div>
+					<span>63</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-125" id="eq-slider-125"></div>
+					<span>125</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-250" id="eq-slider-250"></div>
+					<span>250</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-500" id="eq-slider-500"></div>
+					<span>500</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-1000" id="eq-slider-1000"></div>
+					<span>1k</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-2000" id="eq-slider-2000"></div>
+					<span>2k</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-4000" id="eq-slider-4000"></div>
+					<span>4k</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-8000" id="eq-slider-8000"></div>
+					<span>8k</span>
+				</div>
+				<div class="slider-wrap">
+					<div class="alsa-eq-slider black eq-slider-16000" id="eq-slider-16000"></div>
+					<span>16k</span>
+				</div>
+			</div>
+		</div>
+			
+		<div class="menu-content">
+			<div class="button pill grey" onclick="alsa_eq.resetEq();">Reset</div>
+			
+			<div class="menu-item toggle" id="alsa-eq-enabled-toggle" onclick="alsa_eq.toggleEnabled();">
+				<div class="menu-label">Enabled</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<p class="experiment">This is an experimental feature.</p>
+			
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/alsa-eq-client.js"></script>

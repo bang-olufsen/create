@@ -1,4 +1,4 @@
-<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-enable-with="Beocreate 4-Channel Amplifier, DAC+ DSP" data-stylesheet="equaliser.css" data-namespace="equaliser">
+<div class="menu-screen" id="equaliser" data-icon="equaliser.svg" data-menu-title="Parametric Equaliser" data-menu-title-short="Equaliser" data-menu-class="advanced-adjustment" data-built-in="1" data-context="sound/advanced" data-stylesheet="equaliser.css" data-namespace="equaliser">
 
 
 	
@@ -55,6 +55,7 @@
 	
 	<div id="equaliser-graph-divider"></div>
 	
+	<div class="tabs-container">
 	<div class="tabs no-top-margin equaliser-tabs">
 		<!-- Left & Right channels for sound design. -->
 		<div class="selected" data-select-tab="equaliser-ch-l" id="equaliser-tab-l" data-tab-callback="equaliser.selectChannel">Left<div class="channel-dot grey"></div></div>
@@ -71,31 +72,12 @@
 		<div data-select-tab="equaliser-ch-c" id="equaliser-tab-c" data-tab-callback="equaliser.selectChannel">C<div class="channel-dot green"></div></div>
 		<div data-select-tab="equaliser-ch-d" id="equaliser-tab-d" data-tab-callback="equaliser.selectChannel">D<div class="channel-dot blue"></div></div>
 	</div>
+	</div>
 
 	
 	<div class="scroll-area">
-		<div class="menu-content"><!--no-padding-top-->
-			<!--
-			<div id="equaliser-link">
-				<div id="equaliser-link-a">
-					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('a');"></div>
-					<div class="line"></div>
-				</div>
-				<div id="equaliser-link-b">
-					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('b');"></div>
-					<div class="line"></div>
-				</div>
-				<div id="equaliser-link-c">
-					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('c');"></div>
-					<div class="line"></div>
-				</div>
-				<div id="equaliser-link-d">
-					<div class="button symbol" style="-webkit-mask-image: url(common/symbols-black/link-unlinked.svg); mask-image: url(common/symbols-black/link-unlinked.svg);" onclick="equaliser.toggleLink('d');"></div>
-					<div class="line"></div>
-				</div>
-			</div>-->
+		<div class="menu-content">
 			
-			<!--<h2 class="equaliser-selected-channel"></span></h2>-->
 			<p class="show-when-daisy-chained hidden">Two amplifiers are chained. Filter settings can't be updated to the connected slave amplifier remotely.</p>
 			<div class="menu-item static">
 				<div class="menu-label equaliser-selected-channel"></div>
@@ -104,11 +86,11 @@
 				
 				<div class="menu-icon right button symbol" id="equaliser-channel-settings-button" style="-webkit-mask-image: url(extensions/channels/symbols-black/channels.svg); mask-image: url(extensions/channels/symbols-black/channels.svg);" onclick="equaliser.showChannelSettings();" title="Adjust channel level, role and more"></div>
 				
-				<div class="menu-icon right button symbol" id="equaliser-compare-button" style="-webkit-mask-image: url(€/symbols-black/ear.svg); mask-image: url(€/symbols-black/ear.svg);" onmousedown="equaliser.compare(true);" onmouseup="equaliser.compare(false);" ontouchstart="equaliser.compare(true, true);" ontouchend="equaliser.compare(false, true);" title="Hold to compare with all filters off"></div>
+				<div class="menu-icon right button symbol" id="equaliser-compare-button" style="-webkit-mask-image: url(€/symbols-black/ear.svg); mask-image: url(€/symbols-black/ear.svg);" onmousedown="equaliser.compare(true);" onmouseup="equaliser.compare(false);" ontouchstart="equaliser.compare(true, true);" ontouchend="equaliser.compare(false, true);" title="Press and hold to compare with all filters off"></div>
 				
 				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="beo.ask('equaliser-options-prompt');" title="More filter options"></div>
 			</div>
-			<hr class="no-margin-top">
+			<!--<hr class="no-margin-top">-->
 			<div class="collection-row-scroller" id="equaliser-collection-scroller">
 				<div class="collection-row-wrap">
 					<div id="equaliser-filters" class="collection-row-view">
@@ -120,7 +102,7 @@
 			</div>
 			
 			<h2 id="equaliser-filter-name" class="common-filter-controls hidden">High-Pass</h2>
-			
+			<p id="filter-from-room-compensation" class="hidden">Part of the selected room compensation preset.</p>
 			<div id="parametric-controls" class="filter-controls">
 				<div class="control-squares">
 					<div class="control-square horizontal equaliser-fc-control" data-label="Frequency">
@@ -229,17 +211,6 @@
 				<div class="button pill grey" onclick="equaliser.saveBeosonicPreset();">Save Listening Mode...</div>
 			</div>
 			
-			<!--<h2>Channel options</h2>
-			<div class="menu-item toggle" id="equaliser-channel-inverted" onclick="equaliser.toggleInvert();">
-				<div class="menu-label">Invert Signal</div>
-				<div class="menu-toggle"></div>
-			</div>
-			<hr>
-			<div class="menu-item toggle" id="equaliser-channel-grouping" onclick="equaliser.groupChannels();">
-				<div class="menu-label">Group Channels <span>A &amp; B</span></div>
-				<div class="menu-toggle"></div>
-			</div>
-			<div class="button pill grey">Import Filters...</div>-->
 
 		</div>
 		

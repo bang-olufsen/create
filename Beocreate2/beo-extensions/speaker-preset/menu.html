@@ -55,7 +55,7 @@
 	</div>
 	
 		<div class="popup-content hidden" id="speaker-preset-preview-popup">
-			<header class="popup">
+			<header class="popup opaque-scroll transparent top-hide-title">
 				<div class="button symbol left" onclick="speaker_preset.closePreview();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
 				<h1>Speaker Preset</h1>
 				<div class="button symbol right setup-hide" onclick="speaker_preset.optionsForSelectedPreset();" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
@@ -79,10 +79,9 @@
 					</div>
 					<hr class="setup-hide">
 					<div class="speaker-preset-install-fallback-dsp setup-hide hidden">
-						<p class="warning">Some settings are incompatible with the current DSP program (<span class="current-dsp-program-name">N/A</span>).</p>
-						<!--<p class="success">A compatible DSP program can be automatically installed.</p>-->
+						<p class="warning">It is recommended to install the default DSP program to make sure this speaker preset fully works.</p>
 						<div class="menu-item toggle on install-fallback-dsp-toggle" onclick="speaker_preset.toggleInstallFallbackDSP();">
-							<div class="menu-label">Install Compatible Program</div>
+							<div class="menu-label">Install Default Program</div>
 							<div class="menu-toggle"></div>
 						</div>
 						<hr>

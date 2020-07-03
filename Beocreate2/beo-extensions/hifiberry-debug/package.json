@@ -1,5 +1,5 @@
 {
-  "name": "@beocreate/hifiberry-diagnostics",
+  "name": "@beocreate/hifiberry-debug",
   "version": "0.5.0",
   "description": "HiFiBerryOS diagnostics for Beocreate sound ysstems",
   "main": "index.js",

@@ -73,11 +73,21 @@ function startBluetoothDiscovery() {
 	}
 }
 
+interactDictionary = {
+	actions: {
+		startPairing: {
+			name: "Start Bluetooth Pairing",
+			icon: "extensions/bluetooth/symbols-black/bluetooth.svg"
+		}
+	}
+}
+
 return {
 	toggleEnabled: toggleEnabled,
 	toggleDiscoverable: toggleDiscoverable,
 	setPairingMode: setPairingMode,
-	startBluetoothDiscovery: startBluetoothDiscovery
+	startBluetoothDiscovery: startBluetoothDiscovery,
+	interactDictionary: interactDictionary
 };
 
 })();

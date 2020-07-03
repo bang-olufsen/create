@@ -31,16 +31,16 @@
 	
 	#equaliser-graph-divider {
 		height: 5px;
-		margin-bottom: -5px;
+		margin-bottom: -3px;
 		position: relative;
-		transition: opacity 0.3s ease;
-		box-shadow: 0px -1px 0px currentColor;
-		opacity: 0;
-		cursor: ns-resize;
+		transition: box-shadow 0.3s ease;
+		box-shadow: 0px -1px 0px var(--menu-line);
+		cursor: row-resize;
+		z-index: 3;
 	}
 	
 	#equaliser-graph-divider:hover {
-		opacity: 0.5;
+		box-shadow: 0px -1px 0px currentColor;
 	}
 	
 	#equaliser-graph-divider:before {

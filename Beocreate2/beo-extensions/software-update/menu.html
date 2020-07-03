@@ -10,6 +10,8 @@
 			
 			<p class="loading hidden checking-for-update">Checking for update...</p>
 			
+			<p class="hidden update-check-error">There was a problem checking for update. Please try again later.</p>
+			
 			<div class="no-update-available hidden">
 				<p class="margin-top">No updates are currently available.</p>
 				<div class="menu-item icon static">
@@ -31,13 +33,28 @@
 				</div>
 
 			</div>
-			<!--<h2>Previous Releases</h2>-->
+			
 			<hr>
 			<div class="menu-item" onclick="beo.ask('auto-update-prompt');">
 					<div class="menu-text-wrap">
 						<div class="menu-label">Automatic Updates</div>
 						<div class="menu-value auto-update-mode"></div>
 					</div>
+			</div>
+			<div class="menu-item hidden disabled" id="manual-update-track">
+					<div class="menu-text-wrap">
+						<div class="menu-label">Manual Update Track</div>
+						<div class="menu-value"></div>
+					</div>
+			</div>
+			<h2 class="disclosure" data-disclosure="#software-update-advanced">Advanced</h2>
+			<div id="software-update-advanced" class="hidden">
+				<div class="menu-item static">
+					<div class="menu-label">Previous version</div>
+					<div class="menu-value" id="previous-version-information">Not available</div>
+				</div>
+				<p>Product can be reverted to the state it was before installing the latest software update.</p>
+				<div class="button pill grey disabled" id="restore-previous-version-button" onclick="software_update.restore();">Restore Previous Version...</div>
 			</div>
 		</div>
 	</div>
@@ -96,6 +113,17 @@
 		
 		<div class="ask-buttons">
 			<div class="button pill black cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="restore-previous-version-prompt">
+		<h2>Restore previous version?</h2>
+		<p class="warning">All settings will be reverted to the state they were when the software was last updated. This includes product name and network settings.</p>
+		<p>Are you sure you want to continue?</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill grey" onclick="software_update.restore(true);">Restore</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 </div>

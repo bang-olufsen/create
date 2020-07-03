@@ -1,3 +1,6 @@
+process.env.NODE_PATH = "/usr/lib/node_modules/";
+require('module').Module._initPaths();
+
 const dbus = require('dbus-native');
 
 /*
@@ -10,10 +13,12 @@ const dbus = require('dbus-native');
 	- make a method call: `gdbus introspect -e -d com.dbus.native.return.types -o /com/dbus/native/return/types -m com.dbus.native.return.types.FunctionName`
 */
 
-const serviceName = 'org.freedesktop.DBus'; // the service we request
+console.log("Bluetooth DBus test");
+
+const serviceName = 'org.bluez.hci0.dev_08_F6_9C_4E_86_B7.fd0'; // the service we request
 
 // The interface we request of the service
-const interfaceName = serviceName;
+const interfaceName = "org.bluez";
 
 // The object we request
 const objectPath = `/${serviceName.replace(/\./g, '/')}`;

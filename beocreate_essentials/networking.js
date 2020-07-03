@@ -31,6 +31,7 @@ var ifconfig = require('wireless-tools/ifconfig');
 
 var networking = module.exports = {
 	getWifiStatus: getWifiStatus,
+	setWifiStatus: setWifiStatus,
 	getEthernetStatus: getEthernetStatus,
 	getCountry: getCountry,
 	setCountry: setCountry,
@@ -62,48 +63,68 @@ if (fs.existsSync("/etc/wpa_supplicant/wpa_supplicant.conf")) {
 
 
 // GET NETWORK STATUS
-// Does the system have Wi-Fi, is it connected and if so, where? Same for ethernet.
+// Does the system have Wi-Fi, is it on, is it connected and if so, where? Same for ethernet.
 function getWifiStatus(callback) {
 	if (callback) {
-		iwconfig.status('wlan0', function(err, status) {
+		ifconfig.status('wlan0', function(err, status) { // Use ifconfig to check if Wi-Fi is on or not.
 			if (err) {
 				// The system has no Wi-Fi capabilities.
 				callback(null, err);
 			} else {
-				wifiStatus = {up: true, connected: false};
-				if (status.ssid && !status.unassociated) {
-					wifiStatus.ssid = decodeURIComponent(escape(status.ssid.decodeEscapeSequence()));
-					if (status.mode != "master") wifiStatus.connected = true;
-					wifiStatus.quality = status.quality;
-				}
-				wlan0 = os.networkInterfaces().wlan0;
-				if (wlan0) {
-					for (var i = 0; i < wlan0.length; i++) {
-						if (wlan0[i].family == "IPv4") {
-							wifiStatus.mac = wlan0[i].mac;
-							wifiStatus.ipv4 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
+				wifiStatus = {up: false, connected: false};
+				if (status.up) wifiStatus.up = true;
+				iwconfig.status('wlan0', function(err, status) {
+					if (err) {
+						// The system has no Wi-Fi capabilities.
+						callback(null, err);
+					} else {
+						if (status.ssid && !status.unassociated) {
+							wifiStatus.ssid = decodeURIComponent(escape(status.ssid.decodeEscapeSequence()));
+							if (status.mode != "master") wifiStatus.connected = true;
+							wifiStatus.quality = status.quality;
 						}
-						if (wlan0[i].family == "IPv6") {
-							wifiStatus.ipv6 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
+						wlan0 = os.networkInterfaces().wlan0;
+						if (wlan0) {
+							for (var i = 0; i < wlan0.length; i++) {
+								if (wlan0[i].family == "IPv4") {
+									wifiStatus.mac = wlan0[i].mac;
+									wifiStatus.ipv4 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
+								}
+								if (wlan0[i].family == "IPv6") {
+									wifiStatus.ipv6 = {address: wlan0[i].address, subnetmask: wlan0[i].netmask};
+								}
+							}
+							dhcp = readDHCPSettings("wifi");
+							if (dhcp && dhcp.Network) {
+								if (dhcp.Network.DHCP) {
+									// Automatic settings.
+									wifiStatus.ipSetup = {auto: true};
+								} else {
+									// Manual settings.
+									wifiStatus.ipSetup = {auto: false};
+									wifiStatus.ipSetup.address = dhcp.Network.Address.split("/")[0];
+									wifiStatus.ipSetup.subnetmask = CIDRToSubnetmask(dhcp.Network.Address.split("/")[1]);
+									wifiStatus.ipSetup.dns = dhcp.Network.DNS;
+									wifiStatus.ipSetup.router = dhcp.Network.Gateway;
+								}
+							}
 						}
+						callback(wifiStatus, false);
 					}
-					dhcp = readDHCPSettings("wifi");
-					if (dhcp && dhcp.Network) {
-						if (dhcp.Network.DHCP) {
-							// Automatic settings.
-							wifiStatus.ipSetup = {auto: true};
-						} else {
-							// Manual settings.
-							wifiStatus.ipSetup = {auto: false};
-							wifiStatus.ipSetup.address = dhcp.Network.Address.split("/")[0];
-							wifiStatus.ipSetup.subnetmask = CIDRToSubnetmask(dhcp.Network.Address.split("/")[1]);
-							wifiStatus.ipSetup.dns = dhcp.Network.DNS;
-							wifiStatus.ipSetup.router = dhcp.Network.Gateway;
-						}
-					}
-				}
-				callback(wifiStatus, false);
+				});
 			}
+		});
+	}
+}
+
+function setWifiStatus(power, callback) {
+	if (power == true) {
+		exec('ifconfig wlan0 up', function(error, stdout, stderr){
+		    if (callback) callback(true, error);
+		});
+	} else {
+		exec('ifconfig wlan0 down', function(error, stdout, stderr){
+		    if (callback) callback(false, error);
 		});
 	}
 }
@@ -596,7 +617,7 @@ dhcpConfig = {wifi: {}, ethernet: {}};
 function readDHCPSettings(forInterface) {
 	path = null;
 	if (forInterface == "wifi") path = "/etc/systemd/network/wireless.network";
-	if (forInterface == "ethernet") path = "/etc/systemd/network/eth0.network";
+	if (forInterface == "ethernet") path = "/etc/systemd/network/dhcp.network";
 	if (path) {
 		if (fs.existsSync(path)) {
 			modified = fs.statSync(path).mtimeMs;
@@ -644,7 +665,7 @@ function readDHCPSettings(forInterface) {
 function writeDHCPSettings(forInterface) {
 	path = null;
 	if (forInterface == "wifi") path = "/etc/systemd/network/wireless.network";
-	if (forInterface == "ethernet") path = "/etc/systemd/network/eth0.network";
+	if (forInterface == "ethernet") path = "/etc/systemd/network/dhcp.network";
 	if (path) {
 		// Saves current configuration back into the file.
 		if (fs.existsSync(path)) {

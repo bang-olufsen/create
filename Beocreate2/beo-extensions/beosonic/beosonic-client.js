@@ -69,11 +69,7 @@ $(document).on("beosonic", function(event, data) {
 			beosonicPresets = data.content.presets;
 			if (data.content.settings.presetOrder) {
 				presetOrder = data.content.settings.presetOrder;
-				if (selectedExtension == "beosonic") {
-					updatePresetList();
-				} else {
-					updateQuickPresets();
-				}
+				updatePresetList();
 			}
 			
 			if (data.content.presetSaved) {
@@ -81,6 +77,19 @@ $(document).on("beosonic", function(event, data) {
 			}
 		}
 		
+	}
+	
+	if (data.header == "beosonicPresets") {
+		beosonicPresets = data.content.presets;
+		if (data.content.selectedPreset) {
+			currentPreset = data.content.selectedPreset;
+		} else {
+			currentPreset = null;
+		}
+		if (data.content.presetOrder) {
+			presetOrder = data.content.presetOrder;
+			updateQuickPresets();
+		}
 	}
 	
 	if (data.header == "savingPreset") {
@@ -370,7 +379,7 @@ function savePreset(withAdjustments, systemPresetConflict = false, preselectAdju
 		defaultAdjustments = (preselectAdjustments) ? preselectAdjustments : [];
 		beo.startTextInput(1, "New Listening Mode", 
 			(!systemPresetConflict) ? "Enter a name for this listening mode preset." : "A built-in preset with this name already exists. Please choose another name.", 
-			{text: (!systemPresetConflict) ? "" : beosonicPresets[systemPresetConflict].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}}, function(input) {
+			{text: (!systemPresetConflict) ? "" : beosonicPresets[systemPresetConflict].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}, autocorrect: true, autocapitalise: true}, function(input) {
 			// Validate and store input.
 			if (input && input.text) {
 				newPresetName = input.text;
@@ -386,7 +395,7 @@ function renamePreset(conflict) {
 	beo.ask();
 	beo.startTextInput(1, "Rename Preset", 
 		(!conflict) ? "Enter a new name for this preset." : "A preset with this name already exists. Please choose another name.", 
-		{text: beosonicPresets[selectedPreset].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}}, function(input) {
+		{text: beosonicPresets[selectedPreset].presetName, placeholders: {text: "Preset name"}, minLength: {text: 3}, autocorrect: true, autocapitalise: true}, function(input) {
 		// Validate and store input.
 		if (input && input.text) {
 			beo.sendToProduct("beosonic", {header: "renamePreset", content: {presetID: selectedPreset, name: input.text}});
@@ -491,6 +500,70 @@ $(".loudness-slider").slider({
 		}
 });
 
+// INTERACT
+
+interactBeosonicOption = null;
+function interactSetup(stage, data) {
+	switch (stage) {
+		case "setup":
+			if (data && data.preset != undefined) {
+				interactBeosonicOption = data.preset;
+			} else {
+				interactBeosonicOption = null;
+			}
+			$("#interact-beosonic-list").empty();
+			for (i in presetOrder) {
+				$("#interact-beosonic-list").append(beo.createMenuItem({
+					label: beosonicPresets[presetOrder[i]].presetName,
+					value: i,
+					checkmark: "left",
+					data: {"data-option": presetOrder[i]},
+					onclick: "beosonic.interactSetup('option', '"+presetOrder[i]+"');",
+					checked: (interactBeosonicOption == presetOrder[i])
+				}));
+			}
+			
+			interactSetup("option", interactBeosonicOption);
+			$("#select-beosonic-preset-save-button").addClass("disabled");
+			beo.ask("select-beosonic-preset-setup");
+			break;
+		case "option":
+			$("#interact-beosonic-list .menu-item, #interact-beosonic-with-value").removeClass("checked");
+			$("#select-beosonic-preset-save-button").removeClass("disabled");
+			interactBeosonicOption = data;
+			if (data == false) {
+				$("#interact-beosonic-with-value").addClass("checked");
+			} else if (data) {
+				$('#interact-beosonic-list .menu-item[data-option="'+data+'"]').addClass("checked");
+			}
+			break;
+		case "save":
+			beo.ask();
+			window.interact.saveAction("beosonic", "selectPreset", {preset: interactBeosonicOption});
+			break;
+		case "preview":
+			console.log(data);
+			if (!data.preset) {
+				return "Preset with full name, file name or index number from trigger";
+			} else {
+				return beosonicPresets[data.preset].presetName;
+			}
+			break;
+	}
+}
+
+
+interactDictionary = {
+	actions: {
+		selectPreset: {
+			name: "Select Listening Mode",
+			icon: "extensions/beosonic/symbols-black/tonetouch.svg",
+			setup: function(data) { interactSetup("setup", data) }, 
+			preview: function(data) { return interactSetup("preview", data) }
+		}
+	}
+}
+
 return {
 	beosonicTest: beosonicTest,
 	presetAction: presetAction,
@@ -499,7 +572,9 @@ return {
 	renamePreset: renamePreset,
 	deletePreset: deletePreset,
 	replaceExisting: replaceExisting,
-	selectAdjustmentsToInclude: selectAdjustmentsToInclude
+	selectAdjustmentsToInclude: selectAdjustmentsToInclude,
+	interactDictionary: interactDictionary,
+	interactSetup: interactSetup
 }
 
 })();

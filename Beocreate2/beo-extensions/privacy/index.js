@@ -23,15 +23,22 @@ var fs = require("fs");
 	var debug = beo.debug;
 	var version = require("./package.json").version;
 	
+	var defaultSettings = {
+		"privacyApprovedByUser": false
+	};
+	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	
-	var settings = {
-		externalMetadata: false
+	var inferredSettings = {
+		externalMetadata: false,
+		usageData: false
 	};
 	var audioControl = null;
 	
 	var descriptions = {
-		externalMetadata: null
+		externalMetadata: null,
+		usageData: null
 	}
+	
 	
 	beo.bus.on('general', function(event) {
 		
@@ -39,16 +46,12 @@ var fs = require("fs");
 			
 			if (beo.extensions["hifiberry-audiocontrol"]) audioControl = beo.extensions["hifiberry-audiocontrol"];
 			
-			if (audioControl) {
-				configuration = audioControl.getSettings();
-				if (configuration.privacy) {
-					settings.externalMetadata = (!configuration.privacy.external_metadata ||
-						(!configuration.privacy.external_metadata.comment &&
-						configuration.privacy.external_metadata.value == "1")) ? true : false;
-				} else {
-					settings.externalMetadata = true;
+			if (!settings.privacyApprovedByUser) {
+				// If privacy settings have not been approved by the user, join setup flow.
+				if (beo.extensions.setup && beo.extensions.setup.joinSetupFlow) {
+					beo.extensions.setup.joinSetupFlow("privacy", {after: ["product-information"], allowAdvancing: true});
 				}
-			} 
+			}
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -59,6 +62,9 @@ var fs = require("fs");
 						switch (d) {
 							case "externalMetadata":
 								file = "/opt/audiocontrol2/privacy.html";
+								break;
+							case "usageData":
+								file = "/opt/hifiberry/etc/privacy-usagedata.html";
 								break;
 						}
 						if (file != null) {
@@ -72,7 +78,27 @@ var fs = require("fs");
 						}
 					}
 				}
-				beo.sendToUI("privacy", {header: "privacySettings", content: {settings: settings, descriptions: descriptions}});
+
+				
+				if (audioControl) {
+					configuration = audioControl.getSettings();
+					if (configuration.privacy) {
+						inferredSettings.externalMetadata = (!configuration.privacy.external_metadata ||
+							(!configuration.privacy.external_metadata.comment &&
+							configuration.privacy.external_metadata.value == "1")) ? true : false;
+					} else {
+						inferredSettings.externalMetadata = true;
+					}
+				}
+				
+				exec("systemctl is-active --quiet pushdata.timer").on('exit', function(code) {
+					if (code == 0) {
+						inferredSettings.usageData = true;
+					} else {
+						inferredSettings.usageData = false;
+					}
+					beo.sendToUI("privacy", {header: "privacySettings", content: {settings: inferredSettings, descriptions: descriptions}});
+				});
 			}
 		}
 	});
@@ -80,19 +106,47 @@ var fs = require("fs");
 	
 	beo.bus.on('privacy', function(event) {
 		
+		if (event.header == "settings") {
+			
+			if (event.content.settings) {
+				settings = Object.assign(settings, event.content.settings);
+			}
+			
+		}
 
 		if (event.header == "toggleSetting") {
 			if (event.content.setting) {
 				if (event.content.setting == "externalMetadata" && audioControl) {
 					beo.sendToUI("privacy", {header: "updatingSettings"});
-					settings.externalMetadata = (!settings.externalMetadata) ? true : false;
+					inferredSettings.externalMetadata = (!inferredSsettings.externalMetadata) ? true : false;
 					enabled = (settings.externalMetadata) ? "1" : "0";
 					audioControl.configure([{section: "privacy", option: "external_metadata", value: enabled}], true, function() {
-						beo.sendToUI("privacy", {header: "privacySettings", content: {settings: settings}});
+						beo.sendToUI("privacy", {header: "privacySettings", content: {settings: inferredSettings}});
+					});
+				}
+				
+				if (event.content.setting == "usageData") {
+					command = (!inferredSettings.usageData) ? "enable" : "disable";
+					beo.sendToUI("privacy", {header: "updatingSettings"});
+					exec("systemctl "+command+" --now pushdata.timer").on('exit', function(code) {
+						if (code == 0) {
+							inferredSettings.usageData = (!inferredSettings.usageData) ? true : false;
+							if (debug) console.log("Sending anonymous statistics is now "+command+"d.");
+							beo.sendToUI("privacy", {header: "privacySettings", content: {settings: inferredSettings}});
+						}
 					});
 				}
 			}
 		}
+	});
+	
+	beo.bus.on('setup', function(event) {
+	
+		if (event.header == "advancing" && event.content.fromExtension == "privacy") {
+			settings.privacyApprovedByUser = true;
+			beo.saveSettings("privacy", settings);
+		}
+				
 	});
 	
 	

@@ -1,22 +1,27 @@
-<div class="menu-screen" id="beo4" data-icon="beo4.svg" data-menu-title="Beo4" data-context="interact">
+<div class="menu-screen" id="beo4" data-icon="beo4.svg" data-menu-title="Beo4" data-context="interact" data-namespace="beo4">
 	
 	<header>
+		<div class="back-button master setup"></div>
 		<h1>Beo4</h1>
 	</header>
 	
 	<div class="scroll-area">
 		<div class="menu-content">
+			<p>Control the product with a Beo4, Beolink 1000 or other compatible Bang &amp; Olufsen infrared remote.</p>
 			<h2>Readout</h2>
-			<div class="menu-item">
-				<div class="menu-label">Source Display</div>
-				<div class="menu-value" id="beo4-source"></div>
-			</div>
-			<div class="menu-item">
-				<div class="menu-label">Last Command</div>
-				<div class="menu-value" id="beo4-command"></div>
+			<div class="menu-item static">
+				<div class="menu-label" id="beo4-source">Display</div>
+				<div class="menu-value" id="beo4-command">Last button press</div>
 			</div>
 			
-			<div class="beo-dynamic-menu"></div>
+			<hr>
+			<!--<h2>Receive input from</h2>
+			<div class="menu-item checkmark checked left icon disabled">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Trigger in an Interaction</div>
+			</div>-->
+			<h2>How to set up</h2>
+			<p>Create an interaction where the Beo4 action is connected to a trigger that passes the command codes, such as the "Serial Message Seceived". Learn more.</p>
 			
 		</div>
 		

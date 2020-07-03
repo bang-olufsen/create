@@ -22,6 +22,8 @@ var selectedExtension = null;
 var stateRestored = false;
 var historyConstructed = false;
 var os = null;
+var debug = true;
+var developerMode = false;
 
 beo = (function() {
 
@@ -41,6 +43,7 @@ $( document ).ready(function() {
 		$("body").addClass("standalone");
 	}
 	if ($("body").hasClass("hifiberry-os")) hifiberryOS = true;
+	if (developerMode) $("body").addClass("developer");
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
 	prepareMenus();
@@ -53,6 +56,7 @@ $( document ).ready(function() {
 	$("body").css("opacity", "1");
 	
 	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "common/apple-touch-icon-hifiberry.png");
+	
 	
 	// File selected to upload.
 	$("input[type=file]#file-input").on('change',function(){
@@ -138,8 +142,6 @@ var resizeTimeout;
 var windowHeight = 0;
 var windowWidth = 0;
 
-var sidebarContentColour = "white"; 
-
 function getWindowDimensions() {
 	windowHeight = window.innerHeight;
 	windowWidth = window.innerWidth;
@@ -176,7 +178,7 @@ document.onkeydown = function(evt) {
 };
 
 
-var interfaceMode = 1; // 1 = normal, 2 = compact
+var interfaceMode = 2; // 1 = normal, 2 = compact
 
 function prepareMenus() {
 	// Find every top level menu
@@ -226,7 +228,7 @@ function prepareMenus() {
 					}
 					menuOptions = {
 						onclick: 'beo.showExtension(\''+$(this).attr("id")+'\');',
-						icon: $(this).attr("data-asset-path")+"/symbols-"+sidebarContentColour+"/"+iconName,
+						icon: $(this).attr("data-asset-path")+"/symbols-black/"+iconName,
 						id: $(this).attr("id")+'-menu-item',
 						data: {"data-extension-id": $(this).attr("id")},
 						classes: ["nav-item"]
@@ -386,39 +388,26 @@ function updateInterfaceMode() {
 	breakpoint = 620;
 	
 	if (windowWidth < breakpoint && interfaceMode == 1) {
-		// Change to compact mode
-		
+		// Change to compact mode.
+		// Move main tabs from the "sidebar" to the top.
+		$('.tabs-container.move').each(function(index){
+			if ($(this).parent().is("header")) {
+				$(this).parents(".menu-screen").find(".tab-placeholder").replaceWith($(this).detach());
+			}
+		});
 		interfaceMode = 2;
 	} else if (windowWidth >= breakpoint && interfaceMode == 2) {
-		// Change to normal mode
+		// Change to normal mode.
+		// Move main tabs from the top to the "sidebar".
 		if (mainMenuVisible) toggleMainMenu();
 		interfaceMode = 1;
+		$('.tabs-container.move').each(function(index){
+			if (!$(this).parent().is("header")) {
+				$(this).after('<div class="tab-placeholder"></div>');
+				$(this).parents(".menu-screen").find("header h1").first().after($(this).detach());
+			}
+		});
 	}
-	updateNavIcons();
-	updateHeaderIcons();
-}
-
-function updateNavIcons() {
-	if (interfaceMode == 1) symbolFolder = "symbols-"+sidebarContentColour;
-	if (interfaceMode == 2) symbolFolder = "symbols-white";
-	$("nav.full .menu-item").each(function() {
-		menuID = $(this).attr("data-extension-id");
-		if ($(this).hasClass("selected")) {
-			$(".menu-icon", this).attr("src", extensions[menuID].assetPath+"/symbols-white/"+extensions[menuID].icon);
-		} else {
-			$(".menu-icon", this).attr("src", extensions[menuID].assetPath+"/"+symbolFolder+"/"+extensions[menuID].icon);
-		}
-	});
-}
-
-function updateHeaderIcons() {
-	
-	$("header .symbol").each(function() {
-		symbolURL = $(this).css("background-image");
-		//if (interfaceMode == 1) symbolURL = symbolURL.replace("/symbols-black/", "/symbols-white/");
-		if (interfaceMode == 2) symbolURL = symbolURL.replace("/symbols-white/", "/symbols-black/");
-		$(this).css("background-image", symbolURL);
-	});
 }
 
 
@@ -524,7 +513,6 @@ function showExtension(extension, direction, fromBackButton, invisibly) {
 		}
 		
 		if (selectedParentMenu) {
-			if (interfaceMode == 1) $('nav .nav-item[data-extension-id="'+selectedParentMenu+'"] .menu-icon').attr("src", extensions[selectedParentMenu].assetPath+"/symbols-"+sidebarContentColour+"/"+extensions[selectedParentMenu].icon);
 			$('nav .nav-item[data-extension-id="'+selectedParentMenu+'"]').removeClass("selected");
 		}
 		
@@ -924,7 +912,6 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
-	console.log(menuState, deepMenuState);
 }
 
 
@@ -1181,12 +1168,20 @@ function createCollectionItem(options) {
 
 document.addEventListener("scroll", function(event) {
 	if (event.target != document) {
-		targetScreen = event.target.offsetParent.id;
-		if ($("#"+targetScreen).hasClass("large-title") || $("#"+targetScreen).hasClass("setup-large-title")) {
-			if ($("#"+targetScreen+" .scroll-area").scrollTop() > 45) {
-				$("#"+targetScreen+" header").addClass("compact");
+		targetScreen = event.target.parentNode;
+		if (targetScreen.classList.contains("large-title") ||
+		 	targetScreen.classList.contains("setup-large-title")) {
+			if (targetScreen.querySelector(".scroll-area").scrollTop > 45) {
+				targetScreen.querySelector("header").classList.add("compact");
 			} else {
-				$("#"+targetScreen+" header").removeClass("compact");
+				targetScreen.querySelector("header").classList.remove("compact");
+			}
+		}
+		if (targetScreen.querySelector("header").classList.contains("opaque-scroll")) {
+			if (targetScreen.querySelector(".scroll-area").scrollTop > 50) {
+				targetScreen.querySelector("header").classList.add("opaque");
+			} else {
+				targetScreen.querySelector("header").classList.remove("opaque");
 			}
 		}
 	}
@@ -1598,62 +1593,58 @@ function updateSliderWidths() {
 var currentPopup = null;
 var currentPopupParent = null;
 var popupCancelAction = null;
+var popupCancelTimeout;
 function showPopupView(popupContentID, overridePopup, cancelAction) {
-	if (!currentPopup) {
-		popupCancelAction = null;
-		if (popupContentID) {
-			if (!currentPopup || overridePopup == currentPopup) {
-				if (currentPopup) {
-					$("#open-popup .popup-content").addClass("hidden");
-					currentPopupParent.append($("#open-popup .popup-content").detach());
-				}
-				currentPopup = popupContentID;
-				currentPopupParent = $("#"+popupContentID).parent();
-				$("#open-popup").append($("#"+popupContentID).detach());
-				$("#open-popup .popup-content").removeClass("hidden");
-				
-				// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
-				showPopupViewInternal("#open-popup", "#open-popup-back-plate");
-				if (cancelAction != undefined) popupCancelAction = cancelAction;
+	popupCancelAction = null;
+	if (popupContentID) {
+		if (!currentPopup || overridePopup == currentPopup) {
+			if (currentPopupParent) {
+				clearTimeout(popupCancelTimeout);
+				$("#open-popup .popup-content").addClass("hidden");
+				currentPopupParent.append($("#open-popup .popup-content").detach());
 			}
+			currentPopup = popupContentID;
+			currentPopupParent = $("#"+popupContentID).parent();
+			$("#open-popup").append($("#"+popupContentID).detach());
+			$("#open-popup .popup-content").removeClass("hidden");
+			
+			// Apply the ID of the popup content view to the target view as a class so it can be targeted with CSS or JavaScript.
+			$("#open-popup, #open-popup-back-plate").addClass("block");
+			setTimeout(function() {
+				$("#open-popup, #open-popup-back-plate").addClass("visible");
+				updatePopupHeight();
+			}, 100);
+			if (cancelAction != undefined) popupCancelAction = cancelAction;
 		}
 	}
 }
 
-function hidePopupView(popupContentID) {
-	hidePopupViewInternal("#open-popup", "#open-popup-back-plate", true);
-}
 
-function showPopupViewInternal(view, backplate) {
-	$(view+", "+backplate).addClass("block");
-	setTimeout(function() {
-		$(view+", "+backplate).addClass("visible");
-		updatePopupHeight();
-	}, 100);
-}
-
-function hidePopupViewInternal(view, backplate, universalOverride) {
-	if (view == "#open-popup" && universalOverride) {
-		currentPopup = null;
+function hidePopupView(view = null, universalOverride = false) {
+	if (currentPopupParent) {
+		if (view == currentPopup || universalOverride) {
+			currentPopup = null;
+			$("#open-popup, #open-popup-back-plate").removeClass("visible");
+			popupCancelTimeout = setTimeout(function() {
+				$("#open-popup .popup-content").addClass("hidden");
+				currentPopupParent.append($("#open-popup .popup-content").detach());
+				$("#open-popup, #open-popup-back-plate").removeClass("block");
+				currentPopupParent = null;
+			}, 500);
+		}
 	}
-	$(view+", "+backplate).removeClass("visible");
-	setTimeout(function() {
-		$("#open-popup .popup-content").addClass("hidden");
-		currentPopupParent.append($("#open-popup .popup-content").detach());
-		$(view+", "+backplate).removeClass("block");
-	}, 500);
 }
 
-function popupBackplateClick(view, backplate, universalOverride) {
-	if (popupCancelAction != null && view == "#open-popup") {
+function popupBackplateClick() {
+	if (popupCancelAction) {
 		popupCancelAction();
 	} else {
-		hidePopupViewInternal(view, backplate, universalOverride);
+		hidePopupView(null, true);
 	}
 }
 
 function updatePopupHeight() {
-	if (interfaceMode == 1) {
+/*	if (interfaceMode == 1) {
 		if ((windowHeight - 100) == $("#open-popup .popup-content").innerHeight()) {
 			$("#open-popup .popup-content").css("height", "100%");
 		} else {
@@ -1661,7 +1652,7 @@ function updatePopupHeight() {
 		}
 	} else {
 		$("#open-popup .popup-content").css("height", "");
-	}
+	}*/
 }
 
 
@@ -2069,6 +2060,7 @@ function getOS() {
 	} else if (iosPlatforms.indexOf(platform) !== -1) {
 		os = 'ios';
 		osUI = platform;
+		if (!window.navigator.standalone) showStandaloneCallToAction(true);
 	} else if (windowsPlatforms.indexOf(platform) !== -1) {
 		os = 'windows';
 		osUI = "Windows device";
@@ -2081,6 +2073,25 @@ function getOS() {
 	}
 
   return [os, osUI];
+}
+
+function showStandaloneCallToAction(show, force) {
+	if (show) {
+		setTimeout(function() {
+			if (force || (!document.body.classList.contains("setup") && !localStorage.beoStandaloneCallToActionDismissed)) {
+				document.querySelector("#standalone-call-to-action").classList.remove("hidden");
+				setTimeout(function() {
+					document.querySelector("#standalone-call-to-action").classList.add("visible");
+				}, 100);
+			}
+		}, 2000);
+	} else {
+		localStorage.beoStandaloneCallToActionDismissed = true;
+		document.querySelector("#standalone-call-to-action").classList.remove("visible");
+		setTimeout(function() {
+			document.querySelector("#standalone-call-to-action").classList.add("hidden");
+		}, 500);
+	}
 }
 
 
@@ -2116,7 +2127,8 @@ return {
 	isDarkAppearance: function() {return darkAppearance},
 	insertConnectionGuide: insertConnectionGuide,
 	wizard: wizard,
-	getOS: getOS
+	getOS: getOS,
+	showStandaloneCallToAction: showStandaloneCallToAction
 }
 
 })();

@@ -271,28 +271,29 @@ async function updateCache(force = false) {
 							track = [];
 							try {
 								track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
+								album = {
+									name: mpdAlbums[artist].album[album].album, 
+									artist: mpdAlbums[artist].albumartist, 
+									date: null, 
+									provider: "mpd",
+									img: null
+								};
+								if (track[0]) {
+									if (track[0].date) album.date = track[0].date.toString().substring(0,4);
+									cover = await getCover(track[0].file, createTiny);
+									if (cover.error != null) { // Cover fetching had errors, likely due to folder not existing.
+										addAlbum = false;
+									} else {
+										album.img = cover.img;
+										album.thumbnail = cover.thumbnail;
+										album.tinyThumbnail = cover.tiny;
+									}
+								}
+								if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
 							} catch (error) {
 								console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
 							}
-							album = {
-								name: mpdAlbums[artist].album[album].album, 
-								artist: mpdAlbums[artist].albumartist, 
-								date: null, 
-								provider: "mpd",
-								img: null
-							};
-							if (track[0]) {
-								if (track[0].date) album.date = track[0].date.toString().substring(0,4);
-								cover = await getCover(track[0].file, createTiny);
-								if (cover.error != null) { // Cover fetching had errors, likely due to folder not existing.
-									addAlbum = false;
-								} else {
-									album.img = cover.img;
-									album.thumbnail = cover.thumbnail;
-									album.tinyThumbnail = cover.tiny;
-								}
-							}
-							if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
+
 						}
 						newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
 							if (a.date && b.date) {

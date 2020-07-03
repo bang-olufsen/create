@@ -291,7 +291,7 @@ async function updateCache(force = false) {
 								}
 								if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
 							} catch (error) {
-								console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
+								console.error("Error getting a data from album '"+album+"'.", error);
 							}
 
 						}

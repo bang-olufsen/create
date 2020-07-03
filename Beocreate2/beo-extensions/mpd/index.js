@@ -25,6 +25,7 @@ var mpdAPI = require("mpd-api");
 var mpdCmd = mpdAPI.mpd;
 const util = require('util');
 const execPromise = util.promisify(exec);
+const dnssd = require("dnssd2"); // for service discovery.
 
 var debug = beo.debug;
 
@@ -88,6 +89,12 @@ beo.bus.on('general', function(event) {
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "mpd") {
 			beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
+			listStorage().then(storageList => {
+				beo.sendToUI("mpd", "mountedStorage", {storage: storageList});
+			}).catch({
+				// Error listing storage.
+			});
+			
 		}
 	}
 });
@@ -144,7 +151,7 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "update") {
-		force = (event.content && event.content.force) ? true : false;
+		force = (event.content && (event.content.force || (event.content.extra && event.content.extra == "covers"))) ? true : false;
 		updateCache(force);
 	}
 	
@@ -242,8 +249,8 @@ async function connectMPD() {
 
 updatingCache = false;
 async function updateCache(force = false) {
+	if (!client) await connectMPD();
 	if (client && !updatingCache) {
-		if (!client) await connectMPD();
 		try {
 			status = await client.api.status.get();
 			stats = await client.api.status.stats();
@@ -264,35 +271,39 @@ async function updateCache(force = false) {
 		
 					for (artist in mpdAlbums) {
 						newCache.data[mpdAlbums[artist].albumartist] = [];
-						for (album in mpdAlbums[artist].album) {
-							// Get a song from the album to get album art and other data.
-							addAlbum = true;
-							if (debug > 1) console.log(mpdAlbums[artist].album[album]);
-							track = [];
-							try {
-								track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
-							} catch (error) {
-								console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
-							}
-							album = {
-								name: mpdAlbums[artist].album[album].album, 
-								artist: mpdAlbums[artist].albumartist, 
-								date: null, 
-								provider: "mpd",
-								img: null
-							};
-							if (track[0]) {
-								if (track[0].date) album.date = track[0].date.toString().substring(0,4);
-								cover = await getCover(track[0].file, createTiny);
-								if (cover.error != null) { // Cover fetching had errors, likely due to folder not existing.
-									addAlbum = false;
-								} else {
-									album.img = cover.img;
-									album.thumbnail = cover.thumbnail;
-									album.tinyThumbnail = cover.tiny;
+						if (mpdAlbums[artist].album) {
+							for (album in mpdAlbums[artist].album) {
+								// Get a song from the album to get album art and other data.
+								try {
+									addAlbum = true;
+									if (debug > 1) console.log(mpdAlbums[artist].album[album]);
+									track = [];
+									track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
+									newAlbum = {
+										name: mpdAlbums[artist].album[album].album, 
+										artist: mpdAlbums[artist].albumartist, 
+										date: null, 
+										provider: "mpd",
+										img: null
+									};
+									if (track[0]) {
+										if (track[0].date) newAlbum.date = track[0].date.toString().substring(0,4);
+										cover = await getCover(track[0].file, createTiny);
+										if (cover.error != null) { // Cover fetching had errors, likely due to folder not existing.
+											addAlbum = false;
+										} else {
+											newAlbum.img = cover.img;
+											newAlbum.thumbnail = cover.thumbnail;
+											newAlbum.tinyThumbnail = cover.tiny;
+										}
+									}
+									if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(newAlbum);
+								} catch (error) {
+									console.error("Error getting a track from album '"+mpdAlbums[artist].album[album].album+"'.", error);
 								}
 							}
-							if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(album);
+						} else {
+							console.error("No album items for artist '"+artist+"'. This is probably an MPD (-API) glitch.");
 						}
 						newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
 							if (a.date && b.date) {
@@ -337,8 +348,8 @@ async function updateCache(force = false) {
 							beo.extensions.music.returnMusic("mpd", "artists", artists, null);
 						}
 				}
-				albumsRequested = false;
-				artistsRequested = false;
+				//albumsRequested = false;
+				//artistsRequested = false;
 			}
 		} catch (error) {
 			console.error("Couldn't update MPD album cache:", error);
@@ -401,7 +412,6 @@ async function getMusic(type, context, noArt = false) {
 							}
 						}
 						trackData = {
-							id: track,
 							disc: 1,
 							path: mpdTracks[track].file,
 							number: mpdTracks[track].track,
@@ -429,6 +439,7 @@ async function getMusic(type, context, noArt = false) {
 						}
 					});
 					for (t in album.tracks) {
+						album.tracks[t].id = t;
 						if (!album.discs[album.tracks[t].disc - 1]) {
 							album.discs[album.tracks[t].disc - 1] = [];
 						}
@@ -620,6 +631,65 @@ function escapeString(string) {
 	return string.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"').replace(/\\/g, '\\');
 }
 
+
+
+async function listStorage() {
+	startDiscovery();
+	storageList = [];
+	
+	// List mounted USB storage.
+	try {
+		storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
+		storageUSB = storageUSB.stdout.trim().split("\n");
+		for (s in storageUSB) {
+			storageList.push({name: storageUSB[s].substring(storageUSB[s].lastIndexOf("/")+1).split(" type ")[0], kind: "USB"});
+		}
+	} catch (error) {
+		console.error("Couldn't get a list of USB storage:", error);
+	}
+	
+	return storageList;
+}
+
+
+// Discover NAS storage.
+
+var browser = null;
+discoveryStopDelay = null;
+discoveredNAS = {};
+
+function startDiscovery() {
+	discoveredNAS = {};
+	beo.sendToUI("mpd", "discoveredNAS", {storage: {}});
+	if (!browser) {
+		browser = new dnssd.Browser(dnssd.tcp('smb'));
+		
+		browser.on('serviceUp', service => discoveryEvent("up", service));
+		browser.on('serviceDown', service => discoveryEvent("down", service));
+		browser.on('serviceChanged', service => discoveryEvent("changed", service));
+		browser.on('error', error => console.log("dnssd error: ", error));
+	} else {
+		browser.stop();
+	}
+	browser.start();
+	clearTimeout(discoveryStopDelay);
+	discoveryStopDelay = setTimeout(function() {
+		stopDiscovery();
+	}, 60000);
+}
+
+function stopDiscovery() {
+	if (browser) browser.stop();
+}
+
+function discoveryEvent(event, service) {
+	if (event == "up") {
+		discoveredNAS[service.name] = {hostname: service.host, addresses: service.addresses};
+	} else if (event == "down") {
+		delete discoveredNAS[service.name];
+	}
+	beo.sendToUI("mpd", "discoveredNAS", {storage: discoveredNAS});
+}
 
 	
 module.exports = {

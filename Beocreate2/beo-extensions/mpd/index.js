@@ -276,7 +276,6 @@ async function updateCache(force = false) {
 								// Get a song from the album to get album art and other data.
 								try {
 									addAlbum = true;
-									if (debug > 1) console.log(mpdAlbums[artist].album[album]);
 									track = [];
 									track = await client.api.db.find('((album == "'+escapeString(mpdAlbums[artist].album[album].album)+'") AND (albumartist == "'+escapeString(mpdAlbums[artist].albumartist)+'"))', 'window', '0:1');
 									newAlbum = {
@@ -297,9 +296,11 @@ async function updateCache(force = false) {
 											newAlbum.tinyThumbnail = cover.tiny;
 										}
 									}
-									if (addAlbum) newCache.data[mpdAlbums[artist].albumartist].push(newAlbum);
+									if (addAlbum) {
+										newCache.data[mpdAlbums[artist].albumartist].push(newAlbum);
+										if (debug > 1) console.log("Album '"+mpdAlbums[artist].album[album].album+"' from artist '"+mpdAlbums[artist].albumartist+"' was cached to the MPD cache.")
 								} catch (error) {
-									console.error("Could not fetch data for an album (index "+album+") from artist '"+artist+"'.", error);
+									console.error("Could not fetch data for an album (index "+album+") from artist '"+mpdAlbums[artist].albumartist+"'.", error);
 								}
 							}
 						} else {

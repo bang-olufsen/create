@@ -155,6 +155,11 @@ beo.bus.on('mpd', function(event) {
 		updateCache(force);
 	}
 	
+	
+	if (event.header == "getNASShares") {
+	
+	}
+	
 });
 
 
@@ -298,7 +303,8 @@ async function updateCache(force = false) {
 									}
 									if (addAlbum) {
 										newCache.data[mpdAlbums[artist].albumartist].push(newAlbum);
-										if (debug > 1) console.log("Album '"+mpdAlbums[artist].album[album].album+"' from artist '"+mpdAlbums[artist].albumartist+"' was cached to the MPD cache.")
+										if (debug > 1) console.log("Album '"+mpdAlbums[artist].album[album].album+"' from artist '"+mpdAlbums[artist].albumartist+"' was added to the MPD cache.");
+									}
 								} catch (error) {
 									console.error("Could not fetch data for an album (index "+album+") from artist '"+mpdAlbums[artist].albumartist+"'.", error);
 								}

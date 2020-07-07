@@ -3,7 +3,7 @@
  "productName": "Beocreate Connect",
  "version": "0.3.0",
  "description": "Desktop utility for Beocreate-based sound systems",
- "main": "main.js",
+ "main": "start.js",
  "scripts": {
   "start": "electron .",
   "dist": "electron-builder",
@@ -13,17 +13,20 @@
  "author": "",
  "license": "MIT",
  "devDependencies": {
-  "electron": "^5.0.6",
-  "electron-builder": "^20.44.4",
-  "electron-rebuild": "^1.8.2"
+  "electron": "^8.3.0",
+  "electron-builder": "^21.2.0",
+  "electron-rebuild": "^1.11.0",
+  "node-hid": "^1.2.0"
  },
  "dependencies": {
   "dnssd2": "^1.0.0",
-  "drivelist": "^6.4.2",
+  "drivelist": "^6.4.6",
   "electron-window-state": "^5.0.3",
-  "multicast-dns": "^7.2.0",
-  "request": "^2.88.0",
-  "tinkerhub-mdns": "^0.5.0"
+  "etcher-image-write": "^9.1.6",
+  "multicast-dns": "^7.2.2",
+  "node-fetch": "^2.6.0",
+  "sudo-prompt": "^9.2.1",
+  "tinkerhub-mdns": "^0.5.1"
  },
  "build": {
   "appId": "dk.bang-olufsen.beocreateconnect",

@@ -151,11 +151,10 @@
 				
 				<div class="menu-screen" id="set-up-new-start">
 					
-					<div class="setup-choice disabled" onclick="startAssistant('createCard');">
+					<div class="setup-choice" onclick="startAssistant('createCard');">
 						<div class="number">01</div>
 						<h1>Prepare Card</h1>
 						<p>Install the necessary software onto a MicroSD card.</p>
-						<div class="tag">Coming soon</div>
 					</div>
 					<div class="vertical-separator"></div>
 					<div class="setup-choice" onclick="startAssistant('findAndSetUp');">
@@ -163,25 +162,22 @@
 						<h1>Find &amp; Set Up</h1>
 						<p>Turn on and configure the product for the first time.</p>
 					</div>
-					<!--<div class="cards">
-						<div class="card" onclick="startAssistant('createCard');">
-							<div class="card-image" style="background-image: url(images/sd-card.jpg);"></div>
-							<div class="card-content">
-								<h2>Prepare a MicroSD Card</h2>
-								<p>Install the necessary software for the product.</p>
+					
+				</div>
+				
+				<div class="menu-screen side-by-side" id="select-card">
+					<div class="banner-image" style="background-image: url(images/sd-card.jpg);"></div>
+					<div class="scroll-area">
+						<div class="menu-content">
+							<div class="menu-group">
+								<h1>Choose destination</h1>
+								<p>Connect your MicroSD card (4 GB or higher capacity) to the computer. When the card appears below, select it to continue.</p>
 							</div>
-							
-						</div>
-						
-						<div class="card" onclick="startAssistant('findAndSetUp');">
-							<div class="card-image" style="background-image: url(images/setup-card.jpg);"></div>
-							<div class="card-content">
-								<h2>First-Time Setup</h2>
-								<p>Turn on, find and set up the product.</p>
+							<div id="drive-list">
+								
 							</div>
-							
 						</div>
-					</div>-->
+					</div>
 				</div>
 				
 				<div class="menu-screen" id="writing-card">

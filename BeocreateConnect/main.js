@@ -1,9 +1,30 @@
-const {app, Menu, BrowserWindow, ipcMain, systemPreferences} = require('electron');
+/*Copyright 2018-2020 Bang & Olufsen A/S
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
+// BEOCREATE CONNECT
+
+
+const {app, Menu, BrowserWindow, ipcMain, nativeTheme, systemPreferences} = require('electron');
 const windowStateKeeper = require('electron-window-state');
 const dnssd = require('dnssd2');
 const drivelist = require('drivelist');
-const request = require('request');
+const fetch = require('node-fetch');
 const os = require('os');
+const fs = require('fs');
 var shell = require('electron').shell;
 
 var debug = false;
@@ -163,7 +184,7 @@ Menu.setApplicationMenu(menu);
     
     win.webContents.on('did-finish-load', () => {
 		if (process.platform == 'darwin') {
-			win.webContents.send('colourSchemeIsDark', systemPreferences.isDarkMode());
+			win.webContents.send('colourSchemeIsDark', nativeTheme.shouldUseDarkColors);
 		}
 		win.webContents.send('styleForWindows', process.platform !== 'darwin');
 		setTimeout(function() {
@@ -262,12 +283,11 @@ Menu.setApplicationMenu(menu);
 
 
 // DARK / LIGHT MODE
-if (process.platform == "darwin") {
+if (process.platform == "darwin" && win) {
 	systemPreferences.subscribeNotification(
 	  'AppleInterfaceThemeChangedNotification',
 	  function theThemeHasChanged () {
-	  	console.log(systemPreferences.isDarkMode());
-		win.webContents.send('colourSchemeIsDark', systemPreferences.isDarkMode());
+		win.webContents.send('colourSchemeIsDark', nativeTheme.shouldUseDarkColors);
 	  }
 	)
 }
@@ -418,19 +438,23 @@ var manualDiscoveryInterval;
 var manualDiscoveryAddress = "10.0.0.1";
 function discoverProductAtAddress(address) {
 	if (bonjourProductCount == 0) {
-		request('http://'+address+'/product-information/discovery', { json: true }, (err, res, body) => {
-			if (res && res.statusCode == 200) {
-				service = {name: body.name, fullname: body.name+"._"+body.serviceType+"._tcp.local.", port: body.advertisePort, addresses: [address], host: address, txt: body.txtRecord, manual: true};
-				if (!manuallyDiscoveredProduct) {
-					manuallyDiscoveredProduct = service;
-					refreshProducts();
-				}
+		fetch('http://'+address+'/product-information/discovery').then(res => {
+			if (res.status == 200) {
+				res.json().then(body => {
+					service = {name: body.name, fullname: body.name+"._"+body.serviceType+"._tcp.local.", port: body.advertisePort, addresses: [address], host: address, txt: body.txtRecord, manual: true};
+					if (!manuallyDiscoveredProduct) {
+						manuallyDiscoveredProduct = service;
+						refreshProducts();
+					}
+				});
 			} else {
 				if (manuallyDiscoveredProduct != null) {
 					manuallyDiscoveredProduct = null;
 					refreshProducts();
 				}
 			}
+		}).catch(err => {
+			//console.error("Manual product discovery unsuccessful")
 		});
 	} else {
 		if (manuallyDiscoveredProduct != null) {
@@ -517,7 +541,15 @@ Array.prototype.equals = function (array) {
 Object.defineProperty(Array.prototype, "equals", {enumerable: false});
 
 
+
+
+
 // SD CARD LOGIC
+
+ipcMain.on("listDrives", (event, arg) => {
+	listDrives();
+	//console.log(app.getPath("userData"));
+}); 
 
 function listDrives() {
 	drivelist.list((error, drives) => {
@@ -526,7 +558,6 @@ function listDrives() {
 		}
 		
 		
-		
-		console.log(drives);
+		win.webContents.send('availableDrives', drives);
 	});
 }

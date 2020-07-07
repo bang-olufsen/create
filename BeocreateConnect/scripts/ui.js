@@ -1,3 +1,23 @@
+/*Copyright 2018-2020 Bang & Olufsen A/S
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.*/
+
+// BEOCREATE CONNECT
+
+
 var inElectron = false;
 var debug = true;
 
@@ -393,6 +413,19 @@ if (ipc) {
 		//}
 		//updateProductLists();
 	});
+	
+	ipc.on('availableDrives', (event, drives) => {
+		console.log(drives);
+		$("#drive-list").empty();
+		for (d in drives) {
+			if (drives[d].busType == "USB") { // Only list USB drives.
+				size = Math.round(drives[d].size/100000000)/10;
+				if (size > 3) { // Make sure drive is large enough.
+					$("#drive-list").append('<div class="menu-item" onclick="selectDrive(\''+drives[d].raw+'\');"><div class="menu-label">'+drives[d].description+'</div><div class="menu-value">'+size+' GB</div></div>');
+				}
+			}
+		}
+	});
 }
 
 function refresh() {
@@ -642,10 +675,11 @@ function assistantFlow(step) {
 					endAssistant();
 					break;
 				case 0:
-					assistantButtons("Stop Writing", "Next Step");
+					assistantButtons("Cancel", "Prepare Card");
 					enableAssistantButtons(true, false);
-					showScreen('writing-card', direction);
+					showScreen('select-card', direction);
 					showMenuButton(true);
+					ipc.send("listDrives");
 					break;
 			}
 			break;
@@ -653,6 +687,11 @@ function assistantFlow(step) {
 }
 
 
+// SD CARD FLOW
+
+function selectDrive(raw) {
+	console.log(raw);
+}
 
 
 // COMMUNICATIONS FROM THE PRODUCT UI

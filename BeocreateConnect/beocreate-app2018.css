@@ -1,8 +1,7 @@
 @import "fonts/metropolis.css";
 
-/* Theme Controls */
-:root {
-	color-scheme: light dark;
+
+body {
 	
 	--carnation: #FF3E46;
 	--yellow: #FFAA46;
@@ -14,11 +13,10 @@
 	--waterleaf: #9DE7D7;
 
 	--main-bg: white;
-	--main-bg-dark: #333;
 	--text: black;
-}
-
-body {
+	--button-bg: #f5f5f5;
+	--menu-line: rgba(0,0,0,0.1); 
+	
 	margin: 0;
 	padding: 0;
 	font-family: "Metropolis", -apple-system, sans-serif;
@@ -31,13 +29,20 @@ body {
 	right: 0;
 	left: 0;
 	bottom: 0;
-	background-color: transparent;
+	background-color: var(--main-bg);
+	color: var(--text);
+	
+	color-scheme: light dark;
 }
 
-.dark {
-	color: white;
-	background-color: var(--main-bg-dark);
+body.dark {
+
+	--main-bg: #333;
+	--text: white;
+	--menu-line: rgba(255,255,255,0.1); 
+	--button-bg: #444;
 }
+
 
 body.beocreate-1 .beocreate-1-hide {
 	display: none !important;
@@ -809,10 +814,18 @@ hr {
 }
 
 .menu-item {
-	background-color: #f5f5f5;
-	margin-bottom: 1em;
-	padding: 7.5%;
 	position: relative;
+	display: flex;
+	padding-right: 20px;
+	padding-left: 20px;
+	height: 45px;
+	align-items: center;
+	box-sizing: border-box;
+	padding-top: 2px;
+	transition: background-color 0.3s ease, opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+	cursor: default;
+	background-color: var(--button-bg);
+	margin-bottom: 10px;
 }
 
 .menu-item.disabled {
@@ -829,9 +842,38 @@ hr {
 }
 
 .menu-label {
-	font-size: 1.5em;
+	font-size: 1em;
 	font-weight: 500;
-	margin-bottom: 0.5em;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.menu-value {
+	margin-left: auto;
+	opacity: 0.5;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	text-align: right;
+	flex-shrink: 0;
+	padding-left: 0.5em;
+}
+
+.menu-item:hover {
+	background-color: var(--menu-line);
+}
+
+.menu-item:active {
+	background-color: #333;
+	transition: none;
+	color: white;
+}
+
+.dark .menu-item:active {
+	background-color: #eee;
+	transition: none;
+	color: black;
 }
 
 
@@ -1065,7 +1107,7 @@ hr {
 }
 
 .collection-item.configure:after {
-	content: "Configure";
+	content: "View";
 }
 
 

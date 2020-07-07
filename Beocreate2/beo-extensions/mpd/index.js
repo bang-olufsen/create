@@ -157,7 +157,19 @@ beo.bus.on('mpd', function(event) {
 	
 	
 	if (event.header == "getNASShares") {
+		getNASShares(event.content).then(results => {
+			beo.sendToUI("mpd", "shares", results);
+		}).catch({
+			// Error listing shares.
+		});
+	}
 	
+	if (event.header == "addNAS") {
+		console.log(event.content.share, event.content.path, cachedNASDetails);
+	}
+	
+	if (event.header == "cancelNASAdd") {
+		cachedNASDetails = {};
 	}
 	
 });
@@ -306,7 +318,7 @@ async function updateCache(force = false) {
 										if (debug > 1) console.log("Album '"+mpdAlbums[artist].album[album].album+"' from artist '"+mpdAlbums[artist].albumartist+"' was added to the MPD cache.");
 									}
 								} catch (error) {
-									console.error("Could not fetch data for an album (index "+album+") from artist '"+mpdAlbums[artist].albumartist+"'.", error);
+									console.error("Could not fetch data for album at index "+album+" from artist at index "+artist+".", error);
 								}
 							}
 						} else {
@@ -639,7 +651,7 @@ function escapeString(string) {
 }
 
 
-
+var storageList = [];
 async function listStorage() {
 	startDiscovery();
 	storageList = [];
@@ -649,10 +661,37 @@ async function listStorage() {
 		storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
 		storageUSB = storageUSB.stdout.trim().split("\n");
 		for (s in storageUSB) {
-			storageList.push({name: storageUSB[s].substring(storageUSB[s].lastIndexOf("/")+1).split(" type ")[0], kind: "USB"});
+			storageList.push({name: storageUSB[s].substring(storageUSB[s].lastIndexOf("/")+1).split(" type ")[0], kind: "USB", id: null});
 		}
 	} catch (error) {
 		console.error("Couldn't get a list of USB storage:", error);
+	}
+	
+	// List configured NAS destinations.
+	try {
+		storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+		for (s in storageNAS) {
+			nasItem = storageNAS[s].trim().split(";");
+			if (nasItem[0].charAt(0) != "#") { // Not a comment.
+				nasAddress = nasItem[0].substr(2).split("/")[0];
+				nasName = nasAddress;
+				for (n in discoveredNAS) {
+					if (nasAddress == discoveredNAS[n].addresses[0] ||
+						discoveredNAS[n].hostname.indexOf(nasAddress) != -1) {
+						nasName = discoveredNAS[n].name;
+					}
+				}
+				storageList.push({
+					kind: "NAS",
+					id: nasItem[0], 
+					name: nasName,
+					address: nasAddress,
+					path: nasItem[0].substr(2).split("/").slice(1).join("/")
+				});
+			}
+		}
+	} catch (error) {
+		console.log("Couldn't get a list of configured NAS storage:", error);
 	}
 	
 	return storageList;
@@ -662,8 +701,8 @@ async function listStorage() {
 // Discover NAS storage.
 
 var browser = null;
-discoveryStopDelay = null;
-discoveredNAS = {};
+var discoveryStopDelay = null;
+var discoveredNAS = {};
 
 function startDiscovery() {
 	discoveredNAS = {};
@@ -691,11 +730,41 @@ function stopDiscovery() {
 
 function discoveryEvent(event, service) {
 	if (event == "up") {
-		discoveredNAS[service.name] = {hostname: service.host, addresses: service.addresses};
+		discoveredNAS[service.name] = {name: service.name, hostname: service.host, addresses: service.addresses};
+		var namesUpdated = false;
+		for (s in storageList) {
+			if (storageList[s].kind == "NAS") {
+				if ((storageList[s].address == service.addresses[0] ||
+					service.host.indexOf(storageList[s].address) != -1) &&
+					storageList[s].name != service.name) {
+					storageList[s].name = service.name;
+					namesUpdated = true;
+				}
+			}
+		}
+		if (namesUpdated) beo.sendToUI("mpd", "mountedStorage", {storage: storageList});
 	} else if (event == "down") {
 		delete discoveredNAS[service.name];
 	}
 	beo.sendToUI("mpd", "discoveredNAS", {storage: discoveredNAS});
+}
+
+var cachedNASDetails = {};
+async function getNASShares(details) {
+	shareList = [];
+	if (details.server && details.username && details.password != undefined) {
+		cachedNASDetails = JSON.parse(JSON.stringify(details));
+		try {
+			sharesRaw = await execPromise("smbclient -N -L "+details.server.addresses[0]+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
+			sharesRaw = sharesRaw.stdout.trim().split("\n");
+			for (s in sharesRaw) {
+				shareList.push(sharesRaw[s].slice(5, -1));
+			}
+		} catch (error) {
+			console.error("Couldn't get a list of SMB shares:", error);
+		}
+	}
+	return {server: details.server, shares: shareList};
 }
 
 	

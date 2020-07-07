@@ -392,7 +392,7 @@ function loadArtwork(url, port, testExternal) {
 			pictureInTargetView = $(".artwork-img-"+hiddenArtworkView).attr("src");
 			$(".artwork-img-"+hiddenArtworkView).attr("src", src);
 			if (!testExternal) {
-				console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+"...");
+				console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+" ("+src+")...");
 			} else {
 				console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
 			}

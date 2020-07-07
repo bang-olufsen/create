@@ -482,7 +482,7 @@ var fetch = require("node-fetch"); // for sending HTTP requests to the DACP serv
 	// DACP SERVICE DISCOVERY
 	
 	
-	browser = null;
+	var browser = null;
 	
 	function startDiscovery() {
 		browser = new dnssd.Browser(dnssd.tcp('dacp'));

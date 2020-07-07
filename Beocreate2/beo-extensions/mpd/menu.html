@@ -11,8 +11,37 @@
 				<div class="menu-label">Enabled</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p><a href="http://musicpd.org" target="_blank">Music Player Daemon</a> (MPD) is the background service for playing internet radio and locally stored music.</p>
-			<a class="button pill grey" href="#" target="_blank" id="mpd-link">Open MPD Web Interface</a>
+			<p><a href="http://musicpd.org" target="_blank">Music Player Daemon</a> (MPD) is the background service for Music and Radio sources.</p>
+			<!--<a class="button pill grey" href="#" target="_blank" id="mpd-link">Open MPD Web Interface</a>-->
+			<hr>
+			<p class="margin-top">Music from USB drives and network attached storage (NAS) can be browsed through the Music source.</p>
+			<h2>Added storage</h2>
+			<div id="mpd-mounted-storage">
+			
+			</div>
+			<div id="mpd-discovered-storage">
+			
+			</div>
+			<div class="button pill grey">Add Other Server...</div>
+			<p class="margin-top">When adding storage, it may take some time for the new content to be available, depending on the amount of files and connection type.</p>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="mpd-nas-setup">
+		<h2 id="mpd-server-name">Server</h2>
+		<p>Select a share from the server to add.</p>
+		<div id="mpd-share-list">
+		
+		</div>
+		<hr>
+		<div class="menu-item" onclick="mpd.addNAS(3);">
+			<div class="menu-label">Path</div>
+			<div class="menu-value" id="mpd-nas-path">/</div>
+		</div>
+		
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="mpd.addNAS(4);" id="mpd-add-nas-button">Add Storage</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 </div>

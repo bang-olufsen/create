@@ -165,7 +165,7 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "addNAS") {
-		console.log(event.content.share, event.content.path, cachedNASDetails);
+		addNAS(cachedNASDetails, event.content.share, event.content.path);
 	}
 	
 	if (event.header == "cancelNASAdd") {
@@ -673,7 +673,7 @@ async function listStorage() {
 		for (s in storageNAS) {
 			nasItem = storageNAS[s].trim().split(";");
 			if (nasItem[0].charAt(0) != "#") { // Not a comment.
-				nasAddress = nasItem[0].substr(2).split("/")[0];
+				nasAddress = nasItem[1].substr(2).split("/")[0];
 				nasName = nasAddress;
 				for (n in discoveredNAS) {
 					if (nasAddress == discoveredNAS[n].addresses[0] ||
@@ -686,7 +686,7 @@ async function listStorage() {
 					id: nasItem[0], 
 					name: nasName,
 					address: nasAddress,
-					path: nasItem[0].substr(2).split("/").slice(1).join("/")
+					path: nasItem[1].substr(2).split("/").slice(1).join("/")
 				});
 			}
 		}
@@ -717,6 +717,7 @@ function startDiscovery() {
 	} else {
 		browser.stop();
 	}
+	if (debug) console.log("Looking for NAS devices with SMB protocol...");
 	browser.start();
 	clearTimeout(discoveryStopDelay);
 	discoveryStopDelay = setTimeout(function() {
@@ -729,8 +730,15 @@ function stopDiscovery() {
 }
 
 function discoveryEvent(event, service) {
-	if (event == "up") {
+	if (event == "up" || event == "changed") {
 		discoveredNAS[service.name] = {name: service.name, hostname: service.host, addresses: service.addresses};
+		discoveredNAS[service.name].addresses.sort(function(a, b) {
+			if (a.length >= b.length) {
+				return 1;
+			} else {
+				return -1;
+			}
+		});
 		var namesUpdated = false;
 		for (s in storageList) {
 			if (storageList[s].kind == "NAS") {
@@ -753,7 +761,7 @@ var cachedNASDetails = {};
 async function getNASShares(details) {
 	shareList = [];
 	if (details.server && details.username && details.password != undefined) {
-		cachedNASDetails = JSON.parse(JSON.stringify(details));
+		cachedNASDetails = details;
 		try {
 			sharesRaw = await execPromise("smbclient -N -L "+details.server.addresses[0]+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
 			sharesRaw = sharesRaw.stdout.trim().split("\n");
@@ -765,6 +773,45 @@ async function getNASShares(details) {
 		}
 	}
 	return {server: details.server, shares: shareList};
+}
+
+async function addNAS(details, share, path) {
+	storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+	beo.sendToUI("mpd", "addingNAS");
+	serverAddress = (details.server.hostname.charAt(details.server.hostname.length-1) == ".") ? details.server.hostname.slice(0, -1) : details.server.hostname; // Remove trailing period.
+	storageNAS.push(details.server.name+"-"+share+";//"+serverAddress+"/"+share+path+";"+details.username+";"+details.password);
+	fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
+	if (debug) console.log("Added share '"+share+path+"' from NAS '"+details.server.hostname+"'. Mount and scan will start momentarily.");
+	cachedNASDetails = {};
+	try {
+		storage = await listStorage();
+		beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+	} catch (error) {
+		console.error("Error listing storage:", error);
+	}
+	await mountNewNAS();
+	beo.sendToUI("mpd", "addedNAS", {name: details.server.name});
+}
+
+var mountInProgress = 0;
+async function mountNewNAS(override = false) {
+	//if (!override) mountInProgress++;
+	//if (!mountInProgress || override) {
+	if (debug) console.log("Mounting new NAS storage...");
+		try {
+			await execPromise("/opt/hifiberry/bin/mount-smb.sh");
+			if (debug) console.log("NAS storage mount finished.");
+			return true;
+			//mountInProgress--;
+		} catch (error) {
+			//mountInProgress--;
+			console.error("Error running NAS/SMB mount program:", error);
+			return false;
+		}
+	/*	if (mountInProgress) {
+			mountNewNAS(true);
+		}
+	}*/
 }
 
 	

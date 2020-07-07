@@ -118,7 +118,7 @@ var _ = beo.underscore;
 		}
 		
 		if (event.header == "getPreviews") {
-			beo.sendToUI("equaliser", {header: "previews", content: {filterResponses: filterResponses}});
+			beo.sendToUI("equaliser", {header: "previews", content: {filterResponses: filterResponses, Fs: Fs}});
 		}
 		
 		if (event.header == "getSettings") {
@@ -354,6 +354,7 @@ var _ = beo.underscore;
 				metadata = event.content.metadata;
 				if (metadata.sampleRate) {
 					Fs = parseInt(metadata.sampleRate.value[0]);
+					console.log("Sampling rate of "+Fs+" Hz specified in the DSP program.");
 					for (var c = 0; c < 4; c++) {
 						channel = "abcd".charAt(c);
 						applyAllFiltersFromSettings(channel, true);

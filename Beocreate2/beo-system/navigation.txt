@@ -1,9 +1,0 @@
-product-information
-clock
--
-sound
-sources
-network
-general-settings
--
-interact

@@ -559,7 +559,11 @@ var fs = require("fs");
 			}
 			
 			if (fromURL) {
-				download(fromURL, imageDirectory, null, function(success, err) {
+				download(fromURL, imageDirectory)
+				.then(file => {
+					downloadProductImage(queue, callback, downloaded, failed);
+				})
+				.catch(error => {
 					downloadProductImage(queue, callback, downloaded, failed);
 				});
 			}
@@ -573,13 +577,6 @@ var fs = require("fs");
 	}
 	
 	
-	function restAPI(header, extra, callback) {
-		if (header == "discovery") {
-			callback({name: systemName.ui, serviceType: "beocreate", advertisePort: beo.systemConfiguration.port, txtRecord: {"type": settings.modelID, "typeui": settings.modelName, "id": systemID, "image": currentProductImage, "status": systemStatus}});
-		} else {
-			callback(null);
-		}
-	}
 	
 beo.expressServer.get("/product-information/discovery", function (req, res) {
 

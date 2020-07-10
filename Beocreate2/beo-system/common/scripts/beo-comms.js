@@ -161,6 +161,7 @@ function send(data) {
 
 function sendToProduct(target, header, content = undefined) {
 	if (typeof header == "string") {
+		if (debug > 1) console.log(target, header, content);
 		send({target: target, header: header, content: content});
 	} else {
 		// Legacy way of sending data, supported. 'Header' used to be 'data'.

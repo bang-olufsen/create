@@ -353,7 +353,7 @@ var hiddenArtworkView = "b";
 function loadArtwork(url, port, testExternal) {
 	evaluateExternalArtwork = false;
 	sourcePlaceholder = false;
-	if (!url || url.indexOf("file:///") == -1) {
+	if (!url || url.indexOf("file://") == -1) {
 		if (url) {
 			if (url.indexOf("http") == 0) {
 				// Remote url, use as is.
@@ -423,7 +423,7 @@ function determineArtworkToShow(internalURL, externalURL, port) {
 	
 	if (internalURL != currentInternalPicture || (!internalURL && !externalURL)) { // Always load internal artwork first, or if neither image is available.
 		loadArtwork(internalURL, port);
-		if (internalURL != null && internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
+		if (internalURL != null && internalURL.indexOf("file://") != -1) internalURL = null; // Treat file URLs as no URL.
 		currentInternalPicture = internalURL;
 	} else if (internalURL && currentPicture != internalURL) {
 		loadArtwork(internalURL, port);

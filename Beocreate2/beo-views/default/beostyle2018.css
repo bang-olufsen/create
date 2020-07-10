@@ -645,7 +645,8 @@ nav.favourites div:active img {
 	overflow: hidden;
 }
 
-.player-bar h3 {
+.player-bar h3,
+.dark .player-bar h3 {
 	color: white;
 	font-weight: 500;
 	font-size: 0.9em;

@@ -504,10 +504,15 @@ var fetch = require("node-fetch");
 			volumeControlRange[1] = max;
 			settings.volumeControlRange = volumeControlRange;
 			beo.saveSettings("sound", settings);
+			console.log("saved sound settings");
 			return volumeControlRange;
 		} else {
 			return false;
 		}
+	}
+	
+	function getVolumeControlRange() {
+		return settings.volumeControlRange;
 	}
 	
 	interact = {
@@ -559,7 +564,8 @@ module.exports = {
 	interact: interact,
 	alsaSet: setVolumeViaALSA,
 	alsaGet: getVolumeViaALSA,
-	setVolumeControlRange: setVolumeControlRange
+	setVolumeControlRange: setVolumeControlRange,
+	getVolumeControlRange: getVolumeControlRange
 };
 
 

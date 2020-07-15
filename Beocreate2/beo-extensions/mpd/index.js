@@ -89,12 +89,12 @@ beo.bus.on('general', function(event) {
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "mpd") {
 			beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
-			listStorage().then(storageList => {
-				beo.sendToUI("mpd", "mountedStorage", {storage: storageList});
+			listStorage().then(storage => {
+				beo.sendToUI("mpd", "mountedStorage", {storage: storage});
 			}).catch({
 				// Error listing storage.
 			});
-			
+			listNAS();
 		}
 	}
 });
@@ -152,7 +152,9 @@ beo.bus.on('mpd', function(event) {
 	
 	if (event.header == "update") {
 		force = (event.content && (event.content.force || (event.content.extra && event.content.extra == "covers"))) ? true : false;
-		updateCache(force);
+		setTimeout(function() {
+			updateCache(force);
+		}, 1000);
 	}
 	
 	
@@ -165,11 +167,18 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "addNAS") {
-		addNAS(cachedNASDetails, event.content.share, event.content.path);
+		details = JSON.parse(JSON.stringify(cachedNASDetails));
+		addNAS(details, event.content.share, event.content.path);
 	}
 	
 	if (event.header == "cancelNASAdd") {
 		cachedNASDetails = {};
+	}
+	
+	if (event.header == "removeStorage") {
+		if (event.content.id) {
+			removeStorage(event.content.id);
+		}
 	}
 	
 });
@@ -264,16 +273,19 @@ async function connectMPD() {
 }
 
 
-updatingCache = false;
+var updatingCache = false;
+var startOver = false;
 async function updateCache(force = false) {
 	if (!client) await connectMPD();
+	var startOver = (updatingCache) ? true : false; 
 	if (client && !updatingCache) {
 		try {
 			status = await client.api.status.get();
 			stats = await client.api.status.stats();
-			if (status.updating_db && debug) console.log("MPD is currently updating its database, album cache will not be built at this time.");
+			if (status.updating_db && !force && debug) console.log("MPD is currently updating its database. Album cache will not be updated at this time.");
+			if (status.updating_db && force && debug) console.log("MPD is currently updating its database. Album cache may not be up todate after updating.");
 			if (cache.lastUpdate == stats.db_update && !force && debug) console.log("MPD album cache appears to be up to date.");
-			if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update || force) && !status.updating_db) {
+			if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) || force) { //  && !status.updating_db
 				// Start updating cache.
 				updatingCache = true;
 				if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", true);
@@ -287,9 +299,11 @@ async function updateCache(force = false) {
 					mpdAlbums = await client.api.db.list("album", null, "albumartist");
 		
 					for (artist in mpdAlbums) {
+						if (startOver) break;
 						newCache.data[mpdAlbums[artist].albumartist] = [];
 						if (mpdAlbums[artist].album) {
 							for (album in mpdAlbums[artist].album) {
+								if (startOver) break;
 								// Get a song from the album to get album art and other data.
 								try {
 									addAlbum = true;
@@ -336,45 +350,51 @@ async function updateCache(force = false) {
 							}
 						});
 					}
-					
-					cache = Object.assign({}, newCache);
-					fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
-					if (debug) console.log("MPD album cache update has finished.");
-					if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
+					if (!startOver) {
+						cache = Object.assign({}, newCache);
+						fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+						if (debug) console.log("MPD album cache update has finished.");
+					}
 				} catch (error) {
 					console.error("Couldn't update MPD album cache:", error);
 					if (error.code == "ENOTCONNECTED") client = null;
 				}
 				updatingCache = false;
-				if ((albumsRequested || artistsRequested) &&
-					beo.extensions.music &&
-					beo.extensions.music.returnMusic) {
-						if (albumsRequested) {
-							if (debug) console.log("Sending updated list of albums from MPD.");
-							albums = [];
-							for (artist in cache.data) {
-								albums = albums.concat(cache.data[artist]);
+				if (!startOver) {
+					if ((albumsRequested || artistsRequested) &&
+						beo.extensions.music &&
+						beo.extensions.music.returnMusic) {
+							if (albumsRequested) {
+								if (debug) console.log("Sending updated list of albums from MPD.");
+								albums = [];
+								for (artist in cache.data) {
+									albums = albums.concat(cache.data[artist]);
+								}
+								beo.extensions.music.returnMusic("mpd", "albums", albums, null);
 							}
-							beo.extensions.music.returnMusic("mpd", "albums", albums, null);
-						}
-						if (artistsRequested) {
-							if (debug) console.log("Sending updated list of artists from MPD.");
-							mpdAlbums = await client.api.db.list("album", null, "albumartist");
-							artists = [];
-							for (artist in mpdAlbums) {
-								artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+							if (artistsRequested) {
+								if (debug) console.log("Sending updated list of artists from MPD.");
+								mpdAlbums = await client.api.db.list("album", null, "albumartist");
+								artists = [];
+								for (artist in mpdAlbums) {
+									artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+								}
+								beo.extensions.music.returnMusic("mpd", "artists", artists, null);
 							}
-							beo.extensions.music.returnMusic("mpd", "artists", artists, null);
-						}
+					}
+				} else {
+					// Start cache update again.
+					if (debug) console.log("Restarting MPD album cache update.");
+					startOver = false;
+					updateCache(force);
 				}
-				//albumsRequested = false;
-				//artistsRequested = false;
 			}
 		} catch (error) {
 			console.error("Couldn't update MPD album cache:", error);
 			if (error.code == "ENOTCONNECTED") client = null;
 		}
 	}
+	if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
 }
 
 var albumsRequested = false;
@@ -652,49 +672,122 @@ function escapeString(string) {
 
 
 var storageList = [];
+var listingStorage = false;
 async function listStorage() {
-	startDiscovery();
-	storageList = [];
-	
-	// List mounted USB storage.
-	try {
-		storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
-		storageUSB = storageUSB.stdout.trim().split("\n");
-		for (s in storageUSB) {
-			storageList.push({name: storageUSB[s].substring(storageUSB[s].lastIndexOf("/")+1).split(" type ")[0], kind: "USB", id: null});
-		}
-	} catch (error) {
-		console.error("Couldn't get a list of USB storage:", error);
-	}
-	
-	// List configured NAS destinations.
-	try {
-		storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
-		for (s in storageNAS) {
-			nasItem = storageNAS[s].trim().split(";");
-			if (nasItem[0].charAt(0) != "#") { // Not a comment.
-				nasAddress = nasItem[1].substr(2).split("/")[0];
-				nasName = nasAddress;
-				for (n in discoveredNAS) {
-					if (nasAddress == discoveredNAS[n].addresses[0] ||
-						discoveredNAS[n].hostname.indexOf(nasAddress) != -1) {
-						nasName = discoveredNAS[n].name;
-					}
-				}
-				storageList.push({
-					kind: "NAS",
-					id: nasItem[0], 
-					name: nasName,
-					address: nasAddress,
-					path: nasItem[1].substr(2).split("/").slice(1).join("/")
-				});
+	if (!listingStorage) {
+		listingStorage = true;
+		storage = [];
+		// List mounted USB storage.
+		try {
+			storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
+			storageUSB = storageUSB.stdout.trim().split("\n");
+			for (s in storageUSB) {
+				device = {id: storageUSB[s].split(" on ")[0], mount: storageUSB[s].split(" on ")[1].split(" type ")[0], kind: "USB"};
+				label = await execPromise("blkid "+device.id+" -o value -s LABEL");
+				device.name = label.stdout.trim();
+				storage.push(device);
 			}
+		} catch (error) {
+			console.error("Couldn't get a list of USB storage:", error);
 		}
-	} catch (error) {
-		console.log("Couldn't get a list of configured NAS storage:", error);
+		
+		// List configured NAS destinations.
+		try {
+			storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+			for (s in storageNAS) {
+				nasItem = storageNAS[s].trim().split(";");
+				if (nasItem[0].charAt(0) != "#") { // Not a comment.
+					nasAddress = nasItem[1].substr(2).split("/")[0];
+					nasName = nasAddress;
+					for (n in discoveredNAS) {
+						if ((discoveredNAS[n].netbios && 
+							nasAddress == discoveredNAS[n].netbios) ||
+							discoveredNAS[n].addresses[0].indexOf(nasAddress) != -1) {
+							nasName = discoveredNAS[n].name;
+						}
+					}
+					try {
+						nasMountRaw = await execPromise("mount | grep '"+nasItem[0]+"'");
+						if (nasMountRaw.stdout) {
+							nasMount = nasMountRaw.stdout.trim().split(" on ")[1].split(" type ")[0];
+						} else {
+							console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
+							nasMount = false;
+						}
+					} catch (error) {
+						console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
+						nasMount = false;
+					}
+					storage.push({
+						kind: "NAS",
+						id: nasItem[0], 
+						name: nasName,
+						address: nasAddress,
+						path: nasItem[1].substr(2).split("/").slice(1).join("/"),
+						mount: nasMount
+					});
+				}
+			}
+		} catch (error) {
+			console.log("Couldn't get a list of configured NAS storage:", error);
+		}
+		
+		storageList = storage;
+		listingStorage = false;
 	}
-	
 	return storageList;
+}
+
+async function removeStorage(id) {
+	storageList = await listStorage();
+	errors = 0;
+	for (s in storageList) {
+		if (storageList[s].id == id) {
+			// The correct storage was found.
+			if (storageList[s].mount) {
+				try {
+					await execPromise("umount "+storageList[s].mount);
+				} catch (error) {
+					console.error("Unable to eject '"+storageList[s].mount+"':", error);
+					errors = 1;
+				}
+			} else {
+				console.error("Storage device '"+storageList[s].id+"' is not mounted.");
+			}
+			if (storageList[s].kind == "NAS") { // Remove from configured NAS storage.
+				try {
+					nasIndex = -1;
+					storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+					for (s in storageNAS) {
+						nasItem = storageNAS[s].trim().split(";");
+						if (nasItem[0].charAt(0) != "#") { // Not a comment.
+							if (nasItem[0] == id) {
+								nasIndex = s;
+								break;
+							}
+						}
+					}
+					if (nasIndex != -1) {
+						storageNAS.splice(nasIndex, 1);
+						fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
+					}
+				} catch (error) {
+					console.error("Unable to remove NAS '"+storageList[s].id+"' from configuration:", error);
+				}
+			}
+			break;
+		}
+	}
+	if (errors == 0 && debug) console.log("Storage device '"+storageList[s].id+"' was ejected.");
+	storage = await listStorage();
+	beo.sendToUI("mpd", "mountedStorage", {storage: storage, unmountErrors: errors});
+	/*try {
+		if (debug) console.log("Triggering MPD database update.");
+		execPromise("/opt/hifiberry/bin/update-mpd-db");
+	} catch (error) {
+		console.error("Error triggering MPD database update:", error);
+	}*/
+	console.log("In this version, you must manually trigger MPD database update. Automation coming soon.");
 }
 
 
@@ -705,7 +798,7 @@ var discoveryStopDelay = null;
 var discoveredNAS = {};
 
 function startDiscovery() {
-	discoveredNAS = {};
+
 	beo.sendToUI("mpd", "discoveredNAS", {storage: {}});
 	if (!browser) {
 		browser = new dnssd.Browser(dnssd.tcp('smb'));
@@ -717,7 +810,7 @@ function startDiscovery() {
 	} else {
 		browser.stop();
 	}
-	if (debug) console.log("Looking for NAS devices with SMB protocol...");
+	
 	browser.start();
 	clearTimeout(discoveryStopDelay);
 	discoveryStopDelay = setTimeout(function() {
@@ -729,9 +822,48 @@ function stopDiscovery() {
 	if (browser) browser.stop();
 }
 
-function discoveryEvent(event, service) {
+var listingNAS = false;
+async function listNAS() {
+	if (!listingNAS) {
+		if (debug) console.log("Looking for NAS devices with SMB protocol...");
+		listingNAS = true;
+		discoveredNAS = {};
+		try {
+			netbiosLookupRaw = await execPromise("nmblookup -S WORKGROUP");
+			netbiosItems = netbiosLookupRaw.stdout.split("Looking up status of ");
+			for (n in netbiosItems) {
+				netbios = netbiosItems[n].split("\n");
+				netbiosIP = netbios[0].trim();
+				netbiosName = null;
+				for (l in netbios) {
+					if (netbios[l].indexOf("<20>") != -1) {
+						netbiosName = netbios[l].split("<20>")[0].trim();
+						break;
+					}
+				}
+				if (netbiosName) {
+					if (!discoveredNAS[netbiosName]) {
+						discoveredNAS[netbiosName] = {name: netbiosName, netbios: netbiosName, from: "netbios", addresses: [netbiosIP]};
+					}
+				}
+			}
+		} catch (error) {
+			console.error("Error performing a NetBIOS lookup:", error);
+		}
+		beo.sendToUI("mpd", "discoveredNAS", {storage: discoveredNAS});
+		startDiscovery();
+		listingNAS = false;
+	}
+}
+
+async function discoveryEvent(event, service) {
 	if (event == "up" || event == "changed") {
-		discoveredNAS[service.name] = {name: service.name, hostname: service.host, addresses: service.addresses};
+		if (!discoveredNAS[service.name]) discoveredNAS[service.name] = {};
+		discoveredNAS[service.name].name = service.name;
+		discoveredNAS[service.name].from = "bonjour";
+		discoveredNAS[service.name].hostname = service.host; 
+		discoveredNAS[service.name].addresses = service.addresses;
+		
 		discoveredNAS[service.name].addresses.sort(function(a, b) {
 			if (a.length >= b.length) {
 				return 1;
@@ -739,11 +871,43 @@ function discoveryEvent(event, service) {
 				return -1;
 			}
 		});
+		
+		if (discoveredNAS[service.name].addresses[0].indexOf(":") != -1) { // We just have an IPv6 address, see if we can get it in IPv4.
+			try {
+				avahiRaw = await execPromise("avahi-resolve-host-name \""+service.host+"\"");
+				address = avahiRaw.stdout.trim().split("\t")[1];
+				if (address.indexOf(".") != -1) {
+					discoveredNAS[service.name].addresses.unshift(address.trim());
+				}
+			} catch (error) {
+				
+			}
+		}
 		var namesUpdated = false;
+		
+		for (n in discoveredNAS) {
+			if (discoveredNAS[n].from == "netbios" &&
+				discoveredNAS[n].addresses[0] == service.addresses[0]) {
+				discoveredNAS[service.name].netbios = discoveredNAS[n].netbios;
+				delete discoveredNAS[n];
+			}
+		}
+		
+		if (!discoveredNAS[service.name].netbios && discoveredNAS[service.name].addresses[0].indexOf(".") != -1) {
+			try {
+				// This entry has no Netbios name, so try to look it up.
+				netbiosRaw = await execPromise("nmblookup -A "+discoveredNAS[service.name].addresses[0]+" | grep '<20>' | awk '{print $1}'");
+				discoveredNAS[service.name].netbios = netbiosRaw.stdout.trim();
+			} catch (error) {
+				console.error("Error getting NetBIOS name for '"+service.name+"':", error);
+			}
+		}
+		
 		for (s in storageList) {
 			if (storageList[s].kind == "NAS") {
-				if ((storageList[s].address == service.addresses[0] ||
-					service.host.indexOf(storageList[s].address) != -1) &&
+				if ((storageList[s].address == service.addresses[0] || (
+					discoveredNAS[service.name].netbios &&
+					discoveredNAS[service.name].netbios.indexOf(storageList[s].name) != -1)) &&
 					storageList[s].name != service.name) {
 					storageList[s].name = service.name;
 					namesUpdated = true;
@@ -761,9 +925,19 @@ var cachedNASDetails = {};
 async function getNASShares(details) {
 	shareList = [];
 	if (details.server && details.username && details.password != undefined) {
-		cachedNASDetails = details;
+		if (details.server.addresses[0].indexOf(".") == -1) { // Probably an IPv6 address, try to get it in IPv4.
+			//address = await dnssd.resolveA(details.server.hostname);
+			address = details.server.addresses[0];
+		} else {
+			address = details.server.addresses[0];
+		}
 		try {
-			sharesRaw = await execPromise("smbclient -N -L "+details.server.addresses[0]+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
+			if (!details.server.netbios) {
+				// This shouldn't be needed, because this lookup should already be done before.
+				netbiosRaw = await execPromise("nmblookup -A "+details.server.addresses[0]+" | grep '<20>' | awk '{print $1}'");
+				details.server.netbios = netbiosRaw.stdout.trim();
+			}
+			sharesRaw = await execPromise("smbclient -N -L "+details.server.netbios+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
 			sharesRaw = sharesRaw.stdout.trim().split("\n");
 			for (s in sharesRaw) {
 				shareList.push(sharesRaw[s].slice(5, -1));
@@ -771,6 +945,7 @@ async function getNASShares(details) {
 		} catch (error) {
 			console.error("Couldn't get a list of SMB shares:", error);
 		}
+		cachedNASDetails = details;
 	}
 	return {server: details.server, shares: shareList};
 }
@@ -778,19 +953,28 @@ async function getNASShares(details) {
 async function addNAS(details, share, path) {
 	storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
 	beo.sendToUI("mpd", "addingNAS");
-	serverAddress = (details.server.hostname.charAt(details.server.hostname.length-1) == ".") ? details.server.hostname.slice(0, -1) : details.server.hostname; // Remove trailing period.
-	storageNAS.push(details.server.name+"-"+share+";//"+serverAddress+"/"+share+path+";"+details.username+";"+details.password);
+	storageNAS.push(details.server.name+"-"+share+"-"+makeID(5)+";//"+details.server.netbios+"/"+share+path+";"+details.username+";"+details.password);
 	fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
-	if (debug) console.log("Added share '"+share+path+"' from NAS '"+details.server.hostname+"'. Mount and scan will start momentarily.");
+	if (debug) console.log("Added '"+share+path+"' from NAS '"+details.server.name+"'.");
 	cachedNASDetails = {};
+	await mountNewNAS();
 	try {
 		storage = await listStorage();
 		beo.sendToUI("mpd", "mountedStorage", {storage: storage});
 	} catch (error) {
 		console.error("Error listing storage:", error);
 	}
-	await mountNewNAS();
 	beo.sendToUI("mpd", "addedNAS", {name: details.server.name});
+}
+
+function makeID(length) { // From https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+	var result = '';
+	var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	var charactersLength = characters.length;
+	for (var i = 0; i < length; i++) {
+		result += characters.charAt(Math.floor(Math.random() * charactersLength));
+	}
+	return result;
 }
 
 var mountInProgress = 0;

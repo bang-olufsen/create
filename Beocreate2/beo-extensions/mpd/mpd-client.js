@@ -1,6 +1,7 @@
 var mpd = (function() {
 
 var mpdEnabled = false;
+var storageList = [];
 var discoveredNAS = {};
 var shares = [];
 var sharePath = "/";
@@ -23,22 +24,25 @@ $(document).on("mpd", function(event, data) {
 	if (data.header == "mountedStorage") {
 		$("#mpd-mounted-storage").empty();
 		if (data.content && data.content.storage) {
+			storageList = data.content.storage;
 			for (s in data.content.storage) {
 				if (data.content.storage[s].kind == "USB") {
 					menuOptions = {
 						label: data.content.storage[s].name,
-						//value: "Remove...",
+						value: "Remove...",
 						valueAsButton: true,
 						icon: extensions.mpd.assetPath+"/symbols-black/usb-drive.svg",
-						description: "USB drive"
+						description: "USB drive",
+						onclick: "mpd.removeStorage("+s+");"
 					}
 				} else if (data.content.storage[s].kind == "NAS") {
 					menuOptions = {
 						label: data.content.storage[s].name,
-						//value: "Remove...",
+						value: "Remove...",
 						valueAsButton: true,
 						icon: extensions.mpd.assetPath+"/symbols-black/nas.svg",
-						description: "NAS — "+data.content.storage[s].path
+						description: "NAS — "+data.content.storage[s].path,
+						onclick: "mpd.removeStorage("+s+");"
 					}
 				}
 				$("#mpd-mounted-storage").append(beo.createMenuItem(menuOptions));
@@ -110,14 +114,16 @@ function toggleEnabled() {
 	beo.send({target: "mpd", header: "mpdEnabled", content: {enabled: enabled}});
 }
 
+var noReset = false;
 function addNAS(stage, data) {
 	switch (stage) {
 		case 0:
 			// Cancel.
-			beo.sendToProduct("mpd", "cancelNASAdd");
+			if (!noReset) beo.sendToProduct("mpd", "cancelNASAdd");
 			break;
 		case 1:
 			// Enter username & password.
+			noReset = false;
 			beo.startTextInput(3, "Server Login", "Enter user name and password to log into '"+data+"'.", 
 			{text: "", placeholders: {text: "User name", password: "Password"}, minLength: {text: 1}}, function(input) {
 				if (input && input.text && input.password) {
@@ -148,16 +154,31 @@ function addNAS(stage, data) {
 			break;
 		case 4:
 			// Save.
+			noReset = true;
 			beo.sendToProduct("mpd", "addNAS", {share: shares[selectedShare], path: sharePath});
 			beo.ask();
 			break;
 	}
 }
 
+function removeStorage(index) {
+	if (storageList[index].kind == "USB") {
+		storageName = storageList[index].name;
+	} else {
+		storageName = storageList[index].name+"/"+storageList[index].path;
+	}
+	beo.ask("mpd-remove-storage", [storageName], [
+		function() {
+			beo.sendToProduct("mpd", "removeStorage", {id: storageList[index].id});
+		}
+	]);
+}
+
 
 return {
 	toggleEnabled: toggleEnabled,
-	addNAS: addNAS
+	addNAS: addNAS,
+	removeStorage: removeStorage
 };
 
 })();

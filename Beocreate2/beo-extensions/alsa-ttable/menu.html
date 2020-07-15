@@ -24,8 +24,20 @@
 			</div>
 			<p data-translation="limitVolumeNotice">Limit the maximum volume level of sources.</p>
 			
+			<h2>Volume slider minimum</h2>
+			<div id="alsa-ttable-minvolume-wrap">
+				<!-- <h2 data-translation="sliderMinVolume"></h2> -->
+				<div class="slider-wrap">
+					<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume-quiet.svg); mask-image: url(common/symbols-black/volume-quiet.svg);"></div>
+					<div class="alsa-volume-min-slider black show-value"></div>
+					<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
+				</div>
+			</div>
+			<p data-translation="minVolumeNotice">Limit the minimum level of the volume slider.</p>
+
 			<div class="button margin-top pill grey" onclick="alsa_ttable.save();">Store Adjustments</div>
 			<p>Activate adjustments. This will stop the currently playing source.</p>
+			
 		</div>
 	</div>
 </div>

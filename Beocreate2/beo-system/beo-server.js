@@ -720,15 +720,17 @@ function loadExtensionWithPath(mode, extensionName, userExtension, menuName, bas
 	extensionsList[extensionName] = {loadedSuccessfully: false, isSource: false, menuTitle: null};
 	if (mode == 1) {
 		menu = fs.readFileSync(shouldLoad.path, "utf8"); // Read the menu from file.
-		menuParts = menu.split("\">\n");
-		if (menuParts[0].indexOf("menu-screen") != -1) {
-			headItems = menuParts[0].substring(5).split(/"\s|"\n/g);
-			preHead = "";
-			menuParts.shift();
-		} else {
-			headItems = menuParts[1].substring(5).split(/"\s|"\n/g);
-			preHead = menuParts[0]+"\">";
-			menuParts.splice(0, 2);
+		menuParts = menu.split("\">");
+		preHead = "";
+		for (var p = 0; p < menuParts.length; p++) {
+			if (menuParts[p].indexOf("menu-screen") != -1) {
+				spaceSplit = menuParts[p].indexOf(" "); // Find first space
+				headItems = menuParts[p].substring(spaceSplit+1).split(/"\s/g);
+				menuParts.splice(0, p+1);
+				break;
+			} else {
+				preHead += menuParts[p]+"\">";
+			}
 		}
 		head = {};
 		for (l in headItems) {
@@ -736,7 +738,8 @@ function loadExtensionWithPath(mode, extensionName, userExtension, menuName, bas
 			head[lineItems[0].trim()] = lineItems[1];
 		};
 		
-		body = menuParts.join("\">\n");
+		body = menuParts.join("\">");
+		
 		head["data-asset-path"] = basePath+'/'+extensionName; // Add asset path.
 		if (head.class && head.class.indexOf('source') != -1) isSource = true; 
 		body = body.split('€/').join(basePath+'/'+extensionName+'/'); // Replace the special character in src with the correct asset path

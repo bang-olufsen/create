@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/last-fm",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Last.FM configuration in Beocreate systems",
   "main": "index.js",
   "scripts": {

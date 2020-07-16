@@ -72,26 +72,31 @@ $(document).on("mpd", function(event, data) {
 	
 	if (data.header == "shares" && data.content && 
 		data.content.server && data.content.shares) {
-		$("#mpd-server-name").text(data.content.server.name);
-		$("#mpd-share-list").empty();
-		shares = data.content.shares;
-		sharePath = "/";
-		selectedShare = null;
-		for (s in shares) {
-			menuOptions = {
-				label: shares[s],
-				valueAsButton: true,
-				checkmark: "left",
-				id: "mpd-share-list-item-"+s,
-				onclick: "mpd.addNAS(2, '"+s+"');"
+		if (!data.content.errors) {
+			beo.notify();
+			$("#mpd-server-name").text(data.content.server.name);
+			$("#mpd-share-list").empty();
+			shares = data.content.shares;
+			sharePath = "/";
+			selectedShare = null;
+			for (s in shares) {
+				menuOptions = {
+					label: shares[s],
+					valueAsButton: true,
+					checkmark: "left",
+					id: "mpd-share-list-item-"+s,
+					onclick: "mpd.addNAS(2, '"+s+"');"
+				}
+				$("#mpd-share-list").append(beo.createMenuItem(menuOptions));
 			}
-			$("#mpd-share-list").append(beo.createMenuItem(menuOptions));
+			$("#mpd-nas-path").text(sharePath);
+			$("#mpd-add-nas-button").addClass("disabled");
+			beo.ask("mpd-nas-setup", null, null, function() {
+				addNAS(0);
+			});
+		} else {
+			beo.notify({title: "Destination unavailable", message: "Available shares on the selected NAS could not be listed.", icon: "common/symbols-colour/warning-yellow.svg", timeout: false, buttonAction: "close", buttonTitle: "Close"});
 		}
-		$("#mpd-nas-path").text(sharePath);
-		$("#mpd-add-nas-button").addClass("disabled");
-		beo.ask("mpd-nas-setup", null, null, function() {
-			addNAS(0);
-		});
 	}
 	
 	if (data.header == "addingNAS") {
@@ -115,6 +120,7 @@ function toggleEnabled() {
 }
 
 var noReset = false;
+var shareListTimeout = null;
 function addNAS(stage, data) {
 	switch (stage) {
 		case 0:
@@ -127,7 +133,12 @@ function addNAS(stage, data) {
 			beo.startTextInput(3, "Server Login", "Enter user name and password to log into '"+data+"'.", 
 			{text: "", placeholders: {text: "User name", password: "Password"}, minLength: {text: 1}}, function(input) {
 				if (input && input.text && input.password) {
-					beo.sendToProduct("mpd", "getNASShares", {server: discoveredNAS[data], username: input.text, password: input.password});
+					if (discoveredNAS[data]) {
+						beo.sendToProduct("mpd", "getNASShares", {server: discoveredNAS[data], username: input.text, password: input.password});
+					} else {
+						beo.sendToProduct("mpd", "getNASShares", {server: {addresses: [data]}, username: input.text, password: input.password});
+					}
+					beo.notify({title: "Waiting for server...", message: "Please wait.", icon: "attention", timeout: false});
 				}
 			});
 			break;
@@ -158,7 +169,37 @@ function addNAS(stage, data) {
 			beo.sendToProduct("mpd", "addNAS", {share: shares[selectedShare], path: sharePath});
 			beo.ask();
 			break;
+		case 5:
+			// Enter IP address manually.
+			beo.startTextInput(1, "Add Other Server", "Enter the IP address of the NAS you would like to add.", {placeholders: {text: "10.0..."}, optional: {text: true}}, function(input) {
+				// Validate and store input.
+				if (input) {
+					if (input.text) {
+						if (isValidIP(input.text)) {
+							addNAS(1, input.text);
+						} else {
+							beo.notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Close", buttonAction: "close"});
+						}
+					}
+				}
+			});
+			break;
 	}
+}
+
+
+function isValidIP(address) {
+	ipItems = address.split(".");
+	validIP = true;
+	if (ipItems.length == 4 && address != "0.0.0.0") {
+		// Length matches.
+		for (var i = 0; i < ipItems.length; i++) {
+			if (isNaN(ipItems[i])) validIP = false;
+		}
+	} else {
+		validIP = false;
+	}
+	return validIP;
 }
 
 function removeStorage(index) {

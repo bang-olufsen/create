@@ -695,9 +695,10 @@ async function listStorage() {
 		try {
 			storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
 			for (s in storageNAS) {
+				slash = (storageNAS[s].indexOf("//") != -1) ? "/" : "\\"; // Does this line use forward or backslashes?
 				nasItem = storageNAS[s].trim().split(";");
 				if (nasItem[0].charAt(0) != "#") { // Not a comment.
-					nasAddress = nasItem[1].substr(2).split("/")[0];
+					nasAddress = nasItem[1].substr(2).split(slash)[0];
 					nasName = nasAddress;
 					for (n in discoveredNAS) {
 						if ((discoveredNAS[n].netbios && 
@@ -723,7 +724,7 @@ async function listStorage() {
 						id: nasItem[0], 
 						name: nasName,
 						address: nasAddress,
-						path: nasItem[1].substr(2).split("/").slice(1).join("/"),
+						path: nasItem[1].substr(2).split(slash).slice(1).join("/"),
 						mount: nasMount
 					});
 				}
@@ -830,34 +831,27 @@ async function listNAS() {
 		netbiosLookupRaw = null;
 		namesUpdated = false;
 		try {
-			netbiosLookupRaw = await execPromise("nmblookup -S WORKGROUP");
+			netbiosLookupRaw = await execPromise("/opt/hifiberry/bin/list-smb-servers");
 		} catch (error) {
-			//console.error("Error performing a NetBIOS lookup:", error);
+			console.error("Error performing a NetBIOS lookup:", error);
 		}	
-		if (netbiosLookupRaw.stdout) {
-			netbiosItems = netbiosLookupRaw.stdout.split("Looking up status of ");
+		if (netbiosLookupRaw && netbiosLookupRaw.stdout) {
+			netbiosItems = netbiosLookupRaw.stdout.trim().split("\n");
 			for (n in netbiosItems) {
-				netbios = netbiosItems[n].split("\n");
-				netbiosIP = netbios[0].trim();
-				netbiosName = null;
-				for (l in netbios) {
-					if (netbios[l].indexOf("<20>") != -1) {
-						netbiosName = netbios[l].split("<20>")[0].trim();
-						break;
-					}
+				netbios = netbiosItems[n].split(", ");
+				netbiosIP = netbios[1].split(" ")[0].trim();
+				netbiosName = netbios[0].trim();
+		
+				if (!discoveredNAS[netbiosName]) {
+					discoveredNAS[netbiosName] = {name: netbiosName, netbios: netbiosName, from: "netbios", addresses: [netbiosIP]};
 				}
-				if (netbiosName) {
-					if (!discoveredNAS[netbiosName]) {
-						discoveredNAS[netbiosName] = {name: netbiosName, netbios: netbiosName, from: "netbios", addresses: [netbiosIP]};
-					}
-					
-					for (s in storageList) {
-						if (storageList[s].kind == "NAS") {
-							if ((storageList[s].address == discoveredNAS[netbiosName].addresses[0] || discoveredNAS[netbiosName].netbios.indexOf(storageList[s].name) != -1) &&
-								storageList[s].name != discoveredNAS[netbiosName].name) {
-								storageList[s].name = discoveredNAS[netbiosName].name;
-								namesUpdated = true;
-							}
+				
+				for (s in storageList) {
+					if (storageList[s].kind == "NAS") {
+						if ((storageList[s].address == discoveredNAS[netbiosName].addresses[0] || discoveredNAS[netbiosName].netbios.indexOf(storageList[s].name) != -1) &&
+							storageList[s].name != discoveredNAS[netbiosName].name) {
+							storageList[s].name = discoveredNAS[netbiosName].name;
+							namesUpdated = true;
 						}
 					}
 				}

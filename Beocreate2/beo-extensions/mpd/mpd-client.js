@@ -171,7 +171,7 @@ function addNAS(stage, data) {
 			break;
 		case 5:
 			// Enter IP address manually.
-			beo.startTextInput(1, "Add Other Server", "Enter the IP address of the NAS you would like to add.", {placeholders: {text: "10.0..."}, optional: {text: true}}, function(input) {
+			beo.startTextInput(1, "Add Other Server", "Enter the IP address of the SMB server you would like to add.", {placeholders: {text: "10.0..."}, optional: {text: true}}, function(input) {
 				// Validate and store input.
 				if (input) {
 					if (input.text) {

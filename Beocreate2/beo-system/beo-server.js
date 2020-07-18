@@ -370,13 +370,23 @@ expressServer.get("/view/:appearance", function (req, res) {
 expressServer.use(express.json());
 expressServer.post("/:extension/:header/:extra*?", function (req, res) {
 	if (req.params.header == "upload") {
-		if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
 		if (debugMode) console.log("File upload for '"+req.params.extension+"':", req.header("fileName"));
 		if (extensions[req.params.extension] && extensions[req.params.extension].processUpload) { // Check that the extension can receive this file, then save it to the upload directory and call the extension to process it.
-			fileStream = fs.createWriteStream(dataDirectory+"/beo-uploads/"+req.header("fileName"));
+			if (req.header("customData")) {
+				customData = JSON.parse(req.header("customData"));
+			} else {
+				customData = null;
+			}
+			if (req.header("path")) {
+				filePath = req.header("path")+"/"+req.header("fileName");
+			} else {
+				if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
+				filePath = dataDirectory+"/beo-uploads/"+"/"+req.header("fileName");
+			}
+			fileStream = fs.createWriteStream(filePath);
 			fileStream.on("finish", function() {
 				try {
-					extensions[req.params.extension].processUpload(dataDirectory+"/beo-uploads/"+req.header("fileName"));
+					extensions[req.params.extension].processUpload(filePath, customData);
 				} catch (error) {
 					console.error("Error processing file upload:", error);
 				}
@@ -1147,7 +1157,9 @@ function download(url, destination, filename = null) {
 					}
 				}).on('error', function(error) { // Handle errors.
 					console.error("Error in downloading file:", error);
-					fs.unlink(destination+"/"+filename); // Delete the file asynchronously.
+					fs.unlink(destination+"/"+filename, (err) => {
+						if (err) console.error("Error deleting file:", err);
+					});
 					reject(error);
 				});
 			} else {

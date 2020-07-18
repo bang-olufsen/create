@@ -247,7 +247,7 @@ async function connectMPD() {
 					libraryPath = config.music_directory;
 					// Create a route for serving album covers (and ONLY album covers):
 					beo.expressServer.use('/mpd/covers/', (req, res, next) => {
-						if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
+						if (!req.url.match(/^.*\.(png|jpg|jpeg)/ig)) return res.status(403).end('403 Forbidden');
 						next();
 					});
 					beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
@@ -283,7 +283,7 @@ async function updateCache(force = false) {
 		try {
 			status = await client.api.status.get();
 			stats = await client.api.status.stats();
-			if (debug) console.log("MPD is currently updating its database. Album cache may not be up to date after updating.");
+			if (debug && status.updating_db) console.log("MPD is currently updating its database. Album cache may not be up to date after updating.");
 			if (cache.lastUpdate == stats.db_update && !force && debug) console.log("MPD album cache appears to be up to date.");
 			if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) || force) { //  && !status.updating_db
 				// Start updating cache.
@@ -612,8 +612,9 @@ async function playMusic(index, type, context) {
 }
 
 
-async function getCover(trackPath, createTiny = false) {
+async function getCover(trackPath, createTiny = false, update = false) {
 	// If cover exists on the file system, return its path.
+	urlParameters = (update) ? "?variant="+Math.round(Math.random()*100) : "";
 	if (libraryPath) {
 		albumPath = path.dirname(trackPath);
 		
@@ -646,9 +647,9 @@ async function getCover(trackPath, createTiny = false) {
 			if (img || thumbnail || tiny) {
 				encodedAlbumPath = encodeURIComponent(albumPath).replace(/[!'()*]/g, escape);
 				return {error: null, 
-						img: ((img) ? "/mpd/covers/"+encodedAlbumPath+"/"+img : null), 
-						thumbnail: ((thumbnail) ? "/mpd/covers/"+encodedAlbumPath+"/"+thumbnail : null),
-						tiny: ((tiny) ? "/mpd/covers/"+encodedAlbumPath+"/"+tiny : null)
+						img: ((img) ? "/mpd/covers/"+encodedAlbumPath+"/"+img+urlParameters : null), 
+						thumbnail: ((thumbnail) ? "/mpd/covers/"+encodedAlbumPath+"/"+thumbnail+urlParameters : null),
+						tiny: ((tiny) ? "/mpd/covers/"+encodedAlbumPath+"/"+tiny+urlParameters : null)
 					};
 			} else {
 				return {error: null};
@@ -662,6 +663,59 @@ async function getCover(trackPath, createTiny = false) {
 		}
 	}
 	return {error: 503};
+}
+
+async function setAlbumCover(uploadPath, context) {
+	cover = null;
+	if (!client) await connectMPD();
+	if (client && libraryPath) {
+		try {
+			track = [];
+			track = await client.api.db.find('((album == "'+escapeString(context.album)+'") AND (albumartist == "'+escapeString(context.artist)+'"))', 'window', '0:1');
+			if (track[0]) {
+				albumPath = path.dirname(track[0].file);
+				files = fs.readdirSync(libraryPath+"/"+albumPath);
+				img = null;
+				thumbnail = null;
+				tiny = null;
+				for (file in files) {
+					if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
+						// Delete previous covers.
+						if (!img && settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
+							fs.unlinkSync(libraryPath+"/"+albumPath+"/"+files[file]);
+						}
+						if (files[file] == "cover-thumb.jpg") fs.unlinkSync(libraryPath+"/"+albumPath+"/cover-thumb.jpg");
+						if (files[file] == "cover-tiny.jpg") fs.unlinkSync(libraryPath+"/"+albumPath+"/cover-tiny.jpg");
+					}
+				}
+				fileExtension = (context.fileType == "image/jpeg") ? ".jpg" : ".png";
+				fs.copyFileSync(uploadPath, libraryPath+"/"+albumPath+"/cover"+fileExtension);
+				
+				// Update the cache to include the new picture.
+				createTiny = (beo.extensions["beosound-5"]) ? true : false;
+				cover = await getCover(track[0].file, createTiny, true);
+				
+				if (cover.error == null && 
+					cache[context.artist] && 
+					cache[context.artist][context.album]) {
+					
+					cache[context.artist][context.album].img = cover.img;
+					cache[context.artist][context.album].thumbnail = cover.thumbnail;
+					cache[context.artist][context.album].tinyThumbnail = cover.tiny;
+					
+					fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+					if (debug) console.log("Updated MPD album cache with the new picture.");
+				}
+				
+			}
+		} catch (error) {
+			console.error("Could not fetch data for album at index "+album+" from artist at index "+artist+".", error);
+		}
+	}
+	fs.unlink(uploadPath, (err) => {
+		if (err) console.error("Error deleting file:", err);
+	});
+	return cover;
 }
 
 
@@ -1055,6 +1109,7 @@ module.exports = {
 	version: version,
 	isEnabled: getMPDStatus,
 	getMusic: getMusic,
-	playMusic: playMusic
+	playMusic: playMusic,
+	setAlbumCover: setAlbumCover
 };
 

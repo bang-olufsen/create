@@ -1867,35 +1867,56 @@ var uploadToExtension = null;
 var uploadOptions = null;
 var uploadNotifyTimeout;
 function uploadFile(options, extension, file) {
-	if (file && file.name && uploadToExtension) {
+	if (file && file.name && (uploadToExtension || extension)) {
+		if (extension) uploadToExtension = extension;
 		console.log(file);
-		uploadNotifyTimeout = setTimeout(function() {
-			// In most cases uploads are so fast there's no point showing a status.
-			notify({title: "Uploading file...", icon: "attention", timeout: false}, "uploadFile");
-		}, 500);
-		fetch(window.location.protocol+"//"+productAddress+"/"+uploadToExtension+"/upload", {
-			body: file,
-			method: "POST",
-			credentials: "include",
-			headers: {
-				"Content-Type": "application/octet-stream",
-				"Content-Disposition": "attachment",
-				"fileName": file.name
-			}
-		}).then(
-			function(response) {
-				uploadFile();
-				if (response.status !== 202) {
-					console.log("Extension can't receive files.");
-					notify({title: "File upload unsuccesful", message: "This extension is not set up to receive files.", buttonTitle: "Dismiss", buttonAction: "close", timeout: false}, "uploadFile");
-				} else {
-					console.log("File upload succeeded.");
-				}
+		types = [];
+		canUpload = false;
+		if (uploadOptions && uploadOptions.types) {
+			types = uploadOptions.types;
+		} else if (options && options.types) {
+			types = options.types;
+		}
+		if (types.length) {
+			if (types.indexOf(file.type) != -1) {
+		        canUpload = true;
 		    }
-		).catch(function(err) {
-			console.log('Fetch error when uploading file:', err);
-		});
-		document.getElementById("file-input").value = "";
+		} else {
+			canUpload = true;
+		}
+		if (canUpload) {
+			uploadNotifyTimeout = setTimeout(function() {
+				// In most cases uploads are so fast there's no point showing a status.
+				notify({title: "Uploading file...", icon: "attention", timeout: false}, "uploadFile");
+			}, 500);
+			fetch(window.location.protocol+"//"+productAddress+"/"+uploadToExtension+"/upload", {
+				body: file,
+				method: "POST",
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/octet-stream",
+					"Content-Disposition": "attachment",
+					"fileName": file.name,
+					"filePath": (options && options.path) ? options.path : null,
+					"customData": (options && options.customData) ? JSON.stringify(options.customData) : null
+				}
+			}).then(
+				function(response) {
+					uploadFile();
+					if (response.status !== 202) {
+						console.log("Extension can't receive files.");
+						notify({title: "File upload unsuccesful", message: "This extension is not set up to receive files.", buttonTitle: "Close", buttonAction: "close", timeout: false}, "uploadFile");
+					} else {
+						console.log("File upload succeeded.");
+					}
+			    }
+			).catch(function(err) {
+				console.log('Fetch error when uploading file:', err);
+			});
+			document.getElementById("file-input").value = "";
+		} else {
+			notify({title: "Wrong file type", message: "The selected file is not one of the accepted file types.", buttonTitle: "Close", buttonAction: "close", timeout: false}, "uploadFile");
+		}
 	} else if (options && options.title && extension) {
 		uploadToExtension = extension;
 		uploadOptions = options;

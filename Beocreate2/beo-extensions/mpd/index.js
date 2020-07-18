@@ -695,16 +695,22 @@ async function setAlbumCover(uploadPath, context) {
 				createTiny = (beo.extensions["beosound-5"]) ? true : false;
 				cover = await getCover(track[0].file, createTiny, true);
 				
-				if (cover.error == null && 
-					cache[context.artist] && 
-					cache[context.artist][context.album]) {
-					
-					cache[context.artist][context.album].img = cover.img;
-					cache[context.artist][context.album].thumbnail = cover.thumbnail;
-					cache[context.artist][context.album].tinyThumbnail = cover.tiny;
-					
-					fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
-					if (debug) console.log("Updated MPD album cache with the new picture.");
+				if (!cover.error &&
+					cache.data[context.artist]) {
+					cacheUpdated = false;
+					for (a in cache.data[context.artist]) {
+						if (cache.data[context.artist][a].name == context.album) {
+							cache.data[context.artist][a].img = cover.img;
+							cache.data[context.artist][a].thumbnail = cover.thumbnail;
+							cache.data[context.artist][a].tinyThumbnail = cover.tiny;
+							cacheUpdated = true;
+							break;
+						}
+					}
+					if (cacheUpdated) {
+						fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+						if (debug) console.log("Updated MPD album cache with the new picture.");
+					}
 				}
 				
 			}

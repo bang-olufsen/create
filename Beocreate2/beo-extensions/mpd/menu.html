@@ -24,6 +24,11 @@
 			</div>
 			<div class="button pill grey" onclick="mpd.addNAS(5);">Add Other Server...</div>
 			<p class="margin-top">When adding storage, it may take some time for the new content to be available, depending on the amount of files and connection type.</p>
+			
+			
+			<div id="mpd-rescan-button" class="button pill grey" onclick="mpd.rescan();">Update MPD database</div>
+			
+			
 		</div>
 	</div>
 	
@@ -54,6 +59,8 @@
 			<div class="button pill black default cancel" onclick="beo.ask();">Don't Remove</div>
 		</div>
 	</div>
+	
+
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/mpd-client.js"></script>

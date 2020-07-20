@@ -49,7 +49,7 @@ var connected = false;
 var libraryPath = null;
 var cache = {};
 
-var force_rescan = true;
+var last_updateStatus = null;
 
 
 cron.schedule('* * * * *', () => {
@@ -358,17 +358,21 @@ async function updateCache(force = false) {
 						} else {
 							console.error("No album items for artist '"+artist+"'. This is probably an MPD (-API) glitch.");
 						}
-						newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
-							if (a.date && b.date) {
-								if (a.date >= b.date) {
-									return 1;
-								} else if (a.date < b.date) {
-									return -1;
+						try {
+							newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
+								if (a.date && b.date) {
+									if (a.date >= b.date) {
+										return 1;
+									} else if (a.date < b.date) {
+										return -1;
+									}
+								} else {
+									return 0;
 								}
-							} else {
-								return 0;
-							}
-						});
+							});
+						} catch (error) {
+							console.error("Couldn't sort album for artist '"+artist+"'");
+						}
 					}
 					if (!startOver) {
 						cache = Object.assign({}, newCache);
@@ -1137,8 +1141,14 @@ async function updateMPDStatus() {
 		if (debug) console.log("update MPD status");
 		if (!client) await connectMPD;
 		status = await client.api.status.get();
-		updating = false
+		updating = false;
 		if (typeof status.updating_db !== "undefined") updating=true
+		
+		if (updating != last_updateStatus) {
+			last_updateStatus = updating
+			if (!(updating)) updateCache()
+		}
+		
 		beo.sendToUI("mpd", "updateStatus", {"updating": updating});
 	} catch (error) {
 		console.error("Error updating mpd status", error);

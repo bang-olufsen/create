@@ -192,15 +192,19 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "rescan") {
-		cache.lastUpdate = null
-		spawn("/opt/hifiberry/bin/update-mpd-db", {
-			stdio: [ 'ignore', 'ignore', 'ignore' ],
-			detached: true
-		}).unref();
-		beo.sendToUI("mpd", "updateStatus", {"updating": true});
+		rescanMPDDatabase()
 	}
 	
 });
+
+function rescanMPDDatabase() {
+	cache.lastUpdate = null
+	spawn("/opt/hifiberry/bin/update-mpd-db", {
+		stdio: [ 'ignore', 'ignore', 'ignore' ],
+		detached: true
+	}).unref();
+	beo.sendToUI("mpd", "updateStatus", {"updating": true});
+}
 
 function getMPDStatus(callback) {
 	exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
@@ -1156,6 +1160,14 @@ async function updateMPDStatus() {
 	}
 }
 
+interact = {
+	actions: {
+		rescan: function() {
+			rescanMPDDatabase();
+		}
+	}
+}
+
 	
 module.exports = {
 	version: version,
@@ -1163,6 +1175,7 @@ module.exports = {
 	getMusic: getMusic,
 	playMusic: playMusic,
 	setAlbumCover: setAlbumCover,
-	updateMPDStatus: updateMPDStatus
+	updateMPDStatus: updateMPDStatus,
+	interact: interact
 };
 

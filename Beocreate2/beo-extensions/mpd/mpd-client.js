@@ -239,13 +239,24 @@ function rescan() {
 	beo.send({target: "mpd", header: "rescan", content: {}});
 	console.log("rescan started");
 }
+	
+
+interactDictionary = {
+	actions: {
+		rescan: {
+			name: "Rescan MPD database",
+			icon: "extensions/mpd/symbols-black/mpd.svg"
+		}
+	}
+}
 
 
 return {
 	toggleEnabled: toggleEnabled,
 	addNAS: addNAS,
 	removeStorage: removeStorage,
-	rescan: rescan
+	rescan: rescan,
+	interactDictionary: interactDictionary,
 };
 
 })();

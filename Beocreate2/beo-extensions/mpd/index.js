@@ -160,6 +160,11 @@ beo.bus.on('mpd', function(event) {
 			// Triggers a cache update (different from database).
 			updateCache(force);
 		}, 1000);
+		listStorage().then(storage => {
+			beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+		}).catch({
+			// Error listing storage.
+		});
 	}
 
 	if (event.header == "updateDatabase") {
@@ -281,10 +286,10 @@ async function connectMPD() {
 		console.error("Failed to connect to Music Player Daemon:", error);
 	}
 	isUpdatingDatabase();
-	updateCache();
+	//updateCache();
 }
 
-var lastUpdateStatus = false;
+var lastUpdateStatus = null;
 async function isUpdatingDatabase(auto) {
 	if (mpdEnabled) {
 		try {
@@ -320,7 +325,7 @@ function updateDatabase() {
 	cache.lastUpdate = null
 	if (debug) console.log("Triggering MPD database and cache update.");
 	spawn("/opt/hifiberry/bin/update-mpd-db", {
-		stdio: [ 'ignore', 'ignore', 'ignore' ],
+		stdio: "ignore",
 		detached: true
 	}).unref();
 	beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
@@ -331,7 +336,7 @@ var startOver = false;
 async function updateCache(force = false) {
 	if (!client) await connectMPD();
 	var startOver = (updatingCache) ? true : false; 
-	if (client) {
+	if (client && !updatingCache) {
 		try {
 			var status = await client.api.status.get();
 			var stats = await client.api.status.stats();
@@ -439,6 +444,13 @@ async function updateCache(force = false) {
 								beo.extensions.music.returnMusic("mpd", "artists", artists, null);
 							}
 					}
+					status = await client.api.status.get();
+					stats = await client.api.status.stats();
+					if (!status.updating_db) {
+						beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": false});
+						// Check that the cache is now up to date.
+						if (cache.lastUpdate && cache.lastUpdate != stats.db_update) updateCache(force);
+					}
 				} else {
 					// Start cache update again.
 					if (debug) console.log("Restarting MPD album cache update.");
@@ -449,15 +461,6 @@ async function updateCache(force = false) {
 		} catch (error) {
 			console.error("Couldn't update MPD album cache:", error);
 			if (error.code == "ENOTCONNECTED") client = null;
-		}
-		if (!startOver) {
-			status = await client.api.status.get();
-			stats = await client.api.status.stats();
-			if (!status.updating_db) {
-				beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": false});
-				// Check that the cache is now up to date.
-				if (cache.lastUpdate && cache.lastUpdate != stats.db_update) updateCache(force);
-			}
 		}
 	}
 	if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
@@ -818,10 +821,14 @@ async function listStorage() {
 			storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
 			storageUSB = storageUSB.stdout.trim().split("\n");
 			for (s in storageUSB) {
-				device = {id: storageUSB[s].split(" on ")[0], mount: storageUSB[s].split(" on ")[1].split(" type ")[0], kind: "USB"};
-				label = await execPromise("blkid "+device.id+" -o value -s LABEL");
-				device.name = label.stdout.trim();
-				storage.push(device);
+				try {
+					device = {id: storageUSB[s].split(" on ")[0], mount: storageUSB[s].split(" on ")[1].split(" type ")[0], kind: "USB"};
+					label = await execPromise("blkid "+device.id+" -o value -s LABEL");
+					device.name = label.stdout.trim();
+					storage.push(device);
+				} catch (error) {
+					// This item is probably just empty.
+				}
 			}
 		} catch (error) {
 			console.error("Couldn't get a list of USB storage:", error);
@@ -831,38 +838,42 @@ async function listStorage() {
 		try {
 			storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
 			for (s in storageNAS) {
-				slash = (storageNAS[s].indexOf("//") != -1) ? "/" : "\\"; // Does this line use forward or backslashes?
-				nasItem = storageNAS[s].trim().split(";");
-				if (nasItem[0].charAt(0) != "#") { // Not a comment.
-					nasAddress = nasItem[1].substr(2).split(slash)[0];
-					nasName = nasAddress;
-					for (n in discoveredNAS) {
-						if ((discoveredNAS[n].netbios && 
-							nasAddress == discoveredNAS[n].netbios) ||
-							discoveredNAS[n].addresses[0].indexOf(nasAddress) != -1) {
-							nasName = discoveredNAS[n].name;
+				try {
+					slash = (storageNAS[s].indexOf("//") != -1) ? "/" : "\\"; // Does this line use forward or backslashes?
+					nasItem = storageNAS[s].trim().split(";");
+					if (nasItem[0].charAt(0) != "#") { // Not a comment.
+						nasAddress = nasItem[1].substr(2).split(slash)[0];
+						nasName = nasAddress;
+						for (n in discoveredNAS) {
+							if ((discoveredNAS[n].netbios && 
+								nasAddress == discoveredNAS[n].netbios) ||
+								discoveredNAS[n].addresses[0].indexOf(nasAddress) != -1) {
+								nasName = discoveredNAS[n].name;
+							}
 						}
-					}
-					try {
-						nasMountRaw = await execPromise("mount | grep '"+nasItem[0]+"'");
-						if (nasMountRaw.stdout) {
-							nasMount = nasMountRaw.stdout.trim().split(" on ")[1].split(" type ")[0];
-						} else {
+						try {
+							nasMountRaw = await execPromise("mount | grep '"+nasItem[0]+"'");
+							if (nasMountRaw.stdout) {
+								nasMount = nasMountRaw.stdout.trim().split(" on ")[1].split(" type ")[0];
+							} else {
+								console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
+								nasMount = false;
+							}
+						} catch (error) {
 							console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
 							nasMount = false;
 						}
-					} catch (error) {
-						console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
-						nasMount = false;
+						storage.push({
+							kind: "NAS",
+							id: nasItem[0], 
+							name: nasName,
+							address: nasAddress,
+							path: nasItem[1].substr(2).split(slash).slice(1).join("/"),
+							mount: nasMount
+						});
 					}
-					storage.push({
-						kind: "NAS",
-						id: nasItem[0], 
-						name: nasName,
-						address: nasAddress,
-						path: nasItem[1].substr(2).split(slash).slice(1).join("/"),
-						mount: nasMount
-					});
+				} catch (error) {
+					console.error("NAS configuration line "+s+" was not recognised: "+storageNAS[s]);
 				}
 			}
 		} catch (error) {
@@ -920,7 +931,10 @@ async function removeStorage(id) {
 	beo.sendToUI("mpd", "mountedStorage", {storage: storage, unmountErrors: errors});
 	try {
 		if (debug) console.log("Triggering MPD database update.");
-		execPromise("/opt/hifiberry/bin/update-mpd-db");
+		spawn("/opt/hifiberry/bin/update-mpd-db", {
+			stdio: "ignore",
+			detached: true
+		}).unref();
 	} catch (error) {
 		console.error("Error triggering MPD database update:", error);
 	}

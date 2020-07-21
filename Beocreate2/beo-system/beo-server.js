@@ -1152,7 +1152,6 @@ function download(url, destination, filename = null) {
 						});
 					} else {
 						error = new Error("Error in downloading file. Server response was "+response.statusCode+".");
-						console.error(error);
 						reject(error);
 					}
 				}).on('error', function(error) { // Handle errors.

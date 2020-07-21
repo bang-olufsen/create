@@ -27,11 +27,11 @@ var mpdCmd = mpdAPI.mpd;
 const util = require('util');
 const execPromise = util.promisify(exec);
 const dnssd = require("dnssd2"); // for service discovery.
+var cron = require('node-cron');
 
 var debug = beo.debug;
 
 var version = require("./package.json").version;
-
 
 var defaultSettings = {
 	coverNames: ["cover", "artwork", "folder", "front", "albumart"],
@@ -48,6 +48,14 @@ var connected = false;
 
 var libraryPath = null;
 var cache = {};
+
+var last_updateStatus = null;
+
+
+cron.schedule('* * * * *', () => {
+  updateMPDStatus()
+});
+
 
 beo.bus.on('general', function(event) {
 	
@@ -84,7 +92,6 @@ beo.bus.on('general', function(event) {
 			});
 		}
 		
-		
 	}
 	
 	if (event.header == "activatedExtension") {
@@ -95,9 +102,11 @@ beo.bus.on('general', function(event) {
 			}).catch({
 				// Error listing storage.
 			});
+			updateMPDStatus();
 			listNAS();
 		}
 	}
+	
 });
 
 beo.bus.on('mpd', function(event) {
@@ -182,8 +191,20 @@ beo.bus.on('mpd', function(event) {
 		}
 	}
 	
+	if (event.header == "rescan") {
+		rescanMPDDatabase()
+	}
+	
 });
 
+function rescanMPDDatabase() {
+	cache.lastUpdate = null
+	spawn("/opt/hifiberry/bin/update-mpd-db", {
+		stdio: [ 'ignore', 'ignore', 'ignore' ],
+		detached: true
+	}).unref();
+	beo.sendToUI("mpd", "updateStatus", {"updating": true});
+}
 
 function getMPDStatus(callback) {
 	exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
@@ -271,12 +292,15 @@ async function connectMPD() {
 		client = null;
 		console.error("Failed to connect to Music Player Daemon:", error);
 	}
+	
+	updateMPDStatus()
 }
 
 
 var updatingCache = false;
 var startOver = false;
 async function updateCache(force = false) {
+	updateMPDStatus()
 	if (!client) await connectMPD();
 	var startOver = (updatingCache) ? true : false; 
 	if (client && !updatingCache) {
@@ -338,17 +362,21 @@ async function updateCache(force = false) {
 						} else {
 							console.error("No album items for artist '"+artist+"'. This is probably an MPD (-API) glitch.");
 						}
-						newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
-							if (a.date && b.date) {
-								if (a.date >= b.date) {
-									return 1;
-								} else if (a.date < b.date) {
-									return -1;
+						try {
+							newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
+								if (a.date && b.date) {
+									if (a.date >= b.date) {
+										return 1;
+									} else if (a.date < b.date) {
+										return -1;
+									}
+								} else {
+									return 0;
 								}
-							} else {
-								return 0;
-							}
-						});
+							});
+						} catch (error) {
+							console.error("Couldn't sort album for artist '"+artist+"'");
+						}
 					}
 					if (!startOver) {
 						cache = Object.assign({}, newCache);
@@ -395,6 +423,8 @@ async function updateCache(force = false) {
 		}
 	}
 	if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
+	updateMPDStatus()
+
 }
 
 var albumsRequested = false;
@@ -1110,12 +1140,42 @@ function mountNewNAS() {
 	});
 }
 
+async function updateMPDStatus() {
+	try {
+		if (debug) console.log("update MPD status");
+		if (!client) await connectMPD;
+		status = await client.api.status.get();
+		updating = false;
+		if (typeof status.updating_db !== "undefined") updating=true
+		
+		if (updating != last_updateStatus) {
+			last_updateStatus = updating
+			if (!(updating)) updateCache()
+		}
+		
+		beo.sendToUI("mpd", "updateStatus", {"updating": updating});
+	} catch (error) {
+		console.error("Error updating mpd status", error);
+		return false;
+	}
+}
+
+interact = {
+	actions: {
+		rescan: function() {
+			rescanMPDDatabase();
+		}
+	}
+}
+
 	
 module.exports = {
 	version: version,
 	isEnabled: getMPDStatus,
 	getMusic: getMusic,
 	playMusic: playMusic,
-	setAlbumCover: setAlbumCover
+	setAlbumCover: setAlbumCover,
+	updateMPDStatus: updateMPDStatus,
+	interact: interact
 };
 

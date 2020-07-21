@@ -107,26 +107,18 @@ $(document).on("mpd", function(event, data) {
 		beo.notify({title: data.content.name, message: "Server added.", icon: "common/symbols-black/checkmark-round.svg"});
 	}
 	
-	if (data.header == "updateStatus") {
-		if (data.content.updating) 
-			setRescanButton(false)
-		else
-			setRescanButton(true)
+	if (data.header == "isUpdatingDatabase") {
+		if (data.content.updating) {
+			$("#mpd-update-button").addClass("disabled");
+			$("#mpd-updating-label").removeClass("hidden");
+		} else {
+			$("#mpd-update-button").removeClass("disabled");
+			$("#mpd-updating-label").addClass("hidden");
+		}
 	}
 	
 
 });
-
-
-function setRescanButton(state) {
-	if (state) {
-		$("#mpd-rescan-button").removeClass("disabled");
-		$("#mpd-rescan-button").text=("Update music database");
-	} else {
-		$("#mpd-rescan-button").addClass("disabled");
-		$("#mpd-rescan-button").text("Database update in progress");
-	}
-}
 
 
 function toggleEnabled() {
@@ -235,16 +227,15 @@ function removeStorage(index) {
 	]);
 }
 
-function rescan() {
-	beo.send({target: "mpd", header: "rescan", content: {}});
-	console.log("rescan started");
+function updateDatabase() {
+	beo.sendToProduct("mpd", "updateDatabase");
 }
 	
 
 interactDictionary = {
 	actions: {
-		rescan: {
-			name: "Rescan MPD database",
+		updateDatabase: {
+			name: "Update Music Library",
 			icon: "extensions/mpd/symbols-black/mpd.svg"
 		}
 	}
@@ -255,7 +246,7 @@ return {
 	toggleEnabled: toggleEnabled,
 	addNAS: addNAS,
 	removeStorage: removeStorage,
-	rescan: rescan,
+	updateDatabase: updateDatabase,
 	interactDictionary: interactDictionary,
 };
 

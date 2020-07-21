@@ -27,7 +27,6 @@ var mpdCmd = mpdAPI.mpd;
 const util = require('util');
 const execPromise = util.promisify(exec);
 const dnssd = require("dnssd2"); // for service discovery.
-var cron = require('node-cron');
 
 var debug = beo.debug;
 
@@ -48,13 +47,6 @@ var connected = false;
 
 var libraryPath = null;
 var cache = {};
-
-var last_updateStatus = null;
-
-
-cron.schedule('* * * * *', () => {
-  updateMPDStatus()
-});
 
 
 beo.bus.on('general', function(event) {
@@ -102,8 +94,10 @@ beo.bus.on('general', function(event) {
 			}).catch({
 				// Error listing storage.
 			});
-			updateMPDStatus();
 			listNAS();
+			isUpdatingDatabase().then(updating => {
+				beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": updating});
+			});
 		}
 	}
 	
@@ -163,8 +157,14 @@ beo.bus.on('mpd', function(event) {
 	if (event.header == "update") {
 		force = (event.content && (event.content.force || (event.content.extra && event.content.extra == "covers"))) ? true : false;
 		setTimeout(function() {
+			// Triggers a cache update (different from database).
 			updateCache(force);
 		}, 1000);
+	}
+
+	if (event.header == "updateDatabase") {
+		// Triggers a database update.
+		updateDatabase();
 	}
 	
 	
@@ -191,20 +191,8 @@ beo.bus.on('mpd', function(event) {
 		}
 	}
 	
-	if (event.header == "rescan") {
-		rescanMPDDatabase()
-	}
 	
 });
-
-function rescanMPDDatabase() {
-	cache.lastUpdate = null
-	spawn("/opt/hifiberry/bin/update-mpd-db", {
-		stdio: [ 'ignore', 'ignore', 'ignore' ],
-		detached: true
-	}).unref();
-	beo.sendToUI("mpd", "updateStatus", {"updating": true});
-}
 
 function getMPDStatus(callback) {
 	exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
@@ -280,7 +268,7 @@ async function connectMPD() {
 						}
 					}
 					firstConnect = false;
-					updateCache();
+	
 				} else {
 					console.error("MPD music library path is not available. Can't build a cache.");
 				}
@@ -292,22 +280,63 @@ async function connectMPD() {
 		client = null;
 		console.error("Failed to connect to Music Player Daemon:", error);
 	}
-	
-	updateMPDStatus()
+	isUpdatingDatabase();
+	updateCache();
 }
 
+var lastUpdateStatus = false;
+async function isUpdatingDatabase(auto) {
+	if (mpdEnabled) {
+		try {
+			if (debug > 1) console.log("Checking MPD database update status...");
+			if (!client) await connectMPD;
+			var status = await client.api.status.get();
+			var stats = await client.api.status.stats();
+			updatingDatabase = (status.updating_db) ? true : false;
+			if (updatingDatabase != lastUpdateStatus) {
+				lastUpdateStatus = updatingDatabase;
+				if (auto) beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": updatingDatabase});
+			}
+			if (!updatingDatabase && 
+				!updatingCache && 
+				(!cache.lastUpdate || cache.lastUpdate != stats.db_update)) {
+				updateCache();
+			}
+			return updatingDatabase;
+		} catch (error) {
+			console.error("Error checking MPD database update status:", error);
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
+setInterval(function() {
+	isUpdatingDatabase(true);
+}, 62000);
+
+function updateDatabase() {
+	cache.lastUpdate = null
+	if (debug) console.log("Triggering MPD database and cache update.");
+	spawn("/opt/hifiberry/bin/update-mpd-db", {
+		stdio: [ 'ignore', 'ignore', 'ignore' ],
+		detached: true
+	}).unref();
+	beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
+}
 
 var updatingCache = false;
 var startOver = false;
 async function updateCache(force = false) {
-	updateMPDStatus()
 	if (!client) await connectMPD();
 	var startOver = (updatingCache) ? true : false; 
-	if (client && !updatingCache) {
+	if (client) {
 		try {
-			status = await client.api.status.get();
-			stats = await client.api.status.stats();
+			var status = await client.api.status.get();
+			var stats = await client.api.status.stats();
 			if (debug && status.updating_db) console.log("MPD is currently updating its database. Album cache may not be up to date after updating.");
+			if (status.updating_db) beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
 			if (cache.lastUpdate == stats.db_update && !force && debug) console.log("MPD album cache appears to be up to date.");
 			if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) || force) { //  && !status.updating_db
 				// Start updating cache.
@@ -421,9 +450,17 @@ async function updateCache(force = false) {
 			console.error("Couldn't update MPD album cache:", error);
 			if (error.code == "ENOTCONNECTED") client = null;
 		}
+		if (!startOver) {
+			status = await client.api.status.get();
+			stats = await client.api.status.stats();
+			if (!status.updating_db) {
+				beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": false});
+				// Check that the cache is now up to date.
+				if (cache.lastUpdate && cache.lastUpdate != stats.db_update) updateCache(force);
+			}
+		}
 	}
 	if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
-	updateMPDStatus()
 
 }
 
@@ -672,6 +709,15 @@ async function getCover(trackPath, createTiny = false, update = false) {
 					tiny = "cover-tiny.jpg";
 				} catch (error) {
 					console.log("Error creating tiny album cover:", error);
+				}
+			}
+			if (!thumbnail && img) {
+				try {
+					if (debug) console.log("Creating thumbnail album artwork for '"+albumPath+"'...");
+					await execPromise("convert \""+libraryPath+"/"+albumPath+"/"+img+"\" -resize 400x400\\> \""+libraryPath+"/"+albumPath+"/cover-thumb.jpg\"");
+					thumbnail = "cover-thumb.jpg";
+				} catch (error) {
+					console.log("Error creating album cover thumbnail:", error);
 				}
 			}
 			if (img || thumbnail || tiny) {
@@ -1094,29 +1140,11 @@ function makeID(length) { // From https://stackoverflow.com/questions/1349404/ge
 	return result;
 }
 
-var mountInProgress = 0;
-async function mountNewNASOld(override = false) {
-	//if (!override) mountInProgress++;
-	//if (!mountInProgress || override) {
-	if (debug) console.log("Mounting new NAS storage...");
-		try {
-			await execPromise("/opt/hifiberry/bin/mount-smb.sh");
-			if (debug) console.log("NAS storage mount finished.");
-			return true;
-			//mountInProgress--;
-		} catch (error) {
-			//mountInProgress--;
-			console.error("Error running NAS/SMB mount program:", error);
-			return false;
-		}
-	/*	if (mountInProgress) {
-			mountNewNAS(true);
-		}
-	}*/
-}
 
 function mountNewNAS() {
 	return new Promise(function(resolve, reject) {
+		
+		beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
 		
 		mountProcess = spawn("/opt/hifiberry/bin/mount-smb.sh", {
 			detached: true
@@ -1140,30 +1168,11 @@ function mountNewNAS() {
 	});
 }
 
-async function updateMPDStatus() {
-	try {
-		if (debug) console.log("update MPD status");
-		if (!client) await connectMPD;
-		status = await client.api.status.get();
-		updating = false;
-		if (typeof status.updating_db !== "undefined") updating=true
-		
-		if (updating != last_updateStatus) {
-			last_updateStatus = updating
-			if (!(updating)) updateCache()
-		}
-		
-		beo.sendToUI("mpd", "updateStatus", {"updating": updating});
-	} catch (error) {
-		console.error("Error updating mpd status", error);
-		return false;
-	}
-}
 
 interact = {
 	actions: {
-		rescan: function() {
-			rescanMPDDatabase();
+		updateDatabase: function() {
+			updateDatabase();
 		}
 	}
 }
@@ -1175,7 +1184,7 @@ module.exports = {
 	getMusic: getMusic,
 	playMusic: playMusic,
 	setAlbumCover: setAlbumCover,
-	updateMPDStatus: updateMPDStatus,
+	isUpdatingDatabase: isUpdatingDatabase,
 	interact: interact
 };
 

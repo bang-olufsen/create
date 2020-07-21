@@ -23,12 +23,10 @@
 			
 			</div>
 			<div class="button pill grey" onclick="mpd.addNAS(5);">Add Other Server...</div>
-			<p class="margin-top">When adding storage, it may take some time for the new content to be available, depending on the amount of files and connection type.</p>
+			<p class="margin-top">When adding storage, the library is automatically updated. When changing content on a NAS that has already been added, the library may need to be manually updated.</p>
 			
-			
-			<div id="mpd-rescan-button" class="button pill grey" onclick="mpd.rescan();">Update MPD database</div>
-			
-			
+			<div id="mpd-update-button" class="button pill grey" onclick="mpd.updateDatabase();">Update Library</div>
+			<p id="mpd-updating-label" class="loading hidden">Updating library...</p>
 		</div>
 	</div>
 	

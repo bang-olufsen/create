@@ -1916,6 +1916,7 @@ function uploadFile(options, extension, file) {
 			document.getElementById("file-input").value = "";
 		} else {
 			notify({title: "Wrong file type", message: "The selected file is not one of the accepted file types.", buttonTitle: "Close", buttonAction: "close", timeout: false}, "uploadFile");
+			document.getElementById("file-input").value = "";
 		}
 	} else if (options && options.title && extension) {
 		uploadToExtension = extension;
@@ -1926,8 +1927,8 @@ function uploadFile(options, extension, file) {
 		} else {
 			$("#upload p").addClass("hidden");
 		}
-		if (options.types) { // Specify file type.
-			$("#file-input").attr("accept", options.types.join(","));
+		if (options.fileExtensions) { // Specify file type.
+			$("#file-input").attr("accept", options.fileExtensions.join(","));
 		} else {
 			$("#file-input").attr("accept", "");
 		}

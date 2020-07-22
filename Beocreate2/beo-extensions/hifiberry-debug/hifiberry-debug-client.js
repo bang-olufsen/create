@@ -65,16 +65,9 @@ function updateSystemInfo(info) {
 		block = document.getElementById("hifiberry-debug-sysinfo");
 		block.innerHTML = "";
 		for (var i = 0; i <info.length; i++) {
-			if (info[i][0] == "Features" || 
-				info[i][0] == "Sound card") {
-				under = true;
-			} else {
-				under = false;
-			}
 			block.innerHTML += beo.createMenuItem({
 				label: info[i][0],
-				description: (under) ? info[i][1] : null,
-				value: (!under) ? info[i][1] : null,
+				description: info[i][1],
 				static: true
 			}) + "\n";
 			

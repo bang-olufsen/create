@@ -38,11 +38,11 @@ $(document).on("mpd", function(event, data) {
 				} else if (data.content.storage[s].kind == "NAS") {
 					menuOptions = {
 						label: data.content.storage[s].name,
-						value: "Remove...",
-						valueAsButton: true,
-						icon: extensions.mpd.assetPath+"/symbols-black/nas.svg",
+						value: (data.content.storage[s].mount) ? "Remove..." : "Unavailable",
+						valueAsButton: (data.content.storage[s].mount) ? true : false,
+						icon: (data.content.storage[s].mount) ? extensions.mpd.assetPath+"/symbols-black/nas.svg" : "/common/symbols-colour/warning-yellow.svg",
 						description: "NAS — "+data.content.storage[s].path,
-						onclick: "mpd.removeStorage("+s+");"
+						onclick: "mpd.removeStorage("+s+", "+(!data.content.storage[s].mount)+");"
 					}
 				}
 				$("#mpd-mounted-storage").append(beo.createMenuItem(menuOptions));
@@ -214,17 +214,25 @@ function isValidIP(address) {
 	return validIP;
 }
 
-function removeStorage(index) {
+function removeStorage(index, unavailable = false) {
 	if (storageList[index].kind == "USB") {
 		storageName = storageList[index].name;
 	} else {
 		storageName = storageList[index].name+"/"+storageList[index].path;
 	}
-	beo.ask("mpd-remove-storage", [storageName], [
-		function() {
-			beo.sendToProduct("mpd", "removeStorage", {id: storageList[index].id});
-		}
-	]);
+	if (!unavailable) {
+		beo.ask("mpd-remove-storage", [storageName], [
+			function() {
+				beo.sendToProduct("mpd", "removeStorage", {id: storageList[index].id});
+			}
+		]);
+	} else {
+		beo.ask("mpd-remove-storage-unavailable", [storageName], [
+			function() {
+				beo.sendToProduct("mpd", "removeStorage", {id: storageList[index].id});
+			}
+		]);
+	}
 }
 
 function updateDatabase() {

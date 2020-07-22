@@ -53,7 +53,11 @@ var fs = require("fs");
 			}
 			
 			readConfiguration();
-			if (configuration.global.username && !configuration.global.username.comment && configuration.global.password && !configuration.global.password.comment) {
+			if (configuration.global && 
+				configuration.global.username && 
+				!configuration.global.username.comment && 
+				configuration.global.password && 
+				!configuration.global.password.comment) {
 				settings.loggedInAs = configuration.global.username.value;
 			} else {
 				settings.loggedInAs = false;

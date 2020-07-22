@@ -63,8 +63,6 @@ function collect() {
 
 function create_line(block, d1,d2) {
 	
-	console.log(d1,d2);
-
 	var div1 = document.createElement("div");
 	div1.innerHTML = d1;
 	div1.setAttribute('class', 'hifiberry-debug-sysinfo-left')

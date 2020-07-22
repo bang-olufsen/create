@@ -65,6 +65,8 @@ beo.bus.on('general', function(event) {
 			}
 			
 			beo.sendToUI("hifiberry-debug", {header: "state", content: {exclusiveAudio: exclusiveAudio, resamplingRate: resamplingRate}});
+			reportSysInfo();
+			
 		}
 		
 		if (event.content.extension != previousExtension) {
@@ -152,6 +154,31 @@ function reportActivation(key, active) {
 	} catch (error) {
 		console.error("Can't report activation: ", error);
 	}
+}
+
+function reportSysInfo() {
+	var child = exec("/opt/hifiberry/bin/check-system",
+		function (error, stdout, stderr) {
+			var res = []
+			var output = stdout.split(/\r\n|\r|\n/);
+			for (var i = 0; i <output.length; i++) {
+				var parts = output[i].split(": ");
+				if (parts.length == 2) {
+					res.push(parts);
+				} else {
+					console.error("can't parse line "+output[i]);
+				}
+			}
+			
+			if (error !== null) {
+				res=["Sysinfo","failed"];
+			}
+			
+
+			beo.sendToUI("hifiberry-debug", {header: "sysinfo", content: res});
+
+		}
+	);
 }
 
 module.exports = {

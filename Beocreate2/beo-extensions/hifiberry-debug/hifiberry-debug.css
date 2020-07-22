@@ -1,0 +1,13 @@
+.hifiberry-debug-sysinfo-left {
+	float: left;
+	width: 30%;
+}
+
+.hifiberry-debug-sysinfo-right {
+}
+
+.hifiberry-debug-sysinfo-row:after {
+  content: "";
+  display: table;
+  clear: both;
+}

@@ -1,4 +1,4 @@
-<div class="menu-screen" id="hifiberry-debug" data-icon="diagnose.svg" data-menu-title="Diagnostics" data-context="general-settings/more">
+<div class="menu-screen" id="hifiberry-debug" data-icon="diagnose.svg" data-menu-title="Diagnostics" data-context="general-settings/more" data-stylesheet="hifiberry-debug.css">
 	
 	<header>
 		<div class="back-button master"></div>
@@ -14,8 +14,20 @@
 				<div class="button pill black" onclick="hifiberry_debug.download();" id="diagnostic-download-button">Download Archive</div>
 				<p class="privacy margin-top">No personal information is included in the archive.</p>
 			</div>
+			
+			<h2 class="disclosure" data-disclosure="#hifiberry-debug-advanced">System information</h2>
+			<div id="hifiberry-debug-advanced" class="hidden">
+
+					<div id="hifiberry-debug-sysinfo">test</div>
+				
+			</div>
+			
+			
 		</div>
+		
 	</div>
+	
+	
 
 </div>
 

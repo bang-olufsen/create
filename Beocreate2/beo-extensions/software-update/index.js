@@ -177,6 +177,12 @@ function installUpdate() {
 	if (!updateInProgress) {
 		updateInProgress = true;
 		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false || autoUpdate != "critical") ? autoUpdate : "latest");
+		
+		exec("history -a", function(error, stdout, stderr) {
+			if (!error) {
+				console.log("Saved command line history before updating.");
+			}
+		});
 		/*if (beo.developerMode) {
 			if (debug) console.log("Starting software update simulation.");
 			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--"+updateTrack]);

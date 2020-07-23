@@ -818,16 +818,13 @@ async function listStorage() {
 		storage = [];
 		// List mounted USB storage.
 		try {
-			storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
+			storageUSB = await execPromise("/opt/hifiberry/bin/list-usb-storage");
 			storageUSB = storageUSB.stdout.trim().split("\n");
 			for (s in storageUSB) {
-				try {
-					device = {id: storageUSB[s].split(" on ")[0], mount: storageUSB[s].split(" on ")[1].split(" type ")[0], kind: "USB"};
-					label = await execPromise("blkid "+device.id+" -o value -s LABEL");
-					device.name = label.stdout.trim();
+				parts = storageUSB[s].split(":");
+				if (parts.length >= 3) {
+					device = {id: parts[0], mount: parts[1], kind: "USB", name: parts[2]};
 					storage.push(device);
-				} catch (error) {
-					// This item is probably just empty.
 				}
 			}
 		} catch (error) {

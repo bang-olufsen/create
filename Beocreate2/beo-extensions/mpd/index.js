@@ -285,7 +285,7 @@ async function connectMPD() {
 		client = null;
 		console.error("Failed to connect to Music Player Daemon:", error);
 	}
-	isUpdatingDatabase();
+	// isUpdatingDatabase();
 	//updateCache();
 }
 

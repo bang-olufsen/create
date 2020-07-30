@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/channels",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Speaker channel setup for BeoCreate sound systems",
   "main": "index.js",
   "scripts": {

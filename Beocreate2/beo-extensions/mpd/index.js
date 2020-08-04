@@ -1105,7 +1105,7 @@ async function getNASShares(details) {
 			sharesRaw = await execPromise("smbclient -N -L "+address+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
 			sharesRaw = sharesRaw.stdout.trim().split("\n");
 			for (s in sharesRaw) {
-				shareList.push(sharesRaw[s].slice(5, -1));
+				shareList.push(sharesRaw[s].split("|")[1]);
 			}
 		} catch (error) {
 			console.error("Couldn't get a list of SMB shares:", error);

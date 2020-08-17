@@ -82,6 +82,7 @@ var _ = require('underscore');
 										console.log("Received metadata from DSP.");
 									}
 									beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+									if (beo.selectedExtension == "dsp-programs") sendDSPPrograms();
 								} else {
 									if (debug) console.log("No metadata found for current DSP program.");
 									beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
@@ -110,18 +111,7 @@ var _ = require('underscore');
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "dsp-programs") {
 				
-				info = getCurrentProgramInfo();
-				beo.bus.emit("ui", {target: "dsp-programs", header: "showCurrent", content: info});
-				beo.bus.emit("ui", {target: "dsp-programs", header: "status", content: {dspConnected: dspConnected, dspResponding: dspResponding}});
-				
-				programs = {};
-				active = 0;
-				for (program in dspPrograms) {
-					programs[program] = {name: dspPrograms[program].name, checksum: dspPrograms[program].checksum, version: dspPrograms[program].version, active: dspPrograms[program].active};
-					if (programs[program].active) active++;
-				}
-				beo.bus.emit("ui", {target: "dsp-programs", header: "allPrograms", content: {programs: programs, activePrograms: active, dspUpgrade: dspUpgrade}});
-				beo.bus.emit("ui", {target: "dsp-programs", header: "settings", content: settings});
+				sendDSPPrograms();
 			}
 		}
 	});
@@ -268,6 +258,31 @@ var _ = require('underscore');
 		}
 				
 	});
+	
+	function sendDSPPrograms() {
+		info = getCurrentProgramInfo();
+		beo.sendToUI("dsp-programs", "showCurrent", info);
+		beo.sendToUI("dsp-programs", "status", {dspConnected: dspConnected, dspResponding: dspResponding});
+		
+		programs = {};
+		active = 0;
+		for (program in dspPrograms) {
+			if (beo.systemConfiguration.dspModel) {
+				compareType = beo.systemConfiguration.dspModel.toLowerCase();
+			} else if (beo.systemConfiguration.cardType) {
+				compareType = beo.systemConfiguration.cardType.toLowerCase();
+			} else {
+				compareType = null;
+			}
+			if (!dspPrograms[program].device || !compareType ||
+				(dspPrograms[program].device.toLowerCase() == compareType)) {
+				programs[program] = {name: dspPrograms[program].name, checksum: dspPrograms[program].checksum, version: dspPrograms[program].version, active: dspPrograms[program].active};
+				if (programs[program].active) active++;
+			}
+		}
+		beo.sendToUI("dsp-programs", "allPrograms", {programs: programs, activePrograms: active, dspUpgrade: dspUpgrade});
+		beo.sendToUI("dsp-programs", "settings", settings);
+	}
 	
 	function getCurrentChecksumAndMetadata(callback, startup) {
 		if (callback) {
@@ -600,7 +615,8 @@ var _ = require('underscore');
 			name = getProgramName(metadata.metadata, id);
 			checksum = getChecksumFromMetadata(metadata.metadata);
 			version = (metadata.metadata.profileVersion) ? metadata.metadata.profileVersion.value[0] : null;
-			dspPrograms[id] = {name: name, path: path, metadata: metadata.metadata, checksum: checksum, version: version, filename: id+".xml", readOnly: readOnly};
+			device = (metadata.metadata.modelName) ? metadata.metadata.modelName.value[0] : null;
+			dspPrograms[id] = {name: name, path: path, metadata: metadata.metadata, checksum: checksum, version: version, filename: id+".xml", device: device, readOnly: readOnly};
 			if (debug >= 2) console.log("Added DSP program '"+name+"' ("+id+").");
 		}
 	}

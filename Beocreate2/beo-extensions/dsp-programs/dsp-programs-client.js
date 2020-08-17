@@ -146,7 +146,7 @@ $(document).on("dsp-programs", function(event, data) {
 						onclick: "dsp_programs.getPreview('"+program+"');",
 						classes: ["dsp-program-item"],
 						data: {"data-dsp-program-id": program},
-						icon: $("#dsp-programs").attr("data-asset-path")+"/symbols-black/dsp-file.svg"
+						icon: extensions['dsp-programs'].assetPath+"/symbols-black/dsp-file.svg"
 					}
 					// Show version if a program of the same name is loaded or otherwise exists, to differentiate them.
 					showVersion = false;

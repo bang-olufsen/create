@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/dsp-programs",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "DSP program manager for Beocreate sound systems",
   "main": "index.js",
   "scripts": {

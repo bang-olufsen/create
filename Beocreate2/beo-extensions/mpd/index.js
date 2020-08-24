@@ -474,6 +474,18 @@ async function getMusic(type, context, noArt = false) {
 	
 	if (!client) await connectMPD();
 	if (client) {
+		if (context && 
+			context.uri && 
+			!context.artist && !context.album) { // Find music by URI (used by the "reveal" feature).
+			mpdTracks = await client.api.db.find("((file == '"+escapeString(context.uri)+"'))");
+			try {
+				context.artist = mpdTracks[0].albumartist;
+				context.album = mpdTracks[0].album;
+			} catch (error) {
+				console.error("Error finding "+type+" with URI '"+context.uri+"':", error);
+			}
+		}
+		
 		switch (type) {
 			case "albums":
 				

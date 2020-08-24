@@ -2,7 +2,7 @@ var network = (function() {
 	
 savedNetworks = [];
 availableNetworks = [];
-networkAssetPath = $("#network").attr("data-asset-path");
+networkAssetPath = extensions.network.assetPath;
 connectedNetwork = null;
 selectedNetworkTab = "wifi";
 wifiScanning = false;

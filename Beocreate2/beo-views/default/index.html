@@ -12,6 +12,8 @@
 	<link rel="apple-touch-icon" href="views/default/apple-touch-icon.png?v=1" />
 	
 	<link rel="stylesheet" type="text/css" href="views/default/beostyle2018.css" />
+	<beo-styles></beo-styles>
+	
 	<script type="text/javascript" src="views/default/scripts/jquery-1.10.2.min.js"></script>
 	<script type="text/javascript" src="views/default/scripts/jquery-ui.min.js"></script>
 	<script type="text/javascript" src="views/default/scripts/jquery.ui.touch-punch.min.js"></script>
@@ -19,6 +21,7 @@
 	<script src='views/default/scripts/modernizr.js'></script>
 	<script src='views/default/scripts/fastclick.min.js'></script>
 	<script src='common/scripts/flotr2.mod.min.js'></script>
+	<script src='common/scripts/vue.js'></script>
 	<script src='views/default/scripts/beo-ui.js'></script>
 	<script src='common/scripts/beo-drag.js'></script>
 	<script src='common/scripts/beo-comms.js'></script>
@@ -118,14 +121,14 @@
 	</div>
 	
  	
-	<div id="extensions">
+	<section id="extensions">
 		
 		<!-- DYNAMIC UI CONTENT
 		- all UI sections ("extensions") currently installed
 		- added on the server before serving the page
 		-->
 		<beo-dynamic-ui></beo-dynamic-ui>
-	</div>
+	</section>
 	
 	<div class="setup-navigation">
 		<div class="button pill black disabled" id="assistant-button" onclick="setup.nextStep();">Next Step</div>
@@ -133,9 +136,9 @@
 	
 	
 	
-	<div class="player-bar setup-hide">
-		<div class="player-bar-wrap">
-			<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();" title="Show Now Playing"></div>
+	<div id="player-bar" class="setup-hide" v-bind:class="{shifted: visible}">
+		<div id="player-bar-wrap">
+			<!--<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();" title="Show Now Playing"></div>
 			<div id="player-bar-info-area">
 				<div class="focused-source">
 					<div class="symbol focused-source-icon hidden" style=""></div><span class="focused-source-name"></span>
@@ -144,7 +147,8 @@
 					<h3 class="first-row">Partir avec moi</h3>
 					<h4 class="second-row">Poets of the Fall</h4>
 				</div>
-			</div>
+			</div>-->
+			<mini-now-playing></mini-now-playing>
 			<div class="slider-wrap white" id="player-bar-volume-wrap">
 				<img class="symbol" src="common/symbols-white/volume-mute.svg" draggable="false">
 				<div class="master-volume-slider white" id="player-bar-volume-slider"></div>

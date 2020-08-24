@@ -10,5 +10,7 @@
 			{"name": "interact", "kind": "extension"},
 			{"name": "feedback", "kind": "extension"}
 		],
-	"extensionMarkupFileName": "menu"
+	"extensionMarkupFileName": "menu",
+	"extensionScriptFileName": "€-client",
+	"extensionStylesheetFileName": "€"
 }

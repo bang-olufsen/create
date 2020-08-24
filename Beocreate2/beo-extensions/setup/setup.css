@@ -69,6 +69,15 @@
 	text-align: center;
 }
 
+#setup .menu-content:before,
+#setup-finish .menu-content:before {
+	display: none;
+}
+
+ul.setup-list {
+	text-align: left;
+}
+
 .setupsetup-image {
 	width: 100%;
 	display: block;

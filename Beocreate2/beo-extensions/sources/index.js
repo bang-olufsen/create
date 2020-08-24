@@ -612,6 +612,7 @@ function setSourceOptions(extension, options, noUpdate) {
 			sourceAdded = true;
 			allSources[extension] = {
 				active: false,
+				sortName: extension,
 				enabled: false,
 				playerState: "stopped",
 				stopOthers: true,
@@ -640,6 +641,7 @@ function setSourceOptions(extension, options, noUpdate) {
 				allSources[extension].transportControls = options.transportControls;
 			}
 		}
+		if (options.sortName) allSources[extension].sortName = options.sortName;
 		if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
 		if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
 		if (options.allowChangingTransportControls != undefined) allSources[extension].allowChangingTransportControls = (options.allowChangingTransportControls) ? true : false;
@@ -710,11 +712,14 @@ function setSourceOptions(extension, options, noUpdate) {
 				for (source in allSources) {
 					if (settings.sourceOrder.indexOf(source) == -1 && !allSources[source].backgroundService) {
 						// This source doesn't exist. Add it to the mix alphabetically (by display name), preserving user order.
+						
 						titles = [];
 						for (o in settings.sourceOrder) {
-							if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
+							titles.push(allSources[settings.sourceOrder[o]].sortName);
+							//if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
 						}
-						newTitle = beo.extensionsList[source].menuTitle;
+						//newTitle = beo.extensionsList[source].menuTitle;
+						newTitle = allSources[source].sortName;
 						newIndex = 0;
 						for (t in titles) {
 							if ([newTitle, titles[t]].sort()[1] == newTitle) newIndex = t+1;
@@ -830,17 +835,18 @@ interact = {
 
 
 module.exports = {
-version: version,
-setSourceOptions: setSourceOptions,
-setMetadata: setMetadata,
-sourceActivated: sourceActivated,
-sourceDeactivated: sourceDeactivated,
-allSources: allSources,
-settings: settings,
-stopAllSources: stopAllSources,
-getCurrentSource: getCurrentSource,
-transport: transport,
-interact: interact
+	version: version,
+	setSourceOptions: setSourceOptions,
+	setMetadata: setMetadata,
+	sourceActivated: sourceActivated,
+	sourceDeactivated: sourceDeactivated,
+	allSources: allSources,
+	settings: settings,
+	stopAllSources: stopAllSources,
+	getCurrentSource: getCurrentSource,
+	getSources: function() {return allSources},
+	transport: transport,
+	interact: interact
 };
 
 

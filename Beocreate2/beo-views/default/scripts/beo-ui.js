@@ -1914,6 +1914,10 @@ function uploadFile(options, extension, file) {
 			if (types.indexOf(file.type) != -1) {
 		        canUpload = true;
 		    }
+			fileExtension = file.name.substring(file.name.lastIndexOf("."));
+			if (uploadOptions.fileExtensions.indexOf(fileExtension) != -1) {
+		        canUpload = true;
+		    }
 		} else {
 			canUpload = true;
 		}

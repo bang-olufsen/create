@@ -326,6 +326,10 @@
 	padding-right: 20px;
 }
 
+#now-playing-info-area .scroll-invitation {
+	display: none;
+}
+
 .now-playing-text {
 	width: calc(100% + 20px);
 	text-align: center;

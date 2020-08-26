@@ -89,7 +89,7 @@ var fs = require("fs");
 			systemVersionReadable = event.content.systemVersionReadable;
 			
 			if (fs.existsSync("/etc/hifiberry.version")) {
-				hifiberryVersion = fs.readFileSync("/etc/hifiberry.version", "utf8");
+				hifiberryVersion = fs.readFileSync("/etc/hifiberry.version", "utf8").trim();
 			}
 			
 			updateProductIdentities();

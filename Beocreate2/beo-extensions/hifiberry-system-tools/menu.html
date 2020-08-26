@@ -1,0 +1,81 @@
+<div class="menu-screen" id="hifiberry-system-tools" data-icon="gear.svg" data-menu-title="System Tools" data-context="general-settings/more">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>System Tools</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			
+			<h2>Back up and restore</h2>
+			
+			<p>Download all settings to your <span class="device">device</span> for safekeeping or for transferring them to another product.</p>
+			<div id="backup-controls">
+			<div class="button pill black" onclick="hifiberry_system_tools.backup();" id="backup-button">Create New Backup</div>
+			<p class="loading hidden margin-top" id="backup-collecting">Archiving settings, please wait...</p>
+			<div class="button pill black hidden" onclick="hifiberry_system_tools.downloadBackup();" id="backup-download-button">Download Backup</div>
+			<div class="button pill grey" id="restore-button" onclick="beo.uploadFile({title: 'Import settings', uploadMessage: 'Uploading settings...', fileExtensions: ['.gz'], types: ['application/x-gzip']}, 'hifiberry-system-tools');">Restore...</div>
+			<p>The settings that will be restored must be from a product with the same or older software version.</p>
+			</div>
+			
+			
+			<hr>
+			<div class="menu-item icon chevron" onclick="beo.showDeepMenu('hifiberry-debug');">
+				<div class="menu-icon left" style="-webkit-mask-image: url(€/symbols-black/diagnose.svg); mask-image: url(€/symbols-black/diagnose.svg);"></div>
+				<div class="menu-text-wrap">
+					<div class="menu-label">Diagnostic Information</div>
+				</div>
+			</div>
+			
+		</div>
+		
+	</div>
+	
+	<div class="ask-menu" id="restore-backup-prompt">
+		<h2>Restore backup?</h2>
+		<p class="warning">All current settings on the product will be replaced by settings contained in the backup. This includes product name and network settings.</p>
+		<p>Are you sure you want to continue?</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill grey" onclick="hifiberry_system_tools.restore(true);">Restore</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+
+</div>
+
+<div class="menu-screen" id="hifiberry-debug" data-icon="diagnose.svg" data-menu-title="Diagnostics" data-parent-extension="hifiberry-system-tools">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>Diagnostics</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<p>If asked for diagnostic information from your system, you can collect and download it here.</p>
+			<div class="button pill black" id="diagnostic-collect-button" onclick="hifiberry_system_tools.collect();">Collect Information</div>
+			<p class="loading margin-top hidden" id="diagnostic-collecting">Collecting data. This takes up to a minute. When finished, the archive will be available here.</p>
+			<div id="diagnostic-archive" class="hidden">
+				<div class="button pill black" onclick="hifiberry_system_tools.downloadArchive();" id="diagnostic-download-button">Download Archive</div>
+				<p class="privacy margin-top">No personal information is included in the archive.</p>
+			</div>
+			
+			<h2 class="disclosure" data-disclosure="#hifiberry-debug-advanced">System information</h2>
+			<div id="hifiberry-debug-advanced" class="hidden">
+
+					<div id="hifiberry-debug-sysinfo"></div>
+				
+			</div>
+			
+			
+		</div>
+		
+	</div>
+	
+	
+
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/hifiberry-system-tools-client.js"></script>

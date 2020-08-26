@@ -1,10 +1,11 @@
-var hifiberry_debug = (function() {
+var hifiberry_system_tools = (function() {
 
 var newVersion = null;
 var archiveURL = null;
+var backupURL = null;
 
 
-$(document).on("hifiberry-debug", function(event, data) {
+$(document).on("hifiberry-system-tools", function(event, data) {
 	
 	if (data.header == "collecting") {
 		$("#diagnostic-collect-button").addClass("disabled");
@@ -12,7 +13,7 @@ $(document).on("hifiberry-debug", function(event, data) {
 		$("#diagnostic-archive").addClass("hidden");
 	}
 	
-	if (data.header == "finished") {
+	if (data.header == "finishedCollecting") {
 		$("#diagnostic-collect-button").removeClass("disabled");
 		$("#diagnostic-collecting").addClass("hidden");
 	}
@@ -26,6 +27,41 @@ $(document).on("hifiberry-debug", function(event, data) {
 		} else {
 			$("#diagnostic-archive").addClass("hidden");
 			$("#diagnostic-collect-button").removeClass("grey").addClass("black");
+		}
+	}
+	
+	if (data.header == "backingUp") {
+		$("#backup-controls .button").addClass("disabled");
+		$("#backup-download-button").addClass("hidden");
+		$("#backup-collecting").removeClass("hidden");
+	}
+	
+	if (data.header == "finishedBackup") {
+		$("#backup-controls .button").removeClass("disabled");
+		$("#backup-collecting").addClass("hidden");
+	}
+	
+	if (data.header == "backup") {
+		if (data.content && data.content.backupURL) {
+			backupURL = data.content.backupURL;
+			
+			$("#backup-button").removeClass("black").addClass("grey");
+			$("#backup-download-button").removeClass("hidden");
+		} else {
+			$("#backup-download-button").addClass("hidden");
+			$("#backup-button").removeClass("grey").addClass("black");
+		}
+	}
+	
+	if (data.header == "restoreSettings") {
+		if (!data.content) {
+			restore();
+		} else {
+			if (data.content && data.content.stage) {
+				if (data.content.stage == "restoring") {
+					beo.notify({title: "Restoring settings…", message: "Please wait. The product will restart automatically.", icon: "attention", timeout: false, id: "settingsRestore"});
+				}
+			}
 		}
 	}
 	
@@ -57,7 +93,7 @@ $(document).on("hifiberry-debug", function(event, data) {
 
 
 function collect() {
-	beo.send({target: "hifiberry-debug", header: "collect"});
+	beo.send({target: "hifiberry-system-tools", header: "collect"});
 }
 
 
@@ -75,14 +111,34 @@ function updateSystemInfo(info) {
 	
 }
 
-function download() {
+function downloadArchive() {
 	window.location = archiveURL;
+}
+
+function downloadBackup() {
+	window.location = backupURL;
+}
+
+function backup() {
+	beo.send({target: "hifiberry-system-tools", header: "backup"});
+}
+
+function restore(confirmed) {
+	if (!confirmed) {
+		beo.ask("restore-backup-prompt");
+	} else {
+		beo.ask();
+		beo.sendToProduct("hifiberry-system-tools", "restoreSettings");
+	}
 }
 
 
 return {
 	collect: collect,
-	download: download
+	downloadArchive: downloadArchive,
+	backup: backup,
+	downloadBackup: downloadBackup,
+	restore: restore
 };
 
 })();

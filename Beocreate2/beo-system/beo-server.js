@@ -146,6 +146,7 @@ beoBus.on('general', function(event) {
 			if (event.content.extension) completeShutdownForExtension(event.content.extension);
 			break;
 		case "requestReboot":
+		case "requestRestart":
 			if (event.content.extension) {
 				overrideUIActions = (event.content.overrideUIActions) ? true : false;
 				rebootSystem(event.content.extension, overrideUIActions);
@@ -375,7 +376,7 @@ expressServer.post("/:extension/:header/:extra*?", function (req, res) {
 				filePath = req.header("path")+"/"+req.header("fileName");
 			} else {
 				if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
-				filePath = dataDirectory+"/beo-uploads/"+"/"+req.header("fileName");
+				filePath = dataDirectory+"/beo-uploads/"+req.header("fileName");
 			}
 			fileStream = fs.createWriteStream(filePath);
 			fileStream.on("finish", function() {

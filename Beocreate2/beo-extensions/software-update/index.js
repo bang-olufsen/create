@@ -21,13 +21,17 @@ var exec = require("child_process").exec;
 var spawn = require("child_process").spawn;
 var fs = require("fs");
 
+const util = require('util');
+const execPromise = util.promisify(require('child_process').exec);
+
 var debug = beo.debug;
 var version = require("./package.json").version;
 
 
 var defaultSettings = {
 	autoCheck: true,
-	manualUpdateTrack: null
+	showExperimental: false,
+	updateTracks: ["experimental", "latest", "stable", "critical"]
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
@@ -48,17 +52,17 @@ beo.bus.on('general', function(event) {
 	
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "software-update") {
-			checkForUpdate();
+			checkForAllUpdates();
 			autoUpdateMode();
 			checkForPreviousVersion();
 		}
 		
 		if (event.content == "general-settings") {
-			if (newVersion) {
-				beo.sendToUI("software-update", {header: "badge", content: {badge: 1}});
-			} else {
-				beo.sendToUI("software-update", {header: "badge"});
+			var hasUpdates = 0;
+			for (track in versions) {
+				if (versions[track].version) hasUpdates = 1;
 			}
+			beo.sendToUI("software-update", {header: "badge", content: {badge: hasUpdates}});
 		}
 	}
 	
@@ -84,30 +88,9 @@ beo.bus.on('software-update', function(event) {
 		}
 	}
 	
-	if (event.header == "manualUpdateMode") {
-		if (event.content.mode != undefined) {
-			switch (event.content.mode) {
-				case false:
-				case null:
-				case "default":
-				case "auto":
-					beo.saveSettings("software-update", settings);
-					settings.manualUpdateTrack = null;
-					break;
-				case "critical":
-				case "stable":
-				case "latest":
-				case "experimental":
-					settings.manualUpdateTrack = event.content.mode;
-					beo.saveSettings("software-update", settings);
-					break;
-			}
-		}
-		autoUpdateMode();
-	}
 	
-	if (event.header == "install") {
-		installUpdate();
+	if (event.header == "install" && event.content && event.content.track) {
+		installUpdate(event.content.track);
 	}
 	
 	if (event.header == "restorePreviousVersion") {
@@ -130,14 +113,45 @@ beo.bus.on('software-update', function(event) {
 var lastChecked = 0;
 var newVersion = null;
 var releaseNotes = "";
+var versions = {};
 
-function checkForUpdate(forceCheck) {
+
+var checkingForUpdates = false;
+async function checkForAllUpdates(forceCheck) {
+	if (!checkingForUpdates) {
+		beo.sendToUI("software-update", "checking", {checking: true});
+		checkingForUpdates = true;
+		for (var i = 0; i < settings.updateTracks.length; i++) {
+			if (settings.updateTracks[i] != "experimental" ||
+				settings.updateTracks[i] == "experimental" && settings.showExperimental == true) {
+				await checkForUpdate(settings.updateTracks[i], forceCheck);
+				beo.sendToUI("software-update", "updateList", {versions: versions, checking: true});
+			}
+		}
+		checkingForUpdates = false;
+		beo.sendToUI("software-update", "checking", {checking: false});
+	} else {
+		beo.sendToUI("software-update", "checking", {checking: true});
+	}
+}
+
+async function checkForUpdate(updateTrack, forceCheck) {
+	
+	if (settings.autoCheck) startAutoCheckTimeout();
 	checkTime = new Date().getTime();
-	updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false || autoUpdate != "critical") ? autoUpdate : "latest");
-	if (checkTime - lastChecked > 300000 || forceCheck) {
-		exec("/opt/hifiberry/bin/update --"+updateTrack+" --check", function(error, stdout, stderr) {
-			lastChecked = checkTime;
-			updateLines = stdout.trim().split("\n");
+	if (versions[updateTrack] && 
+		versions[updateTrack].lastChecked != undefined &&
+	 	checkTime - versions[updateTrack].lastChecked > 300000 || 
+	 	!versions[updateTrack] || 
+	 	forceCheck) {
+		updateLines = {};
+		try {
+			updateLines = await execPromise("/opt/hifiberry/bin/update --"+updateTrack+" --check");
+		} catch (error) {
+			// Handle later.
+		}
+		if (updateLines.stdout) {
+			updateLines = updateLines.stdout.trim().split("\n");
 			newVersion = updateLines[0];
 			if (newVersion) {
 				if (newVersion.indexOf("Couldn't") != -1) { // Error checking for update.
@@ -145,38 +159,41 @@ function checkForUpdate(forceCheck) {
 					lastChecked = 0;
 					newVersion = null;
 					releaseNotes = "";
-					beo.sendToUI("software-update", "errorChecking");
+					//beo.sendToUI("software-update", "errorChecking");
+					versions[updateTrack] = {version: null, releaseNotes: null, lastChecked: 0, error: true};
+					return {version: null, releaseNotes: null, error: true};
 				} else {
-					if (debug) console.log("Software update is available – release "+newVersion+" ('"+updateTrack+"' track).");
+					if (debug) console.log("Software update is available: "+newVersion+" ('"+updateTrack+"' track).");
 					updateLines.splice(0, 1);
 					releaseNotes = updateLines.join("\n").trim();
-					beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
+					//beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
+					versions[updateTrack] = {version: newVersion, releaseNotes: releaseNotes, lastChecked: checkTime, error: false};
+					return {version: newVersion, releaseNotes: releaseNotes, error: null};
 				}
 			} else {
 				newVersion = null;
 				releaseNotes = "";
-				if (debug) console.log("Product appears to be up to date ('"+updateTrack+"' track).");
-				beo.sendToUI("software-update", {header: "upToDate"});
+				if (debug) console.log("Product is up to date ('"+updateTrack+"' track).");
+				//beo.sendToUI("software-update", {header: "upToDate"});
+				versions[updateTrack] = {version: null, releaseNotes: null, lastChecked: checkTime};
+				return {version: null, releaseNotes: null, lastChecked: checkTime, error: null};
 			}
-		});
-	} else {
-		if (debug) console.log("Checked for update less than 5 minutes ago, sending cached info.");
-		if (newVersion) {
-			beo.sendToUI("software-update", {header: "updateAvailable", content: {version: newVersion, releaseNotes: releaseNotes}});
 		} else {
-			beo.sendToUI("software-update", {header: "upToDate"});
+			console.error("Couldn't check for update ('"+updateTrack+"' track).");
+			versions[updateTrack] = {version: null, releaseNotes: null, lastChecked: 0, error: true};
+			return {version: null, releaseNotes: null, error: true};
 		}
+	} else {
+		return true;
 	}
-	if (settings.autoCheck) startAutoCheckTimeout();
 }
 
 var updateInProgress = false;
 var updatePhase = 0;
 var previousProgress = -5;
-function installUpdate() {
+function installUpdate(updateTrack) {
 	if (!updateInProgress) {
 		updateInProgress = true;
-		updateTrack = (settings.manualUpdateTrack) ? settings.manualUpdateTrack : ((autoUpdate != false || autoUpdate != "critical") ? autoUpdate : "latest");
 		
 		exec("history -a", function(error, stdout, stderr) {
 			if (!error) {
@@ -282,7 +299,7 @@ var autoCheckTimeout;
 function startAutoCheckTimeout() {
 	clearTimeout(autoCheckTimeout);
 	autoCheckTimeout = setTimeout(function() {
-		checkForUpdate();
+		checkForAllUpdates(true);
 	}, 86400000) // Check once per day.
 }
 
@@ -319,7 +336,7 @@ function autoUpdateMode(mode) {
 			autoUpdate = false;
 		}
 	}
-	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate, manualMode: settings.manualUpdateTrack}});
+	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate, showExperimental: settings.showExperimental}});
 }
 
 function checkForPreviousVersion() {

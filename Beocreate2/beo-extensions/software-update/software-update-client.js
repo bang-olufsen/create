@@ -1,19 +1,103 @@
 var software_update = (function() {
 
-var newVersion = null;
+var mostRecentTrack = null;
+var mostRecentVersion = 0;
+var versions = {};
+var errorsChecking = 0;
 
 $(document).on("general", function(event, data) {
 	
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "software-update") {
-			$(".checking-for-update").removeClass("hidden");
-			$(".update-check-error").addClass("hidden");
+			
+			
 		}
 	}
 	
 });
 
 $(document).on("software-update", function(event, data) {
+	
+	if (data.header == "checking" || data.header == "updateList") {
+		if (data.content && data.content.checking) {
+			$(".checking-for-update").removeClass("hidden");
+			$(".update-check-error").addClass("hidden");
+			$(".no-update-available").addClass("hidden");
+		} else {
+			$(".checking-for-update").addClass("hidden");
+			if (errorsChecking && !mostRecentTrack) {
+				$(".update-check-error").removeClass("hidden");
+			} else if (!mostRecentTrack) {
+				$(".no-update-available").removeClass("hidden");
+				$(".software-update-available").addClass("hidden");
+			}
+		}
+	}
+	
+	if (data.header == "updateList") {
+		if (data.content && data.content.versions) {
+			versions = data.content.versions;
+			mostRecentTrack = null;
+			mostRecentVersion = 0;
+			errorsChecking = 0;
+			for (track in versions) {
+				if (versions[track].error) errorsChecking++;
+				if (versions[track].version) {
+					if (parseInt(versions[track].version) > mostRecentVersion) {
+						mostRecentVersion = parseInt(versions[track].version);
+						mostRecentTrack = track;
+					}
+				}
+			}
+			if (mostRecentTrack) {
+				if (mostRecentTrack == "experimental") {
+					$("#main-pre-release-warning").removeClass("hidden");
+				} else {
+					$("#main-pre-release-warning").addClass("hidden");
+				}
+				menuOptions = {
+					value: mostRecentVersion,
+					static: true
+				}
+				if ($("body").hasClass("hifiberry-os")) {
+					menuOptions.label = "HiFiBerryOS";
+					menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/hifiberry.svg"
+				} else {
+					menuOptions.label = "Beocreate 2";
+					menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/create.svg"
+				}
+				$("#update-available-container").empty();
+				$("#update-available-container").append(beo.createMenuItem(menuOptions));
+				
+				$("#update-release-notes").html(generateMarkupForUpdate(mostRecentTrack));
+				$(".software-update-available").removeClass("hidden");
+			}
+			
+			$("#earlier-updates").addClass("hidden");
+			$("#earlier-updates-container").empty();
+			for (track in versions) {
+				if (track != mostRecentTrack) {
+					//if (versions[track].version) {
+					if (versions[track].version && parseInt(versions[track].version) != mostRecentVersion) {
+						$("#earlier-updates").removeClass("hidden");
+						menuOptions = {
+							value: versions[track].version,
+							label: getTrackName(track),
+							onclick: "software_update.showEarlierUpdate('"+track+"');"
+						}
+						if ($("body").hasClass("hifiberry-os")) {
+							menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/hifiberry.svg"
+						} else {
+							menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/create.svg"
+						}
+						
+						$("#earlier-updates-container").append(beo.createMenuItem(menuOptions));
+					}
+				}
+			}
+		}
+	}
+	
 	
 	if (data.header == "badge") {
 		if (data.content && data.content.badge) {
@@ -30,7 +114,7 @@ $(document).on("software-update", function(event, data) {
 			switch (data.content.mode) {
 				case "critical":
 					$("#auto-update-critical").addClass("checked");
-					updateMode = "Security only";
+					updateMode = "Critical only";
 					break;
 				case "stable":
 					$("#auto-update-stable").addClass("checked");
@@ -41,7 +125,7 @@ $(document).on("software-update", function(event, data) {
 					updateMode = "Quick";
 					break;
 				case "experimental":
-					updateMode = "Experimental";
+					updateMode = "Pre-release";
 					break;
 				case false:
 					updateMode = "Off";
@@ -50,26 +134,10 @@ $(document).on("software-update", function(event, data) {
 			if (updateMode) {
 				$(".auto-update-mode").text(updateMode);
 			}
-			if (data.content.manualMode && data.content.manualMode != data.content.mode) {
-				$("#manual-update-track").removeClass("hidden");
-				manualMode = "Unknown";
-				switch (data.content.manualMode) {
-					case "critical":
-						manualMode = "Security only";
-						break;
-					case "stable":
-						manualMode = "Regular";
-						break;
-					case "latest":
-						manualMode = "Quick";
-						break;
-					case "experimental":
-						manualMode = "Experimental";
-						break;
-				}
-				$("#manual-update-track .menu-value").text(manualMode);
+			if (data.content.showExperimental) {
+				$("#show-experimental-updates").removeClass("hidden");
 			} else {
-				$("#manual-update-track").addClass("hidden");
+				$("#show-experimental-updates").addClass("hidden");
 			}
 		}
 	}
@@ -96,38 +164,7 @@ $(document).on("software-update", function(event, data) {
 		$("#update-available-container").append(beo.createMenuItem(menuOptions));
 		
 		$("#update-release-notes").empty();
-		if (data.content.releaseNotes) {
-			releaseNotes = data.content.releaseNotes.split("\n");
-			openUL = "";
-			notesHTML = ""
-			for (var i = 0; i < releaseNotes.length; i++) {
-				if (!(i == 0 && releaseNotes[i].trim() == newVersion)) {
-					if (releaseNotes[i].trim().charAt(0) == "-") {
-						// A dash is a list item.
-						if (!openUL) {
-							openUL += "\n<ul>";
-						}
-						openUL += "\n<li>"+releaseNotes[i].trim().substring(2)+"</li>";
-						//console.log(openUL);
-					} else {
-						// Normal lines make p elements.
-						if (openUL) {
-							openUL += "\n</ul>";
-							notesHTML += openUL;
-							openUL = "";
-						}
-						notesHTML += "<p>"+releaseNotes[i].trim()+"</p>";
-					}
-				}
-			}
-			if (openUL) {
-				openUL += "\n</ul>";
-				notesHTML += openUL;
-			}
-			$("#update-release-notes").append(notesHTML);
-		} else {
-			$("#update-release-notes").html("<p>No release notes included.</p>");
-		}
+		
 	}
 	
 	if (data.header == "upToDate") {
@@ -229,9 +266,75 @@ $(document).on("software-update", function(event, data) {
 	}
 });
 
+function generateMarkupForUpdate(track) {
+	if (versions[track] && versions[track].releaseNotes) {
+		releaseNotes = versions[track].releaseNotes.split("\n");
+		openUL = "";
+		notesHTML = ""
+		for (var i = 0; i < releaseNotes.length; i++) {
+			if (!(i == 0 && releaseNotes[i].trim() == versions[track].version)) {
+				if (releaseNotes[i].trim().charAt(0) == "-") {
+					// A dash is a list item.
+					if (!openUL) {
+						openUL += "\n<ul>";
+					}
+					openUL += "\n<li>"+releaseNotes[i].trim().substring(2)+"</li>";
+					//console.log(openUL);
+				} else {
+					// Normal lines make p elements.
+					if (openUL) {
+						openUL += "\n</ul>";
+						notesHTML += openUL;
+						openUL = "";
+					}
+					notesHTML += "<p>"+releaseNotes[i].trim()+"</p>";
+				}
+			}
+		}
+		if (openUL) {
+			openUL += "\n</ul>";
+			notesHTML += openUL;
+		}
+		return notesHTML
+	} else {
+		return "<p>No release notes included.</p>";
+	}
+}
 
-function install() {
-	beo.send({target: "software-update", header: "install"});
+function getTrackName(track) {
+	switch (track) {
+		case "critical":
+			return "Critical Release";
+			break;
+		case "stable":
+			return "Regular Release";
+			break;
+		case "latest":
+			return "Latest Release";
+			break;
+		case "experimental":
+			return "Pre-Release";
+			break;
+	}
+}
+
+function showEarlierUpdate(track) {
+	if (versions[track].version) {
+		$("#earlier-release-notes").html(generateMarkupForUpdate(track));
+		if (track == "experimental") {
+			$("#earlier-pre-release-warning").removeClass("hidden");
+		} else {
+			$("#earlier-pre-release-warning").addClass("hidden");
+		}
+		beo.ask("earlier-update-info-prompt", [getTrackName(track)], [function() {
+			install(track);
+		}]);
+	}
+}
+
+
+function install(track = mostRecentTrack) {
+	beo.sendToProduct("software-update", "install", {track: mostRecentTrack});
 }
 
 function setAutoUpdate(mode) {
@@ -257,7 +360,8 @@ return {
 	install: install,
 	setAutoUpdate: setAutoUpdate,
 	setManualUpdateMode: setManualUpdateMode,
-	restore: restore
+	restore: restore,
+	showEarlierUpdate: showEarlierUpdate
 };
 
 })();

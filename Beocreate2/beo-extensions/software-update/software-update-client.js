@@ -10,7 +10,7 @@ $(document).on("general", function(event, data) {
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "software-update") {
 			
-			
+			$("#earlier-updates").addClass("hidden");
 		}
 	}
 	

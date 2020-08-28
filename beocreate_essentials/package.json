@@ -1,6 +1,6 @@
 {
   "name": "beocreate_essentials",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Essential tools for sound systems based on BeoCreate 4-Channel Amplifier.",
   "main": "beocreate_essentials.js",
   "scripts": {

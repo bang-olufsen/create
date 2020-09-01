@@ -150,10 +150,10 @@ async function checkForUpdate(updateTrack, forceCheck) {
 		} catch (error) {
 			// Handle later.
 		}
-		if (updateLines.stdout) {
-			updateLines = updateLines.stdout.trim().split("\n");
-			newVersion = updateLines[0];
-			if (newVersion) {
+		if (updateLines.code == 0) {
+			if (updateLines.stdout) {
+				updateLines = updateLines.stdout.trim().split("\n");
+				newVersion = updateLines[0];
 				if (newVersion.indexOf("Couldn't") != -1) { // Error checking for update.
 					console.error("There was an error checking for update ('"+updateTrack+"' track): "+newVersion);
 					lastChecked = 0;
@@ -179,7 +179,7 @@ async function checkForUpdate(updateTrack, forceCheck) {
 				return {version: null, releaseNotes: null, lastChecked: checkTime, error: null};
 			}
 		} else {
-			console.error("Couldn't check for update ('"+updateTrack+"' track).");
+			console.error("Couldn't check for update ('"+updateTrack+"' track):", updateLines.stdout);
 			versions[updateTrack] = {version: null, releaseNotes: null, lastChecked: 0, error: true};
 			return {version: null, releaseNotes: null, error: true};
 		}

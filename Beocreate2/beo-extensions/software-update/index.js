@@ -147,10 +147,6 @@ async function checkForUpdate(updateTrack, forceCheck) {
 		updateLines = {};
 		try {
 			updateLines = await execPromise("/opt/hifiberry/bin/update --"+updateTrack+" --check");
-		} catch (error) {
-			// Handle later.
-		}
-		if (updateLines.code == 0) {
 			if (updateLines.stdout) {
 				updateLines = updateLines.stdout.trim().split("\n");
 				newVersion = updateLines[0];
@@ -178,8 +174,8 @@ async function checkForUpdate(updateTrack, forceCheck) {
 				versions[updateTrack] = {version: null, releaseNotes: null, lastChecked: checkTime};
 				return {version: null, releaseNotes: null, lastChecked: checkTime, error: null};
 			}
-		} else {
-			console.error("Couldn't check for update ('"+updateTrack+"' track):", updateLines.stdout);
+		} catch (error) {
+			console.error("Couldn't check for update ('"+updateTrack+"' track):", error);
 			versions[updateTrack] = {version: null, releaseNotes: null, lastChecked: 0, error: true};
 			return {version: null, releaseNotes: null, error: true};
 		}

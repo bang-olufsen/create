@@ -797,11 +797,11 @@ function showExtensionWithHistory(extensionHistory, extension) {
 		for (var i = 0; i < extensionHistory.length; i++) {
 			if (extensionHistory[i] == extension) {
 				console.log("History constructed, now showing '"+extensionHistory[i]+"' normally…");
-				showExtension(extensionHistory[i], "right", false);
+				showExtension(extensionHistory[i], "left", false);
 				break;
 			} else {
 				console.log("Showing '"+extensionHistory[i]+"' invisibly to construct history…");
-				showExtension(extensionHistory[i], "right", false, true);
+				showExtension(extensionHistory[i], "left", false, true);
 			}
 		}
 	} else {

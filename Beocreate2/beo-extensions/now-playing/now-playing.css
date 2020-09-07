@@ -115,6 +115,10 @@
 	pointer-events: none;
 }
 
+.setup #now-playing {
+	display: none !important;
+}
+
 #now-playing-container {
 	transition: opacity 0.5s ease;
 	background-color: var(--main-bg);
@@ -327,7 +331,7 @@
 }
 
 #now-playing-info-area .scroll-invitation {
-	display: none;
+	/*display: none;*/
 }
 
 .now-playing-text {

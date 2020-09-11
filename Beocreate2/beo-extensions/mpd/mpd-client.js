@@ -229,6 +229,9 @@ function removeStorage(index, unavailable = false) {
 	} else {
 		beo.ask("mpd-remove-storage-unavailable", [storageName], [
 			function() {
+				beo.sendToProduct("mpd", "mountNASAgain");
+			},
+			function() {
 				beo.sendToProduct("mpd", "removeStorage", {id: storageList[index].id});
 			}
 		]);

@@ -103,6 +103,20 @@ beo.bus.on('general', function(event) {
 	
 });
 
+
+beo.bus.on('sources', function(event) {
+	
+	if (event.header == "sourcesChanged") {
+		if (event.content.sources.mpd &&
+			event.content.sources.mpd.childSource && 
+			event.content.sources.mpd.childSource == "music") {
+			sendQueue(true);
+		}
+	}
+});	
+
+
+
 beo.bus.on('mpd', function(event) {
 	
 	if (event.header == "settings") {
@@ -154,6 +168,10 @@ beo.bus.on('mpd', function(event) {
 		}
 	}
 	
+	if (event.header == "queueTest") {
+		getQueue();
+	}
+	
 	if (event.header == "update") {
 		force = (event.content && (event.content.force || (event.content.extra && event.content.extra == "covers"))) ? true : false;
 		setTimeout(function() {
@@ -182,8 +200,7 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "addNAS") {
-		details = JSON.parse(JSON.stringify(cachedNASDetails));
-		addNAS(details, event.content.share, event.content.path);
+		addNAS(event.content.share, event.content.path);
 	}
 	
 	if (event.header == "cancelNASAdd") {
@@ -194,6 +211,10 @@ beo.bus.on('mpd', function(event) {
 		if (event.content.id) {
 			removeStorage(event.content.id);
 		}
+	}
+	
+	if (event.header == "mountNASAgain") {
+		mountNASAgain();
 	}
 	
 	
@@ -479,7 +500,11 @@ async function getMusic(type, context, noArt = false) {
 			!context.artist && !context.album) { // Find music by URI (used by the "reveal" feature).
 			mpdTracks = await client.api.db.find("((file == '"+escapeString(context.uri)+"'))");
 			try {
-				context.artist = mpdTracks[0].albumartist;
+				if (mpdTracks[0].albumartist) {
+					context.artist = mpdTracks[0].albumartist;
+				} else {
+					context.artist = mpdTracks[0].artist;
+				}
 				context.album = mpdTracks[0].album;
 			} catch (error) {
 				console.error("Error finding "+type+" with URI '"+context.uri+"':", error);
@@ -684,7 +709,7 @@ async function playMusic(index, type, context) {
 				return true;
 			} catch (error) {
 				if (error.code == "ENOTCONNECTED") client = null;
-				console.error("Could not get start playback with MPD:", error);
+				console.error("Could not start playback with MPD:", error);
 				return false;
 			}
 		} else {
@@ -820,6 +845,185 @@ async function setAlbumCover(uploadPath, context) {
 function escapeString(string) {
 	return string.replace(/'/g, "\\\\'").replace(/"/g, '\\\\"').replace(/\\/g, '\\');
 }
+
+
+// QUEUE FUNCTIONALITY
+var queue = { 
+	tracks: [],
+	position: null,
+	id: null,
+	provider: "mpd"
+};
+
+async function sendQueue(changedOnly = false) {
+	var updated = false;
+	if (!client) await connectMPD();
+	if (client) {
+		var changed = false;
+		var currentSong = null;
+		try {
+			currentSong = await client.api.status.currentsong();
+		} catch (error) {
+			if (error.code == "ENOTCONNECTED") client = null;
+			console.error("Could not get current song from MPD:", error);
+		}
+		if (currentSong) {
+			if (queue.position != currentSong.pos || queue.id != currentSong.id) {
+				queue.position = currentSong.pos;
+				queue.id = currentSong.id;
+				changed = true;
+			}
+		}
+		if (changed || !changedOnly) updated = true;
+		if (updated) {
+			var mpdTracks = [];
+			queue.tracks = [];
+			try {
+				mpdTracks = await client.api.queue.info();
+			} catch (error) {
+				if (error.code == "ENOTCONNECTED") client = null;
+				console.error("Could not get queue from MPD:", error);
+			}
+			for (track in mpdTracks) {
+				var img = null;
+				if (mpdTracks[track].albumartist) {
+					theArtist = mpdTracks[track].albumartist;
+				} else if (mpdTracks[track].artist) {
+					theArtist = mpdTracks[track].artist;
+				}
+				if (mpdTracks[track].album && 
+					cache.data[theArtist]) {
+					for (a in cache.data[theArtist]) {
+						if (cache.data[theArtist][a].name == mpdTracks[track].album) {
+							img = cache.data[theArtist][a].thumbnail;
+						}
+					}
+				}
+				trackData = {
+					path: mpdTracks[track].file,
+					number: mpdTracks[track].track,
+					artist: mpdTracks[track].artist,
+					name: mpdTracks[track].title,
+					time: mpdTracks[track].time,
+					img: img,
+					provider: "mpd",
+					queueID: mpdTracks[track].id,
+					queuePosition: mpdTracks[track].pos
+				}
+				queue.tracks.push(trackData);
+			}
+		}
+	}
+	if (beo.extensions.music && beo.extensions.music.updateQueue && updated) {
+		beo.extensions.music.updateQueue("mpd", "tracks", queue);
+	}
+}
+
+async function playQueued(position) {
+	if (!client) await connectMPD();
+	if (client && 
+		position != undefined) {
+		try {
+			await client.api.playback.play(position);
+			return true;
+		} catch (error) {
+			if (error.code == "ENOTCONNECTED") client = null;
+			console.error("Could not start playback with MPD:", error);
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function clearQueue() {
+	if (!client) await connectMPD();
+	if (client) {
+		try {
+			await client.api.queue.clear();
+			sendQueue();
+			return true;
+		} catch (error) {
+			if (error.code == "ENOTCONNECTED") client = null;
+			console.error("Could not clear MPD queue:", error);
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function modifyQueue(operation, data) {
+	if (!client) await connectMPD();
+	if (client) {
+		switch (operation) {
+			case "remove":
+				if (data.id != undefined) {
+					try {
+						await client.api.queue.deleteid(data.id);
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not remove track from MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+			case "playNext":
+				if (data.id != undefined) {
+					try {
+						await client.api.queue.moveid(data.id, -1);
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not remove track from MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function addToQueue(position, type, context) {
+	if (!client) await connectMPD();
+	if (client) {
+		switch (type) {
+			case "track":
+				if (context.path != undefined) {
+					try {
+						var addedID = await client.api.queue.addid(context.path);
+						if (position == "next") {
+							await client.api.queue.moveid(addedID, -1);
+						}
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not add track to MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+		}
+	} else {
+		return false;
+	}
+}
+
+
+
+// STORAGE MANAGEMENT
 
 
 var storageList = [];
@@ -1128,29 +1332,34 @@ async function getNASShares(details) {
 	return {server: details.server, shares: shareList, errors: errors};
 }
 
-async function addNAS(details, share, path) {
-	storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
-	beo.sendToUI("mpd", "addingNAS");
-	if (details.server.from == "bonjour") {
-		address = details.server.hostname.replace(".local.", ".local");
-	} else if (details.server.netbios) {
-		address = details.server.netbios;
+async function addNAS(share, path) {
+	details = JSON.parse(JSON.stringify(cachedNASDetails));
+	if (details.server) {
+		storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+		beo.sendToUI("mpd", "addingNAS");
+		if (details.server.from == "bonjour") {
+			address = details.server.hostname.replace(".local.", ".local");
+		} else if (details.server.netbios) {
+			address = details.server.netbios;
+		} else {
+			address = details.server.addresses[0];
+		}
+		storageNAS.push(details.server.name+"-"+share+"-"+makeID(5)+";//"+address+"/"+share+path+";"+details.username+";"+details.password);
+		fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
+		if (debug) console.log("Added '"+share+path+"' from NAS '"+details.server.name+"'.");
+		cachedNASDetails = {};
+		await mountNewNAS();
+		try {
+			storage = await listStorage();
+			beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+		} catch (error) {
+			console.error("Error listing storage:", error);
+		}
+		listNAS();
+		beo.sendToUI("mpd", "addedNAS", {name: details.server.name});
 	} else {
-		address = details.server.addresses[0];
+		console.error("Server details were not found in the cache.");
 	}
-	storageNAS.push(details.server.name+"-"+share+"-"+makeID(5)+";//"+address+"/"+share+path+";"+details.username+";"+details.password);
-	fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
-	if (debug) console.log("Added '"+share+path+"' from NAS '"+details.server.name+"'.");
-	cachedNASDetails = {};
-	await mountNewNAS();
-	try {
-		storage = await listStorage();
-		beo.sendToUI("mpd", "mountedStorage", {storage: storage});
-	} catch (error) {
-		console.error("Error listing storage:", error);
-	}
-	listNAS();
-	beo.sendToUI("mpd", "addedNAS", {name: details.server.name});
 }
 
 function makeID(length) { // From https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
@@ -1191,6 +1400,16 @@ function mountNewNAS() {
 	});
 }
 
+async function mountNASAgain() {
+	await mountNewNAS();
+	try {
+		storage = await listStorage();
+		beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+	} catch (error) {
+		console.error("Error listing storage:", error);
+	}
+	listNAS();
+}
 
 interact = {
 	actions: {
@@ -1206,6 +1425,10 @@ module.exports = {
 	isEnabled: getMPDStatus,
 	getMusic: getMusic,
 	playMusic: playMusic,
+	playQueued: playQueued,
+	clearQueue: clearQueue,
+	modifyQueue: modifyQueue,
+	addToQueue: addToQueue,
 	setAlbumCover: setAlbumCover,
 	isUpdatingDatabase: isUpdatingDatabase,
 	interact: interact

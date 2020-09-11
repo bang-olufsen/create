@@ -30,7 +30,11 @@ var nowPlayingData = {
 	notify: false,
 	scrollH1: false,
 	scrollH2: false,
-	reveal: false
+	reveal: false,
+	queueTracks: [],
+	queuePosition: 0,
+	queueSource: null,
+	canClearQueue: false
 }
 
 
@@ -128,6 +132,12 @@ var nowPlayingController = new Vue({
 			} else {
 				return null;
 			}
+		},
+		remainingQueue: function() {
+			var pos = this.queuePosition;
+			return this.queueTracks.filter(function(track) {
+				return track.queuePosition > pos;
+			});
 		}
 	},
 	methods: {
@@ -203,6 +213,15 @@ var nowPlayingController = new Vue({
 				this.pictureView = null;
 			}
 		},
+		time: function(seconds) {
+			return Intl.DateTimeFormat(window.navigator.language, {minute: "numeric", second: "numeric"}).format(new Date(seconds * 1000)).replace(/^0?/g, '');
+		},
+		playQueued: function(position) {
+			now_playing.playQueued(position);
+		},
+		queueTrackAction: function(id, holdPosition) {
+			now_playing.queueTrackMenu(id);
+		}
 	}
 });
 
@@ -232,11 +251,26 @@ $(document).on("now-playing", function(event, data) {
 		}
 	}
 
-	
+	if (data.header == "queue") {
+		if (data.content.source == focusedSource) {
+			// Only allow queue to come in from the focused source.
+			nowPlayingController.queueSource = focusedSource;
+			nowPlayingController.canClearQueue = data.content.canClear;
+			if (data.content.data) {
+				if (data.content.data.tracks) {
+					nowPlayingController.queueTracks = data.content.data.tracks;
+				}
+				if (data.content.data.position != undefined) {
+					nowPlayingController.queuePosition = data.content.data.position;
+				}
+			}
+		}
+	}
 });
 
 $(document).on("sources", function(event, data) {
 	if (data.header == "sources") {
+		
 		
 		clearTimeout(playButtonSymbolTimeout);
 		
@@ -264,12 +298,14 @@ $(document).on("sources", function(event, data) {
 						nowPlayingController.transportControls = allSources[focusedSource].transportControls;
 					}
 				}
+				if (nowPlayingController.queueSource != focusedSource) nowPlayingController.queueSource = null;
 			} else {
 				nowPlayingController.metadata = {};
 				focusedSource = null;
 				nowPlayingController.playerState = "stopped";
 				nowPlayingController.transportControls = [];
 				nowPlayingController.canLove = false;
+				nowPlayingController.queueSource = null; 
 			}
 			determinePicture();
 			
@@ -418,9 +454,20 @@ function testPlaceholderArtwork() {
 	determinePicture();
 }
 
+var hasQueue = false;
 function showNowPlaying() {
 	nowPlayingController.visible = true;
+	if (focusedSource && !hasQueue) {
+		beo.sendToProduct(focusedSource, "getQueue");
+		hasQueue = true;
+	}
 	evaluateTextScrolling();
+	/*setTimeout(function() {
+		if (document.querySelector("#now-playing-upper").scrollTop > 0) {
+			document.querySelector("#now-playing-right header").classList.add("opaque");
+		};
+		console.log("Scroll fix");
+	}, 300);*/
 }
 
 function hideNowPlaying() {
@@ -584,6 +631,45 @@ function revealSource() {
 	}
 }
 
+function playQueued(position) {
+	if (focusedSource) {
+		beo.sendToProduct(focusedSource, "playQueued", {position: position});
+	}
+}
+
+function clearQueue() {
+	if (focusedSource) {
+		beo.sendToProduct(focusedSource, "clearQueue");
+	}
+}
+
+function queueTrackMenu(queueID) {
+	queueTrack = null;
+	for (t in nowPlayingController.remainingQueue) {
+		if (nowPlayingController.remainingQueue[t].queueID == queueID) queueTrack = nowPlayingController.remainingQueue[t];
+	}
+	beo.ask("queue-track-menu", [queueTrack.name, queueTrack.artist], [
+		function() {
+			if (focusedSource) {
+				beo.sendToProduct(focusedSource, "modifyQueue", {operation: "playNext", data: {id: queueID}});
+			}
+		},
+		function() {
+			if (focusedSource) {
+				beo.sendToProduct(focusedSource, "modifyQueue", {operation: "remove", data: {id: queueID}});
+			}
+		},
+		function() {
+			if (focusedSource) {
+				revealed = window[extensions[focusedSource].namespace].reveal(queueTrack.path);
+				if (revealed) {
+					hideNowPlaying();
+				}
+			}
+		}
+	]);
+}
+
 
 interactDictionary = {
 	actions: {
@@ -621,7 +707,10 @@ return {
 	evaluateTextScrolling: evaluateTextScrolling,
 	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable},
 	interactDictionary: interactDictionary,
-	revealSource: revealSource
+	revealSource: revealSource,
+	playQueued: playQueued,
+	clearQueue: clearQueue,
+	queueTrackMenu: queueTrackMenu
 }
 
 })();

@@ -118,7 +118,6 @@ body {
 	background-color: var(--main-bg);
 	color: var(--main-font-colour);
 }
-/* Theme Controls */
 
 .no-touch:root {
 	--font-spacing-compensation: 0.15em;
@@ -1452,6 +1451,26 @@ section.faded-out .menu-screen {
 .menu-attachment.icon-margin {
 	margin-left: 35px;
 }
+
+/* @group Vue Animations */
+
+
+.list-enter, 
+.list-leave-to {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.list-complete-enter, 
+.list-complete-leave-to {
+	opacity: 0;
+}
+
+.list-leave-active {
+	position: absolute;
+}
+
+/* @end */
 
 /* @end */
 

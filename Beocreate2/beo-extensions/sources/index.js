@@ -167,8 +167,10 @@ beo.bus.on("sources", function(event) {
 		case "toggleLove":
 			if (focusedSource && allSources[focusedSource].canLove) {
 				if (!allSources[focusedSource].metadata.loved) {
+					if (debug) console.log("Loving this track...");
 					love = true;
 				} else {
+					if (debug) console.log("Removing this track from loved tracks...");
 					love = false;
 				}
 				if (allSources[focusedSource].usesHifiberryControl) {
@@ -177,7 +179,8 @@ beo.bus.on("sources", function(event) {
 					audioControl(action, null, function(success) {
 						if (success) {
 							allSources[focusedSource].metadata.loved = love;
-							beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
+							beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+							beo.sendToUI("sources", "sources", {sources: allSources, currentSource: currentSource, focusedSource: focusedSource});
 						}
 					});
 				}

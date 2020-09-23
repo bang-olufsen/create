@@ -531,6 +531,7 @@ async function getMusic(type, context, noArt = false) {
 				}
 				break;
 			case "album":
+				if (!context.album && context.name) context.album = context.name;
 				if (context && context.artist && context.album) {
 					mpdTracks = [];
 					album = {name: context.album, 
@@ -692,10 +693,10 @@ async function getMusic(type, context, noArt = false) {
 async function playMusic(index, type, context) {
 	if (!client) await connectMPD();
 	if (client && 
-		index != undefined && 
 		type && 
 		context) {
 		content = await getMusic(type, context, true);
+		if (index == undefined) index = 0;
 		if (content.tracks) {
 			try {
 				await client.api.queue.clear();
@@ -1009,6 +1010,32 @@ async function addToQueue(position, type, context) {
 					} catch (error) {
 						if (error.code == "ENOTCONNECTED") client = null;
 						console.error("Could not add track to MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+			case "album":
+				content = await getMusic(type, context, true);
+				if (content.tracks) {
+					try {
+						queueCommands = [];
+						content.tracks.forEach(track => {
+							queueCommands.push(client.api.queue.addid(track.path));
+						});
+						
+						var addedIDs = await Promise.all(queueCommands);
+						if (position == "next") {
+							for (var i = 0; i < addedIDs.length; i++) {
+								await client.api.queue.moveid(addedIDs[i], -1-i);
+							}
+						}
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not add "+type+" to MPD queue:", error);
 						return false;
 					}
 				} else {

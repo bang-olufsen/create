@@ -20,6 +20,8 @@
 	letter-spacing: var(--uppercase-spacing);
 	font-weight: 500;
 	font-size: 0.8em;
+	text-overflow: ellipsis;
+	overflow: hidden;
 	transition: opacity 0.5s ease, transform 0.5s ease;
 	transform: translateY(0.5em);
 }
@@ -155,6 +157,13 @@
 	opacity: 0.5;
 	transition: opacity 0.3s ease;
 	white-space: nowrap;
+	position: relative;
+	max-width: calc(100vw - 120px);
+}
+
+#now-playing .focused-source-name {
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 #now-playing #focused-source .symbol {
@@ -434,8 +443,8 @@
 
 #now-playing-lower .control-area {
 	margin-left: auto;
-	box-sizing: border-box;
-	max-width: 500px;
+	/*box-sizing: border-box;*/
+	max-width: 400px;
 	margin-right: auto;
 	padding: max(10px, 2vw) max(20px, 10%);
 }

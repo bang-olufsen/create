@@ -115,6 +115,7 @@
 								v-bind:value="time(track.time)"
 								v-bind:description="track.artist"
 								v-bind:key="track.queueID"
+								v-bind:thumbnail="track.img"
 								v-on:click="playQueued(track.queuePosition)"
 								v-on:hold="queueTrackAction(track.queueID)"
 								v-on:context="queueTrackAction(track.queueID)"

@@ -1034,6 +1034,10 @@ section.faded-out .menu-screen {
 	display: block;
 }
 
+.menu-item.two-rows-new {
+	height: auto;
+}
+
 .menu-item .first-row {
 	display: flex;
 	flex-direction: row;
@@ -1450,6 +1454,27 @@ section.faded-out .menu-screen {
 
 .menu-attachment.icon-margin {
 	margin-left: 35px;
+}
+
+.menu-thumbnail {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-right: 15px;
+	flex-shrink: 0;
+	width: 50px;
+}
+
+.menu-thumbnail img {
+	max-height: 100%;
+	width: 100%;
+	display: block;
+	outline: 1px solid var(--menu-line);
+	outline-offset: -1px;
+}
+
+.menu-item-right {
+	flex-grow: 1;
+	overflow: hidden;
 }
 
 /* @group Vue Animations */

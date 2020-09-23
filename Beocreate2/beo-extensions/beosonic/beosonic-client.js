@@ -175,13 +175,15 @@ function updateBeosonicUI() {
 	
 	// Dot & glow:
 	$("#beosonic-glow, #beosonic-dot").css("left", x+50+"%").css("top", 50-y+"%");
-	$("#beosonic-area").css("box-shadow", "0 3px 15px rgba(0, 0, 0, 0.2), "+x+"px "+(y*-1)+"px 50px #1e998d");
+	
 	
 	// Feeling labels:
 	if (beosonicDistance == 0) {
 		opacity = [1,1,1,1];
-		opacityDiag = [0.25,0.25,0.25,0.25];
+		opacityDiag = [0.0,0.0,0.0,0.0];
+		$("#beosonic-area").css("box-shadow", "0 3px 15px rgba(0, 0, 0, 0.1)");
 	} else {
+		$("#beosonic-area").css("box-shadow", "0 3px 15px rgba(0, 0, 0, 0.1), "+x+"px "+(y*-1)+"px "+(10+(beosonicDistance/50)*40)+"px hsl("+Math.round(beosonicAngle-105)+", 65%, 50%)");
 		opacityEffect = beosonicDistance/50;
 		[offset, quadrant] = getOffsetAndQuadrant(beosonicDistance, beosonicAngle); // For main labels.
 		
@@ -203,10 +205,10 @@ function updateBeosonicUI() {
 		
 		[offsetDiag, quadrantDiag] = getOffsetAndQuadrant(beosonicDistance, beosonicAngle, -45); // For diagonal labels.
 		oDiag = [ // Opacity:
-			0.25+0.75*opacityEffect, // Current
-			0.25-0.25*opacityEffect, // Opposite
-			(offsetDiag > 0) ? 0.25+(0.75*offsetDiag)*opacityEffect : 0.25+(offsetDiag*0.25)*opacityEffect, // Neighbour CCW
-			(offsetDiag > 0) ? 0.25+(-offsetDiag*0.25)*opacityEffect : 0.25+(0.75*-offsetDiag)*opacityEffect // Neighbour CW
+			0.0+0.75*opacityEffect, // Current
+			0.0-0.25*opacityEffect, // Opposite
+			(offsetDiag > 0) ? 0.0+(0.75*offsetDiag)*opacityEffect : 0.0+(offsetDiag*0.25)*opacityEffect, // Neighbour CCW
+			(offsetDiag > 0) ? 0.0+(-offsetDiag*0.25)*opacityEffect : 0.0+(0.75*-offsetDiag)*opacityEffect // Neighbour CW
 		];
 		if (quadrantDiag == 0) {
 			opacityDiag = [oDiag[1], oDiag[0], oDiag[3], oDiag[2]]; // NW, SE, SW, NE

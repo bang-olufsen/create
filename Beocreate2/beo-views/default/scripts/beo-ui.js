@@ -1903,23 +1903,29 @@ function uploadFile(options, extension, file) {
 	if (file && file.name && (uploadToExtension || extension)) {
 		if (extension) uploadToExtension = extension;
 		console.log(file);
+		if (options) uploadOptions = options;
 		types = [];
 		canUpload = false;
 		if (uploadOptions && uploadOptions.types) {
 			types = uploadOptions.types;
 		} else if (options && options.types) {
 			types = options.types;
+		} else {
+			types = [];
 		}
 		if (types.length) {
 			if (types.indexOf(file.type) != -1) {
 		        canUpload = true;
 		    }
+		}
+		if (uploadOptions.fileExtensions && uploadOptions.fileExtensions.length) {
 			fileExtension = file.name.substring(file.name.lastIndexOf("."));
 			if (uploadOptions.fileExtensions.indexOf(fileExtension) != -1) {
 		        canUpload = true;
 		    }
-		} else {
-			canUpload = true;
+		}
+		if (types.length == 0 && (!uploadOptions.fileExtensions || !uploadOptions.fileExtensions.length)) {
+			canUpload = true; // Allow any file.
 		}
 		if (canUpload) {
 			uploadNotifyTimeout = setTimeout(function() {

@@ -13,7 +13,7 @@
  "author": "",
  "license": "MIT",
  "devDependencies": {
-  "electron": "^8.3.0",
+  "electron": "^8.5.1",
   "electron-builder": "^21.2.0",
   "electron-rebuild": "^1.11.0",
   "node-hid": "^1.2.0"

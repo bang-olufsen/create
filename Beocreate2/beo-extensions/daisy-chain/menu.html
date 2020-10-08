@@ -17,7 +17,7 @@
 				<div class="menu-toggle"></div>
 			</div>
 			
-			<p class="not-chained">Connect and use two Beocreate 4-Channel Amplifiers together as a master &amp; slave pair. <a href="#" onclick="beo.ask('daisy-chain-how-prompt');">Why and how.</a></p>
+			<p class="not-chained">Connect and use two Beocreate 4-Channel Amplifiers together as a primary &amp; secondary pair. <a href="#" onclick="beo.ask('daisy-chain-how-prompt');">Why and how.</a></p>
 			<p class="experiment">This is an experimental feature.</p>
 			<p id="daisy-chain-auto-off" class="warning hidden">Chaining was turned off, because <span id="daisy-chain-auto-off-reason">the DSP program was upgraded</span>. <a href="#" onclick="beo.ask('daisy-chain-changing-settings');">Learn more.</a></p>
 			<p class="chained">Chaining is enabled. Select preferred speaker roles in <a href="#" onclick="beo.showExtension('channels');">channel settings.</a></p>
@@ -30,7 +30,7 @@
 		<p>If your speaker uses more than two amplifier outputs, playing in stereo is not possible with them using only one amplifier.</p>
 		<h2>How It Works</h2>
 		<p>The chaining feature allows you to connect two amplifiers with an <strong>optical audio cable</strong> so that they work together, each powering one speaker. 
-		<p>When chained, one of the speakers is the master speaker that receives sound from your sources. The master speaker will then relay the sound to the slave speaker.</p>
+		<p>When chained, one of the speakers is the primary speaker that receives sound from your sources. The primary speaker will then relay the sound to the secondary speaker.</p>
 		
 		<div class="ask-buttons">
 			
@@ -47,7 +47,7 @@
 			<li>Speaker equaliser or crossover settings are changed</li>
 			<li>A DSP program is installed or upgraded</li>
 		</ul>
-		<p>These settings can't be synchronised over the optical connection. To make sure both speakers behave and sound the same, set up the slave amplifier and chaining again.</p>
+		<p>These settings can't be synchronised over the optical connection. To make sure both speakers behave and sound the same, set up the secondary amplifier and chaining again.</p>
 		<div class="ask-buttons">
 			
 			<div class="button pill black default cancel" onclick="beo.ask();">Dismiss</div>
@@ -68,9 +68,9 @@
 						<div class="header-image" style="background-image: url(product-images/beocreate-4ca-mk1.png);"></div>
 					</div>
 					<div class="menu-content">
-						<h1>Set up slave amplifier</h1>
-						<p class="margin-top">One amplifier needs to be set up to work without the Raspberry Pi. This will be used as the slave amplifier.</p>
-						<p>If you have already set up the slave amplifier, you can <a href="#" onclick="daisy_chain.nextStep(true);">connect it now.</a></p>
+						<h1>Set up secondary amplifier</h1>
+						<p class="margin-top">One amplifier needs to be set up to work without the Raspberry Pi. This will be used as the secondary amplifier.</p>
+						<p>If you have already set up the secondary amplifier, you can <a href="#" onclick="daisy_chain.nextStep(true);">connect it now.</a></p>
 					</div>
 					
 					<div class="image-cacher">
@@ -95,7 +95,7 @@
 					</div>
 					<div class="menu-content">
 						<h1>Move Raspberry Pi</h1>
-						<p class="margin-top">Remove the Raspberry Pi from the current amplifier and connect it to the other one. This will become the new master amplifier.</p>
+						<p class="margin-top">Remove the Raspberry Pi from the current amplifier and connect it to the other one. This will become the new primary amplifier.</p>
 					</div>
 				</div>
 				
@@ -105,7 +105,7 @@
 					</div>
 					<div class="menu-content">
 						<h1>Connect together</h1>
-						<p class="margin-top">Connect an optical audio cable from the <strong>output</strong> of the master amplifier (the one with Raspberry Pi) to the <strong>input</strong> of the slave (the one without).</p>
+						<p class="margin-top">Connect an optical audio cable from the <strong>output</strong> of the primary amplifier (the one with Raspberry Pi) to the <strong>input</strong> of the secondary amplifier (the one without).</p>
 						<p>The output is covered by a white flap, the input has a removable cap.</p>
 					</div>
 				</div>
@@ -116,10 +116,10 @@
 					</div>
 					<div class="menu-content">
 						<h1>Power up</h1>
-						<p class="margin-top preparation">Connect both speakers to power. The new master amplifier will be automatically set up, which will take a moment.</p>
+						<p class="margin-top preparation">Connect both speakers to power. The new primary amplifier will be automatically set up, which will take a moment.</p>
 						<p class="margin-top no-preparation">Connect the other speaker to power.</p>
 						<p>The chain is then complete and you can select the preferred speaker roles in Channels.</p>
-						<p class="loading hidden" id="daisy-chain-waiting-for-master">Waiting for the master speaker...</p>
+						<p class="loading hidden" id="daisy-chain-waiting-for-master">Waiting for the primary speaker...</p>
 					</div>
 				</div>
 			</div>	

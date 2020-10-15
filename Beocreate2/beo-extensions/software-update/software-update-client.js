@@ -25,7 +25,7 @@ $(document).on("software-update", function(event, data) {
 			$(".no-update-available").addClass("hidden");
 		} else {
 			$(".checking-for-update").addClass("hidden");
-			if (errorsChecking && !mostRecentTrack) {
+			if (errorsChecking && !mostRecentTrack && checkedSuccessfully <= 2) {
 				$(".update-check-error").removeClass("hidden");
 			} else if (!mostRecentTrack) {
 				$(".no-update-available").removeClass("hidden");
@@ -40,8 +40,10 @@ $(document).on("software-update", function(event, data) {
 			mostRecentTrack = null;
 			mostRecentVersion = 0;
 			errorsChecking = 0;
+			checkedSuccessfully = 0;
 			for (track in versions) {
 				if (versions[track].error) errorsChecking++;
+				if (versions[track].lastChecked) checkedSuccessfully++;
 				if (versions[track].version) {
 					if (parseInt(versions[track].version) > mostRecentVersion) {
 						mostRecentVersion = parseInt(versions[track].version);

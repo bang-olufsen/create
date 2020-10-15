@@ -208,7 +208,7 @@ function prepareMenus() {
 	sortedExtensions.sort(function(a, b) {
 		nameA = (a.sortName) ? a.sortName : a.name;
 		nameB = (b.sortName) ? b.sortName : b.name;
-		return nameA > nameB;
+		return nameA > nameB ? 1 : -1;
 	});
 	
 	// Add submenus based on the sort order.

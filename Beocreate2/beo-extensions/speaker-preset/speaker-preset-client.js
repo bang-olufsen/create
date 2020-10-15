@@ -114,7 +114,7 @@ $(document).on("speaker-preset", function(event, data) {
 							menuOptions = {
 								label: presetPreview[0],
 								onclick: 'speaker_preset.toggleSetting(\''+soundAdjustment+'\');',
-								icon: $("#"+soundAdjustment).attr("data-asset-path")+"/symbols-black/"+$("#"+soundAdjustment).attr("data-icon"),
+								icon: extensions[soundAdjustment].assetPath+"/symbols-black/"+extensions[soundAdjustment].icon,
 								toggle: true,
 								twoRows: true,
 								customMarkup: presetPreview[1],

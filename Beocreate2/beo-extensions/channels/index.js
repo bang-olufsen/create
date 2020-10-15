@@ -478,7 +478,6 @@ function checkSettings(theSettings) {
 			}
 			
 			if (theSettings[channel].invert != undefined) {
-				console.log(channel, theSettings[channel].invert);
 				if (canControlChannels[channel].invert != false) {
 					compatibilityIssues[channel].invert = 0;
 				} else {

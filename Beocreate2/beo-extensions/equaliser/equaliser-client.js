@@ -177,66 +177,68 @@ function showEqualiser(theEqualiser) {
 }
 
 function loadFiltersForChannel(channel, filtersToLoad, newFilterIndex = null) {
-	dspFilters[channel] = filtersToLoad;
-	channelIndex = channelsToUse.indexOf(channel);
-	if (channel != selectedChannel) {
-		show = (showAllChannels) ? true : false;
-		faded = true;
-	} else {
-		show = true;
-		faded = false;
-	}
-	eqGraph.store([channelIndex], {colour: channelIndex, clearData: true, faded: faded, show: show});
-	uiFilters[channel] = [];
-	if (dspFilters[channel].length == 0) {
-		eqGraph.store([channelIndex], {coefficients: [1,0,0,1,0,0]});
-	} else {
-		for (var i = 0; i < dspFilters[channel].length; i++) {
-			gainAtFc = calculateFilter(channel, i);
-			filter = dspFilters[channel][i];
-			
-			if (filter.a1 != undefined &&
-				filter.a2 != undefined &&
-				filter.b0 != undefined &&
-				filter.b1 != undefined &&
-				filter.b2 != undefined) {
-				// We have coefficients. Expects A0 to always be 1.
-				positionUIFilter(true, channel, i, "coeffs", filter, null, newFilterIndex);
-			} else if (filter.type != undefined) {
-				// Parametric filter. Generate coefficients based on filter type.
+	if (canControlEqualiser[channel]) {
+		dspFilters[channel] = filtersToLoad;
+		channelIndex = channelsToUse.indexOf(channel);
+		if (channel != selectedChannel) {
+			show = (showAllChannels) ? true : false;
+			faded = true;
+		} else {
+			show = true;
+			faded = false;
+		}
+		eqGraph.store([channelIndex], {colour: channelIndex, clearData: true, faded: faded, show: show});
+		uiFilters[channel] = [];
+		if (dspFilters[channel].length == 0) {
+			eqGraph.store([channelIndex], {coefficients: [1,0,0,1,0,0]});
+		} else {
+			for (var i = 0; i < dspFilters[channel].length; i++) {
+				gainAtFc = calculateFilter(channel, i);
+				filter = dspFilters[channel][i];
 				
-				switch (filter.type) {
-					case "peak":
-						if (filter.frequency != undefined &&
-						 	filter.Q != undefined && 
-						 	filter.gain != undefined) {
-							positionUIFilter(true, channel, i, "peak", filter, gainAtFc, newFilterIndex);
-						}
-						break;
-					case "lowShelf":
-						if (filter.frequency != undefined &&
-						 	filter.Q != undefined && 
-						 	filter.gain != undefined) {
-							positionUIFilter(true, channel, i, "lowShelf", filter, gainAtFc, newFilterIndex);
-						}
-						break;
-					case "highShelf":
-						if (filter.frequency != undefined &&
-						 	filter.Q != undefined && 
-						 	filter.gain != undefined) {
-							positionUIFilter(true, channel, i, "highShelf", filter, gainAtFc, newFilterIndex);
-						}
-						break;
-					case "lowPass":
-						if (filter.frequency != undefined) {
-							positionUIFilter(true, channel, i, "lowPass", filter, gainAtFc, newFilterIndex);
-						}
-						break;
-					case "highPass":
-						if (filter.frequency != undefined) {
-							positionUIFilter(true, channel, i, "highPass", filter, gainAtFc, newFilterIndex);
-						}
-						break;
+				if (filter.a1 != undefined &&
+					filter.a2 != undefined &&
+					filter.b0 != undefined &&
+					filter.b1 != undefined &&
+					filter.b2 != undefined) {
+					// We have coefficients. Expects A0 to always be 1.
+					positionUIFilter(true, channel, i, "coeffs", filter, null, newFilterIndex);
+				} else if (filter.type != undefined) {
+					// Parametric filter. Generate coefficients based on filter type.
+					
+					switch (filter.type) {
+						case "peak":
+							if (filter.frequency != undefined &&
+							 	filter.Q != undefined && 
+							 	filter.gain != undefined) {
+								positionUIFilter(true, channel, i, "peak", filter, gainAtFc, newFilterIndex);
+							}
+							break;
+						case "lowShelf":
+							if (filter.frequency != undefined &&
+							 	filter.Q != undefined && 
+							 	filter.gain != undefined) {
+								positionUIFilter(true, channel, i, "lowShelf", filter, gainAtFc, newFilterIndex);
+							}
+							break;
+						case "highShelf":
+							if (filter.frequency != undefined &&
+							 	filter.Q != undefined && 
+							 	filter.gain != undefined) {
+								positionUIFilter(true, channel, i, "highShelf", filter, gainAtFc, newFilterIndex);
+							}
+							break;
+						case "lowPass":
+							if (filter.frequency != undefined) {
+								positionUIFilter(true, channel, i, "lowPass", filter, gainAtFc, newFilterIndex);
+							}
+							break;
+						case "highPass":
+							if (filter.frequency != undefined) {
+								positionUIFilter(true, channel, i, "highPass", filter, gainAtFc, newFilterIndex);
+							}
+							break;
+					}
 				}
 			}
 		}
@@ -1655,7 +1657,9 @@ function groupChannels(confirmed, updateOnly = false) {
 			$("#equaliser-tab-a, #equaliser-tab-b").addClass("hidden");
 			$("#equaliser-tab-group-ab").removeClass("hidden");
 		} else {
-			$("#equaliser-tab-a, #equaliser-tab-b").removeClass("hidden");
+			(canControlEqualiser.a) ? $("#equaliser-tab-a").removeClass("hidden") : $("#equaliser-tab-a").addClass("hidden");
+			(canControlEqualiser.b) ? $("#equaliser-tab-b").removeClass("hidden") : $("#equaliser-tab-b").addClass("hidden");
+			//$("#equaliser-tab-a, #equaliser-tab-b").removeClass("hidden");
 			$("#equaliser-tab-group-ab").addClass("hidden");
 		}
 		if (groupCD) {
@@ -1666,7 +1670,9 @@ function groupChannels(confirmed, updateOnly = false) {
 			$("#equaliser-tab-c, #equaliser-tab-d").addClass("hidden");
 			$("#equaliser-tab-group-cd").removeClass("hidden");
 		} else {
-			$("#equaliser-tab-c, #equaliser-tab-d").removeClass("hidden");
+			(canControlEqualiser.c) ? $("#equaliser-tab-c").removeClass("hidden") : $("#equaliser-tab-c").addClass("hidden");
+			(canControlEqualiser.d) ? $("#equaliser-tab-d").removeClass("hidden") : $("#equaliser-tab-d").addClass("hidden");
+			//$("#equaliser-tab-c, #equaliser-tab-d").removeClass("hidden");
 			$("#equaliser-tab-group-cd").addClass("hidden");
 		}
 		if (groupLR) {

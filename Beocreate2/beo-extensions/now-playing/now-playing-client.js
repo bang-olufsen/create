@@ -375,6 +375,9 @@ function showNowPlayingNotification() {
 
 function determinePicture() {
 	if (nowPlayingController.metadata.picture &&
+		nowPlayingController.metadata.picture.startsWith("http")) {
+		picture = nowPlayingController.metadata.picture;
+	} else if (nowPlayingController.metadata.picture &&
 		!nowPlayingController.metadata.picture.startsWith("file://")) {
 		picture = window.location.protocol+"//"+window.location.hostname+":"+nowPlayingController.metadata.picturePort+"/"+nowPlayingController.metadata.picture;
 		if (!nowPlayingController.placeholderPicture) setPlaceholderArtwork();

@@ -375,7 +375,7 @@ function showNowPlayingNotification() {
 
 function determinePicture() {
 	if (nowPlayingController.metadata.picture &&
-		nowPlayingController.metadata.picture.startsWith("http")) {
+		(nowPlayingController.metadata.picture.startsWith("http://") || nowPlayingController.metadata.picture.startsWith("https://")) {
 		picture = nowPlayingController.metadata.picture;
 	} else if (nowPlayingController.metadata.picture &&
 		!nowPlayingController.metadata.picture.startsWith("file://")) {

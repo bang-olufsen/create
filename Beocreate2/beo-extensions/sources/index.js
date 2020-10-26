@@ -291,6 +291,12 @@ function processAudioControlStatus(overview) {
 				if (overview.players[i].supported_commands) {
 					if (allSources[extension].allowChangingTransportControls) {
 						allSources[extension].transportControls = overview.players[i].supported_commands;
+						if (allSources[extension].transportControls &&
+							typeof allSources[extension].transportControls == "object") {
+							for (tc in allSources[extension].transportControls) {
+								allSources[extension].transportControls[tc] = allSources[extension].transportControls[tc].toLowerCase();
+							}
+						}
 					}
 					if (overview.players[i].supported_commands.indexOf("play") != -1) {
 						allSources[extension].startable = true;
@@ -408,8 +414,8 @@ function processAudioControlMetadata(metadata) {
 
 function matchAudioControlSourceToExtension(acSource, data = null) {
 	// Determine which extension this belongs to.
-	extension = null;
-	childSource = null;
+	var extension = null;
+	var childSource = null;
 	if (acSource) {
 		if (allSources[acSource.toLowerCase()]) {
 			extension = acSource.toLowerCase();
@@ -642,6 +648,12 @@ function setSourceOptions(extension, options, noUpdate) {
 				allSources[extension].transportControls = false;
 			} else {
 				allSources[extension].transportControls = options.transportControls;
+				if (allSources[extension].transportControls &&
+					typeof allSources[extension].transportControls == "object") {
+					for (tc in allSources[extension].transportControls) {
+						allSources[extension].transportControls[tc] = allSources[extension].transportControls[tc].toLowerCase();
+					}
+				}
 			}
 		}
 		if (options.sortName) allSources[extension].sortName = options.sortName;

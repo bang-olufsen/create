@@ -1216,6 +1216,7 @@ var listingNAS = false;
 async function listNAS() {
 	if (!listingNAS) {
 		if (debug) console.log("Looking for NAS devices with SMB protocol...");
+		beo.sendToUI("mpd", "discoveringNAS", {content: true});
 		listingNAS = true;
 		discoveredNAS = {};
 		netbiosLookupRaw = null;
@@ -1250,6 +1251,7 @@ async function listNAS() {
 		if (namesUpdated) beo.sendToUI("mpd", "mountedStorage", {storage: storageList});
 		beo.sendToUI("mpd", "discoveredNAS", {storage: discoveredNAS});
 		startDiscovery();
+		beo.sendToUI("mpd", "discoveringNAS");
 		listingNAS = false;
 	}
 }
@@ -1332,7 +1334,7 @@ async function getNASShares(details) {
 			address = details.server.addresses[0];
 		}
 		try {
-			if (!details.server.netbios) {
+			if (!details.server.netbios && !details.withIP) {
 				try {
 					netbiosRaw = await execPromise("nmblookup -A "+details.server.addresses[0]+" | grep '<20>' | awk '{print $1}'");
 					details.server.netbios = netbiosRaw.stdout.trim();
@@ -1340,7 +1342,7 @@ async function getNASShares(details) {
 					details.server.netbios = null;
 				}
 			}
-			if (details.server.netbios) {
+			if (details.server.netbios && !details.withIP) {
 				address = details.server.netbios;
 			} else {
 				address = details.server.addresses[0];

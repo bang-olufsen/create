@@ -70,6 +70,14 @@ $(document).on("mpd", function(event, data) {
 		}
 	}
 	
+	if (data.header == "discoveringNAS") {
+		if (data.content) {
+			$("#mpd-discovering-storage").removeClass("hidden");
+		} else {
+			$("#mpd-discovering-storage").addClass("hidden");
+		}
+	}
+	
 	if (data.header == "shares" && data.content && 
 		data.content.server && data.content.shares) {
 		if (!data.content.errors) {
@@ -133,7 +141,7 @@ function toggleEnabled() {
 
 var noReset = false;
 var shareListTimeout = null;
-function addNAS(stage, data) {
+function addNAS(stage, data, withIP = false) {
 	switch (stage) {
 		case 0:
 			// Cancel.
@@ -145,10 +153,10 @@ function addNAS(stage, data) {
 			beo.startTextInput(3, "Server Login", "Enter user name and password to log into '"+data+"'.", 
 			{text: "", placeholders: {text: "User name", password: "Password"}, minLength: {text: 1}}, function(input) {
 				if (input && input.text && input.password) {
-					if (discoveredNAS[data]) {
-						beo.sendToProduct("mpd", "getNASShares", {server: discoveredNAS[data], username: input.text, password: input.password});
+					if (!withIP && discoveredNAS[data]) {
+						beo.sendToProduct("mpd", "getNASShares", {server: discoveredNAS[data], username: input.text, password: input.password, withIP: false});
 					} else {
-						beo.sendToProduct("mpd", "getNASShares", {server: {addresses: [data]}, username: input.text, password: input.password});
+						beo.sendToProduct("mpd", "getNASShares", {server: {addresses: [data]}, username: input.text, password: input.password, withIP: true});
 					}
 					beo.notify({title: "Waiting for server...", message: "Please wait.", icon: "attention", timeout: false});
 				}
@@ -188,7 +196,7 @@ function addNAS(stage, data) {
 				if (input) {
 					if (input.text) {
 						if (isValidIP(input.text)) {
-							addNAS(1, input.text);
+							addNAS(1, input.text, true);
 						} else {
 							beo.notify({title: "IP address is not valid", message: "The address must contain four numbers separated by periods.", timeout: false, buttonTitle: "Close", buttonAction: "close"});
 						}

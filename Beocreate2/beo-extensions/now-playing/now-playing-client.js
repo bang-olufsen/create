@@ -151,7 +151,7 @@ var nowPlayingController = new Vue({
 				var otherDimensions = this.pictureADimensions;
 			}
 			var switchView = false;
-			if (event.target.src == this.extPicture) {
+			if (event.target.src == encodeURI(this.extPicture)) {
 				switch (this.extPictureMode) {
 					case "always":
 						switchView = true;
@@ -171,7 +171,7 @@ var nowPlayingController = new Vue({
 						}
 						break;
 				}
-			} else if (event.target.src == this.picture) {
+			} else if (event.target.src == encodeURI(this.picture)) {
 				switch (this.extPictureMode) {
 					case "always":
 						if (!this.extPicture) switchView = true;
@@ -183,6 +183,7 @@ var nowPlayingController = new Vue({
 							if (event.target.naturalWidth > otherDimensions[0] &&
 								event.target.naturalHeight > otherDimensions[1]) {
 								switchView = true;
+								console.log("Switching to a higher resolution picture.");
 							}
 						}
 						break;

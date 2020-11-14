@@ -82,6 +82,9 @@ body {
 	--shadow-up: linear-gradient(to top, hsl(0, 0%, 0%) 0%, hsla(0, 0%, 0%, 0.738) 19%, hsla(0, 0%, 0%, 0.541) 34%, hsla(0, 0%, 0%, 0.382) 47%, hsla(0, 0%, 0%, 0.278) 56.5%, hsla(0, 0%, 0%, 0.194) 65%, hsla(0, 0%, 0%, 0.126) 73%, hsla(0, 0%, 0%, 0.075) 80.2%, hsla(0, 0%, 0%, 0.042) 86.1%, hsla(0, 0%, 0%, 0.021) 91%, hsla(0, 0%, 0%, 0.008) 95.2%, hsla(0, 0%, 0%, 0.002) 98.2%, hsla(0, 0%, 0%, 0) 100%);
 	--shadow-opacity: 0;
 	--font-spacing-compensation: 0.10em;
+	
+	user-select: none;
+	-webkit-user-select: none;
 }
 
 body.dark {
@@ -789,11 +792,16 @@ header.dark.transparent:not(.opaque) {
 header.aux {
 	position: sticky;
 	position: -webkit-sticky;
+	/*position: fixed;*/
 	top: 0;
+	/*bottom: 0;*/
 	z-index: 2;
 	background-color: var(--main-bg);
 	justify-content: flex-start;
+	/*left: var(--sidebar-width);
+	right: 0;*/
 }
+
 
 /* @end */
 
@@ -4191,6 +4199,7 @@ header.aux {
 
 body {
 	--sidebar-padding: 5vw;
+	--sidebar-width: 37vw;
 }
 
 
@@ -4208,7 +4217,8 @@ section header.transparent:not(.always-top):not(.aux) {
 	color: currentColor;
 }
 
-section header:not(.always-top):not(.aux) {
+section header:not(.always-top):not(.aux),
+.as-sidebar {
 	display: flex;
 	align-items: flex-start;
 	flex-direction: column;
@@ -4237,11 +4247,12 @@ section header:not(.always-top):not(.aux):after {
 	top: 0;
 	left: 0;
 	height: auto;
-	width: 37vw;
+	width: var(--sidebar-width);
 	box-sizing: border-box;
 	box-shadow: 1px 0 var(--menu-line);
 	padding-top: var(--sidebar-padding);
 	padding-bottom: var(--sidebar-padding);
+	z-index: 3;
 }
 
 header:not(.always-top) .back-button {
@@ -4329,7 +4340,7 @@ header.aux .search-container {
 
 .menu-screen:not(.full-width),
 .menu-content-wrap.no-full-width {
-	padding-left: 37vw;
+	padding-left: var(--sidebar-width);
 }
 
 .menu-split	{
@@ -4342,7 +4353,7 @@ header.aux .search-container {
 }
 
 .menu-content-wrap.left {
-	width: 37vw;
+	width: var(--sidebar-width);
 }
 
 .menu-content-wrap.left:not(.no-divider) {
@@ -4401,7 +4412,7 @@ h1.large-title {
 .dark.setup .setup-navigation {
 	box-shadow: none;
 	justify-content: flex-end;
-	left: 37vw;
+	left: var(--sidebar-width);
 }
 
 .setup .menu-screen:not(.no-setup-shadow):after {
@@ -4423,7 +4434,8 @@ h1.large-title {
 	padding-top: 10px;
 }
 
-.setup section header:not(.always-top) {
+.setup section header:not(.always-top),
+.setup .as-sidebar {
 	margin-bottom: -65px;
 }
 
@@ -4543,6 +4555,7 @@ section header:not(.always-top) h1 {
 
 body {
 	--sidebar-padding: 45px;
+	--sidebar-width: 330px;
 }
 
 .menu-screen .menu-content:not(.wide), 
@@ -4555,25 +4568,26 @@ body {
 
 .as-sidebar, 
 .menu-screen header:not(.always-top):not(.aux) {
-	width: 330px;
+	width: var(--sidebar-width);
 }
 
-.menu-screen header:not(.always-top):not(.aux) {
+.menu-screen header:not(.always-top):not(.aux),
+.as-sidebar {
 	padding-top: 45px;
 	padding-bottom: 45px;
 }
 
 .menu-screen:not(.full-width),
 .menu-content-wrap.no-full-width {
-	padding-left: 330px;
+	padding-left: var(--sidebar-width);
 }
 
 .menu-content-wrap.right {
-	width: calc(100vw - 330px);
+	width: calc(100vw - var(--sidebar-width));
 }
 
 .menu-content-wrap.left {
-	width: 330px;
+	width: var(--sidebar-width);
 }
 
 .setup .setup-navigation {

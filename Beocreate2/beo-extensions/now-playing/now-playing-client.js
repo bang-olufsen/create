@@ -13,7 +13,9 @@ var nowPlayingData = {
 	picture: null,
 	extPicture: null,
 	pictureA: null,
+	pictureASuccess: false,
 	pictureB: null,
+	pictureBSuccess: false,
 	pictureCounter: 0,
 	pictureADimensions: [0,0],
 	pictureBDimensions: [0,0],
@@ -146,9 +148,11 @@ var nowPlayingController = new Vue({
 			if (view == "a") {
 				this.pictureADimensions = [event.target.naturalWidth, event.target.naturalHeight];
 				var otherDimensions = this.pictureBDimensions;
+				this.pictureASuccess = true;
 			} else {
 				this.pictureBDimensions = [event.target.naturalWidth, event.target.naturalHeight];
 				var otherDimensions = this.pictureADimensions;
+				this.pictureBSuccess = true;
 			}
 			var switchView = false;
 			if (event.target.src == encodeURI(this.extPicture)) {
@@ -197,20 +201,22 @@ var nowPlayingController = new Vue({
 				this.pictureView = view;
 			}
 		},
-		pictureError: function(event) {
+		pictureError: function(event, view) {
 			console.error("Error loading picture: "+event.target.src);
 			var switchToPlaceholder = false;
 			if (view == "a") {
 				this.pictureADimensions = [0,0];
 				this.pictureA = null;
 				if (!this.pictureB) switchToPlaceholder = true;
+				this.pictureASuccess = false;
 			} else {
 				this.pictureBDimensions = [0,0];
 				this.pictureB = null;
 				if (!this.pictureA) switchToPlaceholder = true;
+				this.pictureBSuccess = false;
 			}
 			if (switchToPlaceholder) {
-				setPlaceholderArtwork();
+				now_playing.setPlaceholderArtwork();
 				this.pictureView = null;
 			}
 		},
@@ -298,6 +304,8 @@ $(document).on("sources", function(event, data) {
 					} else {
 						nowPlayingController.transportControls = allSources[focusedSource].transportControls;
 					}
+				} else {
+					nowPlayingController.transportControls = [];
 				}
 				if (nowPlayingController.queueSource != focusedSource) nowPlayingController.queueSource = null;
 			} else {
@@ -387,15 +395,31 @@ function determinePicture() {
 		picture = null;
 	}
 	
-	
 	if (!picture) {
 		nowPlayingController.picture = null;
 		setPlaceholderArtwork();
 	} else {
-		if (nowPlayingController.picture != picture) {
+					
+		if (!nowPlayingController.picture || nowPlayingController.picture != picture) {
 			if (nowPlayingController.pictureView != "a") { // Load a picture to the currently hidden view.
-				nowPlayingController.pictureA = picture;
+				if (nowPlayingController.pictureA == picture) {
+					if (nowPlayingController.pictureASuccess) { 
+						nowPlayingController.pictureView = "a";
+					} else {
+						setPlaceholderArtwork();
+					}
+				} else {
+					nowPlayingController.pictureA = picture;
+				}
+				
 			} else {
+				if (nowPlayingController.pictureB == picture) {
+					if (nowPlayingController.pictureBSuccess) {
+						nowPlayingController.pictureView = "b";
+					} else {
+						setPlaceholderArtwork();
+					}
+				}
 				nowPlayingController.pictureB = picture;
 			}
 			nowPlayingController.picture = picture;
@@ -422,9 +446,23 @@ function determinePicture() {
 				nowPlayingController.pictureA) {
 					nowPlayingController.pictureB = extPicture; // If this view is still empty, load it here instead (freshly loaded page).
 				} else {
+					if (nowPlayingController.pictureA == extPicture) {
+						if (nowPlayingController.pictureASuccess) { 
+							nowPlayingController.pictureView = "a";
+						} else {
+							setPlaceholderArtwork();
+						}
+					}
 					nowPlayingController.pictureA = extPicture;
 				}
 			} else {
+				if (nowPlayingController.pictureB == extPicture) {
+					if (nowPlayingController.pictureBSuccess) {
+						nowPlayingController.pictureView = "b";
+					} else {
+						setPlaceholderArtwork();
+					}
+				}
 				nowPlayingController.pictureB = extPicture;
 			}
 		}
@@ -708,6 +746,7 @@ return {
 	transport: transport,
 	toggleLove: toggleLove,
 	testPlaceholderArtwork: testPlaceholderArtwork,
+	setPlaceholderArtwork: setPlaceholderArtwork,
 	setUseExternalArtwork: setUseExternalArtwork,
 	evaluateTextScrolling: evaluateTextScrolling,
 	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable},

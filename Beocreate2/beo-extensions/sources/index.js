@@ -388,9 +388,17 @@ function processAudioControlMetadata(metadata) {
 			}
 
 			if (metadata.playerState == "playing") {
-				sourceActivated((childSource && allSources[childSource]) ? childSource : extension);
+				if (childSource && allSources[childSource]) {
+					sourceActivated(childSource);
+				} else if (extension) {
+					sourceActivated(extension);
+				}
 			} else {
-				sourceDeactivated((childSource && allSources[childSource]) ? childSource : extension);
+				if (childSource && allSources[childSource]) {
+					sourceDeactivated(childSource);
+				} else if (extension) {
+					sourceDeactivated(extension);
+				}
 			}
 			
 			//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
@@ -476,7 +484,8 @@ function transport(action, overrideHifiberry = false) {
 
 
 function sourceActivated(extension, playerState) {
-	if (allSources[extension] && 
+	if (extension &&
+		allSources[extension] && 
 		allSources[extension].enabled && 
 		!allSources[extension].backgroundService) {
 		if (allSources[extension].focusIndex)  {
@@ -497,21 +506,34 @@ function sourceActivated(extension, playerState) {
 		
 		// Stop currently active sources, if the source demands it.
 		if (allSources[extension].stopOthers) {
-			if (allSources[currentSource] && 
+			/*if (allSources[currentSource] && 
 				allSources[currentSource].usesHifiberryControl && 
 				!allSources[extension].usesHifiberryControl) {
-				if (!allSources[extension].parentSource || !allSources[allSources[extension].parentSource].usesHifiberryControl) {
+				
+				if (!allSources[extension].parentSource || 
+					(allSources[allSources[extension].parentSource] && allSources[allSources[extension].parentSource].usesHifiberryControl)) {
 					// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
 					if (debug) console.log("Pausing sources under HiFiBerry control...");
 					audioControl("pause");
 				}
-			}
+			}*/
+			var hifiberryPaused = false;
 			for (source in allSources) {
 				if (source != extension && 
 					allSources[source].active) {
-					if (!allSources[source].usesHifiberryControl) {
+					if (allSources[source].parentSource && allSources[allSources[source].parentSource]) {
+						var theSource = allSources[source].parentSource;
+					} else {
+						var theSource = source;
+					}
+					if (!allSources[theSource].usesHifiberryControl) {
 						// Stop all other non-AudioControl sources.
 						beo.bus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
+					} else if (!hifiberryPaused && !allSources[extension].usesHifiberryControl) {
+						// If the new source isn't part of AudioControl, stop other AudioControl sources manually (issue command once).
+						if (debug) console.log("Pausing sources under HiFiBerry control...");
+						hifiberryPaused = true;
+						audioControl("pause");
 					}
 				}
 			}
@@ -534,7 +556,8 @@ function sourceActivated(extension, playerState) {
 }
 
 function sourceDeactivated(extension, playerState) {
-	if (allSources[extension] && allSources[extension].active) {
+	if (extension &&
+		allSources[extension] && allSources[extension].active) {
 		allSources[extension].active = false;
 		if (!allSources[extension].transportControls && Object.keys(allSources[extension].metadata).length == 0) {
 			// Remove the focus index from the source if it has no metadata and transport controls.

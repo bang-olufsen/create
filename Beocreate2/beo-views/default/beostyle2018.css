@@ -99,7 +99,7 @@ body.dark {
 	--bottom-bg: #000;
 	--menu-line: rgba(255,255,255,0.1);
 	--menu-line-opaque: rgb(71,71,71);
-	--alternate-bg: rgba(255,255,255,255.03);
+	--alternate-bg: rgba(255,255,255,0.03);
 }
 
 body {
@@ -424,6 +424,10 @@ nav.bar .nav-spacer {
 	height: 50px;
 }
 
+nav.bar .nav-spacer.end {
+	width: 60px;
+}
+
 .touch nav.bar .nav-spacer {
 	width: max(10px, env(safe-area-inset-left));
 }
@@ -448,6 +452,33 @@ nav.bar .reload-button {
 	right: 0;
 	top: 0;
 	height: 50px;
+}
+
+nav.bar #nav-bar-mode-button-wrap {
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	width: 49px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: inherit;
+	transition: box-shadow 0.3s ease;
+	box-shadow: -1px 0px 0px var(--alternate-bg);
+	color: var(--main-font-colour);
+}
+
+nav.bar:hover #nav-bar-mode-button-wrap {
+	box-shadow: -1px 0px 0px var(--menu-line);
+}
+
+nav.bar #nav-bar-mode-button {
+	opacity: 0.2;
+}
+
+nav.bar:hover #nav-bar-mode-button {
+	opacity: 1;
 }
 
 /* @end */

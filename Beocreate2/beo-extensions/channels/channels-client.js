@@ -253,10 +253,10 @@ function showSimpleRoleSelection(roleSelection) {
 			$("#simple-stereo-control .button").text("Stereo").removeClass("selected");
 			break;
 		case "stereo":
-			$("#simple-stereo-control .button").html('L&nbsp;<div class="symbol" style="-webkit-mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg); mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg);"></div>&nbsp;R').addClass("selected");
+			$("#simple-stereo-control .button").html('L&nbsp;<div class="symbol" style="-webkit-mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg); mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg);"></div>&nbsp;R').addClass("selected");
 			break;
 		case "stereo-rev":
-			$("#simple-stereo-control .button").html('R&nbsp;<div class="symbol" style="-webkit-mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg); mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg);"></div>&nbsp;L').addClass("selected");
+			$("#simple-stereo-control .button").html('R&nbsp;<div class="symbol" style="-webkit-mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg); mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg);"></div>&nbsp;L').addClass("selected");
 			break;
 		default:
 			$("#simple-stereo-control .button").text("Stereo").removeClass("selected");

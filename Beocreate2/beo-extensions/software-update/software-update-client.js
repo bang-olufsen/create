@@ -210,7 +210,7 @@ $(document).on("software-update", function(event, data) {
 				notifyOptions.message = "The product has been updated and it will now restart to finish the process. This may take some time, please wait.";
 				beo.sendToProductView({header: "autoReconnect", content: {status: "updateComplete", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				noConnectionNotifications = true;
-				maxConnectionAttempts = 30;
+				maxConnectionAttempts = 60;
 				reloadOnReconnect = true;
 				break;
 			case "doneSimulation":

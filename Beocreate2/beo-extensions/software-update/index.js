@@ -57,7 +57,8 @@ beo.bus.on('general', function(event) {
 			checkForPreviousVersion();
 		}
 		
-		if (event.content.extension == "general-settings") {
+		if (event.content.extension == "general-settings" ||
+			event.content.extension == "product-information") {
 			var hasUpdates = 0;
 			for (track in versions) {
 				if (versions[track].version) hasUpdates = 1;

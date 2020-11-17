@@ -177,11 +177,17 @@ document.onkeydown = function(evt) {
     }
 };
 
+var mainMenuExtension = null;
+var navigation = [];
 
 function prepareMenus() {
 	console.log("Preparing menus...");
 	
-	$("nav.bar .nav-content").append('<div class="nav-spacer"></div>');
+	if (navigationSets && navigationSets.length && navigationSets[0].items) {
+		// Take first set as the main navigation.
+		navigation = [].concat(navigationSets[0].items);
+	}
+	
 
 	// List items specified in the manifest for navigation.
 	var navExtensions = [];
@@ -299,21 +305,38 @@ function prepareMenus() {
 	// Add top-level menus, first from the navigation manifest and then all "left-overs".
 	navigation = navigation.concat(unplacedExtensions);
 	
+	var navDestination = 0;
+	if (document.querySelector(".beo-dynamic-menu.main-menu")) {
+		navDestination = 1;
+		mainMenuExtension = document.querySelector(".beo-dynamic-menu.main-menu").closest(".menu-screen").attributes.id.value;
+	}
+	if (navDestination == 0) {
+		$("nav.bar .nav-content").append('<div class="nav-spacer begin"></div>');
+	}
+	// 0 = Menus go to the top navigation bar as before, 1 = menus go to the "main menu" space inside an extension. Top navigation bar is then populated with shortcuts.
+	
 	for (n in navigation) {
 		if (navigation[n].kind == "extension") {
 			theExtension = document.querySelector(".menu-screen#"+navigation[n].name);
 			if (theExtension) {
+				var isMainMenu = (navigation[n].name == mainMenuExtension) ? true : false; // Checks if this is the main menu. It will always appear in top bar.
+				
 				iconName = (theExtension.attributes["data-icon"]) ? theExtension.attributes["data-icon"].value : null;
 				if (hifiberryOS && theExtension.attributes["data-icon-hifiberry"]) {
 					iconName = theExtension.attributes["data-icon-hifiberry"].value;
 				}
-				menuOptions = {
+				var menuOptions = {
 					onclick: 'beo.showExtension(\''+navigation[n].name+'\');',
 					icon: extensions[navigation[n].name].assetPath+"/symbols-black/"+iconName,
 					id: navigation[n].name+'-menu-item',
 					data: {"data-extension-id": navigation[n].name},
 					classes: ["nav-item"]
 				};
+				
+				if (theExtension.attributes["data-menu-value-class"]) {
+					menuOptions.valueClasses = [theExtension.attributes["data-menu-value-class"].value];
+					menuOptions.value = "";
+				}
 				
 				menuOptions.labelClasses = [""];
 				if (theExtension.attributes["data-menu-title-class"]) {
@@ -322,8 +345,14 @@ function prepareMenus() {
 				menuOptions.label = theExtension.attributes["data-menu-title"].value;
 				
 				if (!theExtension.attributes["data-hidden"]) {
-					$("nav.full .nav-content").append(createMenuItem(menuOptions));
-					$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="beo.showExtension(\''+navigation[n].name+'\');">'+menuOptions.label+'</div>');
+					
+					if (navDestination == 0) {
+						$("nav.full .nav-content").append(createMenuItem(menuOptions));
+						$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="beo.showExtension(\''+navigation[n].name+'\');">'+menuOptions.label+'</div>');
+					} else if (navDestination == 1 && !isMainMenu) {
+						menuOptions.chevron = true;
+						$(".beo-dynamic-menu.main-menu").append(createMenuItem(menuOptions));
+					}
 				}
 				
 				extensions[navigation[n].name] = Object.assign(extensions[navigation[n].name], {
@@ -334,18 +363,125 @@ function prepareMenus() {
 					namespace: (theExtension.attributes["data-namespace"]) ? theExtension.attributes["data-namespace"].value : null
 				});
 				
+				if (!isMainMenu && mainMenuExtension) extensions[navigation[n].name].parentMenu = mainMenuExtension;
+				
 				$(".menu-screen#"+navigation[n].name+" .scroll-area").first().prepend('<h1 class="large-title">'+$(".menu-screen#"+navigation[n].name+" header h1").first().text()+'</h1>'); // Duplicate title for views that use a large title.
 			}
 		} else {
-			$("nav.full .nav-content").append('<hr>');
-			$("nav.bar .nav-content").append('<div class="nav-separator"></div>');
+			if (navDestination == 0) {
+				$("nav.full .nav-content").append('<hr>');
+				$("nav.bar .nav-content").append('<div class="nav-separator"></div>');
+			} else if (navDestination == 1 && !isMainMenu) {
+				$(".beo-dynamic-menu.main-menu").append('<hr>');
+			}
 		}
 	}
 	
-	$("nav.bar .nav-content").append('<div class="nav-spacer"></div>');
+	if (navDestination == 1) {
+		prepareFavourites();
+	} else {
+		$("nav.bar .nav-content").append('<div class="nav-spacer end"></div>');
+	}
 	
 	$(document).trigger("ui", {header: "menusReady"});
 	console.log("Menus ready.");
+}
+
+var navigationMode = null;
+function prepareFavourites(navSetID) {
+	if (!navSetID) {
+		if (localStorage.beocreateSelectedNavigationSet) {
+			navSetID = localStorage.beocreateSelectedNavigationSet;
+		} else {
+			navSetID = navigationSets[0].id;
+		}
+	}
+	if (navSetID == navigationSets[0].id) {
+		favourites = navigation;
+	} else {
+		for (s in navigationSets) {
+			if (navigationSets[s].id == navSetID) favourites = navigationSets[s].items;
+		}
+	}
+	
+	var previousKind = null;
+	if (favourites[0].name && favourites[0].name != mainMenuExtension) {
+		favourites.unshift({kind: "extension", name: mainMenuExtension}, {kind: "separator"});
+	}
+	$("nav.bar .nav-content, nav.full .nav-content").empty();
+	$("nav.bar .nav-content").append('<div class="nav-spacer begin"></div>');
+	for (f in favourites) {
+		if (favourites[f].kind == "extension") {
+			var theExtension = document.querySelector(".menu-screen#"+favourites[f].name);
+			var fav = favourites[f].name;
+			if (theExtension && extensions[fav]) {
+				
+				var menuOptions = {
+					onclick: 'beo.showExtension(\''+fav+'\');',
+					icon: extensions[fav].assetPath+"/symbols-black/"+extensions[fav].icon,
+					id: fav+'-menu-item',
+					data: {"data-extension-id": fav},
+					classes: ["nav-item"]
+				};
+				
+				menuOptions.labelClasses = [""];
+				if (theExtension.attributes["data-menu-title-class"]) {
+					menuOptions.labelClasses = [theExtension.attributes["data-menu-title-class"].value];
+				}
+				menuOptions.label = theExtension.attributes["data-menu-title"].value;
+				
+				if (!theExtension.attributes["data-hidden"]) {
+					
+					$("nav.full .nav-content").append(createMenuItem(menuOptions));
+					$("nav.bar .nav-content").append('<div class="nav-item '+menuOptions.labelClasses.join(" ")+'" data-extension-id="'+menuOptions.data['data-extension-id']+'" onclick="beo.showExtension(\''+fav+'\');">'+menuOptions.label+'</div>');
+				}
+
+			}
+			previousKind = "extension";
+		} else {
+			if (previousKind && previousKind != "separator") {
+				$("nav.full .nav-content").append('<hr>');
+				$("nav.bar .nav-content").append('<div class="nav-separator"></div>');
+			}
+			previousKind = "separator";
+		}
+	}
+	$("nav.bar .nav-content").append('<div class="nav-spacer end"></div>');
+}
+
+function chooseNavigationMode(mode) {
+	if (mode == undefined) {
+		$("#navigation-mode-list").empty();
+		if (localStorage.beocreateSelectedNavigationSet) {
+			var navSetID = localStorage.beocreateSelectedNavigationSet;
+		} else {
+			var navSetID = navigationSets[0].id;
+		}
+		for (var i = 0; i < navigationSets.length; i++) {
+			var setDescription = "";
+			if (i == 0 && !navigationSets[0].name) {
+				var setName = "Main Menu";
+				if (!navigationSets[i].description) var setDescription = "Include all main menu items";
+			} else {
+				var setName = navigationSets[i].name;
+				if (navigationSets[i].description) var setDescription = navigationSets[i].description;
+			}
+			$("#navigation-mode-list").append(createMenuItem({
+				label: setName,
+				description: setDescription,
+				onclick: 'beo.chooseNavigationMode(\''+navigationSets[i].id+'\');',
+				checkmark: "left",
+				checked: (navigationSets[i].id == navSetID)
+			}));
+		}
+		ask("navigation-mode-menu");
+	} else {
+		ask();
+		localStorage.beocreateSelectedNavigationSet = mode;
+		prepareFavourites(mode);
+		showSelectedNavItem();
+		$(document).trigger("ui", {header: "navigationChanged"});
+	}
 }
 
 var configuredTabs = [];
@@ -373,6 +509,7 @@ function reloadTabIcons() {
 		$("#favourite-"+i+" span").text($("#"+tabItem.id).attr("data-menu-title"));
 	}*/
 }
+
 
 var interfaceMode = 2; // 1 = normal, 2 = compact
 
@@ -477,12 +614,13 @@ function toggleMainMenu() {
 }
 
 
-var selectedParentMenu = null;
+var immediateParentMenu = null;
+var topParentMenu = null;
 var menuState = {};
 var navigating = false;
 var extensionAnimations = 0;
 
-function showExtension(extension, direction = null, fromBackButton = false, invisibly = false) {
+function showExtension(extension, direction = null, fromBackButton = false, invisibly = false, fromNavBar = false) {
 	if (navigating) console.error("Navigation is already in progress.");
 	
 	if (isNaN(extension)) { // Selecting tab with name (from a menu item).
@@ -495,22 +633,6 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 		navigating = true;
 		oldExtension = selectedExtension;
 		
-		newTabIndex = configuredTabs.indexOf(newExtension);
-		if (newTabIndex == -1 && extensions[newExtension].parentMenu) {
-			newTabIndex = configuredTabs.indexOf(extensions[newExtension].parentMenu);
-		}
-		try {
-			document.querySelector("nav.favourites div.selected").classList.remove("selected");
-			if (newTabIndex != -1) {
-				document.querySelector("nav.favourites div#favourite-"+newTabIndex).classList.add("selected");
-			}
-		} catch (error) {
-			// No tab bar or tabs not selected.
-		}
-		
-		if (selectedParentMenu) {
-			$('nav .nav-item[data-extension-id="'+selectedParentMenu+'"]').removeClass("selected");
-		}
 		
 		var backTarget = null;
 		var backTitle = null;
@@ -537,146 +659,134 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 			var newDeepMenu = null;
 		}
 		
-		if (selectedParentMenu) $('nav .nav-item[data-extension-id="'+selectedParentMenu+'"]').removeClass("selected");
+		if (topParentMenu) $('nav .nav-item[data-extension-id="'+topParentMenu+'"]').removeClass("selected");
 		
-		if (!extensions[newExtension].parentMenu) {
-			// Top level menu.
-			if (menuState[newExtension] && menuState[newExtension].submenu) {
-				// A submenu is open for this extension.
-				if (selectedParentMenu == newExtension) {
-					// The currently selected parent menu is the new extension, animate out submenus and deep menus and animate in the new menu.
+		
+		if (oldExtension == newExtension) {
+			// New extension is the previously selected extension. Animate out deep menus, if any.
+			if (selectedDeepMenu) {
+				showDeepMenu(oldExtension, oldExtension);
+			}
+		} else {
+			// Not the same extension.
+			if (!extensions[newExtension].parentMenu) {
+				// Top level menu.
+				if (topParentMenu != newExtension) {
 					if (selectedDeepMenu) {
-						showDeepMenu(oldExtension, oldExtension, true);
-					} else {
-						animateOutMenu = menuState[newExtension].submenu;
-						animateOutDirection = "right";
-					}
-					animateInMenu = newExtension;
-					animateInDirection = "right";
-					menuState[newExtension].submenu = null;
-				} else {
-					// The parent menu is not the new extension. Don't close submenus, show the currently open submenu (or deep menu) without animation. Because the extension that actually activates is not the one that was originally commanded, check new deep menus again.
-					extensionToActivate = menuState[newExtension].submenu;
-					if (deepMenuState[extensionToActivate] && deepMenuState[extensionToActivate].length > 0) {
-						// Check if the new extension has a deep menu open.
-						newDeepMenu = deepMenuState[extensionToActivate][deepMenuState[extensionToActivate].length-1];
-					} else {
-						newDeepMenu = null;
-					}
-					
-					if (selectedDeepMenu) {
-						// Close currently open deep menu without animation.
 						hideMenu = selectedDeepMenu;
 					} else {
-						// Close currently open menu without animation.
 						hideMenu = oldExtension;
 					}
 					if (newDeepMenu) {
-						// Show new deep menu without animation.
 						showMenu = newDeepMenu;
 					} else {
-						// Show new menu without animation.
-						showMenu = extensionToActivate;
-					}
-				}
-			} else {
-				// No submenu is open.
-				if (newExtension == selectedExtension) {
-					// The previously selected extension is the same, animate out deep menus, otherwise do nothing.
-					if (newDeepMenu) {
-						showDeepMenu(newExtension, newExtension);
-					}
-				} else {
-					if (selectedDeepMenu) {
-						// Close currently open deep menu without animation.
-						hideMenu = selectedDeepMenu
-					} else if (selectedExtension) {
-						// Close currently open menu without animation.
-						hideMenu = oldExtension;
-					}
-					if (newDeepMenu) {
-						// Show new deep menu without animation.
-						showMenu = newDeepMenu;
-					} else {
-						// Show new menu without animation.
 						showMenu = newExtension;
 					}
-				}
-			}
-			selectedParentMenu = newExtension;
-		} else {
-			// Submenu.
-			if (extensions[newExtension].parentMenu == selectedParentMenu) {
-				// The new extension has the same parent menu as the previously selected extension.
-				if (selectedParentMenu == oldExtension) {
-					// Previous extension was the parent menu. Animate into the new menu.
+				} else {
+					// The new extension is the parent menu, close submenus.
 					if (selectedDeepMenu) {
 						showDeepMenu(oldExtension, oldExtension, true);
 					} else {
 						animateOutMenu = oldExtension;
-						animateOutDirection = "left";
+						animateOutDirection = "right";
 					}
-				} else {
-					// Previous extension was not the current parent menu.
-					if (!extensions[oldExtension].parentMenu) {
-						// Previous extension was a top level menu.
-						if (selectedDeepMenu) {
-							// Close currently open deep menu without animation.
-							hideMenu = selectedDeepMenu;
-						} else if (selectedExtension) {
-							// Close currently open menu without animation.
-							hideMenu = oldExtension;
-						}
+					animateInMenu = newExtension;
+					animateInDirection = "right";
+					// Clear menu states for this stack.
+					if (menuState[newExtension] && menuState[newExtension].submenu) {
+						var nextLevel = menuState[newExtension].submenu;
+					} else if (menuState[oldExtension] && menuState[oldExtension].submenu) {
+						var nextLevel = menuState[oldExtension].submenu;
 					} else {
-						// Previous extension was a submenu.
+						var nextLevel = false;
+					}
+					while (nextLevel) {
+						menuState[nextLevel] = {};
+						if (menuState[nextLevel] &&
+							menuState[nextLevel].submenu) {
+							nextLevel = menuState[nextLevel].submenu;
+						} else {
+							nextLevel = false;
+						}
+					}
+				}
+				topParentMenu = newExtension;
+				immediateParentMenu = newExtension;
+			} else {
+				// Submenu.
+				// Determine new parent menu.
+				var previousLevel = extensions[newExtension].parentMenu;
+				immediateParentMenu = previousLevel;
+				while (previousLevel) {
+					if (extensions[previousLevel].parentMenu) {
+						previousLevel = extensions[previousLevel].parentMenu;
+					} else {
+						topParentMenu = previousLevel;
+						previousLevel = false;
+					}
+				}
+				
+				if (extensions[newExtension].parentMenu == oldExtension) {
+					// New extension is a submenu of the current extension. Animate in the new extension.
+					animateOutMenu = oldExtension;
+					animateInMenu = newExtension;
+					animateInDirection = "left";
+					animateOutDirection = "left";
+					if (!menuState[oldExtension]) menuState[oldExtension] = {};
+					menuState[oldExtension].submenu = newExtension;
+				} else {
+					// New extension is not a submenu of the current extension.
+					
+					if (oldExtension &&
+						extensions[oldExtension].parentMenu && 
+						newExtension == extensions[oldExtension].parentMenu) {
+						// New extension is one level up.
 						if (selectedDeepMenu) {
 							showDeepMenu(oldExtension, oldExtension, true);
 						} else {
 							animateOutMenu = oldExtension;
-							animateOutDirection = "right";
 						}
+						animateInMenu = newExtension;
+						animateInDirection = "right";
+						animateOutDirection = "right";
+						menuState[newExtension] = {};
+						
+					} else {
+						// New extension is somewhere else, just show it.
+						
+						if (menuState[newExtension] && menuState[newExtension].submenu) {
+							showMenu = menuState[newExtension].submenu;
+							extensionToActivate = menuState[newExtension].submenu;
+						} else {
+							showMenu = newExtension;
+						}
+						
+						if (deepMenuState[showMenu] && deepMenuState[showMenu].length > 0) {
+							// Check if the new extension has a deep menu open.
+							showMenu = deepMenuState[showMenu][deepMenuState[showMenu].length-1];
+						}
+						
+						if (selectedDeepMenu) {
+							hideMenu = selectedDeepMenu;
+						} else {
+							hideMenu = oldExtension;
+						}
+						if (!menuState[extensions[newExtension].parentMenu]) menuState[extensions[newExtension].parentMenu] = {};
+						menuState[extensions[newExtension].parentMenu].submenu = newExtension;
+						immediateParentMenu = extensions[newExtension].parentMenu;
 					}
 				}
-				// Animate in the new menu.
-				animateInMenu = newExtension;
-				animateInDirection = "left";
-				backTarget = selectedParentMenu;
-				if (extensions[selectedParentMenu].shortTitle) {
-					backTitle = extensions[selectedParentMenu].shortTitle;
+				backTarget = immediateParentMenu;
+				if (extensions[immediateParentMenu].shortTitle) {
+					backTitle = extensions[immediateParentMenu].shortTitle;
 				} else {
-					backTitle = extensions[selectedParentMenu].title;
+					backTitle = extensions[immediateParentMenu].title;
 				}
-			} else {
-				// The parent menu is different. Close current extension without animation.
-				if (selectedDeepMenu) {
-					// Close currently open deep menu without animation.
-					hideMenu = selectedDeepMenu;
-				} else if (selectedExtension) {
-					// Close currently open menu without animation.
-					hideMenu = oldExtension;
-				}
-				selectedParentMenu = extensions[newExtension].parentMenu;
-				// If the selected submenu (or deep menu) was already open, show it without animation. Otherwise animate it in.
-				if (newDeepMenu) {
-					showMenu = newDeepMenu;
-				} else if (menuState[selectedParentMenu] && menuState[selectedParentMenu].submenu == newExtension) {
-					showMenu = newExtension;
-				} else {
-					animateInMenu = newExtension;
-					animateInDirection = "left";
-				}
-				backTarget = selectedParentMenu;
-				if (extensions[selectedParentMenu].shortTitle) {
-					backTitle = extensions[selectedParentMenu].shortTitle;
-				} else {
-					backTitle = extensions[selectedParentMenu].title;
-				}
+				
 			}
-			
-			if (!menuState[selectedParentMenu]) menuState[selectedParentMenu] = {};
-			menuState[selectedParentMenu].submenu = newExtension;
-			
 		}
+		
+		
 		
 		if (direction) {
 			animateInDirection = (direction == "left") ? "left" : "right";
@@ -687,6 +797,8 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 			showMenu = null;
 		}
 		
+		//console.log(hideMenu, showMenu, animateOutMenu, animateInMenu, animateOutDirection, animateInDirection, extensionToActivate, newExtension);
+		
 		if (invisibly) {
 			hideMenu = animateOutMenu;
 		}
@@ -696,6 +808,7 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 				extensionAnimations++;
 				hiddenDirection = (animateInDirection == "left") ? "right" : "left";
 				document.querySelector(".menu-screen#"+animateInMenu).classList.add("block", "new", "hidden-"+hiddenDirection);
+				document.querySelector(".menu-screen#"+animateInMenu).classList.remove("hidden-"+animateInDirection);
 				setTimeout(function() {
 					document.querySelector(".menu-screen#"+animateInMenu).classList.remove("hidden-"+hiddenDirection);
 				}, 50);
@@ -742,7 +855,7 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 		}
 		try {
 			if (backTarget) {
-				if (!fromBackButton) {
+				if (!(fromBackButton && direction)) {
 					document.querySelector("#"+newExtension+" .back-button.master").classList.add("visible");
 					document.querySelector("#"+newExtension+" .back-button.master").setAttribute("data-back-text", backTitle);
 					document.querySelector("#"+newExtension+" .back-button.master").setAttribute("data-back-target", backTarget);
@@ -770,14 +883,8 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 		
 		activatedExtension(((extensionToActivate) ? extensionToActivate : newExtension), invisibly);
 		
-		try {
-			navItems = document.querySelectorAll('nav .nav-item[data-extension-id="'+selectedParentMenu+'"]')
-			for (ni in navItems) {
-				navItems[ni].classList.add("selected");
-			}
-		} catch (error) {
-			// Navigation item does not exist.
-		}
+		// Manage selected navigation/favourites item.
+		
 		
 		if (interfaceMode == 2 && mainMenuVisible && !invisibly) toggleMainMenu();
 	} else if (newExtension == selectedExtension) {
@@ -785,6 +892,7 @@ function showExtension(extension, direction = null, fromBackButton = false, invi
 			showDeepMenu(selectedExtension, selectedExtension);
 		}
 	}
+	
 }
 
 
@@ -817,18 +925,27 @@ var deepNavigating = false;
 function showDeepMenu(menuID, overrideWithExtension, hideNew) {
 	if (!deepNavigating) {
 		deepNavigating = true;
-		extension = (overrideWithExtension) ? overrideWithExtension : selectedExtension;
-		// First make sure the extension containing this deep menu is selected.
 		if (overrideWithExtension) {
+			extension = overrideWithExtension;
+		} else {
+			try {
+				extension = document.querySelector(".menu-screen#"+menuID).attributes["data-parent-extension"].value;
+			} catch (error) {
+				if (extensions[menuID]) {
+					extension = menuID;
+				} else {
+					extension = null;
+				}
+			}
+		}
+		// First make sure the extension containing this deep menu is selected.
+		if (extension) {
 			if (selectedExtension != extension) showExtension(extension);
 		} else {
-			if (extensions[extension].deepMenu.indexOf(menuID) == -1) {
-				
-				for (ext in extensions) {
-					if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
-						showExtension(ext);
-						break;
-					}
+			for (ext in extensions) {
+				if (extensions[ext].deepMenu.indexOf(menuID) != -1) {
+					showExtension(ext);
+					break;
 				}
 			}
 		}
@@ -935,9 +1052,33 @@ function activatedExtension(extensionID, invisibly = false) {
 		// Save state, so that the UI returns to the same menu when reloaded.
 		localStorage.beoCreateSelectedExtension = extensionID;
 	}
+	
+	showSelectedNavItem();
 }
 
-
+function showSelectedNavItem() {
+	$('nav .nav-item.selected').removeClass("selected");
+		
+	try {
+		// Start with current extension and go backwards until a parent menu is found, select that.
+		var ext = selectedExtension;
+		while (ext) {
+			navItems = document.querySelectorAll('nav .nav-item[data-extension-id="'+ext+'"]');
+			if (!navItems.length && extensions[ext].parentMenu) {
+				ext = extensions[ext].parentMenu;
+			} else {
+				ext = false;
+			}
+		}
+		if (navItems.length) {
+			for (ni in navItems) {
+				navItems[ni].classList.add("selected");
+			}
+		}
+	} catch (error) {
+		// Navigation item does not exist.
+	}
+}
 
 
 
@@ -1593,10 +1734,10 @@ function startHold(target, event) {
 		}
 		holdAction = new Function('holdPosition', 'holdTarget', $(holdTarget).attr("data-hold"));
 		holdAction(holdPosition, holdTarget);
-	}, 500);
+	}, 300);
 }
 
-function endHold() {
+function endHold(event) {
 	clearTimeout(holdTimeout);
 	holdTimeout = null;
 	if (clickHandler && this == holdTarget) {
@@ -1605,6 +1746,7 @@ function endHold() {
 			clickHandler = null;
 		}, 20);
 	}
+	if (event) event.preventDefault();
 }
 
 
@@ -2021,7 +2163,7 @@ document.ontouchmove = function(event) {
 	}
 	
 	if (event.target.className.indexOf("hold") != -1) {
-		endHold();
+		endHold(event);
 	}
 	
 	
@@ -2037,7 +2179,7 @@ document.ontouchend = function(event) {
 	
 	if (event.target.className.indexOf("hold") != -1) {
 		event.preventDefault();
-		endHold();
+		endHold(event);
 	}
 	
 	
@@ -2184,6 +2326,7 @@ return {
 	showExtensionWithHistory: showExtensionWithHistory,
 	showDeepMenu: showDeepMenu,
 	toggleMainMenu: toggleMainMenu,
+	chooseNavigationMode: chooseNavigationMode,
 	createMenuItem: createMenuItem,
 	createCollectionItem: createCollectionItem,
 	setSymbol: setSymbol,

@@ -1,7 +1,7 @@
 {
   "name": "@beocreate/product-information",
-  "version": "0.6.2",
-  "description": "Product identity controller for Beocreate sound systems.",
+  "version": "0.7.0",
+  "description": "Product identity controller and main menu for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -52,7 +52,7 @@ var defaultSystemConfiguration = {
 var systemConfiguration = JSON.parse(JSON.stringify(defaultSystemConfiguration));
 
 var defaultUISettings = {
-	disclosure: {}
+	"disclosure": {}
 };
 var uiSettings = JSON.parse(JSON.stringify(defaultUISettings));
 
@@ -73,7 +73,7 @@ var developerMode = false;
 var quietMode = false;
 var forceBeosounds = false;
 
-console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2020 Bang & Olufsen A/S");
+console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2020 Bang & Olufsen A/S. MIT licence.");
 
 
 // CHECK COMMAND LINE ARGUMENTS
@@ -729,11 +729,11 @@ function loadAppearance(appearance) {
 	
 	if (Object.keys(masterList).length > 0) {
 		
-		navigation = [];
+		navigationSets = [];
 		menuName = "menu";
 		try {
 			manifest = JSON.parse(fs.readFileSync(appearancePath+'/manifest.json', "utf8"));
-			if (manifest.navigation) navigation = manifest.navigation;
+			if (manifest.navigationSets) navigationSets = manifest.navigationSets;
 			if (manifest.extensionMarkupFileName) menuName = manifest.extensionMarkupFileName;
 		} catch (error) {
 			console.error("Error loading manifest.json for appearance '"+appearance+"':",error);
@@ -790,7 +790,7 @@ function loadAppearance(appearance) {
 		}
 		
 		bodyClass = (systemConfiguration.cardType && systemConfiguration.cardType.indexOf("Beocreate") == -1) ? '<body class="hifiberry-os ' : '<body class=" ';
-		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClass).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>extensions = "+JSON.stringify(extensionsListClient)+";\n navigation = "+JSON.stringify(navigation)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";</script>\n").replace("</beo-scripts>", scriptMarkup);
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClass).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";</script>\n").replace("</beo-scripts>", scriptMarkup);
 		
 		return completeUI;
 	} else {

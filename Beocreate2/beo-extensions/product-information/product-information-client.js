@@ -14,6 +14,7 @@ var systemVersionReadable = "";
 var hifiberryVersion = null;
 
 var productIdentities = {};
+var productImageShowTimeout = null;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -24,11 +25,15 @@ $(document).on("general", function(event, data) {
 	
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "product-information") {
-			setTimeout(function() {
+			clearTimeout(productImageShowTimeout);
+			productImageShowTimeout = setTimeout(function() {
 				$(".product-overview-image").addClass("visible");
 			}, 200);
 		} else {
-			$(".product-overview-image").removeClass("visible");
+			clearTimeout(productImageShowTimeout);
+			productImageShowTimeout = setTimeout(function() {
+				$(".product-overview-image").removeClass("visible");
+			}, 500);
 		}
 	}
 	
@@ -143,6 +148,12 @@ $(document).on("product-information", function(event, data) {
 	
 });
 
+$(document).on("ui", function(event, data) {
+	if (data.header == "navigationChanged") {
+		$(".system-name").text(systemName); // Reinstate system name to the navigation items when they change.
+	}
+});
+
 function toggleSystemIDFormat(updateOnly) {
 	if (!updateOnly) {
 		showFullSystemID = (showFullSystemID == false) ? true : false;
@@ -165,7 +176,7 @@ function cycleSystemInformation(updateOnly) {
 	
 	switch (currentSystemInfo) {
 		case 0: // HiFiBerryOS version ("release")
-			infoText = "Software "+hifiberryVersion;
+			infoText = "System software "+hifiberryVersion;
 			break;
 		case 1: // Beocreate version
 			infoText = "Beocreate "+systemVersion;

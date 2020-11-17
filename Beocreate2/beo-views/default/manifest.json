@@ -1,5 +1,6 @@
 {
-	"navigation": [
+	"navigationSets": [
+		{"id": "full", "items": [
 			{"name": "product-information", "kind": "extension"},
 			{"kind": "separator"},
 			{"name": "sound", "kind": "extension"},
@@ -9,7 +10,16 @@
 			{"kind": "separator"},
 			{"name": "interact", "kind": "extension"},
 			{"name": "feedback", "kind": "extension"}
-		],
+		]},
+		{"id": "focused", "name": "Focused", "description": "Shortcuts focused on daily use", "items": [
+			{"kind": "extension", "name": "music"},
+			{"kind": "extension", "name": "radio"},
+			{"kind": "extension", "name": "sources"},
+			{"kind": "separator"},
+			{"kind": "extension", "name": "beosonic"},
+			{"kind": "extension", "name": "sound"}
+		]}
+	],
 	"extensionMarkupFileName": "menu",
 	"extensionScriptFileName": "€-client",
 	"extensionStylesheetFileName": "€"

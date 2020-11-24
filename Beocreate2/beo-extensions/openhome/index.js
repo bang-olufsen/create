@@ -110,10 +110,9 @@ var fs = require("fs");
 		} else {
 			cmd = '/opt/hifiberry/bin/openhome-room "'+name+'"'
 		}
-		console.log(cmd);
 		exec(cmd, (err, stdout, stderr) => {
 			if (err) {
-				console.log(`error: ${err.message}`);
+				console.log("OpenHome error:", err);
 				return;
 			}
 			settings.room = stdout

@@ -332,7 +332,7 @@ function getAllTriggersAndActions() {
 	}
 }
 
-function runTrigger(extension, type, data) { // Other extensions can call the trigger.
+function runTrigger(extension, type, data = null) { // Other extensions can call the trigger.
 	if (settings.interactions[extension] && settings.interactionsEnabled) {
 		if (settings.interactions[extension][type] &&
 			allTriggers[extension][type]) {

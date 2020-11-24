@@ -347,7 +347,7 @@ function chooseTrigger(triggerExtension = null, theTrigger) {
 			} else if (allTriggers[triggerExtension][theTrigger].setup) {
 				allTriggers[triggerExtension][theTrigger].setup(null);
 			} else {
-				saveTrigger(triggerExtension, type);
+				saveTrigger(triggerExtension, theTrigger);
 			}
 		}
 	}

@@ -234,7 +234,6 @@ p#copy-hifiberry-os {
 		box-shadow: none;
 	}
 	
-	
 	#product-overview {
 		display: flex;
 		flex-direction: row;
@@ -282,7 +281,7 @@ p#copy-hifiberry-os {
 		top: 50px;
 		bottom: 50px;
 		height: auto;
-		right: -40px;
+		right: -50px;
 		width: auto;
 		left: 0;
 	}
@@ -297,5 +296,26 @@ p#copy-hifiberry-os {
 
 @media only screen and (min-width: 800px) {
 	
+	
+	#product-information header {
+		width: 41vw;
+	}
+	
+	#product-information {
+		padding-left: 41vw;
+	}
+	
+}
+
+@media only screen and (min-width: 900px) {
+	
+	
+	#product-information header {
+		width: 45vw;
+	}
+	
+	#product-information {
+		padding-left: 45vw;
+	}
 	
 }

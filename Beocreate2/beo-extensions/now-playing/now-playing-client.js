@@ -409,6 +409,7 @@ function determinePicture() {
 						setPlaceholderArtwork();
 					}
 				} else {
+					nowPlayingController.pictureASuccess = false;
 					nowPlayingController.pictureA = picture;
 				}
 				
@@ -419,8 +420,10 @@ function determinePicture() {
 					} else {
 						setPlaceholderArtwork();
 					}
+				} else {
+					nowPlayingController.pictureBSuccess = false;
+					nowPlayingController.pictureB = picture;
 				}
-				nowPlayingController.pictureB = picture;
 			}
 			nowPlayingController.picture = picture;
 		}
@@ -439,7 +442,7 @@ function determinePicture() {
 				break;
 		}
 	}
-	if (extPicture != nowPlayingController.extPicture) {
+	if (extPicture && extPicture != nowPlayingController.extPicture) {
 		if (extPicture) {
 			if (nowPlayingController.pictureView != "a") {
 				if (!nowPlayingController.pictureB && 
@@ -452,8 +455,10 @@ function determinePicture() {
 						} else {
 							setPlaceholderArtwork();
 						}
+					} else {
+						nowPlayingController.pictureASuccess = false;
+						nowPlayingController.pictureA = extPicture;
 					}
-					nowPlayingController.pictureA = extPicture;
 				}
 			} else {
 				if (nowPlayingController.pictureB == extPicture) {
@@ -462,8 +467,10 @@ function determinePicture() {
 					} else {
 						setPlaceholderArtwork();
 					}
+				} else {
+					nowPlayingController.pictureBSuccess = false;
+					nowPlayingController.pictureB = extPicture;
 				}
-				nowPlayingController.pictureB = extPicture;
 			}
 		}
 		nowPlayingController.extPicture = extPicture;

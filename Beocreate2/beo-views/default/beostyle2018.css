@@ -24,8 +24,8 @@ Keep track of layers in the UI
 8  - Popup views + plexi
 +
 +
-6  - Navigation, both full and compact, now playing
-5  - Navigation plexiglass back, in compact layout
+6  - Navigation full, now playing
+5  - Navigation plexiglass back, in compact layout, navigation menu
 4  - Setup button
 3  - Headers
 2  - Tabs in menus
@@ -185,9 +185,6 @@ nav {
 
 nav.full {
 	display: none;
-	background-color: #eee;
-	/*outline: 1px solid rgba(0, 0, 0, 0.1);*/
-	box-shadow: inset -1px 0px 0px rgba(0, 0, 0, 0.1);
 	bottom: 0;
 	left: 0;
 	right: 0;
@@ -195,18 +192,21 @@ nav.full {
 	position: relative;
 	box-sizing: border-box;
 	flex-shrink: 0;
-	overflow-y: auto;
-	-webkit-overflow-scrolling: touch;
-	padding: 3px 20px 10px;
-	z-index: 6;
+	padding-bottom: var(--menu-height);
+	z-index: 5;
 	-webkit-user-select: none;
 	cursor: default;
-}
-
-nav.full {
 	background-color: #222;
 	color: white;
 	box-shadow: inset 1px 0px rgba(255,255,255,0.1);
+}
+
+nav.full .scroll-area {
+	margin-bottom: var(--menu-height);
+}
+
+nav.full .nav-content {
+	padding: 3px 20px 10px;
 }
 
 .dark nav.full {
@@ -287,6 +287,33 @@ nav.full .nav-content {
 .connecting nav.full .nav-content {
 	pointer-events: none;
 	opacity: 0.3;
+}
+
+#nav-menu-mode-button-wrap {
+	border-top: 1px solid rgba(255,255,255,0.07);
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+#main-menu-nav-mode-button {
+	margin-top: 0;
+	margin-bottom: 0;
+	padding-left: 25px;
+	height: var(--menu-height);
+	background-color: transparent;
+	opacity: 0.3;
+	color: inherit;
+}
+
+.no-touch #main-menu-nav-mode-button:hover,
+#main-menu-nav-mode-button:active {
+	opacity: 1;
+}
+
+#main-menu-nav-mode-button:after {
+	right: 15px;
 }
 
 /* @end */
@@ -1296,6 +1323,7 @@ section.faded-out .menu-screen {
 	transition: background-color 0.3s ease;
 	background-color: transparent;
 	margin-bottom: 3px;
+	color: var(--main-font-colour);
 }
 
 .menu-value.ball.fill:after {

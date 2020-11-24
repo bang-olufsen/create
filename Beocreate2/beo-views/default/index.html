@@ -44,19 +44,24 @@
 			</div>
 		</div>
 		<div id="nav-bar-mode-button-wrap">
-			<div class="button symbol" onclick="beo.chooseNavigationMode();" id="nav-bar-mode-button" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-updown.svg); mask-image: url(common/symbols-black/chevron-thin-updown.svg);"></div>
+			<div class="button symbol" onclick="beo.chooseNavigationMode();" id="nav-bar-mode-button" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-updown.svg); mask-image: url(common/symbols-black/chevron-thin-updown.svg);" title="Choose navigation shortcuts"></div>
 		</div>
 		
 		<div class="reload-button" onclick="window.location.reload();"></div>
 	</nav>
 	
 	<nav class="full top-level">
-		<div class="nav-content dark">
-		<!-- 
-		SIDEBAR
-		- assembled client-side
-		- based on extensions included in the UI
-		-->
+		<div class="scroll-area">
+			<div class="nav-content dark">
+			<!-- 
+			SIDEBAR
+			- assembled client-side
+			- based on extensions included in the UI
+			-->
+			</div>
+		</div>
+		<div id="nav-menu-mode-button-wrap">
+			<div class="button pill popup-button black nav-mode-name" id="main-menu-nav-mode-button" onclick="beo.chooseNavigationMode();" title="Choose navigation shortcuts"></div>
 		</div>
 	</nav>
 

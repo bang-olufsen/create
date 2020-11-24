@@ -396,13 +396,23 @@ function prepareFavourites(navSetID) {
 			navSetID = navigationSets[0].id;
 		}
 	}
+	var setName = "";
 	if (navSetID == navigationSets[0].id) {
 		favourites = navigation;
+		if (!navigationSets[0].name) {
+			setName = "Main Menu";
+		} else {
+			setName = navigationSets[0].name;
+		}
 	} else {
 		for (s in navigationSets) {
-			if (navigationSets[s].id == navSetID) favourites = navigationSets[s].items;
+			if (navigationSets[s].id == navSetID) {
+				favourites = navigationSets[s].items;
+				setName = navigationSets[s].name;
+			}
 		}
 	}
+	$(".nav-mode-name").text(setName);
 	
 	var previousKind = null;
 	if (favourites[0].name && favourites[0].name != mainMenuExtension) {

@@ -133,16 +133,16 @@ function showToslinkStatus() {
 	} else {
 		if (toslinkStatus) {
 			if (toslinkEnabled) {
-				$(".toslink-status").addClass("fill").text(beo.translatedString("Active", "active", "toslink"));
+				$(".toslink-status").addClass("fill").text(beo.translatedString("Playing", "active", "toslink"));
 			} else {
-				$(".toslink-status").removeClass("fill").text(beo.translatedString("Disabled, has signal", "disabledHasSignal", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.translatedString("Off, has signal", "disabledHasSignal", "toslink"));
 			}
 		} else {
 			
 			if (toslinkEnabled) {
-				$(".toslink-status").removeClass("fill").text(beo.translatedString("Inactive", "inactive", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.translatedString("Not active", "inactive", "toslink"));
 			} else {
-				$(".toslink-status").removeClass("fill").text(beo.translatedString("Disabled", "disabled", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.translatedString("Off", "disabled", "toslink"));
 			}
 		}
 	}

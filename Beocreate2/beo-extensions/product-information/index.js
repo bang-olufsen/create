@@ -149,6 +149,8 @@ var fs = require("fs");
 					}
 				});
 			});
+			
+			if (beo.extensions.interact) beo.extensions.interact.runTrigger("product-information", "systemBoot");
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -595,6 +597,11 @@ interact = {
 			if (interactData.option == "restart") {
 				beo.bus.emit("general", {header: "requestReboot", content: {extension: "interact"}});
 			}
+		}
+	},
+	triggers: {
+		systemBoot: function(data, interactData) {
+			return true;
 		}
 	}
 }

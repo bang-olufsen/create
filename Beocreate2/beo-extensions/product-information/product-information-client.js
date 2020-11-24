@@ -313,7 +313,16 @@ interactDictionary = {
 			icon: "common/symbols-black/power.svg",
 			once: true,
 			setup: function(data) { interactSetup("setup", data) }, 
-			preview: function(data) { return interactSetup("preview", data) }
+			preview: function(data) { return interactSetup("preview", data) },
+			illegalWith: ["triggers/product-information/systemBoot"]
+		}
+	},
+	triggers: {
+		systemBoot: {
+			name: "Product Startup",
+			icon: "common/symbols-black/power.svg",
+			once: true,
+			illegalWith: ["actions/product-information/power"]
 		}
 	}
 }

@@ -371,24 +371,40 @@ function generateMetadataForBlock(block) {
 		case "IIR_B":
 		case "IIR_C":
 		case "IIR_D":
+		case "IIR_E":
+		case "IIR_F":
+		case "IIR_G":
+		case "IIR_H":
 			metadata[block.title] = {value: block.paramAddress[0]+"/"+block.paramAddress.length, storable: "yes"};
 			break;
 		case "Invert_A":
 		case "Invert_B":
 		case "Invert_C":
 		case "Invert_D":
+		case "Invert_E":
+		case "Invert_F":
+		case "Invert_G":
+		case "Invert_H":
 			metadata["invert"+block.title.charAt(7)+"Register"] = {value: block.paramAddress[0], storable: "yes"};
 			break;
 		case "Ch_A":
 		case "Ch_B":
 		case "Ch_C":
 		case "Ch_D":
+		case "Ch_E":
+		case "Ch_F":
+		case "Ch_G":
+		case "Ch_H":
 			metadata["channelSelect"+block.title.charAt(3)+"Register"] = {value: block.paramAddress[0], channels: "left,right,mono,side", multiplier: 1, storable: "yes"};
 			break;
 		case "Delay_A":
 		case "Delay_B":
 		case "Delay_C":
 		case "Delay_D":
+		case "Delay_E":
+		case "Delay_F":
+		case "Delay_G":
+		case "Delay_H":
 			metadata["delay"+block.title.charAt(6)+"Register"] = {value: block.paramAddress[0], maxDelay: 2000, storable: "yes"};
 			break;
 		case "Ch_Toslink_L":
@@ -426,6 +442,16 @@ function generateMetadataForBlock(block) {
 						break;
 				}
 			}
+			break;
+		case "VolumeLimitPi":
+			metadata["volumeLimitRegister"] = {value: block.paramAddress[0] };
+			metadata["volumeLimitPiRegister"] = {value: block.paramAddress[0], storable: "yes"};
+			break;
+		case "VolumeLimitSPDIF":
+			metadata["volumeLimitSPDIFRegister"] = {value: block.paramAddress[0], storable: "yes"};
+			break;
+		case "VolumeLimitPi":
+			metadata["volumeLimitAUXRegister"] = {value: block.paramAddress[0], storable: "yes"};
 			break;
 		case "Master-Slave":
 			metadata["masterSlaveSelectRegister"] = {value: block.paramAddress[0]};

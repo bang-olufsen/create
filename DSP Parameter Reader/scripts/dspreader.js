@@ -444,14 +444,17 @@ function generateMetadataForBlock(block) {
 			}
 			break;
 		case "VolumeLimitPi":
-			metadata["volumeLimitRegister"] = {value: block.paramAddress[0] };
-			metadata["volumeLimitPiRegister"] = {value: block.paramAddress[0], storable: "yes"};
+			registers = getRelevantParamAddress(block).relevantAddresses;
+			metadata["volumeLimitRegister"] = {value: registers[0] };
+			metadata["volumeLimitPiRegister"] = {value: registers[0], storable: "yes"};
 			break;
 		case "VolumeLimitSPDIF":
-			metadata["volumeLimitSPDIFRegister"] = {value: block.paramAddress[0], storable: "yes"};
+			registers = getRelevantParamAddress(block).relevantAddresses;
+			metadata["volumeLimitSPDIFRegister"] = {value: registers[0], storable: "yes"};
 			break;
-		case "VolumeLimitPi":
-			metadata["volumeLimitAUXRegister"] = {value: block.paramAddress[0], storable: "yes"};
+		case "VolumeLimitAux":
+			registers = getRelevantParamAddress(block).relevantAddresses;
+			metadata["volumeLimitAUXRegister"] = {value: registers[0], storable: "yes"};
 			break;
 		case "Master-Slave":
 			metadata["masterSlaveSelectRegister"] = {value: block.paramAddress[0]};

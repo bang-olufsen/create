@@ -54,15 +54,7 @@ var fs = require("fs");
 			}
 			
 			readConfiguration();
-			if (configuration.global && 
-				configuration.global.username && 
-				!configuration.global.username.comment && 
-				configuration.global.password && 
-				!configuration.global.password.comment) {
-				settings.loggedInAs = configuration.global.username.value;
-			} else {
-				settings.loggedInAs = false;
-			}
+			// Check login here (removed).
 			if (sources && Object.keys(configuration).length == 0) {
 				sources.setSourceOptions("spotify", {
 					enabled: false
@@ -82,7 +74,7 @@ var fs = require("fs");
 		if (event.header == "systemNameChanged") {
 			// Listen to changes in system name and update the spotify display name.
 			if (event.content.systemName) {
-				configure({section: "global", option: "device_name", value: event.content.systemName.split(" ").join("")}, true);
+				configure({section: "Authentication", option: "device-name", value: ("'"+event.content.systemName.split(" ").join("-")+"'")}, true);
 			}
 			
 		}
@@ -210,10 +202,10 @@ var fs = require("fs");
 			if (relaunch && settings.spotifyEnabled) {
 				exec("systemctl restart spotify.service", function(error, stdout, stderr) {
 					if (error) {
-						if (debug) console.error("Relaunching spotify failed: "+error);
+						if (debug) console.error("Relaunching Spotify failed: "+error);
 						if (callback) callback(false, error);
 					} else {
-						if (debug) console.error("spotify was relaunched.");
+						if (debug) console.error("Spotify was relaunched.");
 						if (callback) callback(true);
 					}
 				});
@@ -227,21 +219,21 @@ var fs = require("fs");
 	
 	configModified = 0;
 	function readConfiguration() {
-		if (fs.existsSync("/etc/spotifyd.conf")) {
-			modified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
+		if (fs.existsSync("/etc/vollibrespot.conf")) {
+			modified = fs.statSync("/etc/vollibrespot.conf").mtimeMs;
 			if (modified != configModified) {
 				// Reads configuration into a JavaScript object for easy access.
 				configModified = modified;
-				config = fs.readFileSync("/etc/spotifyd.conf", "utf8").split('\n');
+				config = fs.readFileSync("/etc/vollibrespot.conf", "utf8").split('\n');
 				section = null;
 				for (var i = 0; i < config.length; i++) {
 					// Find settings sections.
-					if (config[i].indexOf("[") != -1 && config[i].indexOf("]") != -1) {
-						section = config[i].trim().slice(1, -1);
+					var line = config[i].trim();
+					if (line.indexOf("[") == 0 && line.indexOf("]") != -1) {
+						section = line.slice(1, -1);
 						configuration[section] = {};
 					} else {
 						if (section != null) {
-							line = config[i].trim();
 							comment = (line.charAt(0) == "#") ? true : false;
 							if (comment) {
 								lineItems = line.slice(1).split("=");
@@ -250,7 +242,7 @@ var fs = require("fs");
 							}
 							if (lineItems.length == 2) {
 								value = lineItems[1].trim();
-								configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+								if (configuration[section][lineItems[0].trim()] == undefined) configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
 							}
 						}
 					}
@@ -261,7 +253,7 @@ var fs = require("fs");
 	
 	function writeConfiguration() {
 		// Saves current configuration back into the file.
-		if (fs.existsSync("/etc/spotifyd.conf")) {
+		if (fs.existsSync("/etc/vollibrespot.conf")) {
 			config = [];
 			for (section in configuration) {
 				sectionStart = (config.length != 0) ? "\n["+section+"]" : "["+section+"]";
@@ -275,8 +267,8 @@ var fs = require("fs");
 					config.push(line);
 				}
 			}
-			fs.writeFileSync("/etc/spotifyd.conf", config.join("\n"));
-			configModified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
+			fs.writeFileSync("/etc/vollibrespot.conf", config.join("\n"));
+			configModified = fs.statSync("/etc/vollibrespot.conf").mtimeMs;
 		}
 	}
 	

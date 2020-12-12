@@ -20,6 +20,6 @@
   "author": "Bang & Olufsen",
   "license": "MIT",
   "beocreate": {
-  	"enableWith": ["Beocreate 4-Channel Amplifier", "DAC+ DSP"]
+  	"requireCardFeatures": ["toslink"]
   }
 }

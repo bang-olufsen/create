@@ -230,6 +230,25 @@
 			<div class="button pill black cancel default" onclick="beo.ask();">Dismiss</div>
 		</div>
 	</div>
+	
+	<div class="ask-menu" id="room-compensation-dsp-required-prompt">
+		<h2>DSP needed</h2>
+		<p>To use room compensation filters, a sound device with DSP is required (such as DAC+ DSP or Beocreate 4-Channel Amplifier).</p>
+		<div class="ask-buttons">
+			<a href="http://hifiberry.com/shop" target="_blank" class="button pill grey">View Products in Shop</a>
+			<div class="button pill black cancel default" onclick="beo.ask();">Dismiss</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="room-compensation-dsp-problem-prompt">
+		<h2>Problem with sound processor</h2>
+		<p>Room compensation filters can't be used because there is a problem with the current DSP program. Known sampling rate and support for parametric equaliser (Sound Design) are required.</p>
+		<p>In the DSP Programs menu, please check which program is active and, if necessary, install the default DSP program for your sound device. Then try again.</p>
+		<div class="ask-buttons">
+			<div class="button pill black default" onclick="room_compensation.goToDSPPrograms();">Show DSP Programs</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Dismiss</div>
+		</div>
+	</div>
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/room-compensation-client.js"></script>

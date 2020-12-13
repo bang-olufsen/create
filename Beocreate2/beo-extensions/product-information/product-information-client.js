@@ -12,6 +12,7 @@ var showFullSystemID = false;
 var systemVersion = null;
 var systemVersionReadable = "";
 var hifiberryVersion = null;
+var systemConfiguration = {};
 
 var productIdentities = {};
 var productImageShowTimeout = null;
@@ -79,6 +80,11 @@ $(document).on("product-information", function(event, data) {
 			if (systemVersion != null && systemVersion != data.content.systemVersion) systemUpdated = true;
 			systemVersion = data.content.systemVersion;
 			$(".system-version").text(systemVersion);
+		}
+		if (data.content.systemConfiguration) {
+			systemConfiguration = data.content.systemConfiguration;
+		} else {
+			systemConfiguration = {};
 		}
 		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
 			if (cardType != "" && cardType != data.content.systemConfiguration.cardType) systemUpdated = true;
@@ -337,6 +343,7 @@ return {
 	productImage: function() {return productImage},
 	cardType: function() {return cardType},
 	hifiberryVersion: function() {return hifiberryVersion},
+	systemConfiguration: function() {return systemConfiguration},
 	generateSettingsPreview: generateSettingsPreview,
 	clearPresetPreview: clearPresetPreview,
 	startCustomisation: startCustomisation,

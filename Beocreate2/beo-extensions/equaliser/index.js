@@ -824,6 +824,13 @@ function applyBeosonicPreset(fromSettings) {
 	beo.saveSettings("equaliser", settings);
 }
 
+function canDoRoomCompensation(filterCount) {
+	canDo = true;
+	if (canControlEqualiser.l < filterCount) canDo = false;
+	if (canControlEqualiser.r < filterCount) canDo = false;
+	return canDo;
+}
+
 
 function applyRoomCompensation(preset, filters, userConfirmation = false) {
 	chString = "lr";
@@ -971,6 +978,7 @@ module.exports = {
 	applyBeosonicPreset: applyBeosonicPreset,
 	applySpeakerPreset: applySpeakerPreset,
 	tempDisable: tempDisable,
+	canDoRoomCompensation: canDoRoomCompensation,
 	applyRoomCompensation: applyRoomCompensation,
 	getCurrentRoomCompensation: function() {return {preset: settings.roomCompensationPreset, modified: settings.roomCompensationModified}},
 	version: version

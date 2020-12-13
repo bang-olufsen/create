@@ -14,6 +14,7 @@ var selectedMeasurement = null;
 var measureStep = 0;
 
 var Fs = null;
+var capabilities = 0;
 
 var recognisedCurves = {
 	"room_only": {
@@ -52,6 +53,11 @@ $(document).on("room-compensation", function(event, data) {
 	if (data.header == "measurementsAndPresets" ||
 		data.header == "measurements" ||
 		data.header == "presets") {
+		
+		
+		if (data.content.capabilities != undefined) {
+			capabilities = data.content.capabilities;
+		}
 		
 		if (data.content.measurements) {
 			measurements = data.content.measurements;
@@ -240,7 +246,7 @@ $(document).on("room-compensation", function(event, data) {
 			if (compensation.speakerModel) $(".room-compensation-details").append(beo.createMenuItem({label: "Speaker type", value: compensation.speakerModel, static: true}));
 			if (compensation.compensationID) $(".room-compensation-details").append(beo.createMenuItem({label: "Compensation ID", value: compensation.compensationID, static: true}));
 			if (!compensationGraph) {
-				compensationGraph = new Beograph("room-compensation-graph", {resolution: 256, colours: ["#2CD5C4", "#FF3E46", "#000000"], coloursDark: ["#2CD5C4", "#FF3E46", "#FFFFFF"], labels: {frequency: true, gain: true}});
+				compensationGraph = new Beograph("room-compensation-graph", {resolution: 256, colours: ["#2CD5C4", "#FF3E46", "#000000"], coloursDark: ["#2CD5C4", "#FF3E46", "#FFFFFF"], labels: {frequency: true, gain: true}, scale: 20});
 			}
 			if (compensation.filters) {
 				compensationGraph.store([0], {clearData: true});
@@ -393,10 +399,20 @@ function newCompensation(measurement = selectedMeasurement, type = null) {
 	} else {
 		askForSpeakerModel = false;
 		if (measurement) {
-			beo.sendToProduct("room-compensation", {header: "newCompensation", content: {fromMeasurement: measurement}});
+			switch (capabilities) {
+				case 2:
+					beo.sendToProduct("room-compensation", {header: "newCompensation", content: {fromMeasurement: measurement}});
+					break;
+				case 1:
+					beo.ask("room-compensation-dsp-problem-prompt");
+					break;
+				case 0:
+					beo.ask("room-compensation-dsp-required-prompt");
+					break;
+			}
 			showMeasurement();
 		} else {
-			if (Object.keys(measurements).length > 0) {
+			if (Object.keys(measurements).length > 0 && capabilities > 0) {
 				$("#room-measurement-chooser").empty();
 				for (measurement in measurements) {
 				menuOptions = {
@@ -428,7 +444,17 @@ function applyCompensation(disable = false) {
 	if (disable && currentPreset != null) {
 		beo.sendToProduct("room-compensation", {header: "disableCompensation"});
 	} else if (selectedPreset) {
-		beo.sendToProduct("room-compensation", {header: "applyCompensation", content: {preset: selectedPreset, confirm: false}});
+		switch (capabilities) {
+			case 2:
+				beo.sendToProduct("room-compensation", {header: "applyCompensation", content: {preset: selectedPreset, confirm: false}});
+				break;
+			case 1:
+				beo.ask("room-compensation-dsp-problem-prompt");
+				break;
+			case 0:
+				beo.ask("room-compensation-dsp-required-prompt");
+				break;
+		}
 		showCompensation();
 	}
 }
@@ -449,6 +475,11 @@ function deleteCompensation(confirmed) {
 	}
 }
 
+function goToDSPPrograms() {
+	beo.ask();
+	beo.showExtension("dsp-programs");
+}
+
 	
 return {
 	newMeasurement: newMeasurement,
@@ -460,7 +491,9 @@ return {
 	newCompensation: newCompensation,
 	showCompensation: showCompensation,
 	applyCompensation: applyCompensation,
-	deleteCompensation: deleteCompensation
+	deleteCompensation: deleteCompensation,
+	goToDSPPrograms: goToDSPPrograms,
+	setCapabilities: function(level) {capabilities = level;}
 }
 	
 })();

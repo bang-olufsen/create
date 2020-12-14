@@ -174,6 +174,7 @@ function sendToProduct(target, header, content = undefined) {
 	} else {
 		// Legacy way of sending data, supported. 'Header' used to be 'data'.
 		header.target = target;
+		if (debug > 1) console.log(target, header.header, header.content);
 		send(header);
 	}
 }

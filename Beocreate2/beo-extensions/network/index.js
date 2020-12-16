@@ -192,28 +192,32 @@ var networkCore = require('../../beocreate_essentials/networking');
 		if (event.header == "addNetwork") {
 			if (event.content.ssid) {
 				update = (event.content.update) ? true : false;
-				result = networkCore.addNetwork({ssid: event.content.ssid, password: event.content.password, username: event.content.username}, update);
-				if (result == 1 || result == 3) {
-					if (result == 1) {
-						beo.bus.emit("ui", {target: "network", header: "networkAdded", content: {ssid: event.content.ssid}});
-						if (debug) console.log("Network '"+event.content.ssid+"' was added.");
-					} else if (result == 3) {
-						beo.bus.emit("ui", {target: "network", header: "networkUpdated", content: {ssid: event.content.ssid}});
-						if (debug) console.log("Network '"+event.content.ssid+"' was updated.");
-						temporarilyAllowSetupNetwork();
-					}
-					networks = networkCore.listSavedNetworks();
-					if (networks.length > 0 && beo.setup) {
-						if (extensions["setup"] && extensions["setup"].allowAdvancing) {
-							extensions["setup"].allowAdvancing("network", true);
+				networkCore.addNetwork({ssid: event.content.ssid, password: event.content.password, username: event.content.username}, update).then(result => {
+					if (result == 1 || result == 3) {
+						if (result == 1) {
+							beo.bus.emit("ui", {target: "network", header: "networkAdded", content: {ssid: event.content.ssid}});
+							if (debug) console.log("Network '"+event.content.ssid+"' was added.");
+						} else if (result == 3) {
+							beo.bus.emit("ui", {target: "network", header: "networkUpdated", content: {ssid: event.content.ssid}});
+							if (debug) console.log("Network '"+event.content.ssid+"' was updated.");
+							temporarilyAllowSetupNetwork();
 						}
+						networks = networkCore.listSavedNetworks();
+						if (networks.length > 0 && beo.setup) {
+							if (extensions["setup"] && extensions["setup"].allowAdvancing) {
+								extensions["setup"].allowAdvancing("network", true);
+							}
+						}
+						wifiScan();
+						beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
+					} else {
+						if (debug) console.error("Network '"+event.content.ssid+"' already exists.");
+						beo.bus.emit("ui", {target: "network", header: "networkExists", content: {ssid: event.content.ssid}});
 					}
-					wifiScan();
-					beo.bus.emit("ui", {target: "network", header: "savedNetworks", content: {networks: networks}});
-				} else {
-					if (debug) console.error("Network '"+event.content.ssid+"' already exists.");
-					beo.bus.emit("ui", {target: "network", header: "networkExists", content: {ssid: event.content.ssid}});
-				}
+				}).catch(error => {
+					// Error adding network.
+					console.error("Error adding network:", error);
+				});
 			}		
 		}
 		

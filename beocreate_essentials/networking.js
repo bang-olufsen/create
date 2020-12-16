@@ -28,6 +28,8 @@ var iwconfig = require('wireless-tools/iwconfig');
 var ifconfig = require('wireless-tools/ifconfig');
 //var udhcpd = require('wireless-tools/udhcpd');
 //var hostapd = require('wireless-tools/hostapd');
+const util = require('util');
+const execPromise = util.promisify(exec);
 
 var networking = module.exports = {
 	getWifiStatus: getWifiStatus,
@@ -286,7 +288,7 @@ function performWifiScan(callback) {
 
 // ADD OR REMOVE NETWORKS
 
-function addNetwork(options, update) {
+async function addNetwork(options, update) {
 	if (!options.ssid) return false;
 	readWifiConfiguration();
 	
@@ -311,7 +313,8 @@ function addNetwork(options, update) {
 			if (options.username) {
 				// RADIUS network configuration here.
 			} else {
-				wifiConfiguration.networks[networkIndex].psk = options.password;
+				password = await hashPassword(options.ssid, options.password);
+				wifiConfiguration.networks[networkIndex].psk = password;
 			}
 			delete wifiConfiguration.networks[networkIndex].key_mgmt;
 		} else {
@@ -343,6 +346,32 @@ function addNetwork(options, update) {
 	} else {
 		return 2; // This network exists and was not touched.
 	}
+}
+
+async function hashPassword(ssid, password) {
+	var escapedSSID = "";
+	for (var i = 0; i < ssid.length; i++) {
+		escapedSSID += "\\"+ssid[i];
+	}
+	
+	var escapedPassword = "";
+	for (var i = 0; i < password.length; i++) {
+		escapedPassword += "\\"+password[i];
+	}
+	var psk = null;
+	try {
+		var hashResults = null;
+		console.log("Creating hashed password for '"+ssid+"'...");
+		hashResults = await execPromise("wpa_passphrase "+escapedSSID+" "+escapedPassword);
+		lines = hashResults.stdout.trim().split("\n");
+		for (l in lines) {
+			if (lines[l].indexOf("\tpsk=") == 0) psk = lines[l].split("=")[1];
+		}
+		console.log("Password hash created.");
+	} catch (error) {
+		console.log("Error creating hashed password:", error);
+	}
+	return psk;
 }
 
 function removeNetwork(ssid) {

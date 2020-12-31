@@ -10,9 +10,16 @@
 	"shortcuts": [],
 	"icons": [
 		{
+			"src": "maskable_icon.png",
+			"type": "image/png",
+			"sizes": "300x300",
+			"purpose": "maskable"
+		},
+		{
 			"src": "apple-touch-icon.png?v=1",
 			"type": "image/png",
-			"sizes": "300x300"
+			"sizes": "300x300",
+			"purpose": "any"
 		}
 	],
 	"navigation": [

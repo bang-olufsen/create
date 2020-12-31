@@ -1,6 +1,6 @@
 {
-	"short_name": "BeoCreate",
-	"name": "BeoCreate: Upcycle your old speakers",
+	"short_name": "Beocreate",
+	"name": "Beocreate",
 	"description": "Upcyle your old speakers.",
 	"start_url": "/",
 	"background_color": "#222",

@@ -1,4 +1,27 @@
 {
+	"short_name": "Beocreate",
+	"name": "Beocreate",
+	"description": "Upcyle your old speakers.",
+	"start_url": "/",
+	"background_color": "#222",
+	"display": "standalone",
+	"scope": "/",
+	"theme_color": "#222",
+	"shortcuts": [],
+	"icons": [
+		{
+			"src": "maskable_icon.png",
+			"type": "image/png",
+			"sizes": "300x300",
+			"purpose": "maskable"
+		},
+		{
+			"src": "apple-touch-icon.png?v=1",
+			"type": "image/png",
+			"sizes": "300x300",
+			"purpose": "any"
+		}
+	],
 	"navigation": [
 			{"name": "product-information", "kind": "extension"},
 			{"kind": "separator"},

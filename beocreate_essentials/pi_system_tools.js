@@ -212,7 +212,7 @@ function power(operation, callback) {
 		});
 	}
 	if (operation == "shutdown") {
-		exec("/usr/sbin/shutdown now", function(error, stdout, stderr) {
+		exec("/usr/sbin/shutdown -h now", function(error, stdout, stderr) {
 			
 		});
 	}

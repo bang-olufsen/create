@@ -30,6 +30,7 @@ var debug = beo.debug;
 
 var defaultSettings = {
 	sampleCount: 4,
+	filterCount: 10,
 	noiseType: "white",
 	measureWithSoundDesign: false
 }
@@ -44,6 +45,7 @@ var roomEQURL = null;
 var xUUID = null;
 
 var Fs = null;
+var capabilities = 0;
 	
 beo.bus.on('general', function(event) {
 	
@@ -56,8 +58,8 @@ beo.bus.on('general', function(event) {
 	
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "room-compensation") {
-			
-			beo.sendToUI("room-compensation", {header: "measurementsAndPresets", content: {measurements: compactMeasurementList, presets: presets}});
+			getCapabilities();
+			beo.sendToUI("room-compensation", {header: "measurementsAndPresets", content: {measurements: compactMeasurementList, presets: presets, capabilities: capabilities}});
 		}
 	}
 });
@@ -465,7 +467,7 @@ function createAndSaveCompensation(measurement, type, speakerModel = null) {
 			// Save speaker model to the measurement.
 			measurements[measurement].speakerModel = speakerModel;
 			fs.writeFileSync(arcDirectory+"/measurements/"+measurement+".json", JSON.stringify(measurements[measurement]));
-			if (debug) console.log("Updated measurement '"+measurement+" with speaker model '"+speakerModel+"'.");
+			if (debug) console.log("Updated measurement '"+measurement+"' with speaker model '"+speakerModel+"'.");
 		}
 		uploadData = {
 			measurement: {
@@ -473,7 +475,7 @@ function createAndSaveCompensation(measurement, type, speakerModel = null) {
 			},
 			curve: type,
 			optimizer: "smooth",
-			filtercount: 10,
+			filtercount: settings.filterCount,
 			"speaker-model": speakerModel,
 			samplerate: Fs,
 			settings: {
@@ -604,6 +606,20 @@ function deletePreset(preset, noUpdate = false) {
 	delete presets[preset];
 	if (fs.existsSync(arcDirectory+"/presets/"+preset+".json")) fs.unlinkSync(arcDirectory+"/presets/"+preset+".json");
 	if (!noUpdate) beo.sendToUI("room-compensation", {header: "presets", content: {presets: presets}});
+}
+
+function getCapabilities() {
+	capabilities = 0;
+	if (beo.systemConfiguration.cardFeatures &&
+		beo.systemConfiguration.cardFeatures.indexOf("dsp") != -1) {
+		// DSP is available.
+		capabilities = 1;
+	}
+	if (beo.extensions.equaliser &&
+		beo.extensions.equaliser.canDoRoomCompensation) {
+		// Check if enough filters are available.
+		if (beo.extensions.equaliser.canDoRoomCompensation(settings.filterCount)) capabilities = 2;
+	}
 }
 
 

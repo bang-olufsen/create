@@ -110,8 +110,13 @@ BeoCom.prototype.startSocket = function(options, callback) {
 			connection.on('message', function(message) {
 				// Incoming data.
 				// data should always be in serialised JSON format.
-				jsonObject = JSON.parse(message.utf8Data);
-				self.emit('data', jsonObject, findID(connection));
+				try {
+					jsonObject = JSON.parse(message.utf8Data);
+					self.emit('data', jsonObject, findID(connection));
+				} catch (error) {
+					console.error("Error in processing received data:", error);
+				}
+				
 			});
 	
 			connection.on('close', function(connection) {

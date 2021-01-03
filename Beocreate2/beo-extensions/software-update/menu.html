@@ -8,9 +8,9 @@
 	<div class="scroll-area">
 		<div class="menu-content">
 			
-			<p class="loading hidden checking-for-update">Checking for update...</p>
+			<p class="loading hidden checking-for-update">Checking for updates...</p>
 			
-			<p class="hidden update-check-error">There was a problem checking for update. Please try again later.</p>
+			<p class="hidden update-check-error">There was a problem checking for updates. Please try again later.</p>
 			
 			<div class="no-update-available hidden">
 				<p class="margin-top">No updates are currently available.</p>
@@ -26,10 +26,20 @@
 					<!-- OS name & version -->
 				</div>
 				<!--<hr class="margin-bottom">-->
-				<div class="button pill grey software-update-available hidden" id="install-update-button" onclick="software_update.install();">Update Now</div>
+				<p class="warning" id="main-pre-release-warning">Pre-release versions may contain broken features or otherwise behave unexpectedly. Proceed with caution.</p>
+				<div class="button pill black software-update-available hidden" id="install-update-button" onclick="software_update.install();">Update Now</div>
 				<h2>New in this version</h2>
 				<div id="update-release-notes">
 					
+				</div>
+
+			</div>
+			<div id="earlier-updates">
+				<hr>
+				<h2>Other updates</h2>
+				<p>These updates were also released after the current product software version (<span class="hifiberry-version"></span>).</p>
+				<div id="earlier-updates-container">
+					<!-- OS name & version -->
 				</div>
 
 			</div>
@@ -41,10 +51,10 @@
 						<div class="menu-value auto-update-mode"></div>
 					</div>
 			</div>
-			<div class="menu-item hidden disabled" id="manual-update-track">
+			<div class="menu-item disabled toggle on" id="show-experimental-updates">
 					<div class="menu-text-wrap">
-						<div class="menu-label">Manual Update Track</div>
-						<div class="menu-value"></div>
+						<div class="menu-label">Pre-Release Updates</div>
+						<div class="menu-toggle"></div>
 					</div>
 			</div>
 			<h2 class="disclosure" data-disclosure="#software-update-advanced">Advanced</h2>
@@ -95,11 +105,11 @@
 				<div class="first-row">
 					<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
 					<div class="menu-text-wrap">
-						<div class="menu-label">Security Updates</div>
+						<div class="menu-label">Critical Updates</div>
 					</div>
 				</div>
 				<div class="menu-custom-markup">
-					<p>Updates with important security content. Previously released changes and features are included in these updates.</p>
+					<p>Updates with important security content or other fixes. Previously released changes and features are included in these updates.</p>
 				</div>
 			</div>
 			<!--<hr>
@@ -123,6 +133,18 @@
 		<div class="ask-buttons">
 			
 			<div class="button pill grey" onclick="software_update.restore(true);">Restore</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="earlier-update-info-prompt">
+		<h2>New in this version (<span class="ask-dynamic-0"></span>)</h2>
+		<p class="warning" id="earlier-pre-release-warning">Pre-release versions may contain broken features or otherwise behave unexpectedly. Proceed with caution.</p>
+		<div id="earlier-release-notes">
+		
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Update Now</div>
 			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>

@@ -4,6 +4,14 @@ setupFlow = [];
 doingPostSetup = false;
 simulatingSetup = false;
 
+extensions["setup-finish"] = {
+	assetPath: extensions.setup.assetPath,
+	deepMenu: [],
+	icon: "assistant.svg",
+	id: "setup-finish",
+	title: "Setup Finished"
+}
+
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
@@ -148,9 +156,9 @@ function changeExtension(extension) {
 		}
 		//if (extension == "setup-finish") extension = "setup";
 		if (newExtensionIndex > selectedExtensionIndex) {
-			beo.showExtension(extension, "right");
-		} else {
 			beo.showExtension(extension, "left");
+		} else {
+			beo.showExtension(extension, "right");
 		}
 	}
 }
@@ -159,7 +167,7 @@ function nextStep() {
 	if (!simulatingSetup) {
 		beo.send({target: "setup", header: "nextStep"});
 	} else {
-		beo.showExtension("speaker-preset", "right");
+		beo.showExtension("speaker-preset", "left");
 		$("#assistant-button").text("Next Step");
 		$("#assistant-button").removeClass("disabled");
 	}

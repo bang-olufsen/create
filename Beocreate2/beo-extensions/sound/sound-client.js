@@ -87,11 +87,11 @@ function showAdvancedSoundAdjustmentsEnabled(enabled) {
 	}
 	if (enabled || alwaysShowAdvancedAdjustments) {
 		advancedSoundAdjustmentsEnabled = true;
-		$('section[data-top-level-menu-id="sound"]').addClass("advanced-sound-adjustments");
+		$('body').addClass("advanced-sound-adjustments");
 		$('#advanced-sound-adjustments-toggle').addClass("on");
 	} else {
 		advancedSoundAdjustmentsEnabled = false;
-		$('section[data-top-level-menu-id="sound"]').removeClass("advanced-sound-adjustments");
+		$('body').removeClass("advanced-sound-adjustments");
 		$('#advanced-sound-adjustments-toggle').removeClass("on");
 	}
 	

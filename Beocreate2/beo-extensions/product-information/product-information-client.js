@@ -12,8 +12,10 @@ var showFullSystemID = false;
 var systemVersion = null;
 var systemVersionReadable = "";
 var hifiberryVersion = null;
+var systemConfiguration = {};
 
 var productIdentities = {};
+var productImageShowTimeout = null;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
@@ -24,11 +26,15 @@ $(document).on("general", function(event, data) {
 	
 	if (data.header == "activatedExtension") {
 		if (data.content.extension == "product-information") {
-			setTimeout(function() {
+			clearTimeout(productImageShowTimeout);
+			productImageShowTimeout = setTimeout(function() {
 				$(".product-overview-image").addClass("visible");
 			}, 200);
 		} else {
-			$(".product-overview-image").removeClass("visible");
+			clearTimeout(productImageShowTimeout);
+			productImageShowTimeout = setTimeout(function() {
+				$(".product-overview-image").removeClass("visible");
+			}, 500);
 		}
 	}
 	
@@ -74,6 +80,11 @@ $(document).on("product-information", function(event, data) {
 			if (systemVersion != null && systemVersion != data.content.systemVersion) systemUpdated = true;
 			systemVersion = data.content.systemVersion;
 			$(".system-version").text(systemVersion);
+		}
+		if (data.content.systemConfiguration) {
+			systemConfiguration = data.content.systemConfiguration;
+		} else {
+			systemConfiguration = {};
 		}
 		if (data.content.systemConfiguration && data.content.systemConfiguration.cardType) {
 			if (cardType != "" && cardType != data.content.systemConfiguration.cardType) systemUpdated = true;
@@ -143,6 +154,12 @@ $(document).on("product-information", function(event, data) {
 	
 });
 
+$(document).on("ui", function(event, data) {
+	if (data.header == "navigationChanged") {
+		$(".system-name").text(systemName); // Reinstate system name to the navigation items when they change.
+	}
+});
+
 function toggleSystemIDFormat(updateOnly) {
 	if (!updateOnly) {
 		showFullSystemID = (showFullSystemID == false) ? true : false;
@@ -165,7 +182,7 @@ function cycleSystemInformation(updateOnly) {
 	
 	switch (currentSystemInfo) {
 		case 0: // HiFiBerryOS version ("release")
-			infoText = "Software "+hifiberryVersion;
+			infoText = "System software "+hifiberryVersion;
 			break;
 		case 1: // Beocreate version
 			infoText = "Beocreate "+systemVersion;
@@ -302,7 +319,16 @@ interactDictionary = {
 			icon: "common/symbols-black/power.svg",
 			once: true,
 			setup: function(data) { interactSetup("setup", data) }, 
-			preview: function(data) { return interactSetup("preview", data) }
+			preview: function(data) { return interactSetup("preview", data) },
+			illegalWith: ["triggers/product-information/systemBoot"]
+		}
+	},
+	triggers: {
+		systemBoot: {
+			name: "Product Startup",
+			icon: "common/symbols-black/power.svg",
+			once: true,
+			illegalWith: ["actions/product-information/power"]
 		}
 	}
 }
@@ -317,6 +343,7 @@ return {
 	productImage: function() {return productImage},
 	cardType: function() {return cardType},
 	hifiberryVersion: function() {return hifiberryVersion},
+	systemConfiguration: function() {return systemConfiguration},
 	generateSettingsPreview: generateSettingsPreview,
 	clearPresetPreview: clearPresetPreview,
 	startCustomisation: startCustomisation,

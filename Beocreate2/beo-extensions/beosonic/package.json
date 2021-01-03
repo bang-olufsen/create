@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/beosonic",
-  "version": "0.6",
+  "version": "0.6.2",
   "description": "Tone controls for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {

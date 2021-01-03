@@ -117,7 +117,15 @@ function connectProduct() {
 				document.body.classList.add("disconnected");
 				document.body.classList.remove("disconnected", "connected");
 				if (beo.sendToProductView) beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: false}});
-				if (maxConnectionAttempts > 0 && !noConnectionNotifications && beo.notify) beo.notify({title: "Product is unreachable", message: "Make sure the product is on and that the product and your "+os[1]+" are connected to the same network.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
+				if (maxConnectionAttempts > 0 && !noConnectionNotifications && beo.notify) {
+					var productName = "Product";
+					if (product_information && 
+						product_information.systemName &&
+						product_information.systemName()) {
+						productName = product_information.systemName();
+					}
+					beo.notify({title: productName+" can't be reached", message: "Make sure the product is on and that it is connected to the same network with your "+os[1]+".", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
+				}
 				clearTimeout(productConnectionTimeout);
 				connectionAttempts = 0;
 				connecting = false;
@@ -161,10 +169,12 @@ function send(data) {
 
 function sendToProduct(target, header, content = undefined) {
 	if (typeof header == "string") {
+		if (debug > 1) console.log(target, header, content);
 		send({target: target, header: header, content: content});
 	} else {
 		// Legacy way of sending data, supported. 'Header' used to be 'data'.
 		header.target = target;
+		if (debug > 1) console.log(target, header.header, header.content);
 		send(header);
 	}
 }

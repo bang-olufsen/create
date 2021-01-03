@@ -1,0 +1,26 @@
+<div class="menu-screen source" id="openhome" data-icon="openhome.svg" data-menu-title="OpenHome">
+	
+	<header>
+		<div class="back-button master"></div>
+		<h1>OpenHome</h1>
+	</header>
+	
+	<div class="scroll-area">
+		<div class="menu-content">
+			<div class="menu-item toggle" id="openhome-enabled-toggle" onclick="openhome.toggleEnabled();">
+				<div class="menu-label">On</div>
+				<div class="menu-toggle"></div>
+			</div>
+			<div class="menu-item toggle" id="openhome-room-item" onclick="openhome.setRoom();">
+				<div class="menu-label">Room name</div>
+				<div class="menu-value button" id="openhome-room">Set...</div>
+			</div>
+			<p>Stream music using OpenHome/DLNA.</p>
+			<p>OpenHome support is powered by <a href="https://www.lesbonscomptes.com/upmpdcli/" target="_blank">UpMPDCLI</a>.</p>
+			<p class="experiment">This is an experimental feature.</p>
+			
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" charset="utf-8" src="€/openhome-client.js"></script>

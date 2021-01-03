@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/room-compensation",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Room compensation user interface for Beocreate 2 / HiFiBerryOS",
   "main": "index.js",
   "scripts": {

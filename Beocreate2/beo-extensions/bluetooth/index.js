@@ -69,7 +69,7 @@ var fs = require("fs");
 		if (event.header == "activatedExtension") {
 			if (event.content.extension == "bluetooth") {
 				getBluetoothDiscoveryStatus(function() {
-					beo.sendToUI("bluetooth", {header: "bluetoothSettings", content: {settings: settings}});
+					beo.sendToUI("bluetooth", "bluetoothSettings", {settings: settings});
 				});
 			}
 		}

@@ -87,3 +87,6 @@ typings/
 
 # Distribution files for Beocreate Connect
 /BeocreateConnect/dist/*
+
+# Playground
+/Beocreate2/beo-playground/

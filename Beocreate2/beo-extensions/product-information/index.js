@@ -26,8 +26,8 @@ var fs = require("fs");
 	var download = beo.download;
 	var debug = beo.debug;
 	
-	var soundPresetDirectory = beo.dataDirectory+"/beo-sound-presets"; // Sound presets directory.
-	var systemSoundPresetDirectory = beo.systemDirectory+"/beo-sound-presets"; // Sound presets directory.
+	var speakerPresetDirectory = beo.dataDirectory+"/beo-speaker-presets"; // Sound presets directory.
+	var systemSpeakerPresetDirectory = beo.systemDirectory+"/beo-speaker-presets"; // Sound presets directory.
 	var productIdentityDirectory = beo.dataDirectory+"/beo-product-identities"; // Product identities directory.
 	var systemProductIdentityDirectory = beo.systemDirectory+"/beo-product-identities"; // Product identities directory.
 	
@@ -89,7 +89,7 @@ var fs = require("fs");
 			systemVersionReadable = event.content.systemVersionReadable;
 			
 			if (fs.existsSync("/etc/hifiberry.version")) {
-				hifiberryVersion = fs.readFileSync("/etc/hifiberry.version", "utf8");
+				hifiberryVersion = fs.readFileSync("/etc/hifiberry.version", "utf8").trim();
 			}
 			
 			updateProductIdentities();
@@ -149,6 +149,8 @@ var fs = require("fs");
 					}
 				});
 			});
+			
+			if (beo.extensions.interact) beo.extensions.interact.runTrigger("product-information", "systemBoot");
 		}
 		
 		if (event.header == "activatedExtension") {
@@ -336,33 +338,33 @@ var fs = require("fs");
 		// Combines product identities from beo-product-identities and beo-sound-presets directories, from system and user locations.
 		linkedProductImages = [];
 		
-		if (fs.existsSync(systemSoundPresetDirectory)) {
-			presetFiles = fs.readdirSync(systemSoundPresetDirectory);
+		if (fs.existsSync(systemSpeakerPresetDirectory)) {
+			presetFiles = fs.readdirSync(systemSpeakerPresetDirectory);
 			for (var i = 0; i < presetFiles.length; i++) {
 				try {
-					preset = JSON.parse(fs.readFileSync(systemSoundPresetDirectory+"/"+presetFiles[i], "utf8"));
+					preset = JSON.parse(fs.readFileSync(systemSpeakerPresetDirectory+"/"+presetFiles[i], "utf8"));
 					if (preset["product-information"]) {
 						checkAndAddProductIdentity(preset["product-information"]);
 					} else {
-						if (debug == 2) console.log("No product identity data in sound preset '"+presetFiles[i]+"'.");
+						if (debug == 2) console.log("No product identity data in speaker preset '"+presetFiles[i]+"'.");
 					}
 				} catch (error) {
-					console.error("Invalid JSON data for sound preset '"+presetFiles[i]+"':", error);
+					console.error("Invalid JSON data for speaker preset '"+presetFiles[i]+"':", error);
 				}
 			}
 		}
-		if (fs.existsSync(soundPresetDirectory)) {
-			presetFiles = fs.readdirSync(soundPresetDirectory);
+		if (fs.existsSync(speakerPresetDirectory)) {
+			presetFiles = fs.readdirSync(speakerPresetDirectory);
 			for (var i = 0; i < presetFiles.length; i++) {
 				try {
-					preset = JSON.parse(fs.readFileSync(soundPresetDirectory+"/"+presetFiles[i], "utf8"));
+					preset = JSON.parse(fs.readFileSync(speakerPresetDirectory+"/"+presetFiles[i], "utf8"));
 					if (preset["product-information"]) {
 						checkAndAddProductIdentity(preset["product-information"]);
 					} else {
-						if (debug == 2) console.log("No product identity data in sound preset '"+presetFiles[i]+"'.");
+						if (debug == 2) console.log("No product identity data in speaker preset '"+presetFiles[i]+"'.");
 					}
 				} catch (error) {
-					console.error("Invalid JSON data for sound preset '"+presetFiles[i]+"':", error);
+					console.error("Invalid JSON data for speaker preset '"+presetFiles[i]+"':", error);
 				}
 			}
 		}
@@ -595,6 +597,11 @@ interact = {
 			if (interactData.option == "restart") {
 				beo.bus.emit("general", {header: "requestReboot", content: {extension: "interact"}});
 			}
+		}
+	},
+	triggers: {
+		systemBoot: function(data, interactData) {
+			return true;
 		}
 	}
 }

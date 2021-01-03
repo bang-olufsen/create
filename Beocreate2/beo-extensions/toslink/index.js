@@ -55,7 +55,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					enabled: settings.toslinkEnabled,
 					playerState: "stopped",
 					stopOthers: settings.toslinkStopsOtherSources,
-					usesHifiberryControl: false
+					usesHifiberryControl: false,
+					sortName: "Optical Input"
 				});
 			}
 			

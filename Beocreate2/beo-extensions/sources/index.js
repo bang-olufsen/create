@@ -167,8 +167,10 @@ beo.bus.on("sources", function(event) {
 		case "toggleLove":
 			if (focusedSource && allSources[focusedSource].canLove) {
 				if (!allSources[focusedSource].metadata.loved) {
+					if (debug) console.log("Loving this track...");
 					love = true;
 				} else {
+					if (debug) console.log("Removing this track from loved tracks...");
 					love = false;
 				}
 				if (allSources[focusedSource].usesHifiberryControl) {
@@ -177,7 +179,8 @@ beo.bus.on("sources", function(event) {
 					audioControl(action, null, function(success) {
 						if (success) {
 							allSources[focusedSource].metadata.loved = love;
-							beo.bus.emit("sources", {header: "metadataChanged", content: {metadata: allSources[focusedSource].metadata, extension: focusedSource}});
+							beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+							beo.sendToUI("sources", "sources", {sources: allSources, currentSource: currentSource, focusedSource: focusedSource});
 						}
 					});
 				}
@@ -288,6 +291,12 @@ function processAudioControlStatus(overview) {
 				if (overview.players[i].supported_commands) {
 					if (allSources[extension].allowChangingTransportControls) {
 						allSources[extension].transportControls = overview.players[i].supported_commands;
+						if (allSources[extension].transportControls &&
+							typeof allSources[extension].transportControls == "object") {
+							for (tc in allSources[extension].transportControls) {
+								allSources[extension].transportControls[tc] = allSources[extension].transportControls[tc].toLowerCase();
+							}
+						}
 					}
 					if (overview.players[i].supported_commands.indexOf("play") != -1) {
 						allSources[extension].startable = true;
@@ -379,9 +388,17 @@ function processAudioControlMetadata(metadata) {
 			}
 
 			if (metadata.playerState == "playing") {
-				sourceActivated((childSource && allSources[childSource]) ? childSource : extension);
+				if (childSource && allSources[childSource]) {
+					sourceActivated(childSource);
+				} else if (extension) {
+					sourceActivated(extension);
+				}
 			} else {
-				sourceDeactivated((childSource && allSources[childSource]) ? childSource : extension);
+				if (childSource && allSources[childSource]) {
+					sourceDeactivated(childSource);
+				} else if (extension) {
+					sourceDeactivated(extension);
+				}
 			}
 			
 			//beo.bus.emit("sources", {header: "playerStateChanged", content: {state: allSources[extension].playerState, extension: extension}});
@@ -405,8 +422,8 @@ function processAudioControlMetadata(metadata) {
 
 function matchAudioControlSourceToExtension(acSource, data = null) {
 	// Determine which extension this belongs to.
-	extension = null;
-	childSource = null;
+	var extension = null;
+	var childSource = null;
 	if (acSource) {
 		if (allSources[acSource.toLowerCase()]) {
 			extension = acSource.toLowerCase();
@@ -467,7 +484,8 @@ function transport(action, overrideHifiberry = false) {
 
 
 function sourceActivated(extension, playerState) {
-	if (allSources[extension] && 
+	if (extension &&
+		allSources[extension] && 
 		allSources[extension].enabled && 
 		!allSources[extension].backgroundService) {
 		if (allSources[extension].focusIndex)  {
@@ -488,21 +506,34 @@ function sourceActivated(extension, playerState) {
 		
 		// Stop currently active sources, if the source demands it.
 		if (allSources[extension].stopOthers) {
-			if (allSources[currentSource] && 
+			/*if (allSources[currentSource] && 
 				allSources[currentSource].usesHifiberryControl && 
 				!allSources[extension].usesHifiberryControl) {
-				if (!allSources[extension].parentSource || !allSources[allSources[extension].parentSource].usesHifiberryControl) {
+				
+				if (!allSources[extension].parentSource || 
+					(allSources[allSources[extension].parentSource] && allSources[allSources[extension].parentSource].usesHifiberryControl)) {
 					// If the new source isn't part of AudioControl, stop other AudioControl sources manually.
 					if (debug) console.log("Pausing sources under HiFiBerry control...");
 					audioControl("pause");
 				}
-			}
+			}*/
+			var hifiberryPaused = false;
 			for (source in allSources) {
 				if (source != extension && 
 					allSources[source].active) {
-					if (!allSources[source].usesHifiberryControl) {
+					if (allSources[source].parentSource && allSources[allSources[source].parentSource]) {
+						var theSource = allSources[source].parentSource;
+					} else {
+						var theSource = source;
+					}
+					if (!allSources[theSource].usesHifiberryControl) {
 						// Stop all other non-AudioControl sources.
 						beo.bus.emit(source, {header: "stop", content: {reason: "sourceActivated"}});
+					} else if (!hifiberryPaused && !allSources[extension].usesHifiberryControl) {
+						// If the new source isn't part of AudioControl, stop other AudioControl sources manually (issue command once).
+						if (debug) console.log("Pausing sources under HiFiBerry control...");
+						hifiberryPaused = true;
+						audioControl("pause");
 					}
 				}
 			}
@@ -525,7 +556,8 @@ function sourceActivated(extension, playerState) {
 }
 
 function sourceDeactivated(extension, playerState) {
-	if (allSources[extension] && allSources[extension].active) {
+	if (extension &&
+		allSources[extension] && allSources[extension].active) {
 		allSources[extension].active = false;
 		if (!allSources[extension].transportControls && Object.keys(allSources[extension].metadata).length == 0) {
 			// Remove the focus index from the source if it has no metadata and transport controls.
@@ -612,6 +644,7 @@ function setSourceOptions(extension, options, noUpdate) {
 			sourceAdded = true;
 			allSources[extension] = {
 				active: false,
+				sortName: extension,
 				enabled: false,
 				playerState: "stopped",
 				stopOthers: true,
@@ -638,8 +671,15 @@ function setSourceOptions(extension, options, noUpdate) {
 				allSources[extension].transportControls = false;
 			} else {
 				allSources[extension].transportControls = options.transportControls;
+				if (allSources[extension].transportControls &&
+					typeof allSources[extension].transportControls == "object") {
+					for (tc in allSources[extension].transportControls) {
+						allSources[extension].transportControls[tc] = allSources[extension].transportControls[tc].toLowerCase();
+					}
+				}
 			}
 		}
+		if (options.sortName) allSources[extension].sortName = options.sortName;
 		if (options.stopOthers != undefined) allSources[extension].stopOthers = (options.stopOthers) ? true : false;
 		if (options.usesHifiberryControl != undefined) allSources[extension].usesHifiberryControl = (options.usesHifiberryControl) ? true : false;
 		if (options.allowChangingTransportControls != undefined) allSources[extension].allowChangingTransportControls = (options.allowChangingTransportControls) ? true : false;
@@ -710,11 +750,14 @@ function setSourceOptions(extension, options, noUpdate) {
 				for (source in allSources) {
 					if (settings.sourceOrder.indexOf(source) == -1 && !allSources[source].backgroundService) {
 						// This source doesn't exist. Add it to the mix alphabetically (by display name), preserving user order.
+						
 						titles = [];
 						for (o in settings.sourceOrder) {
-							if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
+							titles.push(allSources[settings.sourceOrder[o]].sortName);
+							//if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
 						}
-						newTitle = beo.extensionsList[source].menuTitle;
+						//newTitle = beo.extensionsList[source].menuTitle;
+						newTitle = allSources[source].sortName;
 						newIndex = 0;
 						for (t in titles) {
 							if ([newTitle, titles[t]].sort()[1] == newTitle) newIndex = t+1;
@@ -830,17 +873,18 @@ interact = {
 
 
 module.exports = {
-version: version,
-setSourceOptions: setSourceOptions,
-setMetadata: setMetadata,
-sourceActivated: sourceActivated,
-sourceDeactivated: sourceDeactivated,
-allSources: allSources,
-settings: settings,
-stopAllSources: stopAllSources,
-getCurrentSource: getCurrentSource,
-transport: transport,
-interact: interact
+	version: version,
+	setSourceOptions: setSourceOptions,
+	setMetadata: setMetadata,
+	sourceActivated: sourceActivated,
+	sourceDeactivated: sourceDeactivated,
+	allSources: allSources,
+	settings: settings,
+	stopAllSources: stopAllSources,
+	getCurrentSource: getCurrentSource,
+	getSources: function() {return allSources},
+	transport: transport,
+	interact: interact
 };
 
 

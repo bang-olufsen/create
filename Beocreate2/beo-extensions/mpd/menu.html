@@ -1,4 +1,4 @@
-<div class="menu-screen" data-context="general-settings/services" id="mpd" data-icon="mpd.svg" data-menu-title="Music Player Daemon">
+<div class="menu-screen" data-context="general-settings/services" id="mpd" data-icon="mpd.svg" data-menu-title="Music Player Daemon"  data-namespace="mpd">
 	
 	<header>
 		<div class="back-button master"></div>
@@ -8,13 +8,70 @@
 	<div class="scroll-area">
 		<div class="menu-content">
 			<div class="menu-item toggle" id="mpd-enabled-toggle" onclick="mpd.toggleEnabled();">
-				<div class="menu-label">Enabled</div>
+				<div class="menu-label">On</div>
 				<div class="menu-toggle"></div>
 			</div>
-			<p><a href="http://musicpd.org" target="_blank">Music Player Daemon</a> (MPD) is the background service for playing internet radio and locally stored music.</p>
-			<a class="button pill grey" href="#" target="_blank" id="mpd-link">Open MPD Web Interface</a>
+			<p><a href="http://musicpd.org" target="_blank">Music Player Daemon</a> (MPD) is the background service for Music and Radio sources.</p>
+			<!--<a class="button pill grey" href="#" target="_blank" id="mpd-link">Open MPD Web Interface</a>-->
+			<hr>
+			<p class="margin-top">Music from USB drives and network attached storage (NAS) can be browsed through the Music source.</p>
+			<h2>Added storage</h2>
+			<div id="mpd-mounted-storage">
+			
+			</div>
+			<div id="mpd-discovered-storage">
+			
+			</div>
+			<p class="loading hidden" id="mpd-discovering-storage">Looking for servers...</p>
+			<div class="button pill grey" onclick="mpd.addNAS(5);">Add Other Server...</div>
+			<p class="margin-top">When adding or removing storage, the library is automatically updated. When content  on a NAS is changed, the library may need to be updated manually.</p>
+			
+			<div id="mpd-update-button" class="button pill grey" onclick="mpd.updateDatabase();">Update Library</div>
+			<p id="mpd-updating-label" class="loading hidden">Updating library...</p>
 		</div>
 	</div>
+	
+	<div class="ask-menu" id="mpd-nas-setup">
+		<h2 id="mpd-server-name">Server</h2>
+		<p>Select a share from the server to add.</p>
+		<div id="mpd-share-list">
+		
+		</div>
+		<hr>
+		<div class="menu-item" onclick="mpd.addNAS(3);">
+			<div class="menu-label">Path</div>
+			<div class="menu-value" id="mpd-nas-path">/</div>
+		</div>
+		
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="mpd.addNAS(4);" id="mpd-add-nas-button">Add Storage</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="mpd-remove-storage">
+		<h2>Remove storage location?</h2>
+		<p>Content from '<span class="ask-dynamic-0"></span>' will be removed from the Music source.</p>
+		
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Remove</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Don't Remove</div>
+		</div>
+	</div>
+	
+	<div class="ask-menu" id="mpd-remove-storage-unavailable">
+		<h2>Storage location unavailable</h2>
+		<p>'<span class="ask-dynamic-0"></span>' appears to be currently unavailable. Make sure that it is correctly set up and that the product and the server are on the same network.</p>
+		<p>Try connecting again or remove the location and set it up again.</p>
+		
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Try Again</div>
+			<div class="button pill grey" onclick="beo.askOption(1);">Remove</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/mpd-client.js"></script>

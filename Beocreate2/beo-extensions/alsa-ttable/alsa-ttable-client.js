@@ -2,7 +2,8 @@ alsa_ttable = (function() {
 	
 settings = {
 	role: "stereo",
-	limit_db: 0
+	limit_db: 0,
+	min_slider: 0
 }
 
 $(document).on("alsa-ttable", function(event, data) {
@@ -14,8 +15,14 @@ $(document).on("alsa-ttable", function(event, data) {
 			settings = data.content.settings;
 			
 			if (settings.limit_db) {
-				$(".alsa-volume-limit-slider span").attr("data-content", alsaVolumeLimitPercentageToSliderText(settings.limit_db))
+				$(".alsa-volume-limit-slider span").attr("data-content", alsaVolumedBToSliderText(settings.limit_db))
 				$(".alsa-volume-limit-slider").slider("value", settings.limit_db);
+			}
+			
+			if (settings.min_slider) {
+				console.log(settings.min_slider)
+				$(".alsa-volume-min-slider span").attr("data-content", alsaVolumePercentToSliderText(settings.min_slider))
+				$(".alsa-volume-min-slider").slider("value", settings.min_slider);
 			}
 			
 			if (settings.role == "mono") {
@@ -37,14 +44,33 @@ $(".alsa-volume-limit-slider").slider({
 	value: 0,
 	slide: function( event, ui ) {
 		settings.limit_db = ui.value
-		$(".alsa-volume-limit-slider span").attr("data-content", alsaVolumeLimitPercentageToSliderText(ui.value));
+		$(".alsa-volume-limit-slider span").attr("data-content", alsaVolumedBToSliderText(ui.value));
 			
 	}
 });
 
+$(".alsa-volume-min-slider").slider({
+	range: "min",
+	min: 0,
+	max: 70,
+	value: 0,
+	slide: function( event, ui ) {
+		settings.min_slider = ui.value
+		console.log("min slider1: "+ui.value);
+		$(".alsa-volume-min-slider span").attr("data-content", alsaVolumePercentToSliderText(ui.value));
+		console.log("min slider2: "+ui.value);
+		update_volrange(ui.value);
+			
+	}
+});
 
-function alsaVolumeLimitPercentageToSliderText(value) {
+function alsaVolumedBToSliderText(value) {
 	sliderText = value+" dB";
+	return sliderText;
+}
+
+function alsaVolumePercentToSliderText(value) {
+	sliderText = value+"%";
 	return sliderText;
 }
 
@@ -61,9 +87,14 @@ function selectRole(role) {
 }
 
 function save() {
-	console.log("ttable save")
 	console.log("settings: "+settings.role+"/"+settings.limit_db);
 	beo.send({target: "alsa-ttable", header: "saveSettings", content: {settings}});
+}
+
+function update_volrange(min) {
+	console.log("updating volrange");
+	settings.min_slider = min;
+	beo.send({target: "alsa-ttable", header: "setVolRange", content: {settings}});
 }
 
 return {

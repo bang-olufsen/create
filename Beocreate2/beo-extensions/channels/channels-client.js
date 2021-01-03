@@ -143,7 +143,7 @@ function showChannelSettings() {
 			
 			if (channelSettings[channel].enabled) {
 				beo.setSymbol(".channel-item-"+channel+" .channel-mute", "common/symbols-black/volume.svg");
-				$(".channel-item-"+channel+" .channel-level-slider").removeClass("disabled");
+				if (canControl[channel].level) $(".channel-item-"+channel+" .channel-level-slider").removeClass("disabled");
 			} else {
 				beo.setSymbol(".channel-item-"+channel+" .channel-mute", "common/symbols-black/volume-mute.svg");
 				$(".channel-item-"+channel+" .channel-level-slider").addClass("disabled");
@@ -170,9 +170,10 @@ function showChannelSettings() {
 
 function showCanControlChannels() {
 	$("#simple-channel-select-control, #simple-stereo-control, .channels-channel-item .channel-level-slider, .channels-channel-item .channel-mute, .channels-channel-item .channel-invert").removeClass("disabled");
-	$("#simple-balance-control, .channels-channel-item .selected-role").removeClass("hidden");
+	$("#simple-balance-control, .channels-channel-item .selected-role, .channels-channel-item").removeClass("hidden");
 	$(".channels-channel-item .role-select-control").empty();
 	for (var c = 0; c < 4; c++) {
+		settingsToControl = 0;
 		channel = "abcd".charAt(c);
 		if (canControl[channel].role == false) {
 			$(".channel-item-"+channel+" .selected-role").addClass("hidden");
@@ -194,16 +195,31 @@ function showCanControlChannels() {
 				$(".slave-channel-item-"+channel+" .role-select-control").append("<div class=\""+rearrangedRoles[i]+"\" onclick=\"channels.selectRole('"+channel+"', '"+rearrangedRoles[i]+"', true);\">"+beo.capitaliseFirst(rearrangedRoles[i])+"</div>");
 			}
 			$("#simple-channel-select-control").removeClass("disabled");
+			settingsToControl++;
 		}
 		
 		
 		if (canControl[channel].level == false) {
 			$(".channel-item-"+channel+" .channel-level-slider").addClass("disabled");
 			$(".channel-item-"+channel+" .channel-mute").addClass("disabled");
+		} else {
+			settingsToControl++;
 		}
 		
 		if (canControl[channel].invert == false) {
 			$(".channel-item-"+channel+" .channel-invert").addClass("disabled");
+		} else {
+			settingsToControl++;
+		}
+		
+		if (canControl[channel].delay == false) {
+			$(".channel-item-"+channel+" .channel-delay .button").addClass("disabled");
+		} else {
+			settingsToControl++;
+		}
+		
+		if (!settingsToControl) { // Hide the whole channel if there are no settings to control.
+			$(".channel-item-"+channel).addClass("hidden");
 		}
 	}
 	
@@ -237,10 +253,10 @@ function showSimpleRoleSelection(roleSelection) {
 			$("#simple-stereo-control .button").text("Stereo").removeClass("selected");
 			break;
 		case "stereo":
-			$("#simple-stereo-control .button").html('L&nbsp;<div class="symbol" style="-webkit-mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg); mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg);"></div>&nbsp;R').addClass("selected");
+			$("#simple-stereo-control .button").html('L&nbsp;<div class="symbol" style="-webkit-mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg); mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg);"></div>&nbsp;R').addClass("selected");
 			break;
 		case "stereo-rev":
-			$("#simple-stereo-control .button").html('R&nbsp;<div class="symbol" style="-webkit-mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg); mask-image: url('+$("#channels").attr("data-asset-path")+'/symbols-black/switch-arrows.svg);"></div>&nbsp;L').addClass("selected");
+			$("#simple-stereo-control .button").html('R&nbsp;<div class="symbol" style="-webkit-mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg); mask-image: url('+extensions.channels.assetPath+'/symbols-black/switch-arrows.svg);"></div>&nbsp;L').addClass("selected");
 			break;
 		default:
 			$("#simple-stereo-control .button").text("Stereo").removeClass("selected");
@@ -350,6 +366,7 @@ function prepareChannelsUI() {
 		slaveItem.remove();
 		
 		attachChannelSliders();
+		
 	}
 }
 

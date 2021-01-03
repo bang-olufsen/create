@@ -436,8 +436,8 @@ Checks that the supplied settings are valid and compatible with the current DSP 
 */
 function checkSettings(theSettings) {
 	
-	validatedSettings = {};
-	compatibilityIssues = {};
+	var validatedSettings = {};
+	var compatibilityIssues = {};
 	
 	for (var c = 0; c < 4; c++) {
 		channel = "abcd".charAt(c);
@@ -504,7 +504,8 @@ function checkSettings(theSettings) {
 						validatedSettings[channel].enabled = true;
 					}
 					
-					if (!isNaN(theSettings[channel].level) && theSettings[channel].level >= 0 && theSettings[channel].level <= 100) {
+					if (!isNaN(theSettings[channel].level) && 
+						theSettings[channel].level <= 100) {
 						compatibilityIssues[channel].level = 0;
 					} else {
 						validatedSettings[channel].level = 100;
@@ -513,7 +514,8 @@ function checkSettings(theSettings) {
 				} else {
 					compatibilityIssues[channel].level = 1;
 				}
-				if (!isNaN(theSettings[channel].level) && theSettings[channel].level >= 0 && theSettings[channel].level <= 100) {
+				if (!isNaN(theSettings[channel].level) && 
+					theSettings[channel].level <= 100) {
 					validatedSettings[channel].level = theSettings[channel].level;
 				}
 				if (theSettings[channel].enabled != undefined) {
@@ -787,7 +789,8 @@ function getSettingsForBeosonic() {
 }
 
 function applyBeosonicPreset(fromSettings) {
-	settings = Object.assign(settings, checkSettings(fromSettings).validatedSettings);
+	var validSettings = checkSettings(fromSettings).validatedSettings;
+	settings = Object.assign(settings, validSettings);
 	for (var c = 0; c < 4; c++) {
 		channel = "abcd".charAt(c);
 		applyChannelRoleFromSettings(channel);

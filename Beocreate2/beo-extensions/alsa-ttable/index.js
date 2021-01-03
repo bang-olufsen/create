@@ -26,6 +26,7 @@ var debug = beo.debug;
 
 var defaultSettings = {
 	"limit_db": -3,
+	"min_slider": 0,
 	"role": "mono"
 };
 
@@ -44,6 +45,13 @@ function read_settings() {
 			console.error("Could not read ALSA-ttable settings via speaker-role.")
 		}
 		
+		if (beo.extensions["sound"] && 
+			beo.extensions["sound"].getVolumeControlRange != undefined) {
+				settings.min_slider = beo.extensions["sound"].getVolumeControlRange()[0];
+		} else {
+			settings.min_slider = 0
+		}
+		
 		beo.sendToUI("alsa-ttable", {header: "ttableSettings", content: {settings: settings}});
 	} catch (error) {
 		console.error("Exception reading settings via speaker-role:", error);
@@ -53,12 +61,17 @@ function read_settings() {
 
 function write_settings(settings) {
 	var child;
+	
+	console.error("Write ttable settings");
 
 	try {
-		child = execSync('/opt/hifiberry/bin/speaker-role '+settings.role + " "+settings.limit_db)
+		child = execSync('/opt/hifiberry/bin/speaker-role '+settings.role + " "+settings.limit_db, timeout=10000)
 	} catch (error) {
 		console.error("Exception calling speaker-role:", error);
 	}
+	
+
+
 }
 
 beo.bus.on('general', function(event) {
@@ -83,6 +96,16 @@ beo.bus.on('alsa-ttable', function(event) {
 			write_settings(settings);
 		} else {
 			console.error("Settings for ALSA-ttable were incomplete, ignoring.");
+		}
+	}
+	
+	if (event.header == "setVolRange") {
+		if (beo.extensions["sound"] && 
+			beo.extensions["sound"].setVolumeControlRange != undefined) {
+				settings = event.content.settings
+				beo.extensions["sound"].setVolumeControlRange(min = settings.min_slider, max = 100);
+		} else {
+			console.error("sound.setVolumeControlRange not available")
 		}
 	}
 	

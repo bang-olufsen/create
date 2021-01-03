@@ -14,6 +14,8 @@
 	<link rel="apple-touch-icon" href="views/default/apple-touch-icon.png?v=1" />
 	
 	<link rel="stylesheet" type="text/css" href="views/default/beostyle2018.css" />
+	<beo-styles></beo-styles>
+	
 	<script type="text/javascript" src="views/default/scripts/jquery-1.10.2.min.js"></script>
 	<script type="text/javascript" src="views/default/scripts/jquery-ui.min.js"></script>
 	<script type="text/javascript" src="views/default/scripts/jquery.ui.touch-punch.min.js"></script>
@@ -21,6 +23,7 @@
 	<script src='views/default/scripts/modernizr.js'></script>
 	<script src='views/default/scripts/fastclick.min.js'></script>
 	<script src='common/scripts/flotr2.mod.min.js'></script>
+	<script src='common/scripts/vue.js'></script>
 	<script src='views/default/scripts/beo-ui.js'></script>
 	<script src='common/scripts/beo-drag.js'></script>
 	<script src='common/scripts/beo-comms.js'></script>
@@ -42,18 +45,28 @@
 				
 			</div>
 		</div>
+		<div id="nav-bar-mode-button-wrap">
+			<div class="button symbol" onclick="beo.chooseNavigationMode();" id="nav-bar-mode-button" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-updown.svg); mask-image: url(common/symbols-black/chevron-thin-updown.svg);" title="Choose navigation shortcuts"></div>
+		</div>
+		
 		<div class="reload-button" onclick="window.location.reload();"></div>
 	</nav>
 	
 	<nav class="full top-level">
-		<div class="nav-content dark">
-		<!-- 
-		SIDEBAR
-		- assembled client-side
-		- based on extensions included in the UI
-		-->
+		<div class="scroll-area">
+			<div class="nav-content dark">
+			<!-- 
+			SIDEBAR
+			- assembled client-side
+			- based on extensions included in the UI
+			-->
+			</div>
+		</div>
+		<div id="nav-menu-mode-button-wrap">
+			<div class="button pill popup-button black nav-mode-name" id="main-menu-nav-mode-button" onclick="beo.chooseNavigationMode();" title="Choose navigation shortcuts"></div>
 		</div>
 	</nav>
+
 	
 	<div class="plexi" id="ask-back-plate" onclick="beo.ask();"></div>
 	<div class="ask" id="ask">
@@ -98,7 +111,7 @@
 				</header>
 				<div class="menu-content">
 					<p id="text-prompt">Text prompt.</p>
-					<form id="text-fields" action="javascript:beo.submitText();">
+					<form id="text-fields" action="javascript:;" onsubmit="beo.submitText();">
 						<input type="text" name="text-input" value="" id="text-input-plain" autocorrect="off" autocapitalize="off" placeholder="Placeholder">
 						<input type="password" name="password-input" id="text-input-password" placeholder="Password" value="" autocomplete="current-password">
 						<input type="submit" value="Submit" id="submit-text">
@@ -120,14 +133,14 @@
 	</div>
 	
  	
-	<div id="extensions">
+	<section id="extensions">
 		
 		<!-- DYNAMIC UI CONTENT
 		- all UI sections ("extensions") currently installed
 		- added on the server before serving the page
 		-->
 		<beo-dynamic-ui></beo-dynamic-ui>
-	</div>
+	</section>
 	
 	<div class="setup-navigation">
 		<div class="button pill black disabled" id="assistant-button" onclick="setup.nextStep();">Next Step</div>
@@ -135,9 +148,9 @@
 	
 	
 	
-	<div class="player-bar setup-hide">
-		<div class="player-bar-wrap">
-			<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();" title="Show Now Playing"></div>
+	<div id="player-bar" class="setup-hide" v-bind:class="{shifted: visible}">
+		<div id="player-bar-wrap">
+			<!--<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();" title="Show Now Playing"></div>
 			<div id="player-bar-info-area">
 				<div class="focused-source">
 					<div class="symbol focused-source-icon hidden" style=""></div><span class="focused-source-name"></span>
@@ -146,7 +159,8 @@
 					<h3 class="first-row">Partir avec moi</h3>
 					<h4 class="second-row">Poets of the Fall</h4>
 				</div>
-			</div>
+			</div>-->
+			<mini-now-playing></mini-now-playing>
 			<div class="slider-wrap white" id="player-bar-volume-wrap">
 				<img class="symbol" src="common/symbols-white/volume-mute.svg" draggable="false">
 				<div class="master-volume-slider white" id="player-bar-volume-slider"></div>

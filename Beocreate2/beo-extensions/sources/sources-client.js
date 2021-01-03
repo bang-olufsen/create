@@ -105,40 +105,12 @@ function showActiveSources() {
 	$(".source-menu-item").addClass("hide-icon-right");
 	// Current, playing source.
 	if (currentSource != null) {
-		sourceIcon = null;
-		sourceName = null;
 		cSource = (allSources[currentSource].childSource) ? allSources[currentSource].childSource : currentSource;
-		if (allSources[cSource].aliasInNowPlaying) {
-			sourceName = allSources[cSource].aliasInNowPlaying;
-		} else if (allSources[cSource].alias) {
-			if (allSources[cSource].alias.icon) {
-				sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[cSource].alias.icon;
-			}
-			sourceName = allSources[cSource].alias.name;
-		}
-		if (!sourceIcon && 
-			extensions[cSource].icon && 
-			extensions[cSource].assetPath) {
-				sourceIcon = extensions[cSource].assetPath+"/symbols-black/"+extensions[cSource].icon;
-		}
-		if (!sourceName) sourceName = extensions[cSource].title;
-		if (sourceIcon) {
-			beo.setSymbol(".active-source-icon", sourceIcon);
-			$(".active-source-icon").removeClass("hidden");
-		} else {
-			$(".active-source-icon").addClass("hidden");
-		}
-		$(".active-source-name").text(sourceName);
 		$('.source-menu-item[data-extension-id="'+cSource+'"]').removeClass("hide-icon-right");
-		setTimeout(function() {
-			$(".active-source").addClass("visible");
-		}, 50);
-	} else {
-		$(".active-source").removeClass("visible");
 	}
 	
 	// Which source is focused.
-	if (focusedSource != null) {
+	/*if (focusedSource != null) {
 		sourceIcon = null;
 		sourceName = null;
 		fSource = (allSources[focusedSource].childSource) ? allSources[focusedSource].childSource : focusedSource;
@@ -170,7 +142,7 @@ function showActiveSources() {
 		$(".focused-source:not(.source-select)").removeClass("visible");
 		$(".focused-source.source-select .focused-source-name").text("No Source");
 		$(".focused-source.source-select .focused-source-icon").addClass("hidden");
-	}
+	}*/
 }
 
 var previousDisabled = 0;

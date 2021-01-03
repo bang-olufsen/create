@@ -1,29 +1,52 @@
-<div class="menu-screen full-width" id="product-information" data-icon="create.svg" data-icon-hifiberry="hifiberry.svg" data-menu-title="About" data-menu-title-class="system-name" data-extension-name="Product Information" data-stylesheet="product-information.css" data-built-in="1" data-namespace="product_information">
-	
-	<header class="always-top transparent">
-		<div class="back-button master setup"></div>
-	</header>
+<div class="menu-screen" id="product-information" data-icon="create.svg" data-icon-hifiberry="hifiberry.svg" data-menu-title="Home" data-menu-title-class="system-name" data-extension-name="Product Information" data-stylesheet="product-information.css" data-built-in="1" data-namespace="product_information">
 	
 	<!--<div id="product-overview-image-wrap-sidebar" class="product-overview-image-wrap as-sidebar">
-		<div class="product-overview-image" style="background-image: url(product.png);"></div>
+		<div class="product-overview-image product-image-bg"></div>
 	</div>-->
+	
+	<header class="transparent opaque-scroll top-hide-title">
+		<div class="back-button master setup"></div>
+		<h1 class="compact-only">Beocreate Core</h1>
+		<div class="product-overview-image product-image-bg normal-only" id="product-overview-image-sidebar"></div>
+	</header>
+	
 	
 	<div class="scroll-area">
 		
 			
-		<div id="product-overview" class="full-height">
-			<div id="product-overview-image-wrap-inline" class="product-overview-image-wrap">
+		<div id="product-overview" class="full-height setup-only">
+			<div id="product-overview-image-wrap-inline" class="product-overview-image-wrap compact-only">
 				<div class="product-overview-image product-image-bg"></div>
 			</div>
-			<div id="product-identity-area">
+			<div id="setup-product-identity-area" class="product-identity-area">
 				<h2 class="model-name">Beocreate 2</h2>
 				<h1 class="system-name">Sound System</h1>
 				<div class="button-row centre">
-					<div data-translation="changeNameButton" class="button pill black compact setup-only" onclick="product_information.changeProductName();">Change Name…</div>
-					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>
+					<div data-translation="changeNameButton" class="button pill black compact" onclick="product_information.changeProductName();">Change Name…</div>
+					<!--<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>-->
 				</div>
 			</div>
-			<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">About</h2>
+			<!--<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">About</h2>-->
+		</div>
+		
+		<div class="menu-content setup-hide">
+			<div id="product-overview-image-wrap-inline" class="product-overview-image-wrap compact-only">
+				<div class="product-overview-image product-image-bg"></div>
+			</div>
+			
+			<div id="product-identity-area" class="product-identity-area">
+				<h2 class="model-name">Beocreate 2</h2>
+				<h1 class="system-name">Sound System</h1>
+				<!--<div class="button-row">
+					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>
+				</div>-->
+				<div class="button symbol" onclick="beo.ask('product-appearance-prompt');" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
+			</div>
+			<div class="beo-dynamic-menu main-menu"></div>
+			<!--<hr>
+			<div class="menu-item icon chevron">
+				<div class="menu-label">About</div>
+			</div>-->
 		</div>
 			
 	
@@ -36,15 +59,15 @@
 					
 					
 			<div id="about-texts">
-				<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
-				<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>
+				<!--<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
+				<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>-->
 				
-				<p class="about-line-0 card-type">DAC+ DSP</p>
+				<p class="about-line-0 card-type">Sound device not available</p>
 				
 				<p class="about-line-1 system-info-cycle" onclick="product_information.cycleSystemInformation();"></p>
 				
-				<p class="about-line-2" id="copy-beocreate">&copy; 2017–2020 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry. Licensed under MIT.</p>
-				<p class="about-line-2" id="copy-hifiberry-os">&copy; 2017–2020 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen. Licensed under MIT.</p>
+				<p class="about-line-2" id="copy-beocreate">&copy; 2017–2020 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry.<br>MIT open source licence.</p>
+				<p class="about-line-2" id="copy-hifiberry-os">&copy; 2017–2020 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen.<br>MIT open source licence.</p>
 				
 				<!-- EXIST TO CREATE -->
 			</div>
@@ -55,7 +78,7 @@
 	<div class="ask-menu" id="product-appearance-prompt">
 		<div class="ask-buttons">
 			<div class="button pill grey" onclick="beo.ask();product_information.changeProductName();">Change Name…</div>
-			<div class="button pill grey" onclick="beo.ask();product_information.startCustomisation();">Change Icon…</div>
+			<div class="button pill grey" onclick="beo.ask();product_information.startCustomisation();">Change Icon &amp; Model…</div>
 			<div class="button pill black cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
@@ -96,13 +119,13 @@
 				<hr>-->
 				
 				<!--<h2>Icon &amp; Model Name</h2>-->
-				
+				<p class="hifiberry-hide">Changing the icon doesn't affect sound. For sound adjustments, go to the <a href="#" onclick="product_information.jumpToSoundAdjustments();">Sound menu</a>.</p>
 				
 				<div class="collection product-identity-collection margin-bottom margin-top">
 					
 					
 				</div>
-				<p class="hifiberry-hide">These settings do not change sound. For sound adjustments, go to the <a href="#" onclick="product_information.jumpToSoundAdjustments();">Sound section</a>.</p>
+				
 				
 			</div>
 		</div>

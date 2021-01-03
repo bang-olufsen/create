@@ -15,7 +15,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-// SPOTIFYD CONTROL FOR BEOCREATE
+// spotify CONTROL FOR BEOCREATE
 
 var exec = require("child_process").exec;
 var fs = require("fs");
@@ -27,7 +27,7 @@ var fs = require("fs");
 	var sources = null;
 	
 	var settings = {
-		spotifydEnabled: false,
+		spotifyEnabled: false,
 		loggedInAs: false
 	};
 	var configuration = {};
@@ -43,31 +43,28 @@ var fs = require("fs");
 			}
 			
 			if (sources) {
-				getSpotifydStatus(function(enabled) {
-					sources.setSourceOptions("spotifyd", {
+				getspotifyStatus(function(enabled) {
+					sources.setSourceOptions("spotify", {
 						enabled: enabled,
 						transportControls: true,
-						usesHifiberryControl: true
+						usesHifiberryControl: true,
+						aka: "spotify"
 					});
 				});
 			}
 			
 			readConfiguration();
-			if (configuration.global.username && !configuration.global.username.comment && configuration.global.password && !configuration.global.password.comment) {
-				settings.loggedInAs = configuration.global.username.value;
-			} else {
-				settings.loggedInAs = false;
-			}
+			// Check login here (removed).
 			if (sources && Object.keys(configuration).length == 0) {
-				sources.setSourceOptions("spotifyd", {
+				sources.setSourceOptions("spotify", {
 					enabled: false
 				});
 			}
 		}
 		
 		if (event.header == "activatedExtension") {
-			if (event.content.extension == "spotifyd") {
-				beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+			if (event.content.extension == "spotify") {
+				beo.bus.emit("ui", {target: "spotify", header: "spotifySettings", content: settings});
 			}
 		}
 	});
@@ -75,9 +72,9 @@ var fs = require("fs");
 	beo.bus.on('product-information', function(event) {
 		
 		if (event.header == "systemNameChanged") {
-			// Listen to changes in system name and update the spotifyd display name.
+			// Listen to changes in system name and update the spotify display name.
 			if (event.content.systemName) {
-				configure({section: "global", option: "device_name", value: event.content.systemName.split(" ").join("")}, true);
+				configure({section: "Authentication", option: "device-name", value: ("'"+event.content.systemName.split(" ").join("-")+"'")}, true);
 			}
 			
 		}
@@ -85,19 +82,19 @@ var fs = require("fs");
 		
 	});
 	
-	beo.bus.on('spotifyd', function(event) {
+	beo.bus.on('spotify', function(event) {
 		
-		if (event.header == "spotifydEnabled") {
+		if (event.header == "spotifyEnabled") {
 			
 			if (event.content.enabled != undefined) {
-				setSpotifydStatus(event.content.enabled, function(newStatus, error) {
-					beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
-					if (sources) sources.setSourceOptions("spotifyd", {enabled: newStatus});
+				setspotifyStatus(event.content.enabled, function(newStatus, error) {
+					beo.bus.emit("ui", {target: "spotify", header: "spotifySettings", content: settings});
+					if (sources) sources.setSourceOptions("spotify", {enabled: newStatus});
 					if (newStatus == false) {
-						if (sources) sources.sourceDeactivated("spotifyd");
+						if (sources) sources.sourceDeactivated("spotify");
 					}
 					if (error) {
-						beo.bus.emit("ui", {target: "spotifyd", header: "errorTogglingSpotifyd", content: {}});
+						beo.bus.emit("ui", {target: "spotify", header: "errorTogglingspotify", content: {}});
 					}
 				});
 			}
@@ -113,15 +110,15 @@ var fs = require("fs");
 				], true, function(success, error) {
 					if (success) {
 						settings.loggedInAs = event.content.username;
-						beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+						beo.bus.emit("ui", {target: "spotify", header: "spotifySettings", content: settings});
 					} else {
-						beo.bus.emit("ui", {target: "spotifyd", header: "logInError"});
+						beo.bus.emit("ui", {target: "spotify", header: "logInError"});
 						configure([
 							{section: "global", option: "username", remove: true},
 							{section: "global", option: "password", remove: true}
 						], true);
 						settings.loggedInAs = false;
-						beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+						beo.bus.emit("ui", {target: "spotify", header: "spotifySettings", content: settings});
 					}
 				});
 			}
@@ -133,42 +130,42 @@ var fs = require("fs");
 				{section: "global", option: "username", remove: true},
 				{section: "global", option: "password", remove: true}
 			], true, function() {
-				beo.bus.emit("ui", {target: "spotifyd", header: "spotifydSettings", content: settings});
+				beo.bus.emit("ui", {target: "spotify", header: "spotifySettings", content: settings});
 			});
 		}
 	});
 	
 	
-	function getSpotifydStatus(callback) {
+	function getspotifyStatus(callback) {
 		exec("systemctl is-active --quiet spotify.service").on('exit', function(code) {
 			if (code == 0) {
-				settings.spotifydEnabled = true;
+				settings.spotifyEnabled = true;
 				callback(true);
 			} else {
-				settings.spotifydEnabled = false;
+				settings.spotifyEnabled = false;
 				callback(false);
 			}
 		});
 	}
 	
-	function setSpotifydStatus(enabled, callback) {
+	function setspotifyStatus(enabled, callback) {
 		if (enabled) {
 			exec("systemctl enable --now spotify.service").on('exit', function(code) {
 				if (code == 0) {
-					settings.spotifydEnabled = true;
-					if (debug) console.log("Spotifyd enabled.");
+					settings.spotifyEnabled = true;
+					if (debug) console.log("Spotify enabled.");
 					callback(true);
 				} else {
-					spotifydEnabled = false;
+					spotifyEnabled = false;
 					callback(false, true);
 				}
 			});
 		} else {
 			exec("systemctl disable --now spotify.service").on('exit', function(code) {
-				settings.spotifydEnabled = false;
+				settings.spotifyEnabled = false;
 				if (code == 0) {
 					callback(false);
-					if (debug) console.log("Spotifyd disabled.");
+					if (debug) console.log("Spotify disabled.");
 				} else {
 					callback(false, true);
 				}
@@ -186,15 +183,15 @@ var fs = require("fs");
 				if (options[i].section && options[i].option) {
 					if (!configuration[options[i].section]) configuration[options[i].section] = {};
 					if (options[i].value) {
-						if (debug) console.log("Configuring spotifyd (setting "+options[i].option+" in "+options[i].section+")...")
+						if (debug) console.log("Configuring Spotify (setting "+options[i].option+" in "+options[i].section+")...")
 						configuration[options[i].section][options[i].option] = {value: options[i].value, comment: false};
 					} else {
 						if (configuration[options[i].section][options[i].option]) {
 							if (options[i].remove) {
-								if (debug) console.log("Configuring spotifyd (removing "+options[i].option+" in "+options[i].section+")...")
+								if (debug) console.log("Configuring Spotify (removing "+options[i].option+" in "+options[i].section+")...")
 								delete configuration[options[i].section][options[i].option];
 							} else {
-								if (debug) console.log("Configuring spotifyd (commenting out "+options[i].option+" in "+options[i].section+")...")
+								if (debug) console.log("Configuring Spotify (commenting out "+options[i].option+" in "+options[i].section+")...")
 								configuration[options[i].section][options[i].option].comment = true;
 							}
 						}
@@ -202,13 +199,13 @@ var fs = require("fs");
 				}
 			}
 			writeConfiguration();
-			if (relaunch && settings.spotifydEnabled) {
+			if (relaunch && settings.spotifyEnabled) {
 				exec("systemctl restart spotify.service", function(error, stdout, stderr) {
 					if (error) {
-						if (debug) console.error("Relaunching spotifyd failed: "+error);
+						if (debug) console.error("Relaunching Spotify failed: "+error);
 						if (callback) callback(false, error);
 					} else {
-						if (debug) console.error("Spotifyd was relaunched.");
+						if (debug) console.error("Spotify was relaunched.");
 						if (callback) callback(true);
 					}
 				});
@@ -222,21 +219,21 @@ var fs = require("fs");
 	
 	configModified = 0;
 	function readConfiguration() {
-		if (fs.existsSync("/etc/spotifyd.conf")) {
-			modified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
+		if (fs.existsSync("/etc/vollibrespot.conf")) {
+			modified = fs.statSync("/etc/vollibrespot.conf").mtimeMs;
 			if (modified != configModified) {
 				// Reads configuration into a JavaScript object for easy access.
 				configModified = modified;
-				config = fs.readFileSync("/etc/spotifyd.conf", "utf8").split('\n');
+				config = fs.readFileSync("/etc/vollibrespot.conf", "utf8").split('\n');
 				section = null;
 				for (var i = 0; i < config.length; i++) {
 					// Find settings sections.
-					if (config[i].indexOf("[") != -1 && config[i].indexOf("]") != -1) {
-						section = config[i].trim().slice(1, -1);
+					var line = config[i].trim();
+					if (line.indexOf("[") == 0 && line.indexOf("]") != -1) {
+						section = line.slice(1, -1);
 						configuration[section] = {};
 					} else {
 						if (section != null) {
-							line = config[i].trim();
 							comment = (line.charAt(0) == "#") ? true : false;
 							if (comment) {
 								lineItems = line.slice(1).split("=");
@@ -245,7 +242,7 @@ var fs = require("fs");
 							}
 							if (lineItems.length == 2) {
 								value = lineItems[1].trim();
-								configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
+								if (configuration[section][lineItems[0].trim()] == undefined) configuration[section][lineItems[0].trim()] = {value: value, comment: comment};
 							}
 						}
 					}
@@ -256,7 +253,7 @@ var fs = require("fs");
 	
 	function writeConfiguration() {
 		// Saves current configuration back into the file.
-		if (fs.existsSync("/etc/spotifyd.conf")) {
+		if (fs.existsSync("/etc/vollibrespot.conf")) {
 			config = [];
 			for (section in configuration) {
 				sectionStart = (config.length != 0) ? "\n["+section+"]" : "["+section+"]";
@@ -270,13 +267,13 @@ var fs = require("fs");
 					config.push(line);
 				}
 			}
-			fs.writeFileSync("/etc/spotifyd.conf", config.join("\n"));
-			configModified = fs.statSync("/etc/spotifyd.conf").mtimeMs;
+			fs.writeFileSync("/etc/vollibrespot.conf", config.join("\n"));
+			configModified = fs.statSync("/etc/vollibrespot.conf").mtimeMs;
 		}
 	}
 	
 module.exports = {
 	version: version,
-	isEnabled: getSpotifydStatus
+	isEnabled: getspotifyStatus
 };
 

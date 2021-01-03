@@ -187,6 +187,12 @@ beo.bus.on('beosonic', function(event) {
 		
 	}
 	
+	if (event.header == "logTesti") {
+		
+		console.log(fullPresetList.testi.channels);
+		
+	}
+	
 });
 
 beo.bus.on('dsp', function(event) {
@@ -428,7 +434,8 @@ function savePresetToFile(withName, withAdjustments) {
 		if (withAdjustments[a] != "beosonic") {
 			if (beo.extensions[withAdjustments[a]] &&
 				beo.extensions[withAdjustments[a]].getSettingsForBeosonic) {
-				fullPresetList[newID][withAdjustments[a]] = beo.extensions[withAdjustments[a]].getSettingsForBeosonic();
+				adjustmentSettings = beo.extensions[withAdjustments[a]].getSettingsForBeosonic();
+				fullPresetList[newID][withAdjustments[a]] = JSON.parse(JSON.stringify(adjustmentSettings));
 			}
 		}
 	}

@@ -1,66 +1,160 @@
-<div class="menu-screen full-width hidden" id="now-playing" data-icon="now-playing.svg" data-hidden="1" data-menu-title="Now Playing" data-namespace="now_playing" data-stylesheet="now-playing.css" data-built-in="1">
+<div class="menu-screen full-width block" id="now-playing" data-icon="now-playing.svg" data-hidden="1" data-menu-title="Now Playing" data-namespace="now_playing" data-built-in="1">
+	<transition name="now-playing-fade" appear>
+		<div id="now-playing-container" v-show="visible">
+			<div id="now-playing-left">
+				<transition appear name="now-playing-lift" appear>
+					<div id="artwork-area-wide" v-show="visible">
+						<transition name="now-playing-fade">
+							<div class="artwork-wrap" v-show="pictureView == 'a'">
+								<img v-bind:src="pictureA" v-on:load="pictureLoaded($event, 'a')" v-on:error="pictureError($event, 'a')" class="artwork-img">
+							</div>
+						</transition>
+						<transition name="now-playing-fade">
+							<div class="artwork-wrap" v-show="pictureView == 'b'">
+								<img v-bind:src="pictureB" v-on:load="pictureLoaded($event, 'b')" v-on:error="pictureError($event, 'b')" class="artwork-img">
+							</div>
+						</transition>
+						<transition name="now-playing-fade">
+							<div class="artwork-placeholder-wrap" v-if="!pictureView">
+								<div class="artwork-placeholder"  v-if="placeholderPicture" v-bind:style="{maskImage: 'url('+placeholderPicture+')'}"></div>
+							</div>
+						</transition>
+					</div>
+				</transition>
+			</div>
+			<div id="now-playing-right">
+				<transition appear name="now-playing-blur">
+					<header class="always-top opaque-scroll transparent" v-show="visible" data-opaque-threshold="1">
+						<div class="button symbol left" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-down.svg); mask-image: url(common/symbols-black/chevron-thin-down.svg);" onclick="now_playing.hideNowPlaying();"></div>
+						<div id="focused-source">
+							<transition name="now-playing-fade" mode="out-in">
+								<div class="symbol focused-source-icon" :key="focusedSource.icon" v-if="focusedSource.icon" v-bind:style="{maskImage: 'url('+focusedSource.icon+')'}"></div>
+							</transition>
+							<transition name="now-playing-fade" mode="out-in">
+								<div class="focused-source-name" v-if="focusedSource.name" :key="focusedSource.name">{{ focusedSource.name }}</div>
+							</transition>
+						</div>
+					</header>
+				</transition>
+				<div id="now-playing-upper" class="scroll-area main-scroll-area">
+					
+				<!--	<img v-bind:src="picturePre" v-if="picturePre" class="artwork-test-bench" v-on:load="pictureLoad">
+					<img v-bind:src="extPicturePre" v-if="extPicturePre" class="artwork-test-bench" v-on:load="extPictureLoad">-->
+					<div id="now-playing-info-area">
+						<transition appear name="now-playing-lift" appear>
+							<div id="artwork-area-narrow" v-show="visible">
+								<transition name="now-playing-fade">
+									<div class="artwork-wrap" v-show="pictureView == 'a'">
+										<img v-bind:src="pictureA" class="artwork-img narrow">
+									</div>
+								</transition>
+								<transition name="now-playing-fade">
+									<div class="artwork-wrap" v-show="pictureView == 'b'">
+										<img v-bind:src="pictureB" class="artwork-img narrow">
+									</div>
+								</transition>
+								<transition name="now-playing-fade">
+									<div class="artwork-placeholder-wrap" v-if="!pictureView">
+										<div class="artwork-placeholder" v-if="placeholderPicture" v-bind:style="{maskImage: 'url('+placeholderPicture+')'}"></div>
+									</div>
+								</transition>
+							</div>
+						</transition>
+						<transition appear name="now-playing-blur">
+							<div id="now-playing-main-info" v-show="visible" class="menu-content">
+								<div class="now-playing-text" v-bind:class="{reveal: reveal}" onclick="now_playing.revealSource();">
+									<div class="now-playing-text-mask">
+									<h1 v-bind:class="{scrolling: scrollH1}">
+										<span id="track-string" class="now-playing-string">
+											<transition name="now-playing-fade" mode="out-in">
+												<span class="title" :key="metadata.title" v-if="metadata.title" v-bind:data-content="(metadata.title) ? metadata.title : ' '">{{ (metadata.title) ? metadata.title : ' ' }}</span>
+											</transition>
+										</span><span id="track-string-copy" class="now-playing-string-copy">
+											<transition name="now-playing-fade" mode="out-in">
+												<span class="title" :key="metadata.title" v-if="metadata.title" v-bind:data-content="(metadata.title) ? metadata.title : ' '">{{ (metadata.title) ? metadata.title : ' ' }}</span>
+											</transition>
+										</span>
+									</h1>
+									<h2 v-bind:class="{scrolling: scrollH2}">
+										<span id="artist-album-string" class="now-playing-string">
+											<transition name="now-playing-fade" mode="out-in">
+												<span class="artist" :key="metadata.artist" v-if="metadata.title && metadata.artist">{{ metadata.artist }}</span>
+											</transition>
+											<transition name="now-playing-fade" mode="out-in">
+												<span :key="metadata.album" v-if="metadata.title && metadata.artist && metadata.album"> — {{ metadata.album }}</span>
+											</transition>
+										</span><span id="artist-album-string-copy" class="now-playing-string-copy">
+											<transition name="now-playing-fade" mode="out-in">
+												<span class="artist" :key="metadata.artist" v-if="metadata.title && metadata.artist">{{ metadata.artist }}</span>
+											</transition>
+											<transition name="now-playing-fade" mode="out-in">
+												<span :key="metadata.album" v-if="metadata.title && metadata.artist && metadata.album"> — {{ metadata.album }}</span>
+											</transition>
+										</span>
+									</h2>
+									</div>
+								</div>
+								<div id="track-functions">
+									<div class="button symbol" onclick="now_playing.toggleLove();" v-bind:style="{maskImage: (metadata.loved) ? 'url(€/symbols-black/heart-filled.svg)' : 'url(€/symbols-black/heart.svg)'}" v-if="canLove"></div>
+								</div>
+								<div id="time-bar" v-if="canSeek">
+									<input type="range" name="now-playing-time" value="0" min="0" max="500" />
+								</div>
+							</div>
+						</transition>
+						<transition appear name="now-playing-blur" appear>
+							<h2 class="scroll-invitation" v-bind:class="{hidden: !queueSource}" v-show="visible">&nbsp;</h2>
+						</transition>
+					</div>
+					<transition appear name="now-playing-blur" appear>
+						<div class="menu-content" id="now-playing-queue-area" v-if="queueSource" v-show="visible">
+							<h2>Playing next</h2>
+							<p v-if="remainingQueue.length == 0">No upcoming songs.</p>
+							<!--<div id="now-playing-queue">-->
+							<transition-group name="list" tag="div" id="now-playing-queue">
+								<menu-item
+									v-for="track in remainingQueue"
+									v-bind:label="track.name"
+									v-bind:value="time(track.time)"
+									v-bind:description="track.artist"
+									v-bind:key="track.queueID"
+									v-bind:thumbnail="track.img"
+									v-bind:thumbnail-placeholder="focusedSource.icon"
+									v-on:click="playQueued(track.queuePosition)"
+									v-on:hold="queueTrackAction(track.queueID)"
+									v-on:context="queueTrackAction(track.queueID)"
+								></menu-item>
+							</transition-group>
+							<!--</div>-->
+							<div class="button pill grey" v-bind:class="{disabled: !canClearQueue || remainingQueue.length == 0}" onclick="now_playing.clearQueue();">Clear Queue</div>
+						</div>
+					</transition>
+				</div>
+				<transition appear name="now-playing-lift-slightly" appear>
+					<div id="now-playing-lower" v-show="visible">
+						<div class="control-area">
+							<transport-controls></transport-controls>
+							<div class="slider-wrap">
+								<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume-mute.svg); mask-image: url(common/symbols-black/volume-mute.svg);"></div>
+								<div class="master-volume-slider white" id="now-playing-volume-slider"></div>
+								<div class="symbol" style="-webkit-mask-image: url(common/symbols-black/volume.svg); mask-image: url(common/symbols-black/volume.svg);"></div>
+							</div>
+						</div>
+					</div>
+				</transition>
+			</div>
+		</div>
+	</transition>
 	
-	<header class="always-top">
-		<div class="button symbol left" style="-webkit-mask-image: url(common/symbols-black/chevron-thin-down.svg); mask-image: url(common/symbols-black/chevron-thin-down.svg);" onclick="now_playing.hideNowPlaying();"></div>
-		<div class="focused-source popup-button source-select visible" onclick="sources.showStartableSources();">
-			<div class="symbol focused-source-icon hidden" style="-webkit-mask-image: url(extensions/sources/symbols-black/input.svg); mask-image: url(extensions/sources/symbols-black/input.svg);"></div>
-			<span class="focused-source-name"></span>
+	<div class="ask-menu" id="queue-track-menu">
+		<div class="menu-item two-rows chevron" onclick="beo.askOption(2);">
+			<div class="first-row"><div class="menu-text-wrap"><div class="menu-label ask-dynamic-0"></div></div></div> 
+			<div class="menu-custom-markup"><p class="ask-dynamic-1"></p></div>
 		</div>
-	</header>
-	<div id="now-playing-content">
-		<div id="now-playing-artwork-area">
-			<div class="now-playing-artwork-wrap" id="now-playing-artwork-wrap-a">
-
-				<div id="now-playing-landscape-artwork-background"></div>
-				<div class="artwork-wrap-inner" id="artwork-wrap-inner-a">
-					<!--<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">-->
-					<img src="€/placeholder.png" alt="Album Artwork" class="artwork-img artwork-img-a placeholder main-artwork" id="main-artwork-a" />
-					<div class="artwork-placeholder" id="artwork-placeholder-a" style="-webkit-mask-image: url(extensions/sources/symbols-black/input.svg); mask-image: url(extensions/sources/symbols-black/input.svg);"></div>
-				</div>
-			</div>
-			
-			<div class="now-playing-artwork-wrap" id="now-playing-artwork-wrap-b">
-			
-				<div id="now-playing-landscape-artwork-background"></div>
-				<div class="artwork-wrap-inner" id="artwork-wrap-inner-b">
-					<!--<img src="€/placeholder.png" class="artwork-img placeholder" id="artwork-shadow">-->
-					
-						
-					<img src="€/placeholder.png" alt="Album Artwork" class="artwork-img artwork-img-b placeholder main-artwork" id="main-artwork-b" />
-					<div class="artwork-placeholder" id="artwork-placeholder-b" style="-webkit-mask-image: url(extensions/sources/symbols-black/input.svg); mask-image: url(extensions/sources/symbols-black/input.svg);"></div>
-				</div>
-			</div>
-		</div>
-		
-		<div id="now-playing-control-area">
-			
-			<div id="now-playing-text-area-wrap">
-				<div id="top-text" class="now-playing-titles logo">
-					<div class="h1-wrap"><h1 class="now-playing-title first-row"></h1></div>
-					<div class="h2-wrap"><h2 class="now-playing-artist second-row"></h2></div>
-					<!--<img id="top-text-beo-logo" src="common/bangolufsen-w.svg">-->
-				</div>
-			</div>
-			<div id="now-playing-control-area-wrap">
-				<div id="now-playing-transport">
-					<img src="€/symbols-white/previous-track.svg" onclick="now_playing.transport('previous');" class="previous-track-button button symbol disabled" alt="Previous Track" draggable="false" />
-					<img src="€/symbols-white/play.svg" onclick="now_playing.playButtonPress();" alt="Play or Pause" class="play-button button symbol disabled" draggable="false" />
-					<img src="€/symbols-white/next-track.svg" onclick="now_playing.transport('next');" class="next-track-button button symbol disabled" alt="Next Track" draggable="false" />
-					
-				</div>
-				
-				<div class="slider-wrap white">
-					<img class="symbol" src="common/symbols-white/volume-mute.svg">
-					<div class="master-volume-slider white" id="now-playing-volume-slider"></div>
-					<img class="symbol" src="common/symbols-white/volume.svg">
-				</div>
-				
-				<div id="now-playing-function-row">
-					<div id="love-button" onclick="now_playing.toggleLove();" class="button symbol function-item-love love-button" title="Love or unlove track" style="-webkit-mask-image: url(€/symbols-black/heart.svg); mask-image: url(€/symbols-black/heart.svg);"></div>
-				</div>
-			</div>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="beo.askOption(0);">Play Next</div>
+			<div class="button pill grey" onclick="beo.askOption(1);">Remove from Queue</div>
+			<div class="button pill black default cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
 </div>
-
-<script type="text/javascript" charset="utf-8" src="€/now-playing-client.js"></script>

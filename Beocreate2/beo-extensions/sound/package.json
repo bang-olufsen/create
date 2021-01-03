@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/sound",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Core sound-related functions for BeoCreate systems.",
   "main": "index.js",
   "scripts": {

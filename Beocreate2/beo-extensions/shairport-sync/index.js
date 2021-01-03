@@ -59,7 +59,8 @@ var fetch = require("node-fetch"); // for sending HTTP requests to the DACP serv
 						enabled: enabled,
 						transportControls: true,
 						usesHifiberryControl: true,
-						aka: ["ShairportSync"]
+						aka: ["ShairportSync"],
+						sortName: "AirPlay 1"
 					});
 				});
 			}

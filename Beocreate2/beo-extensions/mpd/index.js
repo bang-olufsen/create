@@ -19,6 +19,7 @@ SOFTWARE.*/
 
 var express = require('express');
 var exec = require("child_process").exec;
+var spawn = require("child_process").spawn;
 var path = require("path");
 var fs = require("fs");
 var mpdAPI = require("mpd-api");
@@ -30,7 +31,6 @@ const dnssd = require("dnssd2"); // for service discovery.
 var debug = beo.debug;
 
 var version = require("./package.json").version;
-
 
 var defaultSettings = {
 	coverNames: ["cover", "artwork", "folder", "front", "albumart"],
@@ -47,6 +47,7 @@ var connected = false;
 
 var libraryPath = null;
 var cache = {};
+
 
 beo.bus.on('general', function(event) {
 	
@@ -83,21 +84,38 @@ beo.bus.on('general', function(event) {
 			});
 		}
 		
-		
 	}
 	
 	if (event.header == "activatedExtension") {
 		if (event.content.extension == "mpd") {
 			beo.bus.emit("ui", {target: "mpd", header: "mpdSettings", content: {mpdEnabled: mpdEnabled}});
-			listStorage().then(storageList => {
-				beo.sendToUI("mpd", "mountedStorage", {storage: storageList});
+			listStorage().then(storage => {
+				beo.sendToUI("mpd", "mountedStorage", {storage: storage});
 			}).catch({
 				// Error listing storage.
 			});
-			
+			listNAS();
+			isUpdatingDatabase().then(updating => {
+				beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": updating});
+			});
 		}
 	}
+	
 });
+
+
+beo.bus.on('sources', function(event) {
+	
+	if (event.header == "sourcesChanged") {
+		if (event.content.sources.mpd &&
+			event.content.sources.mpd.childSource && 
+			event.content.sources.mpd.childSource == "music") {
+			sendQueue(true);
+		}
+	}
+});	
+
+
 
 beo.bus.on('mpd', function(event) {
 	
@@ -150,9 +168,26 @@ beo.bus.on('mpd', function(event) {
 		}
 	}
 	
+	if (event.header == "queueTest") {
+		getQueue();
+	}
+	
 	if (event.header == "update") {
 		force = (event.content && (event.content.force || (event.content.extra && event.content.extra == "covers"))) ? true : false;
-		updateCache(force);
+		setTimeout(function() {
+			// Triggers a cache update (different from database).
+			updateCache(force);
+		}, 1000);
+		listStorage().then(storage => {
+			beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+		}).catch({
+			// Error listing storage.
+		});
+	}
+
+	if (event.header == "updateDatabase") {
+		// Triggers a database update.
+		updateDatabase();
 	}
 	
 	
@@ -165,15 +200,25 @@ beo.bus.on('mpd', function(event) {
 	}
 	
 	if (event.header == "addNAS") {
-		console.log(event.content.share, event.content.path, cachedNASDetails);
+		addNAS(event.content.share, event.content.path);
 	}
 	
 	if (event.header == "cancelNASAdd") {
 		cachedNASDetails = {};
 	}
 	
+	if (event.header == "removeStorage") {
+		if (event.content.id) {
+			removeStorage(event.content.id);
+		}
+	}
+	
+	if (event.header == "mountNASAgain") {
+		mountNASAgain();
+	}
+	
+	
 });
-
 
 function getMPDStatus(callback) {
 	exec("systemctl is-active --quiet mpd.service").on('exit', function(code) {
@@ -237,7 +282,7 @@ async function connectMPD() {
 					libraryPath = config.music_directory;
 					// Create a route for serving album covers (and ONLY album covers):
 					beo.expressServer.use('/mpd/covers/', (req, res, next) => {
-						if (!req.url.match(/^.*\.(png|jpg|jpeg)$/ig)) return res.status(403).end('403 Forbidden');
+						if (!req.url.match(/^.*\.(png|jpg|jpeg)/ig)) return res.status(403).end('403 Forbidden');
 						next();
 					});
 					beo.expressServer.use("/mpd/covers/", express.static(libraryPath));
@@ -249,7 +294,7 @@ async function connectMPD() {
 						}
 					}
 					firstConnect = false;
-					updateCache();
+	
 				} else {
 					console.error("MPD music library path is not available. Can't build a cache.");
 				}
@@ -261,19 +306,65 @@ async function connectMPD() {
 		client = null;
 		console.error("Failed to connect to Music Player Daemon:", error);
 	}
+	// isUpdatingDatabase();
+	//updateCache();
 }
 
+var lastUpdateStatus = null;
+async function isUpdatingDatabase(auto) {
+	if (mpdEnabled) {
+		try {
+			if (debug > 1) console.log("Checking MPD database update status...");
+			if (!client) await connectMPD;
+			var status = await client.api.status.get();
+			var stats = await client.api.status.stats();
+			updatingDatabase = (status.updating_db) ? true : false;
+			if (updatingDatabase != lastUpdateStatus) {
+				lastUpdateStatus = updatingDatabase;
+				if (auto) beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": updatingDatabase});
+			}
+			if (!updatingDatabase && 
+				!updatingCache && 
+				(!cache.lastUpdate || cache.lastUpdate != stats.db_update)) {
+				updateCache();
+			}
+			return updatingDatabase;
+		} catch (error) {
+			console.error("Error checking MPD database update status:", error);
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
 
-updatingCache = false;
+setInterval(function() {
+	isUpdatingDatabase(true);
+}, 62000);
+
+function updateDatabase() {
+	cache.lastUpdate = null
+	if (debug) console.log("Triggering MPD database and cache update.");
+	spawn("/opt/hifiberry/bin/update-mpd-db", {
+		stdio: "ignore",
+		detached: true
+	}).unref();
+	beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
+}
+
+var updatingCache = false;
+var startOver = false;
 async function updateCache(force = false) {
 	if (!client) await connectMPD();
+	var startOver = (updatingCache) ? true : false; 
 	if (client && !updatingCache) {
 		try {
-			status = await client.api.status.get();
-			stats = await client.api.status.stats();
-			if (status.updating_db && debug) console.log("MPD is currently updating its database, album cache will not be built at this time.");
+			var status = await client.api.status.get();
+			var stats = await client.api.status.stats();
+			if (debug && status.updating_db) console.log("MPD is currently updating its database. Album cache may not be up to date after updating.");
+			if (status.updating_db) beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
 			if (cache.lastUpdate == stats.db_update && !force && debug) console.log("MPD album cache appears to be up to date.");
-			if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update || force) && !status.updating_db) {
+			if ((!cache.lastUpdate || cache.lastUpdate != stats.db_update) || force) { //  && !status.updating_db
 				// Start updating cache.
 				updatingCache = true;
 				if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", true);
@@ -287,9 +378,11 @@ async function updateCache(force = false) {
 					mpdAlbums = await client.api.db.list("album", null, "albumartist");
 		
 					for (artist in mpdAlbums) {
+						if (startOver) break;
 						newCache.data[mpdAlbums[artist].albumartist] = [];
 						if (mpdAlbums[artist].album) {
 							for (album in mpdAlbums[artist].album) {
+								if (startOver) break;
 								// Get a song from the album to get album art and other data.
 								try {
 									addAlbum = true;
@@ -324,57 +417,75 @@ async function updateCache(force = false) {
 						} else {
 							console.error("No album items for artist '"+artist+"'. This is probably an MPD (-API) glitch.");
 						}
-						newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
-							if (a.date && b.date) {
-								if (a.date >= b.date) {
-									return 1;
-								} else if (a.date < b.date) {
-									return -1;
+						try {
+							newCache.data[mpdAlbums[artist].albumartist].sort(function(a, b) {
+								if (a.date && b.date) {
+									if (a.date >= b.date) {
+										return 1;
+									} else if (a.date < b.date) {
+										return -1;
+									}
+								} else {
+									return 0;
 								}
-							} else {
-								return 0;
-							}
-						});
+							});
+						} catch (error) {
+							console.error("Couldn't sort album for artist '"+artist+"'");
+						}
 					}
-					
-					cache = Object.assign({}, newCache);
-					fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
-					if (debug) console.log("MPD album cache update has finished.");
-					if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
+					if (!startOver) {
+						cache = Object.assign({}, newCache);
+						fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+						if (debug) console.log("MPD album cache update has finished.");
+					}
 				} catch (error) {
 					console.error("Couldn't update MPD album cache:", error);
 					if (error.code == "ENOTCONNECTED") client = null;
 				}
 				updatingCache = false;
-				if ((albumsRequested || artistsRequested) &&
-					beo.extensions.music &&
-					beo.extensions.music.returnMusic) {
-						if (albumsRequested) {
-							if (debug) console.log("Sending updated list of albums from MPD.");
-							albums = [];
-							for (artist in cache.data) {
-								albums = albums.concat(cache.data[artist]);
+				if (!startOver) {
+					if ((albumsRequested || artistsRequested) &&
+						beo.extensions.music &&
+						beo.extensions.music.returnMusic) {
+							if (albumsRequested) {
+								if (debug) console.log("Sending updated list of albums from MPD.");
+								albums = [];
+								for (artist in cache.data) {
+									albums = albums.concat(cache.data[artist]);
+								}
+								beo.extensions.music.returnMusic("mpd", "albums", albums, null);
 							}
-							beo.extensions.music.returnMusic("mpd", "albums", albums, null);
-						}
-						if (artistsRequested) {
-							if (debug) console.log("Sending updated list of artists from MPD.");
-							mpdAlbums = await client.api.db.list("album", null, "albumartist");
-							artists = [];
-							for (artist in mpdAlbums) {
-								artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+							if (artistsRequested) {
+								if (debug) console.log("Sending updated list of artists from MPD.");
+								mpdAlbums = await client.api.db.list("album", null, "albumartist");
+								artists = [];
+								for (artist in mpdAlbums) {
+									artists.push({artist: mpdAlbums[artist].albumartist, albumLength: mpdAlbums[artist].album.length, provider: "mpd"})
+								}
+								beo.extensions.music.returnMusic("mpd", "artists", artists, null);
 							}
-							beo.extensions.music.returnMusic("mpd", "artists", artists, null);
-						}
+					}
+					status = await client.api.status.get();
+					stats = await client.api.status.stats();
+					if (!status.updating_db) {
+						beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": false});
+						// Check that the cache is now up to date.
+						if (cache.lastUpdate && cache.lastUpdate != stats.db_update) updateCache(force);
+					}
+				} else {
+					// Start cache update again.
+					if (debug) console.log("Restarting MPD album cache update.");
+					startOver = false;
+					updateCache(force);
 				}
-				//albumsRequested = false;
-				//artistsRequested = false;
 			}
 		} catch (error) {
 			console.error("Couldn't update MPD album cache:", error);
 			if (error.code == "ENOTCONNECTED") client = null;
 		}
 	}
+	if (beo.extensions.music && beo.extensions.music.setLibraryUpdateStatus) beo.extensions.music.setLibraryUpdateStatus("mpd", false);
+
 }
 
 var albumsRequested = false;
@@ -384,6 +495,22 @@ async function getMusic(type, context, noArt = false) {
 	
 	if (!client) await connectMPD();
 	if (client) {
+		if (context && 
+			context.uri && 
+			!context.artist && !context.album) { // Find music by URI (used by the "reveal" feature).
+			mpdTracks = await client.api.db.find("((file == '"+escapeString(context.uri)+"'))");
+			try {
+				if (mpdTracks[0].albumartist) {
+					context.artist = mpdTracks[0].albumartist;
+				} else {
+					context.artist = mpdTracks[0].artist;
+				}
+				context.album = mpdTracks[0].album;
+			} catch (error) {
+				console.error("Error finding "+type+" with URI '"+context.uri+"':", error);
+			}
+		}
+		
 		switch (type) {
 			case "albums":
 				
@@ -404,6 +531,7 @@ async function getMusic(type, context, noArt = false) {
 				}
 				break;
 			case "album":
+				if (!context.album && context.name) context.album = context.name;
 				if (context && context.artist && context.album) {
 					mpdTracks = [];
 					album = {name: context.album, 
@@ -565,10 +693,10 @@ async function getMusic(type, context, noArt = false) {
 async function playMusic(index, type, context) {
 	if (!client) await connectMPD();
 	if (client && 
-		index != undefined && 
 		type && 
 		context) {
 		content = await getMusic(type, context, true);
+		if (index == undefined) index = 0;
 		if (content.tracks) {
 			try {
 				await client.api.queue.clear();
@@ -582,7 +710,7 @@ async function playMusic(index, type, context) {
 				return true;
 			} catch (error) {
 				if (error.code == "ENOTCONNECTED") client = null;
-				console.error("Could not get start playback with MPD:", error);
+				console.error("Could not start playback with MPD:", error);
 				return false;
 			}
 		} else {
@@ -592,8 +720,9 @@ async function playMusic(index, type, context) {
 }
 
 
-async function getCover(trackPath, createTiny = false) {
+async function getCover(trackPath, createTiny = false, update = false) {
 	// If cover exists on the file system, return its path.
+	urlParameters = (update) ? "?variant="+Math.round(Math.random()*100) : "";
 	if (libraryPath) {
 		albumPath = path.dirname(trackPath);
 		
@@ -623,12 +752,21 @@ async function getCover(trackPath, createTiny = false) {
 					console.log("Error creating tiny album cover:", error);
 				}
 			}
+			if (!thumbnail && img) {
+				try {
+					if (debug) console.log("Creating thumbnail album artwork for '"+albumPath+"'...");
+					await execPromise("convert \""+libraryPath+"/"+albumPath+"/"+img+"\" -resize 400x400\\> \""+libraryPath+"/"+albumPath+"/cover-thumb.jpg\"");
+					thumbnail = "cover-thumb.jpg";
+				} catch (error) {
+					console.log("Error creating album cover thumbnail:", error);
+				}
+			}
 			if (img || thumbnail || tiny) {
 				encodedAlbumPath = encodeURIComponent(albumPath).replace(/[!'()*]/g, escape);
 				return {error: null, 
-						img: ((img) ? "/mpd/covers/"+encodedAlbumPath+"/"+img : null), 
-						thumbnail: ((thumbnail) ? "/mpd/covers/"+encodedAlbumPath+"/"+thumbnail : null),
-						tiny: ((tiny) ? "/mpd/covers/"+encodedAlbumPath+"/"+tiny : null)
+						img: ((img) ? "/mpd/covers/"+encodedAlbumPath+"/"+img+urlParameters : null), 
+						thumbnail: ((thumbnail) ? "/mpd/covers/"+encodedAlbumPath+"/"+thumbnail+urlParameters : null),
+						tiny: ((tiny) ? "/mpd/covers/"+encodedAlbumPath+"/"+tiny+urlParameters : null)
 					};
 			} else {
 				return {error: null};
@@ -644,6 +782,65 @@ async function getCover(trackPath, createTiny = false) {
 	return {error: 503};
 }
 
+async function setAlbumCover(uploadPath, context) {
+	cover = null;
+	if (!client) await connectMPD();
+	if (client && libraryPath) {
+		try {
+			track = [];
+			track = await client.api.db.find('((album == "'+escapeString(context.album)+'") AND (albumartist == "'+escapeString(context.artist)+'"))', 'window', '0:1');
+			if (track[0]) {
+				albumPath = path.dirname(track[0].file);
+				files = fs.readdirSync(libraryPath+"/"+albumPath);
+				img = null;
+				thumbnail = null;
+				tiny = null;
+				for (file in files) {
+					if (path.extname(files[file]).match(/\.(jpg|jpeg|png)$/ig)) {
+						// Delete previous covers.
+						if (!img && settings.coverNames.indexOf(path.basename(files[file], path.extname(files[file])).toLowerCase()) != -1) {
+							fs.unlinkSync(libraryPath+"/"+albumPath+"/"+files[file]);
+						}
+						if (files[file] == "cover-thumb.jpg") fs.unlinkSync(libraryPath+"/"+albumPath+"/cover-thumb.jpg");
+						if (files[file] == "cover-tiny.jpg") fs.unlinkSync(libraryPath+"/"+albumPath+"/cover-tiny.jpg");
+					}
+				}
+				fileExtension = (context.fileType == "image/jpeg") ? ".jpg" : ".png";
+				fs.copyFileSync(uploadPath, libraryPath+"/"+albumPath+"/cover"+fileExtension);
+				
+				// Update the cache to include the new picture.
+				createTiny = (beo.extensions["beosound-5"]) ? true : false;
+				cover = await getCover(track[0].file, createTiny, true);
+				
+				if (!cover.error &&
+					cache.data[context.artist]) {
+					cacheUpdated = false;
+					for (a in cache.data[context.artist]) {
+						if (cache.data[context.artist][a].name == context.album) {
+							cache.data[context.artist][a].img = cover.img;
+							cache.data[context.artist][a].thumbnail = cover.thumbnail;
+							cache.data[context.artist][a].tinyThumbnail = cover.tiny;
+							cacheUpdated = true;
+							break;
+						}
+					}
+					if (cacheUpdated) {
+						fs.writeFileSync(libraryPath+"/beo-cache.json", JSON.stringify(cache));
+						if (debug) console.log("Updated MPD album cache with the new picture.");
+					}
+				}
+				
+			}
+		} catch (error) {
+			console.error("Could not fetch data for album at index "+album+" from artist at index "+artist+".", error);
+		}
+	}
+	fs.unlink(uploadPath, (err) => {
+		if (err) console.error("Error deleting file:", err);
+	});
+	return cover;
+}
+
 
 
 function escapeString(string) {
@@ -651,50 +848,336 @@ function escapeString(string) {
 }
 
 
-var storageList = [];
-async function listStorage() {
-	startDiscovery();
-	storageList = [];
-	
-	// List mounted USB storage.
-	try {
-		storageUSB = await execPromise("mount | awk '/dev/sd && "+libraryPath+"'");
-		storageUSB = storageUSB.stdout.trim().split("\n");
-		for (s in storageUSB) {
-			storageList.push({name: storageUSB[s].substring(storageUSB[s].lastIndexOf("/")+1).split(" type ")[0], kind: "USB", id: null});
+// QUEUE FUNCTIONALITY
+var queue = { 
+	tracks: [],
+	position: null,
+	id: null,
+	provider: "mpd"
+};
+
+async function sendQueue(changedOnly = false) {
+	var updated = false;
+	if (!client) await connectMPD();
+	if (client) {
+		var changed = false;
+		var currentSong = null;
+		try {
+			currentSong = await client.api.status.currentsong();
+		} catch (error) {
+			if (error.code == "ENOTCONNECTED") client = null;
+			console.error("Could not get current song from MPD:", error);
 		}
-	} catch (error) {
-		console.error("Couldn't get a list of USB storage:", error);
-	}
-	
-	// List configured NAS destinations.
-	try {
-		storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
-		for (s in storageNAS) {
-			nasItem = storageNAS[s].trim().split(";");
-			if (nasItem[0].charAt(0) != "#") { // Not a comment.
-				nasAddress = nasItem[0].substr(2).split("/")[0];
-				nasName = nasAddress;
-				for (n in discoveredNAS) {
-					if (nasAddress == discoveredNAS[n].addresses[0] ||
-						discoveredNAS[n].hostname.indexOf(nasAddress) != -1) {
-						nasName = discoveredNAS[n].name;
-					}
-				}
-				storageList.push({
-					kind: "NAS",
-					id: nasItem[0], 
-					name: nasName,
-					address: nasAddress,
-					path: nasItem[0].substr(2).split("/").slice(1).join("/")
-				});
+		if (currentSong) {
+			if (queue.position != currentSong.pos || queue.id != currentSong.id) {
+				queue.position = currentSong.pos;
+				queue.id = currentSong.id;
+				changed = true;
 			}
 		}
-	} catch (error) {
-		console.log("Couldn't get a list of configured NAS storage:", error);
+		if (changed || !changedOnly) updated = true;
+		if (updated) {
+			var mpdTracks = [];
+			queue.tracks = [];
+			try {
+				mpdTracks = await client.api.queue.info();
+			} catch (error) {
+				if (error.code == "ENOTCONNECTED") client = null;
+				console.error("Could not get queue from MPD:", error);
+			}
+			for (track in mpdTracks) {
+				var img = null;
+				if (mpdTracks[track].albumartist) {
+					theArtist = mpdTracks[track].albumartist;
+				} else if (mpdTracks[track].artist) {
+					theArtist = mpdTracks[track].artist;
+				}
+				if (mpdTracks[track].album && 
+					cache.data[theArtist]) {
+					for (a in cache.data[theArtist]) {
+						if (cache.data[theArtist][a].name == mpdTracks[track].album) {
+							img = cache.data[theArtist][a].thumbnail;
+						}
+					}
+				}
+				trackData = {
+					path: mpdTracks[track].file,
+					number: mpdTracks[track].track,
+					artist: mpdTracks[track].artist,
+					name: mpdTracks[track].title,
+					time: mpdTracks[track].time,
+					img: img,
+					provider: "mpd",
+					queueID: mpdTracks[track].id,
+					queuePosition: mpdTracks[track].pos
+				}
+				queue.tracks.push(trackData);
+			}
+		}
 	}
-	
+	if (beo.extensions.music && beo.extensions.music.updateQueue && updated) {
+		beo.extensions.music.updateQueue("mpd", "tracks", queue);
+	}
+}
+
+async function playQueued(position) {
+	if (!client) await connectMPD();
+	if (client && 
+		position != undefined) {
+		try {
+			await client.api.playback.play(position);
+			return true;
+		} catch (error) {
+			if (error.code == "ENOTCONNECTED") client = null;
+			console.error("Could not start playback with MPD:", error);
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function clearQueue() {
+	if (!client) await connectMPD();
+	if (client) {
+		try {
+			await client.api.queue.clear();
+			sendQueue();
+			return true;
+		} catch (error) {
+			if (error.code == "ENOTCONNECTED") client = null;
+			console.error("Could not clear MPD queue:", error);
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function modifyQueue(operation, data) {
+	if (!client) await connectMPD();
+	if (client) {
+		switch (operation) {
+			case "remove":
+				if (data.id != undefined) {
+					try {
+						await client.api.queue.deleteid(data.id);
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not remove track from MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+			case "playNext":
+				if (data.id != undefined) {
+					try {
+						await client.api.queue.moveid(data.id, -1);
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not remove track from MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+		}
+	} else {
+		return false;
+	}
+}
+
+async function addToQueue(position, type, context) {
+	if (!client) await connectMPD();
+	if (client) {
+		switch (type) {
+			case "track":
+				if (context.path != undefined) {
+					try {
+						var addedID = await client.api.queue.addid(context.path);
+						if (position == "next") {
+							await client.api.queue.moveid(addedID, -1);
+						}
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not add track to MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+			case "album":
+				content = await getMusic(type, context, true);
+				if (content.tracks) {
+					try {
+						queueCommands = [];
+						content.tracks.forEach(track => {
+							queueCommands.push(client.api.queue.addid(track.path));
+						});
+						
+						var addedIDs = await Promise.all(queueCommands);
+						if (position == "next") {
+							for (var i = 0; i < addedIDs.length; i++) {
+								await client.api.queue.moveid(addedIDs[i], -1-i);
+							}
+						}
+						sendQueue();
+						return true;
+					} catch (error) {
+						if (error.code == "ENOTCONNECTED") client = null;
+						console.error("Could not add "+type+" to MPD queue:", error);
+						return false;
+					}
+				} else {
+					return false;
+				}
+				break;
+		}
+	} else {
+		return false;
+	}
+}
+
+
+
+// STORAGE MANAGEMENT
+
+
+var storageList = [];
+var listingStorage = false;
+async function listStorage() {
+	if (!listingStorage) {
+		listingStorage = true;
+		storage = [];
+		// List mounted USB storage.
+		try {
+			storageUSB = await execPromise("/opt/hifiberry/bin/list-usb-storage");
+			storageUSB = storageUSB.stdout.trim().split("\n");
+			for (s in storageUSB) {
+				parts = storageUSB[s].split(":");
+				if (parts.length >= 3) {
+					device = {id: parts[0], mount: parts[1], kind: "USB", name: parts[2]};
+					storage.push(device);
+				}
+			}
+		} catch (error) {
+			console.error("Couldn't get a list of USB storage:", error);
+		}
+		
+		// List configured NAS destinations.
+		try {
+			storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+			for (s in storageNAS) {
+				try {
+					slash = (storageNAS[s].indexOf("//") != -1) ? "/" : "\\"; // Does this line use forward or backslashes?
+					nasItem = storageNAS[s].trim().split(";");
+					if (nasItem[0].charAt(0) != "#") { // Not a comment.
+						nasAddress = nasItem[1].substr(2).split(slash)[0];
+						nasName = nasAddress;
+						for (n in discoveredNAS) {
+							if ((discoveredNAS[n].netbios && 
+								nasAddress == discoveredNAS[n].netbios) ||
+								discoveredNAS[n].addresses[0].indexOf(nasAddress) != -1) {
+								nasName = discoveredNAS[n].name;
+							}
+						}
+						try {
+							nasMountRaw = await execPromise("mount | grep '"+nasItem[0]+"'");
+							if (nasMountRaw.stdout) {
+								nasMount = nasMountRaw.stdout.trim().split(" on ")[1].split(" type ")[0];
+							} else {
+								console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
+								nasMount = false;
+							}
+						} catch (error) {
+							console.error("NAS '"+nasItem[0]+"' does not appear to be mounted.");
+							nasMount = false;
+						}
+						storage.push({
+							kind: "NAS",
+							id: nasItem[0], 
+							name: nasName,
+							address: nasAddress,
+							path: nasItem[1].substr(2).split(slash).slice(1).join("/"),
+							mount: nasMount
+						});
+					}
+				} catch (error) {
+					console.error("NAS configuration line "+s+" was not recognised: "+storageNAS[s]);
+				}
+			}
+		} catch (error) {
+			console.log("Couldn't get a list of configured NAS storage:", error);
+		}
+		
+		storageList = storage;
+		listingStorage = false;
+	}
 	return storageList;
+}
+
+async function removeStorage(id) {
+	storageList = await listStorage();
+	errors = 0;
+	for (s in storageList) {
+		if (storageList[s].id == id) {
+			// The correct storage was found.
+			if (storageList[s].mount) {
+				try {
+					await execPromise("umount "+storageList[s].mount);
+				} catch (error) {
+					console.error("Unable to eject '"+storageList[s].mount+"':", error);
+					errors = 1;
+				}
+			} else {
+				console.error("Storage device '"+storageList[s].id+"' is not mounted.");
+			}
+			if (storageList[s].kind == "NAS") { // Remove from configured NAS storage.
+				try {
+					nasIndex = -1;
+					storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+					for (s in storageNAS) {
+						nasItem = storageNAS[s].trim().split(";");
+						if (nasItem[0].charAt(0) != "#") { // Not a comment.
+							if (nasItem[0] == id) {
+								nasIndex = s;
+								break;
+							}
+						}
+					}
+					if (nasIndex != -1) {
+						storageNAS.splice(nasIndex, 1);
+						fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
+					}
+				} catch (error) {
+					console.error("Unable to remove NAS '"+storageList[s].id+"' from configuration:", error);
+				}
+			}
+			break;
+		}
+	}
+	if (errors == 0 && debug) console.log("Storage device '"+storageList[s].id+"' was ejected.");
+	storage = await listStorage();
+	beo.sendToUI("mpd", "mountedStorage", {storage: storage, unmountErrors: errors});
+	try {
+		if (debug) console.log("Triggering MPD database update.");
+		spawn("/opt/hifiberry/bin/update-mpd-db", {
+			stdio: "ignore",
+			detached: true
+		}).unref();
+	} catch (error) {
+		console.error("Error triggering MPD database update:", error);
+	}
 }
 
 
@@ -705,7 +1188,7 @@ var discoveryStopDelay = null;
 var discoveredNAS = {};
 
 function startDiscovery() {
-	discoveredNAS = {};
+
 	beo.sendToUI("mpd", "discoveredNAS", {storage: {}});
 	if (!browser) {
 		browser = new dnssd.Browser(dnssd.tcp('smb'));
@@ -717,6 +1200,7 @@ function startDiscovery() {
 	} else {
 		browser.stop();
 	}
+	
 	browser.start();
 	clearTimeout(discoveryStopDelay);
 	discoveryStopDelay = setTimeout(function() {
@@ -728,14 +1212,103 @@ function stopDiscovery() {
 	if (browser) browser.stop();
 }
 
-function discoveryEvent(event, service) {
-	if (event == "up") {
-		discoveredNAS[service.name] = {name: service.name, hostname: service.host, addresses: service.addresses};
+var listingNAS = false;
+async function listNAS() {
+	if (!listingNAS) {
+		if (debug) console.log("Looking for NAS devices with SMB protocol...");
+		beo.sendToUI("mpd", "discoveringNAS", {content: true});
+		listingNAS = true;
+		discoveredNAS = {};
+		netbiosLookupRaw = null;
+		namesUpdated = false;
+		try {
+			netbiosLookupRaw = await execPromise("/opt/hifiberry/bin/list-smb-servers");
+		} catch (error) {
+			console.error("Error performing a NetBIOS lookup:", error);
+		}	
+		if (netbiosLookupRaw && netbiosLookupRaw.stdout) {
+			netbiosItems = netbiosLookupRaw.stdout.trim().split("\n");
+			for (n in netbiosItems) {
+				netbios = netbiosItems[n].split(", ");
+				netbiosIP = netbios[1].split(" ")[0].trim();
+				netbiosName = netbios[0].trim();
+		
+				if (!discoveredNAS[netbiosName]) {
+					discoveredNAS[netbiosName] = {name: netbiosName, netbios: netbiosName, from: "netbios", addresses: [netbiosIP]};
+				}
+				
+				for (s in storageList) {
+					if (storageList[s].kind == "NAS") {
+						if ((storageList[s].address == discoveredNAS[netbiosName].addresses[0] || discoveredNAS[netbiosName].netbios.indexOf(storageList[s].name) != -1) &&
+							storageList[s].name != discoveredNAS[netbiosName].name) {
+							storageList[s].name = discoveredNAS[netbiosName].name;
+							namesUpdated = true;
+						}
+					}
+				}
+			}
+		}
+		if (namesUpdated) beo.sendToUI("mpd", "mountedStorage", {storage: storageList});
+		beo.sendToUI("mpd", "discoveredNAS", {storage: discoveredNAS});
+		startDiscovery();
+		beo.sendToUI("mpd", "discoveringNAS");
+		listingNAS = false;
+	}
+}
+
+async function discoveryEvent(event, service) {
+	if (event == "up" || event == "changed") {
+		if (!discoveredNAS[service.name]) discoveredNAS[service.name] = {};
+		discoveredNAS[service.name].name = service.name;
+		discoveredNAS[service.name].from = "bonjour";
+		discoveredNAS[service.name].hostname = service.host; 
+		discoveredNAS[service.name].addresses = service.addresses;
+		
+		discoveredNAS[service.name].addresses.sort(function(a, b) {
+			if (a.length >= b.length) {
+				return 1;
+			} else {
+				return -1;
+			}
+		});
+		
+		if (discoveredNAS[service.name].addresses[0].indexOf(":") != -1) { // We just have an IPv6 address, see if we can get it in IPv4.
+			try {
+				avahiRaw = await execPromise("avahi-resolve-host-name \""+service.host+"\"");
+				address = avahiRaw.stdout.trim().split("\t")[1];
+				if (address.indexOf(".") != -1) {
+					discoveredNAS[service.name].addresses.unshift(address.trim());
+				}
+			} catch (error) {
+				
+			}
+		}
 		var namesUpdated = false;
+		
+		for (n in discoveredNAS) {
+			if (discoveredNAS[n].from == "netbios" &&
+				discoveredNAS[n].addresses[0] == service.addresses[0]) {
+				discoveredNAS[service.name].netbios = discoveredNAS[n].netbios;
+				delete discoveredNAS[n];
+			}
+		}
+		
+		if (!discoveredNAS[service.name].netbios && discoveredNAS[service.name].addresses[0].indexOf(".") != -1) {
+			try {
+				// This entry has no Netbios name, so try to look it up.
+				netbiosRaw = await execPromise("nmblookup -A "+discoveredNAS[service.name].addresses[0]+" | grep '<20>' | awk '{print $1}'");
+				discoveredNAS[service.name].netbios = netbiosRaw.stdout.trim();
+			} catch (error) {
+				console.error("Error getting NetBIOS name for '"+service.name+"':", error);
+			}
+		}
+		
 		for (s in storageList) {
 			if (storageList[s].kind == "NAS") {
-				if ((storageList[s].address == service.addresses[0] ||
-					service.host.indexOf(storageList[s].address) != -1) &&
+				if (((discoveredNAS[service.name].netbios &&
+					discoveredNAS[service.name].netbios.indexOf(storageList[s].name) != -1) || (
+					discoveredNAS[service.name].hostname && 
+					discoveredNAS[service.name].hostname.indexOf(storageList[s].name) != -1)) &&
 					storageList[s].name != service.name) {
 					storageList[s].name = service.name;
 					namesUpdated = true;
@@ -752,19 +1325,127 @@ function discoveryEvent(event, service) {
 var cachedNASDetails = {};
 async function getNASShares(details) {
 	shareList = [];
+	errors = false;
 	if (details.server && details.username && details.password != undefined) {
-		cachedNASDetails = JSON.parse(JSON.stringify(details));
+		if (details.server.addresses[0].indexOf(".") == -1) { // Probably an IPv6 address, try to get it in IPv4.
+			//address = await dnssd.resolveA(details.server.hostname);
+			address = details.server.addresses[0];
+		} else {
+			address = details.server.addresses[0];
+		}
 		try {
-			sharesRaw = await execPromise("smbclient -N -L "+details.server.addresses[0]+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
+			if (!details.server.netbios && !details.withIP) {
+				try {
+					netbiosRaw = await execPromise("nmblookup -A "+details.server.addresses[0]+" | grep '<20>' | awk '{print $1}'");
+					details.server.netbios = netbiosRaw.stdout.trim();
+				} catch (error) {
+					details.server.netbios = null;
+				}
+			}
+			if (details.server.netbios && !details.withIP) {
+				address = details.server.netbios;
+			} else {
+				address = details.server.addresses[0];
+			}
+			sharesRaw = await execPromise("smbclient -N -L "+address+" --user="+details.username+"%"+details.password+" -g | grep 'Disk|'");
 			sharesRaw = sharesRaw.stdout.trim().split("\n");
 			for (s in sharesRaw) {
-				shareList.push(sharesRaw[s].slice(5, -1));
+				shareList.push(sharesRaw[s].split("|")[1]);
 			}
 		} catch (error) {
 			console.error("Couldn't get a list of SMB shares:", error);
+			errors = true;
+		}
+		cachedNASDetails = details;
+	}
+	return {server: details.server, shares: shareList, errors: errors};
+}
+
+async function addNAS(share, path) {
+	details = JSON.parse(JSON.stringify(cachedNASDetails));
+	if (details.server) {
+		storageNAS = fs.readFileSync("/etc/smbmounts.conf", "utf8").split('\n');
+		beo.sendToUI("mpd", "addingNAS");
+		if (details.server.from == "bonjour") {
+			address = details.server.hostname.replace(".local.", ".local");
+		} else if (details.server.netbios) {
+			address = details.server.netbios;
+		} else {
+			address = details.server.addresses[0];
+		}
+		storageNAS.push(details.server.name+"-"+share+"-"+makeID(5)+";//"+address+"/"+share+path+";"+details.username+";"+details.password);
+		fs.writeFileSync("/etc/smbmounts.conf", storageNAS.join("\n"));
+		if (debug) console.log("Added '"+share+path+"' from NAS '"+details.server.name+"'.");
+		cachedNASDetails = {};
+		await mountNewNAS();
+		try {
+			storage = await listStorage();
+			beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+		} catch (error) {
+			console.error("Error listing storage:", error);
+		}
+		listNAS();
+		beo.sendToUI("mpd", "addedNAS", {name: details.server.name});
+	} else {
+		console.error("Server details were not found in the cache.");
+	}
+}
+
+function makeID(length) { // From https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+	var result = '';
+	var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	var charactersLength = characters.length;
+	for (var i = 0; i < length; i++) {
+		result += characters.charAt(Math.floor(Math.random() * charactersLength));
+	}
+	return result;
+}
+
+
+function mountNewNAS() {
+	return new Promise(function(resolve, reject) {
+		
+		beo.sendToUI("mpd", "isUpdatingDatabase", {"updating": true});
+		
+		mountProcess = spawn("/opt/hifiberry/bin/mount-smb.sh", {
+			detached: true
+		});
+		
+		mountProcess.stdout.on('data', function (data) {
+			//console.log('stdout: ' + data.toString());
+			data = data.toString();
+			if (data.indexOf("Updating DB (")) {
+				mountProcess.unref();
+				setTimeout(function() {
+					if (debug) console.log("NAS storage mount finished.");
+					resolve(true);	
+				}, 1000);
+			}
+		});
+		
+		mountProcess.on('exit', function (code) {
+			resolve(true);
+		});
+	});
+}
+
+async function mountNASAgain() {
+	await mountNewNAS();
+	try {
+		storage = await listStorage();
+		beo.sendToUI("mpd", "mountedStorage", {storage: storage});
+	} catch (error) {
+		console.error("Error listing storage:", error);
+	}
+	listNAS();
+}
+
+interact = {
+	actions: {
+		updateDatabase: function() {
+			updateDatabase();
 		}
 	}
-	return {server: details.server, shares: shareList};
 }
 
 	
@@ -772,6 +1453,13 @@ module.exports = {
 	version: version,
 	isEnabled: getMPDStatus,
 	getMusic: getMusic,
-	playMusic: playMusic
+	playMusic: playMusic,
+	playQueued: playQueued,
+	clearQueue: clearQueue,
+	modifyQueue: modifyQueue,
+	addToQueue: addToQueue,
+	setAlbumCover: setAlbumCover,
+	isUpdatingDatabase: isUpdatingDatabase,
+	interact: interact
 };
 

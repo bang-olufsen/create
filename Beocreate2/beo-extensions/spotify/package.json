@@ -1,7 +1,7 @@
 {
-  "name": "@beocreate/hifiberry-debug",
-  "version": "0.5.0",
-  "description": "HiFiBerryOS diagnostics for Beocreate sound ysstems",
+  "name": "@beocreate/spotify",
+  "version": "0.7.0",
+  "description": "Spotify Connect integration in BeoCreate systems",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,8 +12,9 @@
   },
   "keywords": [
     "beocreate",
-    "diagnostics",
-	"hifiberryos",
+    "spotify",
+	"connect",
+	"audio",
 	"bang",
 	"olufsen"
   ],
@@ -22,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/bang-olufsen/create/issues"
   },
-  "homepage": "https://github.com/bang-olufsen/create#readme"
+  "homepage": "https://github.com/bang-olufsen/create#readme",
+  "beocreate": {
+    "requireCardFeatures": ["arm7"]
+  }
 }

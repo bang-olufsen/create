@@ -1,23 +1,248 @@
+var nowPlayingData = {
+	currentSource: {
+		extension: null,
+		name: null,
+		icon: null
+	},
+	focusedSource: {
+		extension: null,
+		name: null,
+		icon: null
+	},
+	pictureView: null,
+	picture: null,
+	extPicture: null,
+	pictureA: null,
+	pictureASuccess: false,
+	pictureB: null,
+	pictureBSuccess: false,
+	pictureCounter: 0,
+	pictureADimensions: [0,0],
+	pictureBDimensions: [0,0],
+	pictureAAspect: 1, // 1: square, <1: landscape, >1: portrait.
+	pictureBAspect: 1, // 1: square, <1: landscape, >1: portrait.
+	placeholderPicture: null,
+	extPictureMode: "never",
+	metadata: {},
+	playerState: "stopped",
+	transportControls: [],
+	canLove: false,
+	canSeek: false,
+	visible: false,
+	notify: false,
+	scrollH1: false,
+	scrollH2: false,
+	reveal: false,
+	queueTracks: [],
+	queuePosition: 0,
+	queueSource: null,
+	canClearQueue: false
+}
+
+
+Vue.component('MiniNowPlaying', {
+	template: '<div class="mini-now-playing">\
+	<div id="player-bar-chevron" class="button symbol" style="-webkit-mask-image: url(common/symbols-white/chevron-thin-up.svg); mask-image: url(common/symbols-white/chevron-thin-up.svg);" onclick="now_playing.showNowPlaying();" title="Show Now Playing"></div>\
+		<div id="mini-now-playing-info" v-bind:class="{notification: notify > 0, text: notify > 1}">\
+			<transition name="now-playing-fade" mode="out-in">\
+				<div class="symbol focused-source-icon" :key="focusedSource.icon" v-if="focusedSource.icon" v-bind:style="{maskImage: \'url(\'+focusedSource.icon+\')\'}"></div>\
+			</transition>\
+			<div class="now-playing-titles" v-bind:class="{\'source-only\': (focusedSource.name && !metadata.title), \'one-row\': (metadata.title && !metadata.artist), \'two-rows\': (metadata.title && metadata.artist)}">\
+				<transition name="now-playing-fade" mode="out-in">\
+					<div class="focused-source-name" v-if="focusedSource.name">{{ focusedSource.name }}</div>\
+				</transition>\
+				<h1>\
+					<transition name="now-playing-fade" mode="out-in">\
+						<span class="title" :key="metadata.title" v-if="metadata.title">{{ metadata.title }}&nbsp;</span>\
+					</transition>\
+				</h1>\
+				<h2>\
+					<transition name="now-playing-fade" mode="out-in">\
+						<span class="artist" :key="metadata.artist" v-if="metadata.title && metadata.artist">{{ metadata.artist }}&nbsp;</span>\
+					</transition>\
+				</h2>\
+			</div>\
+	</div></div>',
+	data: function() {
+		return nowPlayingData;
+	}
+});
+
+Vue.component('TransportControls', {
+	template: '<div class="now-playing-transport">\
+					<div class="symbol button" v-bind:class="{disabled: transportControls.indexOf(\'next\') == -1}" v-bind:style="{maskImage: \'url('+extensions['now-playing'].assetPath+'/symbols-black/previous-track.svg)\'}" @click="previous()"></div>\
+					<div class="symbol button" v-bind:class="{disabled: !playButtonEnabled}" v-bind:style="{maskImage: \'url(\'+playButtonSymbol+\')\'}" @click="playPause()"></div>\
+					<div class="symbol button" v-bind:class="{disabled: transportControls.indexOf(\'next\') == -1}" v-bind:style="{maskImage: \'url('+extensions['now-playing'].assetPath+'/symbols-black/next-track.svg)\'}" @click="next()"></div>\
+				</div>',
+	data: function() {
+		return nowPlayingData;
+	},
+	methods: {
+		previous: function() {
+			now_playing.transport('previous');
+		},
+		playPause: function() {
+			now_playing.transport('playPause');
+		},
+		next: function() {
+			now_playing.transport('next');
+		}
+	},
+	computed: {
+		playButtonEnabled: function() {
+			if (this.playerState != "playing") {
+				return (this.transportControls.indexOf("play") != -1) ? true : false;
+			} else {
+				return (this.transportControls.indexOf("pause") != -1 || this.transportControls.indexOf("stop") != -1) ? true : false;
+			}
+		},
+		playButtonSymbol: function() {
+			if (this.playerState != "playing") {
+				symbol = "play";
+			} else {
+				if (this.transportControls.indexOf("pause") != -1) {
+					symbol = "pause";
+				} else {
+					symbol = "stop";
+				}
+			}
+			return extensions['now-playing'].assetPath+'/symbols-black/'+symbol+'.svg';
+		}
+	},
+});
+
+
+var miniNowPlaying = new Vue({
+	el: "#player-bar",
+	data: nowPlayingData
+});
+
+var nowPlayingController = new Vue({
+	el: "#now-playing",
+	data: nowPlayingData,
+	computed: {
+		trackInfo: function() {
+			return this.metadata.title+this.metadata.artist+this.metadata.album;
+		},
+		artistAlbumString: function() {
+			if (this.metadata.artist) {
+				if (this.metadata.album) {
+					return this.metadata.artist + " — " + this.metadata.album;
+				} else {
+					return this.metadata.artist;
+				}
+			} else {
+				return null;
+			}
+		},
+		remainingQueue: function() {
+			var pos = this.queuePosition;
+			return this.queueTracks.filter(function(track) {
+				return track.queuePosition > pos;
+			});
+		}
+	},
+	methods: {
+		pictureLoaded: function(event, view) { // Determine whether the newly loaded picture should be shown.
+			console.log("Picture loaded (view "+view+"): "+event.target.src);
+			if (view == "a") {
+				this.pictureADimensions = [event.target.naturalWidth, event.target.naturalHeight];
+				var otherDimensions = this.pictureBDimensions;
+				this.pictureASuccess = true;
+			} else {
+				this.pictureBDimensions = [event.target.naturalWidth, event.target.naturalHeight];
+				var otherDimensions = this.pictureADimensions;
+				this.pictureBSuccess = true;
+			}
+			var switchView = false;
+			if (event.target.src == encodeURI(this.extPicture)) {
+				switch (this.extPictureMode) {
+					case "always":
+						switchView = true;
+						break;
+					case "missing":
+						if (!this.picture) switchView = true;
+						break;
+					case "auto":
+						if (!this.picture) {
+							switchView = true;
+						} else {
+							if (event.target.naturalWidth > otherDimensions[0] &&
+								event.target.naturalHeight > otherDimensions[1]) {
+								switchView = true;
+								console.log("Switching to a higher resolution picture.");
+							}
+						}
+						break;
+				}
+			} else if (event.target.src == encodeURI(this.picture)) {
+				switch (this.extPictureMode) {
+					case "always":
+						if (!this.extPicture) switchView = true;
+						break;
+					case "auto":
+						if (!this.extPicture) {
+							switchView = true;
+						} else {
+							if (event.target.naturalWidth > otherDimensions[0] &&
+								event.target.naturalHeight > otherDimensions[1]) {
+								switchView = true;
+								console.log("Switching to a higher resolution picture.");
+							}
+						}
+						break;
+					case "missing":
+					case "never":
+						switchView = true;
+						break;
+				}
+			}
+			if (switchView) {
+				this.pictureView = view;
+			}
+		},
+		pictureError: function(event, view) {
+			console.error("Error loading picture: "+event.target.src);
+			var switchToPlaceholder = false;
+			if (view == "a") {
+				this.pictureADimensions = [0,0];
+				this.pictureA = null;
+				if (!this.pictureB) switchToPlaceholder = true;
+				this.pictureASuccess = false;
+			} else {
+				this.pictureBDimensions = [0,0];
+				this.pictureB = null;
+				if (!this.pictureA) switchToPlaceholder = true;
+				this.pictureBSuccess = false;
+			}
+			if (switchToPlaceholder) {
+				now_playing.setPlaceholderArtwork();
+				this.pictureView = null;
+			}
+		},
+		time: function(seconds) {
+			return Intl.DateTimeFormat(window.navigator.language, {minute: "numeric", second: "numeric"}).format(new Date(seconds * 1000)).replace(/^0?/g, '');
+		},
+		playQueued: function(position) {
+			now_playing.playQueued(position);
+		},
+		queueTrackAction: function(id, holdPosition) {
+			now_playing.queueTrackMenu(id);
+		}
+	}
+});
+
+
 var now_playing = (function() {
 
-var systemVolume = null;
-var adjustingSystemVolume = false;
-var canStartSources = false;
+var allSources = {};
 var focusedSource = null;
-var cacheIndex = 0;
-var playerState = "stopped";
-var metadata = {};
-
-var useExternalArtwork = null;
-var disableInternalArtwork = false;
-
+var currentSource = null;
 
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			//if ($("#now-playing").hasClass("visible")) {
-				beo.send({target: "now-playing", header: "useExternalArtwork"});
-			//}
+			beo.sendToProduct("now-playing", "useExternalArtwork");
 		}
 	}
 	
@@ -29,584 +254,275 @@ $(document).on("now-playing", function(event, data) {
 	if (data.header == "useExternalArtwork") {
 		if (data.content.useExternalArtwork) {
 			setUseExternalArtwork(data.content.useExternalArtwork, true);
-			updateMetadata();
+//			updateMetadata();
 		}
 	}
 
-	
+	if (data.header == "queue") {
+		if (data.content.source == focusedSource) {
+			// Only allow queue to come in from the focused source.
+			nowPlayingController.queueSource = focusedSource;
+			nowPlayingController.canClearQueue = data.content.canClear;
+			if (data.content.data) {
+				if (data.content.data.tracks) {
+					nowPlayingController.queueTracks = data.content.data.tracks;
+				}
+				if (data.content.data.position != undefined) {
+					nowPlayingController.queuePosition = data.content.data.position;
+				}
+			}
+		}
+	}
 });
 
 $(document).on("sources", function(event, data) {
 	if (data.header == "sources") {
 		
+		
+		clearTimeout(playButtonSymbolTimeout);
+		
 		if (data.content.sources != undefined) {
+			allSources = data.content.sources;
 			if (data.content.focusedSource != undefined) {
 				focusedSource = data.content.focusedSource;
-				playerState = data.content.sources[focusedSource].playerState;
+				nowPlayingController.playerState = allSources[focusedSource].playerState;
 				
-				if (data.content.sources[focusedSource].canLove) {
-					functionRow("love", true);
+				nowPlayingController.canLove = (data.content.sources[focusedSource].canLove) ? true : false;
+				
+				if (allSources[focusedSource].metadata != undefined) {
+					nowPlayingController.metadata = allSources[focusedSource].metadata;
 				} else {
-					functionRow("love", false);
+					nowPlayingController.metadata = {};
 				}
-				
-				if (data.content.sources[focusedSource].metadata != undefined && Object.keys(data.content.sources[focusedSource].metadata).length > 0) {
-					if (!_.isEqual(data.content.sources[focusedSource].metadata, metadata)) {
-						metadata = data.content.sources[focusedSource].metadata;
-						updateMetadata();
+				if (allSources[focusedSource].transportControls) {
+					if (allSources[focusedSource].transportControls == "inherit") {
+						if (allSources[focusedSource].parentSource) {
+							nowPlayingController.transportControls = allSources[allSources[focusedSource].parentSource].transportControls;
+						} else {
+							nowPlayingController.transportControls = [];
+						}
+					} else {
+						nowPlayingController.transportControls = allSources[focusedSource].transportControls;
 					}
 				} else {
-					metadata = {};
-					setNowPlayingTitles(false, false);
-					toggleShowAlbumName(true);
-					loadArtwork();
-					$(".artwork-img").attr("alt", "").attr("data-album", "");
-					$("#artwork-wrap-inner").attr("data-album", "");
+					nowPlayingController.transportControls = [];
+				}
+				if (nowPlayingController.queueSource != focusedSource) nowPlayingController.queueSource = null;
+			} else {
+				nowPlayingController.metadata = {};
+				focusedSource = null;
+				nowPlayingController.playerState = "stopped";
+				nowPlayingController.transportControls = [];
+				nowPlayingController.canLove = false;
+				nowPlayingController.queueSource = null; 
+			}
+			determinePicture();
+			
+			// Which source is focused.
+			if (focusedSource != null) {
+				sourceIcon = null;
+				sourceName = null;
+				fSource = (allSources[focusedSource].childSource) ? allSources[focusedSource].childSource : focusedSource;
+				if (allSources[fSource].aliasInNowPlaying) {
+					sourceName = allSources[fSource].aliasInNowPlaying;
+				} else if (allSources[fSource].alias) {
+					if (allSources[fSource].alias.icon) {
+						sourceIcon = extensions.sources.assetPath+"/symbols-black/"+allSources[fSource].alias.icon;
+					}
+					sourceName = allSources[fSource].alias.name;
+				}
+				if (!sourceIcon && 
+					extensions[fSource].icon && 
+					extensions[fSource].assetPath) {
+						sourceIcon = extensions[fSource].assetPath+"/symbols-black/"+extensions[fSource].icon;
+				}
+				if (!sourceName) sourceName = extensions[fSource].title;
+				
+				nowPlayingController.focusedSource.name = sourceName;
+				nowPlayingController.focusedSource.extension = fSource;
+				nowPlayingController.focusedSource.icon = sourceIcon;
+				
+				if (extensions[focusedSource] &&
+					extensions[focusedSource].namespace &&
+					window[extensions[focusedSource].namespace].reveal) {
+					nowPlayingController.reveal = true;
+				} else {
+					nowPlayingController.reveal = false;
 				}
 			} else {
-				metadata = {};
-				focusedSource = null;
-				functionRow("love", false);
-				setNowPlayingTitles(false, false);
-				toggleShowAlbumName(true);
-				enableSourceStart();
-				loadArtwork();
-				playerState = "stopped";
+				nowPlayingController.focusedSource.name = null;
+				nowPlayingController.focusedSource.extension = null;
+				nowPlayingController.focusedSource.icon = null;
+				nowPlayingController.reveal = false;
 			}
-			updateTransportControls();
 		}
 	}
 
 	
 });
 
-function updateTransportControls(withState = playerState) {
-	$(".play-button, .next-track-button, .previous-track-button").addClass("disabled");
-	controls = false;
-	if (allSources[focusedSource]) {
-		if (allSources[focusedSource].transportControls == "inherit" && allSources[focusedSource].parentSource) {
-			controls = allSources[allSources[focusedSource].parentSource].transportControls;
-		} else {
-			controls = allSources[focusedSource].transportControls;
-		}
-		if (withState == "playing") {
-			if (controls) {
-				if (controls.indexOf("pause") != -1) {
-					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/pause.svg");
-					$(".play-button").removeClass("disabled");
+var nowPlayingNotificationTimeout;
+nowPlayingController.$watch('trackInfo', function() {
+	evaluateTextScrolling();
+	if (nowPlayingController.trackInfo) showNowPlayingNotification();
+});
+nowPlayingController.$watch('playerState', function(state) {
+	if (state == "playing") showNowPlayingNotification();
+});
+
+function showNowPlayingNotification() {
+	nowPlayingController.notify = 1;
+	clearTimeout(nowPlayingNotificationTimeout);
+	nowPlayingNotificationTimeout = setTimeout(function() {
+		nowPlayingController.notify = 2;
+		nowPlayingNotificationTimeout = setTimeout(function() {
+			nowPlayingController.notify = 0;
+		}, 5000);
+	}, 700);
+}
+
+
+function determinePicture() {
+	if (nowPlayingController.metadata.picture &&
+		(nowPlayingController.metadata.picture.startsWith("http://") ||
+		 nowPlayingController.metadata.picture.startsWith("https://"))) {
+		picture = nowPlayingController.metadata.picture;
+	} else if (nowPlayingController.metadata.picture &&
+		!nowPlayingController.metadata.picture.startsWith("file://")) {
+		picture = window.location.protocol+"//"+window.location.hostname+":"+nowPlayingController.metadata.picturePort+"/"+nowPlayingController.metadata.picture;
+		if (!nowPlayingController.placeholderPicture) setPlaceholderArtwork();
+	} else {
+		picture = null;
+	}
+	
+	if (!picture) {
+		nowPlayingController.picture = null;
+		setPlaceholderArtwork();
+	} else {
+					
+		if (!nowPlayingController.picture || nowPlayingController.picture != picture) {
+			if (nowPlayingController.pictureView != "a") { // Load a picture to the currently hidden view.
+				if (nowPlayingController.pictureA == picture) {
+					if (nowPlayingController.pictureASuccess) { 
+						nowPlayingController.pictureView = "a";
+					} else {
+						setPlaceholderArtwork();
+					}
 				} else {
-					$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
-					if (controls.indexOf("stop") != -1) $(".play-button").removeClass("disabled");
+					nowPlayingController.pictureASuccess = false;
+					nowPlayingController.pictureA = picture;
+				}
+				
+			} else {
+				if (nowPlayingController.pictureB == picture) {
+					if (nowPlayingController.pictureBSuccess) {
+						nowPlayingController.pictureView = "b";
+					} else {
+						setPlaceholderArtwork();
+					}
+				} else {
+					nowPlayingController.pictureBSuccess = false;
+					nowPlayingController.pictureB = picture;
+				}
+			}
+			nowPlayingController.picture = picture;
+		}
+	}
+	
+	extPicture = null;
+	if (nowPlayingController.metadata.externalPicture) {
+		switch (nowPlayingController.extPictureMode) {
+			
+			case "missing":
+				if (!picture) extPicture = nowPlayingController.metadata.externalPicture;
+				break;
+			case "auto":
+			case "always":
+				extPicture = nowPlayingController.metadata.externalPicture;
+				break;
+		}
+	}
+	if (extPicture && extPicture != nowPlayingController.extPicture) {
+		if (extPicture) {
+			if (nowPlayingController.pictureView != "a") {
+				if (!nowPlayingController.pictureB && 
+				nowPlayingController.pictureA) {
+					nowPlayingController.pictureB = extPicture; // If this view is still empty, load it here instead (freshly loaded page).
+				} else {
+					if (nowPlayingController.pictureA == extPicture) {
+						if (nowPlayingController.pictureASuccess) { 
+							nowPlayingController.pictureView = "a";
+						} else {
+							setPlaceholderArtwork();
+						}
+					} else {
+						nowPlayingController.pictureASuccess = false;
+						nowPlayingController.pictureA = extPicture;
+					}
 				}
 			} else {
-				$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/stop.svg");
-			}
-		} else {
-			$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
-			$(".play-button").removeClass("disabled");
-		}
-		
-		if (controls) {
-			if (controls.indexOf("next") != -1) $(".next-track-button").removeClass("disabled");
-			if (controls.indexOf("previous") != -1) $(".previous-track-button").removeClass("disabled");
-		}
-	} else {
-		$(".play-button").attr("src", extensions['now-playing'].assetPath+"/symbols-white/play.svg");
-	}
-}
-
-function updateMetadata() {
-	/*
-	Contents:
-	content.cacheIndex = a number that increments every time metadata changes on the sound system, used to check if metadata needs to be sent.
-	content.metadata.picture = URL or base64-encoded image data. 
-		- false: remove picture
-		- true: use previous picture
-	content.metadata.artist
-	content.metadata.album
-	content.metadata.title
-	*/
-	/*if (data.content.metadata.title) {
-		$(".now-playing-title").text(data.content.metadata.title);
-	}
-	if (data.content.metadata.artist) {
-		$(".now-playing-artist").text(data.content.metadata.artist);
-	}*/
-	
-	//allSources[data.content.extension].metadata = data.content.metadata;
-	
-	
-	
-	if (metadata.album) {
-		$(".artwork-img").attr("alt", metadata.album);
-		$("#artwork-wrap-inner").attr("data-album", metadata.album);
-	} else {
-		
-	}
-	if (metadata.title != undefined) {
-		artistAlbum = false;
-		if (metadata.artist) {
-			artistAlbum = metadata.artist;
-			if (metadata.album) {
-				//artistAlbum += " — "+data.content.metadata.album;
-			} else {
-				toggleShowAlbumName(true);
+				if (nowPlayingController.pictureB == extPicture) {
+					if (nowPlayingController.pictureBSuccess) {
+						nowPlayingController.pictureView = "b";
+					} else {
+						setPlaceholderArtwork();
+					}
+				} else {
+					nowPlayingController.pictureBSuccess = false;
+					nowPlayingController.pictureB = extPicture;
+				}
 			}
 		}
-		setNowPlayingTitles(metadata.title, artistAlbum);
+		nowPlayingController.extPicture = extPicture;
 	}
 	
-	// Album covers.
-	port = metadata.picturePort;
-	if (metadata.picture && !disableInternalArtwork) {
-		internalURL = metadata.picture;
-	} else {
-		internalURL = null;
-	}
+	// No pictures.
+	if (!picture && !extPicture) nowPlayingController.pictureView = null;
 	
-	if (metadata.externalPicture) {
-		externalURL = metadata.externalPicture;
-	} else {
-		externalURL = null;
-	}
-	determineArtworkToShow(internalURL, externalURL, port);
-	
-	clearTimeout(loveAnimTimeout);
-	$("#love-button").removeClass("love-in-progress");
-	if (metadata.loved) {
-		beo.setSymbol("#love-button", extensions["now-playing"].assetPath+"/symbols-black/heart-filled.svg");
-		$("#love-button").addClass("beat-anim");
-		/*loveAnimTimeout = setTimeout(function() {
-			$("#love-button").removeClass("beat-anim");
-		}, 1000);*/
-	} else {
-		beo.setSymbol("#love-button", extensions["now-playing"].assetPath+"/symbols-black/heart.svg");
-		$("#love-button").removeClass("beat-anim");
-		//clearTimeout(loveAnimTimeout);
-	}
-	//if (data.content.cacheIndex) cacheIndex = data.content.cacheIndex;
 }
 
-function enableSourceStart(startableSources) {
-	if (startableSources != undefined) canStartSources = (startableSources != false) ? true : false;
-	if (!focusedSource) {
-		if (!canStartSources) {
-			$("#now-playing-transport").removeClass("play-only");
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
+function setPlaceholderArtwork() {
+	if (focusedSource &&
+		extensions[focusedSource] && 
+		extensions[focusedSource].assetPath && 
+		extensions[focusedSource].icon) {
+		nowPlayingController.placeholderPicture = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
+	} else {
+		if (document.body.classList.contains("hifiberry-os")) {
+			nowPlayingController.placeholderPicture = extensions["now-playing"].assetPath+"/placeholder-hifiberry.svg";
 		} else {
-			$("#now-playing-transport").addClass("play-only");
-			//$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play-menu.svg");
-			$(".play-button").attr("src", $("#now-playing").attr("data-asset-path")+"/symbols-white/play.svg");
+			nowPlayingController.placeholderPicture = extensions["now-playing"].assetPath+"/placeholder.svg";
 		}
 	}
 }
 
 
+function testPlaceholderArtwork() {
+	nowPlayingController.metadata.picture = null;
+	nowPlayingController.picturePre = null;
+	nowPlayingController.metadata.externalPicture = null;
+	determinePicture();
+}
+
+var hasQueue = false;
 function showNowPlaying() {
-	$("#now-playing").removeClass("hidden");
-	resizeArtwork();
-	//beo.send({target: "now-playing", header: "showingNowPlaying", content: {cacheIndex: cacheIndex}});
-	setTimeout(function() {
-		$(".player-bar").addClass("shifted");
-		$("#now-playing").addClass("visible");
-		evaluateTextScrolling();
-	}, 20);
+	nowPlayingController.visible = true;
+	if (focusedSource && !hasQueue) {
+		beo.sendToProduct(focusedSource, "getQueue");
+		hasQueue = true;
+	}
+	evaluateTextScrolling();
+	/*setTimeout(function() {
+		if (document.querySelector("#now-playing-upper").scrollTop > 0) {
+			document.querySelector("#now-playing-right header").classList.add("opaque");
+		};
+		console.log("Scroll fix");
+	}, 300);*/
 }
 
 function hideNowPlaying() {
-	$("#now-playing").removeClass("visible");
-	$(".player-bar").removeClass("shifted");
-	setTimeout(function() {
-		$("#now-playing").addClass("hidden");
-	}, 600);
+	nowPlayingController.visible = false;
 }
-
-var artworkDragStartPosition;
-$( ".main-artwork" ).draggable({
-//	cursorAt: { top: 0, left: 0 },
-	//delay: 500,
-	scroll: false,
-	helper: function( event ) {
-	return $( "<div class='ui-widget-header' style='display: none;'></div>" );
-	},
-	start: function( event, ui ) {
-		$("#now-playing").addClass("no-animation");
-	},
-	stop: function( event, ui ) {
-		$("#now-playing").removeClass("no-animation");
-		$(".now-playing-artwork-wrap").css("transform", "");
-		$("#now-playing-control-area").css("transform", "");
-		offset = ui.position.top - artworkDragStartPosition.top;
-		if (offset > 40) hideNowPlaying();
-		artworkDragStartPosition = null;
-	},
-	drag: function( event, ui ) {
-		if (artworkDragStartPosition) {
-			offset = ui.position.top - artworkDragStartPosition.top;
-			if (offset < 0) {
-				visibleOffset = offset/6;
-			} else if (offset >= 0 && offset < 50) {
-				visibleOffset = offset/2;
-			} else {
-				visibleOffset = 25+(offset-50)/4;
-			}
-			$(".now-playing-artwork-wrap").css("transform", "translateY("+visibleOffset+"px)");
-			$("#now-playing-control-area").css("transform", "translateY("+visibleOffset/2+"px)");
-		} else {
-			artworkDragStartPosition = ui.position;
-		}
-	}
-});
-
-var functionRowVisible = false;
-var functionRowItems = {
-	love: {visible: false}
-}
-var functionRowTimeout;
-
-function functionRow(item, show) {
-	
-	if (functionRowItems[item]) {
-		functionRowItems[item].visible = (show) ? true : false;
-		
-		visibleItems = 0;
-		for (functionItem in functionRowItems) {
-			if (functionRowItems[functionItem].visible == true) visibleItems++;
-		}
-		clearTimeout(functionRowTimeout);
-		if (visibleItems == 0) {
-			functionRowVisible = false;
-			$("#now-playing-function-row").removeClass("visible");
-			functionRowTimeout = setTimeout(function() {
-				for (functionItem in functionRowItems) {
-					$("#now-playing-function-row .function-item-"+functionItem).addClass("hidden");
-				}
-			}, 500);
-		} else {
-			functionRowVisible = true;
-			$("#now-playing-function-row").addClass("visible");
-			for (functionItem in functionRowItems) {
-				if (functionRowItems[functionItem].visible) {
-					$("#now-playing-function-row .function-item-"+functionItem).removeClass("hidden");
-				} else {
-					$("#now-playing-function-row .function-item-"+functionItem).addClass("hidden");
-				}
-			}
-		}
-	}
-}
-
-
-function transport(action) {
-	switch (action) {
-		case "playPause":
-		case "next":
-		case "previous":
-			beo.send({target: "now-playing", header: "transport", content: {action: action}});
-			break;
-	}
-}
-
-
-function toggleLove() {
-	beo.send({target: "now-playing", header: "toggleLove"});
-	$("#love-button").addClass("love-in-progress");
-	clearTimeout(loveAnimTimeout);
-	loveAnimTimeout = setTimeout(function() {
-		$("#love-button").removeClass("love-in-progress");
-	}, 3000);
-}
-
-var playButtonSymbolTimeout;
-function playButtonPress() {
-	if (focusedSource) {
-		// Change the symbol immediately to improve responsiveness. But change it to the real symbol after two seconds if nothing has happened.
-		if (playerState == "playing") {
-			updateTransportControls("stopped");
-		} else {
-			updateTransportControls("playing");
-		}
-		clearTimeout(playButtonSymbolTimeout);
-		playButtonSymbolTimeout = setTimeout(function() {
-			updateTransportControls();
-		}, 2000);
-		transport("playPause");
-	} else if (canStartSources) {
-		if (sources && sources.showStartableSources) sources.showStartableSources();
-	}
-}
-
-function toggleShowAlbumName(hide) {
-	if (hide || $(".artwork-wrap-inner").hasClass("show-name")) {
-		$(".artwork-wrap-inner").removeClass("show-name")
-	} else {
-		//$("#artwork-wrap-inner").addClass("show-name")
-	}
-}
-
-var artworkChangeTimeout;
-var currentPicture = "";
-var hasPicture = false;
-var currentArtworkView = "a";
-var hiddenArtworkView = "b";
-
-function loadArtwork(url, port, testExternal) {
-	evaluateExternalArtwork = false;
-	sourcePlaceholder = false;
-	if (!url || url.indexOf("file:///") == -1) {
-		if (url) {
-			if (url.indexOf("http") == 0) {
-				// Remote url, use as is.
-				imageURL = url;
-			} else {
-				if (port) {
-					imageURL = window.location.protocol+"//"+window.location.hostname+":"+port+"/"+url;
-				} else {
-					imageURL = url;
-				}
-			}
-			src = imageURL;
-			if (!testExternal) hasPicture = true;
-		} else {
-			// Load appropriately branded placeholder artwork or source icon, if available.
-			if (focusedSource &&
-				extensions[focusedSource] && 
-				extensions[focusedSource].assetPath && 
-				extensions[focusedSource].icon) {
-				beo.setSymbol("#artwork-placeholder-"+hiddenArtworkView, extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon);
-				$("#artwork-wrap-inner-"+hiddenArtworkView).addClass("source-placeholder");
-				src = "common/square-helper.png";
-				sourcePlaceholder = true;
-			} else {
-				if ($("body").hasClass("hifiberry-os")) {
-					src = $("#now-playing").attr("data-asset-path")+"/placeholder-hifiberry.png";
-				} else {
-					src = $("#now-playing").attr("data-asset-path")+"/placeholder.png";
-				}
-			}
-			hasPicture = false;
-		}
-		if (src != currentPicture || sourcePlaceholder) {
-			clearTimeout(artworkChangeTimeout);
-			if (!testExternal) currentPicture = src;
-			pictureInTargetView = $(".artwork-img-"+hiddenArtworkView).attr("src");
-			$(".artwork-img-"+hiddenArtworkView).attr("src", src);
-			if (!testExternal) {
-				console.log("Loading artwork to view "+hiddenArtworkView.toUpperCase()+" ("+src+")...");
-			} else {
-				console.log("Loading external artwork to view "+hiddenArtworkView.toUpperCase()+" to compare...");
-			}
-			
-			if (!sourcePlaceholder) $("#artwork-wrap-inner-"+hiddenArtworkView).removeClass("source-placeholder");
-			if (!url) {
-				$(".artwork-img-"+hiddenArtworkView).addClass("placeholder");
-				$(".artwork-bg-"+hiddenArtworkView).css("background-image", "none");
-			} else {
-				$(".artwork-img-"+hiddenArtworkView).removeClass("placeholder");
-				$(".artwork-bg"+hiddenArtworkView).css("background-image", "url(" + src + ")");
-			}
-			if (pictureInTargetView == currentPicture || sourcePlaceholder) artworkLoaded(hiddenArtworkView);
-		}
-	} else {
-		// In case of a file URL, wait for one second for the actual artwork. Otherwise load default artwork.
-		hasPicture = false;
-		artworkChangeTimeout = setTimeout(function() {
-			loadArtwork();
-		}, 1000);
-	}
-}
-
-var evaluateExternalArtwork = false;
-var currentInternalPicture = null;
-var currentExternalPicture = null;
-function determineArtworkToShow(internalURL, externalURL, port) {
-	
-	if (internalURL != currentInternalPicture || (!internalURL && !externalURL)) { // Always load internal artwork first, or if neither image is available.
-		loadArtwork(internalURL, port);
-		if (internalURL != null && internalURL.indexOf("file:///") != -1) internalURL = null; // Treat file URLs as no URL.
-		currentInternalPicture = internalURL;
-	} else if (internalURL && currentPicture != internalURL) {
-		loadArtwork(internalURL, port);
-	}
-	
-	// If external artwork is set to "never", don't do anything.
-	// If no picture, load external artwork ("missing" mode).
-	// If current picture file is smaller than the picture view, load and check external artwork size. If larger, switch ("auto" mode).
-	// Load external artwork always ("always" mode).
-	
-	switch (useExternalArtwork) {
-		case "missing":
-			if (!internalURL && externalURL && (currentExternalPicture != externalURL || externalURL != currentPicture)) {
-				loadArtwork(externalURL);
-				currentExternalPicture = externalURL;
-			}
-			break;
-		case "auto":
-			if (externalURL && currentExternalPicture != externalURL) {
-				if (!internalURL) {
-					loadArtwork(externalURL);
-					currentExternalPicture = externalURL;
-				} else {
-					artworkWidth = (currentArtworkView == "a") ? artworkDimensionsA[0] : artworkDimensionsB[0];
-					if ($("#main-artwork-"+currentArtworkView).innerWidth() * window.devicePixelRatio > artworkWidth) {
-						// Image view is larger than the image.
-						loadArtwork(externalURL, null, true);
-						evaluateExternalArtwork = hiddenArtworkView;
-						currentExternalPicture = externalURL;
-					}
-				}
-			}
-			break;
-		case "always":
-			if (externalURL && (currentExternalPicture != externalURL || externalURL != currentPicture)) {
-				loadArtwork(externalURL);
-				currentExternalPicture = externalURL;
-			}
-			break;
-			
-	}
-	
-}
-
-function switchArtwork(view) {
-	show = view;
-	hide = (show == "a") ? "b" : "a";
-	if (noAnimation) $(".now-playing-artwork-wrap").addClass("no-animation");
-	$("#now-playing-artwork-wrap-"+show).addClass("visible incoming");
-	$("#now-playing-artwork-wrap-"+hide).removeClass("visible").addClass("outgoing");
-	setTimeout(function() {
-		$(".now-playing-artwork-wrap").removeClass("incoming outgoing");
-		$("#artwork-wrap-inner-"+hide).removeClass("source-placeholder");
-	}, 500);
-	previousSrc = $(".artwork-img-"+show).attr("src");
-	currentArtworkView = show;
-	hiddenArtworkView = hide;
-}
-
-function testArtworkSwap() {
-	view = (currentArtworkView == "a") ? "b" : "a";
-	switchArtwork(view);
-	return view;
-}
-
-function artworkLoaded(view, forceAspectRatio) {
-	shouldSwitch = true;
-	noAnimation = false;
-	if (view == "a") {
-		artworkDimensionsA[0] = $("#main-artwork-a").get(0).naturalWidth;
-		artworkDimensionsA[1] = $("#main-artwork-a").get(0).naturalHeight;
-		artworkAspectRatioA = $("#main-artwork-a").get(0).naturalWidth / $("#main-artwork-a").get(0).naturalHeight;
-		if (forceAspectRatio) artworkAspectRatioA = forceAspectRatio;
-	} else {
-		artworkDimensionsB[0] = $("#main-artwork-b").get(0).naturalWidth;
-		artworkDimensionsB[1] = $("#main-artwork-b").get(0).naturalHeight;
-		artworkAspectRatioB = $("#main-artwork-b").get(0).naturalWidth / $("#main-artwork-b").get(0).naturalHeight;
-		if (forceAspectRatio) artworkAspectRatioB = forceAspectRatio;
-	}
-	resizeArtwork();
-	
-	if (evaluateExternalArtwork == view) {
-		// If the downloaded image is equal size or smaller than the current one, don't switch them.
-		hiddenViewDimension = (view == "a") ? artworkDimensionsA[0] : artworkViewDimensionsB[0];
-		currentViewDimension = (view == "a") ? artworkDimensionsB[0] : artworkViewDimensionsA[0];
-		if (hiddenViewDimension <= currentViewDimension) {
-			shouldSwitch = false;
-			console.log("External artwork is not higher-resolution.");
-		} else {
-			noAnimation = true;
-			console.log("Switching to higher-resolution downloaded artwork in view "+view.toUpperCase()+".");
-		}
-		evaluateExternalArtwork = false;
-	}
-	if (shouldSwitch) {
-		setTimeout(function() {
-			switchArtwork(view, noAnimation);
-		}, 100);
-	}
-}
-
-$("#main-artwork-a").on('load', function() {
-	artworkLoaded("a");
-});
-$("#main-artwork-b").on('load', function() {
-	artworkLoaded("b");
-});
-$("#main-artwork-a").on('error', function() {
-	if (evaluateExternalArtwork != "b") {
-		loadArtwork();
-	} else {
-		evaluateExternalArtwork = false;
-	}
-});
-$("#main-artwork-b").on('error', function() {
-	if (evaluateExternalArtwork != "a") {
-		loadArtwork();
-	} else {
-		evaluateExternalArtwork = false;
-	}
-});
-
-function loadSmallSampleArtwork() {
-	loadArtwork("extensions/now-playing/partiravecmoi-small.jpg");
-}
-
-function loadPlaceholderArtwork() {
-	loadArtwork();
-}
-
-artworkCycle = 0;
-function loadNonSquareArtwork() {
-	switch (artworkCycle) {
-		case 0:
-			loadArtwork("extensions/now-playing/partiravecmoi.jpg");
-			album = "Partir Avec Moi – square";
-			break;
-		case 1:
-			loadArtwork("extensions/now-playing/landscape-cover.png");
-			album = "Turquoise – landscape";
-			break;
-		case 2:
-			loadArtwork("extensions/now-playing/portrait-cover.png");
-			album = "Waxflower – portrait";
-			break;
-	}
-	artworkCycle = (artworkCycle < 2) ? artworkCycle+1 : 0;
-	return album;
-}
-
-window.onresize = function() {
-	resizeArtwork();
-};
-
-var windowAspectRatio = 1;
-var artworkAspectRatioA = 1; // wide > 1 < tall
-var artworkAspectRatioB = 1;
-var artworkDimensionsA = [0,0];
-var artworkDimensionsB = [0,0];
-var containerDimensions = [0,0];
-function resizeArtwork() {
-	containerDimensions = [$(".artwork-wrap-inner").innerWidth(), $(".artwork-wrap-inner").innerHeight()];
-	containerAspectRatio = containerDimensions[0] / containerDimensions[1];
-	
-	if (containerAspectRatio >= artworkAspectRatioA) { // Container is wider
-		$("#main-artwork-a").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
-		$("#artwork-wrap-inner-a").css("flex-direction", "column");
-	} else {
-		$("#main-artwork-a").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
-		$("#artwork-wrap-inner-a").css("flex-direction", "row");
-	}
-	
-	if (containerAspectRatio >= artworkAspectRatioB) { // Container is wider
-		$("#main-artwork-b").css("max-width", "auto").css("max-height", "100%").css("width", "auto").css("height", "100%");
-		$("#artwork-wrap-inner-b").css("flex-direction", "column");
-	} else {
-		$("#main-artwork-b").css("max-width", "100%").css("max-height", "auto").css("height", "auto").css("width", "100%");
-		$("#artwork-wrap-inner-b").css("flex-direction", "row");
-	}
-	
-}
-
-
 
 function setUseExternalArtwork(mode, updateOnly) {
 	switch (mode) {
@@ -617,123 +533,55 @@ function setUseExternalArtwork(mode, updateOnly) {
 			if (updateOnly) {
 				$(".external-artwork-settings .menu-item").removeClass("checked");
 				$(".external-artwork-settings .menu-item#external-artwork-"+mode).addClass("checked");
-				useExternalArtwork = mode;
+				nowPlayingController.extPictureMode = mode;
 			} else {
-				if (!updateOnly) beo.send({target: "now-playing", header: "useExternalArtwork", content: {useExternalArtwork: mode}});
+				beo.sendToProduct("now-playing", "useExternalArtwork", {useExternalArtwork: mode});
+				console.log("Resetting album picture view...");
+				nowPlayingController.picture = null;
+				nowPlayingController.extPicture = null;
+				nowPlayingController.pictureView = null;
+				nowPlayingController.pictureA = null;
+				nowPlayingController.pictureB = null;
+				nowPlayingController.pictureADimensions = [0,0];
+				nowPlayingController.pictureBDimensions = [0,0];
+				setTimeout(function() {
+					determinePicture();
+				}, 1000);
 			}
 			break;
 	}
 	
 }
 
-
-// MANAGE AND SWITCH TOP TEXT AND BANG & OLUFSEN LOGO
-
-var previousFirstRow = "";
-var previousSecondRow = "";
-var topTextActionName = null;
-var tempTopTextTimeout;
-var topTextNotifyTimeout;
-var newFirstRow = "";
-var newSecondRow = "";
-var sourceNameTimeout;
-
-var nowPlayingNotificationTimeout;
-
-function setNowPlayingTitles(firstRow, secondRow, temp) {
-	/* Value interpretation
-    text: change text to this
-    true: use previous text
-    false | null: clear text
-	
-    temp:
-    If true, the text is temporary. Whatever was displayed before the temporary display will be returned after the temporary text display ends. If any text is sent as "non-temporary" whilst the temporary text is being displayed, it will be stored in the "previous" values and displayed after the temporary text display ends.
-    */
-	if (firstRow == true) {
-		newFirstRow = previousFirstRow;
-	} else if (firstRow == false || firstRow == null) {
-		newFirstRow = "";
-	} else {
-		newFirstRow = firstRow;
-	}
-
-	if (secondRow == true) {
-		newSecondRow = previousSecondRow;
-	} else if (secondRow == false || secondRow == null) {
-		newSecondRow = "";
-	} else {
-		newSecondRow = secondRow;
-	}
-	
-	changed = false;
-	if (previousFirstRow != newFirstRow || previousSecondRow != newSecondRow) changed = true;
-	
-	if (!temp) {
-		previousFirstRow = newFirstRow;
-		previousSecondRow = newSecondRow;
-	} else if (temp == true) {
-		//clearTimeout(tempTopTextTimeout);
-		tempTopTextTimeout = null;
-	}
-	
-	
-	
-
-	if (!tempTopTextTimeout) {
-
-
-
-		if (newFirstRow == "" && newSecondRow == "") { // Both rows are empty, show Bang & Olufsen logo.
-			$(".now-playing-titles").addClass("logo").removeClass("one-row");
-			clearTimeout(sourceNameTimeout);
-			sourceNameTimeout = setTimeout(function() {
-				$("#player-bar-info-area .focused-source").removeClass("icon-only");
-			}, 550);
-			evaluateTextScrolling(false);
-		} else if (newFirstRow != "" && newSecondRow == "") { // Second row is empty, hide it.
-			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
-			//$("#top-text .second-row").text(newSecondRow).attr("data-content", newSecondRow);
-			$(".now-playing-titles").addClass("one-row").removeClass("logo");
-			$("#player-bar-info-area .focused-source").addClass("icon-only");
-			clearTimeout(sourceNameTimeout);
-			if (changed) evaluateTextScrolling();
-		} else { // Both rows have text, show them.
-			$(".now-playing-titles .first-row").text(newFirstRow).attr("data-content", newFirstRow);
-			$(".now-playing-titles .second-row").text(newSecondRow).attr("data-content", newSecondRow);
-			$(".now-playing-titles").removeClass("logo one-row");
-			$("#player-bar-info-area .focused-source").addClass("icon-only");
-			clearTimeout(sourceNameTimeout);
-			if (changed) evaluateTextScrolling();
-			clearTimeout(topTextNotifyTimeout);
-			/*topTextNotifyTimeout = setTimeout(function() {
-				tabBarNotify("now-playing", newFirstRow, newSecondRow);
-			}, 100);*/
-		}
-
-		if (temp == true) {
-			tempTopTextTimeout = setTimeout(function() {
-
-				tempTopTextTimeout = null;
-				setNowPlayingTitles(previousFirstRow, previousSecondRow);
+var playButtonSymbolTimeout;
+function transport(action) {
+	switch (action) {
+		case "playPause":
+			clearTimeout(playButtonSymbolTimeout); // Change the symbol immediately for more responsive feeling in the UI.
+			if (nowPlayingController.playerState == "playing") {
+				nowPlayingController.playerState = "stopped";
+			} else {
+				nowPlayingController.playerState = "playing";
+			}
+			playButtonSymbolTimeout = setTimeout(function() {
+				if (nowPlayingController.playerState == "playing") {
+					nowPlayingController.playerState = "stopped";
+				} else {
+					nowPlayingController.playerState = "playing";
+				}
 			}, 2000);
-		}
-	}
-	
-	if (changed) {
-		document.getElementById("player-bar-info-area").classList.add("notification");
-		clearTimeout(nowPlayingNotificationTimeout);
-		nowPlayingNotificationTimeout = setTimeout(function() {
-			document.getElementById("player-bar-info-area").classList.add("text-visible");
-			nowPlayingNotificationTimeout = setTimeout(function() {
-				document.getElementById("player-bar-info-area").classList.remove("notification", "text-visible");
-			}, 5000);
-		}, 700);
+		case "next":
+		case "previous":
+			beo.sendToProduct("now-playing", "transport", {action: action});
+			break;
 	}
 }
 
+function toggleLove() {
+	beo.sendToProduct("now-playing", "toggleLove");
+}
 
-var textScrollElements = ["#top-text h1", "#top-text h2"];
-var textScrollCompareElements = ["#top-text .h1-wrap", "#top-text .h2-wrap"];
+var textScrollElements = ["#now-playing-main-info h1", "#now-playing-main-info h2"];
 var textScrollIntervals = [];
 var textScrollTimeouts = [];
 var preventTextScrolling = false;
@@ -743,59 +591,75 @@ var textScrollSetupDelay;
 function evaluateTextScrolling(flag) {
 	// Checks whether text overflows the fields and sets up scrolling.
 	// Reset
-	for (var i = 0; i < textScrollElements.length; i++) {
-		$(textScrollElements[i]).removeClass("scrolling-text");
-		$(textScrollElements[i]).css("-webkit-transition-duration", "0s");
-		$(textScrollElements[i]).css("-webkit-transform", "translateX(0)");
-
-		clearTimeout(textScrollTimeouts[i]);
-		clearInterval(textScrollIntervals[i]);
-	}
-	if (flag == 2) {
-		preventTextScrolling = true;
-	} else if (flag == 1) {
-		preventTextScrolling = false;
-	}
-	if (preventTextScrolling == false && flag != false && $("#now-playing").hasClass("visible")) {
-
-		clearTimeout(textScrollSetupDelay);
-		textScrollSetupDelay = setTimeout(function() {
-			// timeout to prevent funny things happening when all labels have not yet received new text.
-			// Get widths
-
-			// iterate through elements
-			for (var i = 0; i < textScrollElements.length; i++) {
-				textContainerWidth = $(textScrollCompareElements[i]).width();
-				textWidth = $(textScrollElements[i])[0].scrollWidth;
-				
-				if (textWidth > textContainerWidth) {
-					createTextScroller(i, textWidth);
+	
+	clearTimeout(textScrollSetupDelay);
+	textScrollSetupDelay = setTimeout(function() {
+		nowPlayingController.scrollH1 = false;
+		nowPlayingController.scrollH2 = false;
+		
+		for (var i = 0; i < textScrollElements.length; i++) {
+			$(textScrollElements[i]).css("-webkit-transition-duration", "0s");
+			$(textScrollElements[i]).css("-webkit-transform", "translateX(0)");
+	
+			clearTimeout(textScrollTimeouts[i]);
+			clearInterval(textScrollIntervals[i]);
+		}
+		if (flag == 2) {
+			preventTextScrolling = true;
+		} else if (flag == 1) {
+			preventTextScrolling = false;
+		}
+		if (preventTextScrolling == false && flag != false && nowPlayingController.visible) {
+	
+			clearTimeout(textScrollSetupDelay);
+			textScrollSetupDelay = setTimeout(function() {
+				// timeout to prevent funny things happening when all labels have not yet received new text.
+				// Get widths
+	
+				// iterate through elements
+				var elementsToScroll = [];
+				var longestDuration = 0;
+				for (var i = 0; i < textScrollElements.length; i++) {
+					containerWidth = document.querySelector(textScrollElements[i]).offsetWidth;
+					containerWidthOverflow = document.querySelector(textScrollElements[i]).scrollWidth;
+					if (containerWidthOverflow > containerWidth) {
+						duration = containerWidthOverflow * 30 + 3000;
+						if (duration > longestDuration) longestDuration = duration;
+						elementsToScroll.push({index: i, width: containerWidthOverflow});
+					}
 				}
-			}
-		}, 500);
-
-	}
+				
+				for (i in elementsToScroll) {
+					createTextScroller(elementsToScroll[i].index, elementsToScroll[i].width, longestDuration);
+				}
+			}, 500);
+	
+		}
+	}, 500);
 }
 
-function createTextScroller(i, textWidth) {
+function createTextScroller(i, textWidth, intervalDelay) {
 	// initial run
 	textScrollTimeouts[i] = setTimeout(function() {
-		$(textScrollElements[i]).css("transition-duration", (textWidth) * 0.03 + "s");
-		$(textScrollElements[i]).addClass("scrolling-text");
-		$(textScrollElements[i]).css("transform", "translateX(-" + (textWidth + 30) + "px)");
+		document.querySelector(textScrollElements[i]).style.transitionDuration = ((textWidth) * 0.03 + "s");
+		if (i == 0) nowPlayingController.scrollH1 = true;
+		if (i == 1) nowPlayingController.scrollH2 = true;
+		document.querySelector(textScrollElements[i]).style.transform = ("translateX(-" + (textWidth + 30) + "px)");
 		// the interval takes over subsequent runs
-		intervalDelay = textWidth * 30 + 3000;
+		//intervalDelay = textWidth * 30 + 3000;
 		textScrollIntervals[i] = setInterval(function() {
-			$(textScrollElements[i]).removeClass("scrolling-text");
-			$(textScrollElements[i]).css("transition-duration", "0s");
-			$(textScrollElements[i]).css("transform", "translateX(0)");
+			if (i == 0) nowPlayingController.scrollH1 = false;
+			if (i == 1) nowPlayingController.scrollH2 = false;
+			document.querySelector(textScrollElements[i]).style.transitionDuration = "0s";
+			document.querySelector(textScrollElements[i]).style.transform = ("translateX(0)");
 			setTimeout(function() {
-				$(textScrollElements[i]).css("transition-duration", (textWidth) * 0.03 + "s");
-				$(textScrollElements[i]).addClass("scrolling-text");
-				$(textScrollElements[i]).css("transform", "translateX(-" + (textWidth + 30) + "px)");
+				document.querySelector(textScrollElements[i]).style.transitionDuration = ((textWidth) * 0.03 + "s");
+				if (i == 0) nowPlayingController.scrollH1 = true;
+				if (i == 1) nowPlayingController.scrollH2 = true;
+				document.querySelector(textScrollElements[i]).style.transform = ("translateX(-" + (textWidth + 30) + "px)");
 			}, 20);
 		}, intervalDelay);
-	}, 3000);
+	}, 2000);
 }
 
 $(document).on("ui", function(event, data) {
@@ -803,10 +667,59 @@ $(document).on("ui", function(event, data) {
 	
 	if (data.header == "windowResized") {
 		evaluateTextScrolling();
-		//resizeArtwork();
 	}
 	
 });
+
+
+function revealSource() {
+	if (nowPlayingController.reveal) {
+		revealed = window[extensions[focusedSource].namespace].reveal();
+		if (revealed) {
+			hideNowPlaying();
+		}
+	}
+}
+
+function playQueued(position) {
+	if (focusedSource) {
+		beo.sendToProduct(focusedSource, "playQueued", {position: position});
+	}
+}
+
+function clearQueue() {
+	if (focusedSource) {
+		beo.sendToProduct(focusedSource, "clearQueue");
+	}
+}
+
+function queueTrackMenu(queueID) {
+	queueTrack = null;
+	for (t in nowPlayingController.remainingQueue) {
+		if (nowPlayingController.remainingQueue[t].queueID == queueID) queueTrack = nowPlayingController.remainingQueue[t];
+	}
+	beo.ask("queue-track-menu", [queueTrack.name, queueTrack.artist], [
+		function() {
+			if (focusedSource) {
+				beo.sendToProduct(focusedSource, "modifyQueue", {operation: "playNext", data: {id: queueID}});
+			}
+		},
+		function() {
+			if (focusedSource) {
+				beo.sendToProduct(focusedSource, "modifyQueue", {operation: "remove", data: {id: queueID}});
+			}
+		},
+		function() {
+			if (focusedSource) {
+				revealed = window[extensions[focusedSource].namespace].reveal(queueTrack.path);
+				if (revealed) {
+					hideNowPlaying();
+				}
+			}
+		}
+	]);
+}
+
 
 interactDictionary = {
 	actions: {
@@ -837,21 +750,18 @@ interactDictionary = {
 return {
 	showNowPlaying: showNowPlaying,
 	hideNowPlaying: hideNowPlaying,
-	toggleShowAlbumName: toggleShowAlbumName,
-	playButtonPress: playButtonPress,
 	transport: transport,
-	enableSourceStart: enableSourceStart,
-	loadArtwork: loadArtwork,
-	switchArtwork: switchArtwork,
-	loadSmallSampleArtwork: loadSmallSampleArtwork,
-	loadNonSquareArtwork: loadNonSquareArtwork,
-	testArtworkSwap: testArtworkSwap,
 	toggleLove: toggleLove,
-	functionRow: functionRow,
+	testPlaceholderArtwork: testPlaceholderArtwork,
+	setPlaceholderArtwork: setPlaceholderArtwork,
 	setUseExternalArtwork: setUseExternalArtwork,
+	evaluateTextScrolling: evaluateTextScrolling,
 	setDisableInternalArtwork: function(disable) {disableInternalArtwork = disable},
-	loadPlaceholderArtwork: loadPlaceholderArtwork,
-	interactDictionary: interactDictionary
+	interactDictionary: interactDictionary,
+	revealSource: revealSource,
+	playQueued: playQueued,
+	clearQueue: clearQueue,
+	queueTrackMenu: queueTrackMenu
 }
 
 })();

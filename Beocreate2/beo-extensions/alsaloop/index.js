@@ -51,7 +51,8 @@ var exec = require("child_process").exec;
 						enabled: enabled,
 						transportControls: ["play", "stop"],
 						startable: true,
-						usesHifiberryControl: true
+						usesHifiberryControl: true,
+						sortName: "Analogue Input"
 					});
 				});
 			}

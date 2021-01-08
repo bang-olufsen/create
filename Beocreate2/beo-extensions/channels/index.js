@@ -364,6 +364,7 @@ beo.bus.on('dsp', function(event) {
 			applyBalanceFromSettings(true);
 		} else {
 			metadata = {};
+			Fs = null;
 			for (var c = 0; c < 4; c++) {
 				channel = "abcd".charAt(c);
 				canControlChannels[channel].role = false;
@@ -604,7 +605,7 @@ function applyChannelRoleFromSettings(channel) {
 				}
 			}
 		}
-		
+		sendCurrentSettingsToSpeakerPreset();
 	}
 	
 }
@@ -621,7 +622,7 @@ function applyChannelInvertFromSettings(channel) {
 		} else {
 			beoDSP.writeDSP(invertRegister.value[0], 0, false);
 		}
-		
+		sendCurrentSettingsToSpeakerPreset();
 	}
 	
 }
@@ -655,6 +656,7 @@ function applyChannelLevelFromSettings(channel) {
 			
 			beoDSP.writeDSP(channelLevelRegister, levelValue, true, true);
 		}
+		sendCurrentSettingsToSpeakerPreset();
 	}
 	
 }
@@ -782,6 +784,14 @@ function simpleChannelRoleFromSettings() {
 	} else {
 		simpleRoleSelection = null;
 	}
+}
+
+var settingsSendTimeout;
+function sendCurrentSettingsToSpeakerPreset(timeout = 1000) {
+	clearTimeout(settingsSendTimeout);
+	settingsSendTimeout = setTimeout(function() {
+		beo.bus.emit('speaker-preset', {header: "currentSettings", content: {extension: "channels", settings: {a: settings.a, b: settings.b, c: settings.c, d: settings.d, daisyChainRoles: settings.daisyChainRoles}}});
+	}, timeout);
 }
 	
 function getSettingsForBeosonic() {

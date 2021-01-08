@@ -167,7 +167,7 @@ beoBus.on('general', function(event) {
 beoBus.on('dsp', function(event) {
 	if (event.header == "amplifierUnmuted") {
 		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") {
-			if (!fs.existsSync("/etc/quiet_start")) {
+			if (!fs.existsSync("/etc/quiet_start") && !quietMode) {
 				setTimeout(function() {
 					playProductSound("startup");
 				}, 500);

@@ -335,7 +335,7 @@ var fs = require("fs");
 	
 	
 	function updateProductIdentities() {
-		// Combines product identities from beo-product-identities and beo-sound-presets directories, from system and user locations.
+		// Combines product identities from beo-product-identities and beo-speaker-presets directories, from system and user locations.
 		linkedProductImages = [];
 		
 		if (fs.existsSync(systemSpeakerPresetDirectory)) {
@@ -472,9 +472,22 @@ var fs = require("fs");
 		}
 	}
 	
-	function getProductIdentity(identity) {
-		if (productIdentities[identity]) {
-			return productIdentities[identity];
+	function getProductIdentity(identityID = settings.modelID, clean = false) {
+		
+		if (productIdentities[identityID]) {
+			identityToSend = productIdentities[identityID];
+			if (clean) {
+				identityToSend = JSON.parse(JSON.stringify(identityToSend));
+				delete identityToSend.previewProcessor;
+				delete identityToSend.internal;
+				delete identityToSend.fileReference;
+				if (!identityToSend.productImage[0]) {
+					delete identityToSend.productImage;
+				} else if (identityToSend.productImage[2]) {
+					identityToSend.productImage = identityToSend.productImage[2];
+				}
+			}
+			return identityToSend;
 		} else {
 			return null;
 		}

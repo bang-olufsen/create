@@ -46,71 +46,106 @@
 				<img class="menu-icon" src="€/symbols-black/upload.svg">
 				<div class="menu-label">Import Preset...</div>
 			</div>-->
-			<div class="button pill grey" onclick="beo.uploadFile({title: 'Import Speaker Preset', uploadMessage: 'Importing speaker preset...', fileExtensions: ['.json'], types: ['application/json']}, 'speaker-preset');">Import Preset…</div>
-			<div class="button-row centre setup-hide hidden">
-				<div class="button pill black">Save…</div>
-				<div class="button pill">Import…</div>
+			<div class="button-row centre setup-hide">
+				<div class="button pill grey" onclick="speaker_preset.savePreset(1);">Save New…</div>
+				<div class="button pill grey" onclick="beo.uploadFile({title: 'Import Speaker Preset', uploadMessage: 'Importing speaker preset...', fileExtensions: ['.json'], types: ['application/json']}, 'speaker-preset');">Import…</div>
 			</div>
+			<div class="button pill grey setup-only" onclick="beo.uploadFile({title: 'Import Speaker Preset', uploadMessage: 'Importing speaker preset...', fileExtensions: ['.json'], types: ['application/json']}, 'speaker-preset');">Import Preset…</div>
 		</div>
 	</div>
 	
-		<div class="popup-content hidden" id="speaker-preset-preview-popup">
-			<header class="popup opaque-scroll transparent top-hide-title">
-				<div class="button symbol left" onclick="speaker_preset.closePreview();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
-				<h1>Speaker Preset</h1>
-				<div class="button symbol right setup-hide" onclick="speaker_preset.optionsForSelectedPreset();" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
-			</header>
-			
-			<div class="scroll-area">
-				<div class="speaker-preset-product-image-wrap header-image-wrap">
-					<div class="speaker-preset-product-image header-image"></div>
-					<div class="speaker-preset-beo-logo hidden"></div>
-				</div>
-				<div class="menu-content">
-					<div class="speaker-preset-information">
-						<h2 class="centre"></h2>
-						<h1>Preset Name</h1>
-						<p class="product"></p>
-						<p class="description"></p>
-						<!--<div class="button-bar">
-							<div class="button symbol border" style="background-image: url(common/symbols-black/delete.svg);"></div>
-							<div class="button symbol border" style="background-image: url(common/symbols-black/share.svg);"></div>
-						</div>-->
-					</div>
-					<hr class="setup-hide">
-					<div class="speaker-preset-install-fallback-dsp setup-hide hidden">
-						<p class="warning">It is recommended to install the default DSP program to make sure this speaker preset fully works.</p>
-						<div class="menu-item toggle on install-fallback-dsp-toggle" onclick="speaker_preset.toggleInstallFallbackDSP();">
-							<div class="menu-label">Install Default Program</div>
-							<div class="menu-toggle"></div>
-						</div>
-						<hr>
-					</div>
-					
-					
-					<h2 class="disclosure setup-hide" data-disclosure=".speaker-preset-settings">Details</h2>
-					<div class="speaker-preset-settings setup-hide hidden">
-						<div class="speaker-preset-contents">
-							
-						</div>
-						<p class="setup-hide">Only the selected settings will be applied.</p>
-					</div>
-					
-					
-				</div>
+	<div class="popup-content hidden" id="speaker-preset-preview-popup">
+		<header class="popup opaque-scroll transparent top-hide-title">
+			<div class="button symbol left" onclick="speaker_preset.closePreview();" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>Speaker Preset</h1>
+			<div class="button symbol right setup-hide" onclick="speaker_preset.optionsForSelectedPreset();" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
+		</header>
+		
+		<div class="scroll-area">
+			<div class="speaker-preset-product-image-wrap header-image-wrap">
+				<div class="speaker-preset-product-image show-preset header-image"></div>
+				<div class="speaker-preset-beo-logo show-preset hidden"></div>
 			</div>
-			
-			<footer>
-				<div onclick="speaker_preset.applyPreset();" class="button pill black apply-speaker-preset-button">Use This Speaker Preset</div>
-			</footer>
+			<div class="menu-content">
+				<div class="speaker-preset-information show-preset">
+					<h2 class="centre"></h2>
+					<h1>Preset Name</h1>
+					<p class="product"></p>
+					<p class="description"></p>
+					<!--<div class="button-bar">
+						<div class="button symbol border" style="background-image: url(common/symbols-black/delete.svg);"></div>
+						<div class="button symbol border" style="background-image: url(common/symbols-black/share.svg);"></div>
+					</div>-->
+				</div>
+				<hr class="setup-hide">
+				<div class="speaker-preset-install-fallback-dsp setup-hide hidden">
+					<p class="warning">It is recommended to install the default DSP program to make sure this speaker preset fully works.</p>
+					<div class="menu-item toggle on install-fallback-dsp-toggle" onclick="speaker_preset.toggleInstallFallbackDSP();">
+						<div class="menu-label">Install Default Program</div>
+						<div class="menu-toggle"></div>
+					</div>
+					<hr>
+				</div>
+				
+				
+				<h2 class="disclosure setup-hide" data-disclosure=".speaker-preset-settings">Details</h2>
+				<div class="speaker-preset-settings setup-hide hidden">
+					<div class="speaker-preset-contents">
+						
+					</div>
+					<p class="setup-hide">Only the selected settings will be applied.</p>
+				</div>
+				
+				
+			</div>
 		</div>
+		
+		<footer>
+			<div onclick="speaker_preset.applyPreset();" class="button pill black apply-speaker-preset-button approve-speaker-preset-button">Use This Speaker Preset</div>
+		</footer>
+	</div>
+	
+	<div class="popup-content hidden" id="save-speaker-preset-popup">
+		<header class="popup opaque-scroll transparent top-hide-title">
+			<div class="button symbol left" onclick="speaker_preset.savePreset(0);" style="-webkit-mask-image: url(common/symbols-black/close.svg); mask-image: url(common/symbols-black/close.svg);"></div>
+			<h1>New Speaker Preset</h1>
+		</header>
+		
+		<div class="scroll-area">
+			<div class="speaker-preset-product-image-wrap header-image-wrap">
+				<div class="speaker-preset-product-image new-preset header-image"></div>
+				<div class="speaker-preset-beo-logo new-preset hidden"></div>
+			</div>
+			<div class="menu-content">
+				<div class="speaker-preset-information new-preset">
+					<h2 class="centre"></h2>
+					<h1>Preset Name</h1>
+					<p class="product"></p>
+					<p class="description"></p>
+				</div>
+				
+				<h2>Include settings</h2>
+				<div class="speaker-preset-settings">
+					<div class="new-speaker-preset-contents">
+						
+					</div>
+				</div>
+				
+				
+			</div>
+		</div>
+		
+		<footer>
+			<div onclick="speaker_preset.savePreset(4);" class="button pill black save-speaker-preset-button approve-speaker-preset-button">Save Speaker Preset</div>
+		</footer>
+	</div>
 	
 	<div class="ask-menu" id="replace-speaker-preset-prompt">
 		<h2>Replace Existing Preset?</h2>
-		<p>'<span class="ask-dynamic-0">Preset Name</span>' has the same file name as the imported preset. Would you like to replace it?</p>
+		<p>'<span class="ask-dynamic-0">Preset Name</span>' has the same file name as the new preset. Would you like to replace it?</p>
 		<div class="ask-buttons">
-			<div class="button pill grey" onclick="speaker_preset.replaceExistingPreset(true);">Replace</div>
-			<div class="button pill black cancel default" onclick="speaker_preset.replaceExistingPreset(false);">Don't Replace</div>
+			<div class="button pill grey" onclick="beo.askOption(1);">Replace</div>
+			<div class="button pill black cancel default" onclick="beo.askOption(0);">Don't Replace</div>
 		</div>
 	</div>
 	
@@ -137,6 +172,8 @@
 			<div class="button pill black cancel default" onclick="beo.ask();">Don't Remove</div>
 		</div>
 	</div>
+	
+
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/speaker-preset-client.js"></script>

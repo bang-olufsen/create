@@ -29,6 +29,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	
 	var debug = beo.debug;
 	var metadata = {};
+	var Fs = null;
 	
 	var fullPresetList = {};
 	var compactPresetList = {};
@@ -37,6 +38,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		"selectedSpeakerPreset": null
 	};
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
+	
+	var currentPresetSettings = {};
 	
 	var productIdentitiesFetched = false;
 	
@@ -91,7 +94,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		if (event.header == "settings") {
 			
 			if (event.content.settings) {
-				settings = event.content.settings;
+				settings = Object.assign(settings, event.content.settings);
 			}
 			
 		}
@@ -144,10 +147,10 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 							default:
 								if (extensions[soundAdjustment]) {
 									if (extensions[soundAdjustment].applySpeakerPreset != undefined) {
-										if (debug) console.log("Applying sound preset for extension '"+soundAdjustment+"'...");
+										if (debug) console.log("Applying speaker preset for extension '"+soundAdjustment+"'...");
 										extensions[soundAdjustment].applySpeakerPreset(fullPresetList[presetID][soundAdjustment], samplingRate);
 									} else {
-										if (debug) console.log("Extension '"+soundAdjustment+"' does not support applying a sound preset.");
+										if (debug) console.log("Extension '"+soundAdjustment+"' does not support applying a speaker preset.");
 									}
 								} else {
 									if (debug) console.log("Extension '"+soundAdjustment+"' does not exist on this system.");
@@ -175,9 +178,9 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 						extensions["dsp-programs"].installDSPProgram(fullPresetList[presetID]["speaker-preset"].fallbackDSP, function(result) {
 							if (result == true) {
 								beo.bus.emit("ui", {target: "speaker-preset", header: "presetApplied", content: {presetID: event.content.presetID}});
-								if (debug) console.log("Installing default DSP program succeeded. Sound preset applied.");
+								if (debug) console.log("Installing default DSP program succeeded. Speaker preset applied.");
 							} else {
-								if (debug) console.log("Installing default DSP program unsuccessful.");
+								if (debug) console.log("Installing default DSP program was unsuccessful.");
 							}
 						});
 					}
@@ -193,6 +196,95 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			
 		}
 		
+		if (event.header == "saveSpeakerPreset") {
+			if (event.content.name) {
+				var filename = generateFilename(event.content.name);
+				
+				var presetSettings = {};
+				var identity = null;
+				
+				if (!event.content.settingsSelected) {
+					// Check if preset exists.
+					if (compactPresetList[filename] && !event.content.replaceExisting) {
+						beo.sendToUI("speaker-preset", "saveSpeakerPreset", {exists: true, systemPreset: compactPresetList[filename].readOnly, existingPresetName: compactPresetList[filename].presetName});
+					} else {
+						var image = null;
+						if (beo.extensions["product-information"] &&
+							beo.extensions["product-information"].getProductIdentity) {
+							identity = beo.extensions["product-information"].getProductIdentity();
+							
+							if (identity.manufacturer && identity.manufacturer == "Bang & Olufsen") {
+								delete identity.manufacturer;
+							}
+						}
+						// Compile and send settings to the UI.
+						var identityStatus = (identity) ? 0 : 1;
+						if (identity && 
+							identity.productImage && 
+							identity.productImage.length) {
+							image = identity.productImage[0];
+						}
+						presetSettings["product-information"] = {status: identityStatus, report: identity};
+						
+						presetSettings = Object.assign(presetSettings, preflightPresetSettings(currentPresetSettings, Fs));
+						
+						
+						beo.sendToUI("speaker-preset", "saveSpeakerPreset", {preset: presetSettings, productIdentity: identity, productImage: image});
+					}
+				} else {
+					// UI lists which settings to save (or rather exclude).
+					var presetToSave = {
+						"speaker-preset": {
+							presetName: event.content.name
+						}
+					};
+					if (Fs) presetToSave["speaker-preset"].Fs = Fs;
+					presetToSave = Object.assign(presetToSave, currentPresetSettings);
+					if (beo.extensions["product-information"] &&
+						beo.extensions["product-information"].getProductIdentity) {
+						identity = beo.extensions["product-information"].getProductIdentity(undefined, true);
+						
+						if (identity.manufacturer && identity.manufacturer == "Bang & Olufsen") {
+							delete identity.manufacturer;
+						}
+						presetToSave["product-information"] = identity;
+					}
+					
+					if (event.content.excludedSettings) {
+						for (var i = 0; i < event.content.excludedSettings.length; i++) {
+							delete presetToSave[event.content.excludedSettings[i]];
+						}
+					}
+					
+					fs.writeFileSync(presetDirectory+"/"+filename+".json", JSON.stringify(presetToSave));
+					
+					preset = readPresetFromFile(presetDirectory+"/"+filename+".json", false);
+					if (preset.presetName) {
+						compactPresetList[preset.presetName] = preset.presetCompact;
+						fullPresetList[preset.presetName] = preset.presetFull;
+					}
+					checkIdentities();
+	
+					settings.selectedSpeakerPreset = filename;
+					beo.sendToUI("speaker-preset", "saveSpeakerPreset", {name: event.content.name, saved: true});
+					beo.saveSettings("speaker-preset", settings);
+					if (debug) console.log("Speaker preset '"+event.content.name+"' was saved.");
+					
+					beo.sendToUI("speaker-preset", "presets",{compactPresetList: compactPresetList, currentSpeakerPreset: settings.selectedSpeakerPreset});
+				}
+			}
+		}
+		
+		if (event.header == "currentSettings") {
+			if (event.content.extension) {
+				if (event.content.settings) {
+					currentPresetSettings[event.content.extension] = event.content.settings;
+				} else {
+					delete currentPresetSettings[event.content.extension];
+				}
+			}
+		}
+		
 		
 	});
 	
@@ -204,9 +296,14 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			
 			if (event.content.metadata) {
 				metadata = event.content.metadata;
-				
+				if (metadata.sampleRate) {
+					Fs = parseInt(metadata.sampleRate.value[0]);
+				} else {
+					Fs = null;
+				}
 			} else {
 				metadata = {};
+				Fs = null;
 			}
 	
 		}
@@ -219,51 +316,29 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			if (fullPresetList[presetID] != undefined) {
 				if (fullPresetList[presetID]) {
 					
-					preset = {};
+					var preset = {};
 					
 					// "Preflights" the selected sound preset by sending the settings to the sound adjustment extensions. The extensions will check them against the DSP metadata and their own capabilities and return a compatibility report.
-					checkedPresetContent = {};
-					identity = null;
+					var checkedPresetContent = {};
+					var identity = null;
 					if (compactPresetList[presetID].productIdentity) {
 						identity = extensions["product-information"].getProductIdentity(compactPresetList[presetID].productIdentity);
 						identityStatus = (identity) ? 0 : 1;
 						checkedPresetContent["product-information"] = {status: identityStatus, report: identity};
 					}
-					if (fullPresetList[presetID]["speaker-preset"].samplingRate) {
-						samplingRate = fullPresetList[presetID]["speaker-preset"].samplingRate;
-					} else {
-						samplingRate = null;
-					}
-					for (soundAdjustment in fullPresetList[presetID]) {
-						switch (soundAdjustment) {
-							case "speaker-preset":
-							
-								if (fullPresetList[presetID]["speaker-preset"].description) {
-									preset.description = fullPresetList[presetID]["speaker-preset"].description;
-								}
-								break;
-							case "presetName":
-							case "product-information":
-								
-								break;
-							default:
-								checkedPresetContent[soundAdjustment] = {status: 1};
-								if (extensions[soundAdjustment]) {
-									if (extensions[soundAdjustment].checkSettings != undefined) {
-										if (debug == 2) console.log("Checking preset content for extension '"+soundAdjustment+"'...");
-										checkedPresetContent[soundAdjustment].report = extensions[soundAdjustment].checkSettings(fullPresetList[presetID][soundAdjustment], samplingRate);
-										checkedPresetContent[soundAdjustment].status = 0;
-										
-									} else {
-										if (debug) console.log("Extension '"+soundAdjustment+"' does not support checking preset content.");
-										checkedPresetContent[soundAdjustment].status = 2;
-									}
-								} else {
-									if (debug) console.log("Extension '"+soundAdjustment+"' does not exist on this system.");
-								}	
-								break;
+					if (fullPresetList[presetID]["speaker-preset"]) {
+						if (fullPresetList[presetID]["speaker-preset"].description) {
+							preset.description = fullPresetList[presetID]["speaker-preset"].description;
+						}
+			
+						if (fullPresetList[presetID]["speaker-preset"].samplingRate) {
+							samplingRate = fullPresetList[presetID]["speaker-preset"].samplingRate;
+						} else {
+							samplingRate = null;
 						}
 					}
+					
+					checkedPresetContent = Object.assign(checkedPresetContent, preflightPresetSettings(fullPresetList[presetID]), samplingRate);
 					
 					programName = false;
 					metadataFromDSP = false;
@@ -291,6 +366,36 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			}
 			
 		}
+	}
+	
+	function preflightPresetSettings(presetToPreflight, samplingRate = null) {
+		var preflight = {};
+		for (soundAdjustment in presetToPreflight) {
+			switch (soundAdjustment) {
+				case "speaker-preset":
+				case "presetName":
+				case "product-information":
+					
+					break;
+				default:
+					preflight[soundAdjustment] = {status: 1};
+					if (extensions[soundAdjustment]) {
+						if (extensions[soundAdjustment].checkSettings != undefined) {
+							if (debug == 2) console.log("Checking preset content for extension '"+soundAdjustment+"'...");
+							preflight[soundAdjustment].report = extensions[soundAdjustment].checkSettings(presetToPreflight[soundAdjustment], samplingRate);
+							preflight[soundAdjustment].status = 0;
+							
+						} else {
+							if (debug) console.log("Extension '"+soundAdjustment+"' does not support checking preset content.");
+							preflight[soundAdjustment].status = 2;
+						}
+					} else {
+						if (debug) console.log("Extension '"+soundAdjustment+"' does not exist on this system.");
+					}	
+					break;
+			}
+		}
+		return preflight;
 	}
 	
 	function readLocalPresets() {
@@ -390,7 +495,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				extensions["product-information"].deleteProductIdentity(compactPresetList[preset].productIdentity);
 			}
 			
-			if (debug) console.log("Removing sound preset '"+preset+"'.");
+			if (debug) console.log("Removing speaker preset '"+preset+"'.");
 			delete compactPresetList[preset];
 			delete fullPresetList[preset];
 			
@@ -491,6 +596,13 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	function getCurrentSpeakerPreset() {
 		return {id: settings.selectedSpeakerPreset, name: compactPresetList[settings.selectedSpeakerPreset]};
 	}
+	
+function generateFilename(name) {
+	n = name.toLowerCase().replace(/ /g, "-"); // Replace spaces with hyphens
+	n = n.replace(/\./g, "-"); // Replace periods with hyphens
+	n = n.replace(/-+$/g, ""); // Remove hyphens from the end of the name.
+	return n;
+}
 
 	
 module.exports = {

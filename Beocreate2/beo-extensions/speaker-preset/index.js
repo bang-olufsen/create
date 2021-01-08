@@ -238,7 +238,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 							presetName: event.content.name
 						}
 					};
-					if (Fs) presetToSave["speaker-preset"].Fs = Fs;
+					if (Fs) presetToSave["speaker-preset"].samplingRate = Fs;
 					presetToSave = Object.assign(presetToSave, currentPresetSettings);
 					if (beo.extensions["product-information"] &&
 						beo.extensions["product-information"].getProductIdentity) {

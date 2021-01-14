@@ -157,6 +157,9 @@
 			}
 			dragEvent = null;
 			event.preventDefault();
+		} else if (dragging == 0) {
+			// Do nothing.
+			clearTimeout(dragTimeout);
 		} else if (dragEvent) {
 			if (this.options.cancel) this.options.cancel(event, positions, dragEvent.target);
 			dragEvent = null;

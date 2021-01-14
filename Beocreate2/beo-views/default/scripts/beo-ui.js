@@ -1755,8 +1755,8 @@ function endHold(event) {
 			$(holdTarget).attr('onclick', clickHandler);
 			clickHandler = null;
 		}, 20);
+		if (event) event.preventDefault();
 	}
-	if (event) event.preventDefault();
 }
 
 
@@ -2188,7 +2188,7 @@ document.ontouchend = function(event) {
 	
 	
 	if (event.target.className.indexOf("hold") != -1) {
-		event.preventDefault();
+		//event.preventDefault();
 		endHold(event);
 	}
 	

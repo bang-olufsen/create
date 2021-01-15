@@ -9,7 +9,7 @@ Speaker presets are collections of sound adjustment settings that can be applied
 In Beocreate 2, speaker presets (previously called *sound profiles*) are now separated from DSP programs for greater flexibility:
 
 1. A DSP program determines the sound processing flow and which sound adjustment features are available.
-2. A sound preset contains the actual settings that are dynamically applied to the DSP program (equaliser and crossover parameters, levels, delays, ...).
+2. A speaker preset contains the actual settings that are dynamically applied to the DSP program (equaliser and crossover parameters, levels, delays, ...).
 
 
 ## Data Format: JSON

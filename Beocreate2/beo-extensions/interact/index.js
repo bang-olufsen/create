@@ -332,22 +332,22 @@ function getAllTriggersAndActions() {
 	}
 }
 
-function runTrigger(extension, type, data = null) { // Other extensions can call the trigger.
+async function runTrigger(extension, type, data = null) { // Other extensions can call the trigger.
 	if (settings.interactions[extension] && settings.interactionsEnabled) {
 		if (settings.interactions[extension][type] &&
 			allTriggers[extension][type]) {
 			for (i in settings.interactions[extension][type]) { // Check all interactions that include this trigger.
 				if (settings.interactions[extension][type][i].actions) {
-					triggerResult = allTriggers[extension][type](data, settings.interactions[extension][type][i].triggerData);
+					triggerResult = await allTriggers[extension][type](data, settings.interactions[extension][type][i].triggerData);
 					if (triggerResult != undefined) { // If the trigger function doesn't return undefined, run the actions.
-						if (beo.selectedExtension == "interact") beo.sendToUI("interact", {header: "runInteraction", content: {name: settings.interactions[extension][type][i].name}});
-						stepResult = null;
+						if (beo.selectedExtension == "interact") beo.sendToUI("interact", "runInteraction", {name: settings.interactions[extension][type][i].name});
+						var stepResult = null;
 						for (a in settings.interactions[extension][type][i].actions) {
 							actionExtension = settings.interactions[extension][type][i].actions[a].extension;
 							actionName = settings.interactions[extension][type][i].actions[a].type;
 							if (allActions[actionExtension][actionName]) {
 								try {
-									result = allActions[actionExtension][actionName](settings.interactions[extension][type][i].actions[a].data, triggerResult, stepResult);
+									var result = await allActions[actionExtension][actionName](settings.interactions[extension][type][i].actions[a].data, triggerResult, stepResult);
 									if (result) stepResult = result;
 								} catch (error) {
 									console.error("Interact: error running action '"+actionName+"' for extension '"+actionExtension+"':", error);

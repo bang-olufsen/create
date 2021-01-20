@@ -20,6 +20,6 @@
   "author": "HiFiBerry",
   "license": "MIT",
   "beocreate": {
-  		"rejectCardFeatures": ["dsp"]
+  		"requireCardFeatures": ["alsa-eq"]
   }
 }

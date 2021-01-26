@@ -3547,13 +3547,27 @@ form {
 }
 
 #text-input-plain, 
-#text-input-password {
+#password-group {
 	display: none;
 }
 
-.password #text-input-password, 
+.password #password-group, 
 .text #text-input-plain {
 	display: block;
+}
+
+#password-group {
+	position: relative;
+}
+
+#password-group .button {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+
+#text-input-password {
+	padding-right: 41px;
 }
 
 input[type=text]:focus, 

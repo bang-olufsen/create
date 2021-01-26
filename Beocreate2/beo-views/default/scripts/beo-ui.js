@@ -1927,26 +1927,26 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 	
 	if (options.autocapitalise) {
 		if (options.autocapitalise == true) { 
-			$("#text-input input[type=text]").attr("autocapitalize", "sentences");
+			$("#text-input-plain").attr("autocapitalize", "sentences");
 		} else {
-			$("#text-input input[type=text]").attr("autocapitalize", options.autocapitalise);
+			$("#text-input-plain").attr("autocapitalize", options.autocapitalise);
 		}
 	} else {
-		$("#text-input input[type=text]").attr("autocapitalize", "off");
+		$("#text-input-plain").attr("autocapitalize", "off");
 	}
 	
 	if (options.autocorrect) {
-		$("#text-input input[type=text]").attr("autocorrect", "on");
+		$("#text-input-plain").attr("autocorrect", "on");
 	} else {
-		$("#text-input input[type=text]").attr("autocorrect", "off");
+		$("#text-input-plain").attr("autocorrect", "off");
 	}
-	$("#text-input input[type=password]").attr("placeholder", "");
-	$("#text-input input[type=text]").attr("placeholder", "");
-	if (options.placeholders.text) $("#text-input input[type=text]").attr("placeholder", options.placeholders.text);
-	if (options.placeholders.password) $("#text-input input[type=password]").attr("placeholder", options.placeholders.password);
+	$("#text-input-password").attr("placeholder", "");
+	$("#text-input-plain").attr("placeholder", "");
+	if (options.placeholders.text) $("#text-input-plain").attr("placeholder", options.placeholders.text);
+	if (options.placeholders.password) $("#text-input-password").attr("placeholder", options.placeholders.password);
 	
-	$("#text-input input[type=text], #text-input input[type=password]").val("");
-	if (options.text) $("#text-input input[type=text]").val(options.text);
+	$("#text-input-plain, #text-input-password").val("");
+	if (options.text) $("#text-input-plain").val(options.text);
 	
 	$("#text-prompt").text(prompt);
 	$("#text-input h1").text(title);
@@ -1954,9 +1954,9 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 	
 	//setTimeout(function() {
 	if (type == 2) {
-		$("#text-input input[type=password]").focus();
+		$("#text-input-password").focus();
 	} else {
-		$("#text-input input[type=text]").focus();
+		$("#text-input-plain").focus();
 	}
 	//}, 600);
 	validateTextInput();
@@ -1966,8 +1966,8 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 var textInputValid = false;
 function validateTextInput() {
 	textInputValid = true;
-	txt = $("#text-input input[type=text]").val();
-	passwd = $("#text-input input[type=password]").val();
+	txt = $("#text-input-plain").val();
+	passwd = $("#text-input-password").val();
 	if (textInputMode == 1 || textInputMode == 3) {
 		if (!txt) {
 			if (textInputOptions.optional && textInputOptions.optional.text) {
@@ -1999,10 +1999,21 @@ function validateTextInput() {
 	}
 }
 
+function togglePasswordReveal() {
+	var fieldType = "password" // default
+	
+	if($("#text-input-password").prop("type") == "password") {
+		fieldType = "text";
+	}
+	
+	$("#text-input-password").prop("type", fieldType);
+	$("#text-input-password").focus();
+}
+
 function submitText() {
 	if (textInputValid) {
-		txt = $("#text-input input[type=text]").val();
-		passwd = $("#text-input input[type=password]").val();
+		txt = $("#text-input-plain").val();
+		passwd = $("#text-input-password").val();
 		cancelText(true);
 		textInputCallback({text: txt, password: passwd});
 		return true;
@@ -2013,12 +2024,12 @@ function submitText() {
 
 
 function cancelText(hideOnly) {
-	$("#text-input input[type=text], #text-input input[type=password]").blur();
+	$("#text-input-plain, #text-input-password").blur();
 	$("#text-input, #text-input-back-plate").removeClass("visible");
 	textInputCloseTimeout = setTimeout(function() {
 		$("#text-input, #text-input-back-plate").removeClass("block");
-		$("#text-input input[type=text]").val("");
-		$("#text-input input[type=password]").val("");
+		$("#text-input-plain").val("");
+		$("#text-input-password").val("");
 	}, 500);
 	if (!hideOnly) {
 		textInputCallback();
@@ -2319,6 +2330,7 @@ return {
 	hidePopupView: hidePopupView,
 	popupBackplateClick: popupBackplateClick,
 	startTextInput: startTextInput,
+	togglePasswordReveal: togglePasswordReveal,
 	submitText: submitText,
 	cancelText: cancelText,
 	uploadFile: uploadFile,

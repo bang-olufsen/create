@@ -13,7 +13,7 @@
  "author": "",
  "license": "MIT",
  "devDependencies": {
-  "electron": "^8.5.1",
+  "electron": "^8.5.2",
   "electron-builder": "^21.2.0",
   "electron-rebuild": "^1.11.0",
   "node-hid": "^1.2.0"
@@ -24,7 +24,7 @@
   "electron-window-state": "^5.0.3",
   "etcher-image-write": "^9.1.6",
   "multicast-dns": "^7.2.2",
-  "node-fetch": "^2.6.0",
+  "node-fetch": "^2.6.1",
   "sudo-prompt": "^9.2.1",
   "tinkerhub-mdns": "^0.5.1"
  },

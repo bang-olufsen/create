@@ -157,8 +157,8 @@ $(".interact-volume-slider").slider({
 
 // INTERACT
 
-volumeToSet = null;
-volumeOption = null;
+var volumeToSet = null;
+var volumeOption = null;
 function interactSetup(type, stage, data = null) {
 	switch (stage) {
 		case "setup":
@@ -171,7 +171,7 @@ function interactSetup(type, stage, data = null) {
 			}
 			if (type == "setVolume") {
 				$(".interact-volume-slider").slider("value", volumeToSet);
-				interactSetup("setVolume", "option", volumeOption);
+				interactSetup("setVolume", "option", volumeOption); // Function calls the next stage of itself to populate the dialogue with previous or default data.
 				$("#sound-set-volume-save").addClass("disabled");
 				beo.ask("set-volume-setup");
 			} else {
@@ -216,9 +216,9 @@ function interactSetup(type, stage, data = null) {
 		case "save":
 			beo.ask();
 			if (type == "setVolume") {
-				window.interact.saveAction("sound", "setVolume", {option: volumeOption, volume: volumeToSet});
+				window.interact.saveAction("sound", "setVolume", {option: volumeOption, volume: volumeToSet}); // Save the action.
 			} else {
-				window.interact.saveTrigger("sound", "volumeChanged", {option: volumeOption});
+				window.interact.saveTrigger("sound", "volumeChanged", {option: volumeOption}); // Save the trigger.
 			}
 			break;
 		case "preview":

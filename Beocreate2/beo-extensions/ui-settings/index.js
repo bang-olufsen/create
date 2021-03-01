@@ -25,6 +25,8 @@ var version = require("./package.json").version;
 
 var canUseExternalDisplay = false;
 var externalDisplayOn = false;
+var defaultSettings = {screensaver_timeout:1}
+var settings = JSON.parse(JSON.stringify(defaultSettings));
 
 beo.bus.on('general', function(event) {
 	
@@ -39,6 +41,7 @@ beo.bus.on('general', function(event) {
 			if (canUseExternalDisplay) {
 				getExternalDisplayStatus(function() {
 					beo.sendToUI("ui-settings", "externalDisplay", {enabled: externalDisplayOn, canUseExternalDisplay: true});
+					beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
 				});
 			} else {
 				beo.sendToUI("ui-settings", "externalDisplay", {enabled: false, canUseExternalDisplay: false});
@@ -48,14 +51,45 @@ beo.bus.on('general', function(event) {
 });
 
 beo.bus.on("ui-settings", function(event) {
-
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+			beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+		}
+	}
 	if (event.header == "externalDisplayOn") {
 		setExternalDisplayStatus(event.content.enabled, function() {
 			beo.sendToUI("ui-settings", "externalDisplay", {enabled: externalDisplayOn, canUseExternalDisplay: true});
 		});
 	}
+	if (event.header == "setScreensaverTimeout") {
+		settings.screensaver_timeout = event.content.settings.screensaver_timeout
+		beo.bus.emit("settings", {header: "saveSettings", content: {extension: "ui-settings", settings: settings}});
+		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+		if (debug) console.log("Screensaver timeout set to " + settings.screensaver_timeout);
+	}
+	if (event.header == "getScreensaverTimeout") {
+		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+	}
+
+	hideScreenSaver();
 });
 
+beo.bus.on("ui", function(event) {
+	if (event.header == "getUISettings") {
+		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+	}
+});
+
+beo.bus.on('sources', function(event) {
+	hideScreenSaver();
+});
+beo.bus.on('ui', function(event) {
+	hideScreenSaver();
+});
+beo.bus.on('now-playing', function(event) {
+	hideScreenSaver();
+});
 
 function getExternalDisplayStatus(callback) {
 	exec("systemctl is-active --quiet weston.service cog.service").on('exit', function(code) {
@@ -94,7 +128,10 @@ function setExternalDisplayStatus(enabled, callback) {
 	}
 }
 
-	
+function hideScreenSaver(){
+	beo.sendToUI("screensaver", {header: "deactivate", content: {}});
+}
+
 module.exports = {
 	version: version
 };

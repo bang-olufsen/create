@@ -1,11 +1,12 @@
+
+var ui_settings = (function() {
+
 var settings = {
 	screensaver_timeout: 1
 }
 let timer = null;
 //current localbrowser user agent is 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15'
 let screensaverEnabled = navigator.userAgent.indexOf('(X11; Linux armv7l)') >= 0 && navigator.userAgent.indexOf(' (KHTML, like Gecko) Version/13.0 Safari') >= 0;
-
-var ui_settings = (function() {
 
 var externalDisplayOn = false;
 $(document).on("general", function(event, data) {

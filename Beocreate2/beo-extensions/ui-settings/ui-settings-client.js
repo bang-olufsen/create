@@ -32,11 +32,24 @@ $(document).on("ui-settings", function(event, data) {
 	}
 	if (data.header == "setScreensaverTimeout") {
 		settings.screensaver_timeout = data.content.screensaver_timeout;
-		$(".screensaver-timeout-slider span").attr("data-content", settings.screensaver_timeout)
-		$(".screensaver-timeout-slider").slider("value", settings.screensaver_timeout);
+		$(".screensaver-timeout-selector .menu-item").removeClass("checked");
+		$("#screensaver-timeout-"+data.content.screensaver_timeout).addClass("checked");
 		resetScreensaverTimeout();
 	}
 });
+
+if (screensaverEnabled){
+	//all click events will reset the screensaver timer (but slider drag etc will not)
+	$(document).on("click", function() {
+		resetScreensaverTimeout();
+	});
+
+	$(document).on("screensaver", function(event, data) {
+		if (data.header == "deactivate") {
+			resetScreensaverTimeout();
+		}
+	});
+}
 
 function toggleDisplay() {
 	beo.sendToProduct("ui-settings", "externalDisplayOn", {enabled: (!externalDisplayOn) ? true : false});
@@ -48,46 +61,9 @@ function toggleDisplay() {
 }
 
 return {
-	toggleDisplay: toggleDisplay
+	toggleDisplay: toggleDisplay,
+	setScreensaverTimeout: setScreensaverTimeout
 }
-
-})();
-
-$(".screensaver-timeout-slider").slider({
-	range: "min",
-	min: 1,
-	max: 10,
-	value: 0,
-	slide: function( event, ui ) {
-		settings.screensaver_timeout = ui.value
-		$(".screensaver-timeout-slider span").attr("data-content", ui.value+" min");
-		beo.send({target: "ui-settings", header: "setScreensaverTimeout", content: {settings}});
-		update_screensaver_timeout(ui.value);
-
-	}
-});
-
-function update_screensaver_timeout(timeout) {
-	settings.screensaver_timeout = timeout;
-	resetScreensaverTimeout();
-}
-
-var screensaver = (function() {
-	if (screensaverEnabled){
-		//all click events will reset the screensaver timer (but slider drag etc will not)
-		$(document).on("click", function() {
-			resetScreensaverTimeout();
-		});
-
-		$(document).on("screensaver", function(event, data) {
-			if (data.header == "deactivate") {
-				resetScreensaverTimeout();
-			}
-		});
-	}
-})();
-
-
 
 function timeoutValue(){
 	return settings.screensaver_timeout * 60 * 1000; //convert minutes to milliseconds
@@ -96,7 +72,9 @@ function resetScreensaverTimeout(){
 	if (screensaverEnabled) {
 		hideScreenSaver();
 		clearTimeout(timer);
-		timer = setTimeout(showScreenSaver, timeoutValue())
+		if (settings.screensaver_timeout!=="never"){
+			timer = setTimeout(showScreenSaver, timeoutValue());
+		}
 	}
 }
 function showScreenSaver(){
@@ -106,3 +84,9 @@ function showScreenSaver(){
 function hideScreenSaver(){
 	document.getElementById("myNav").style.width = "0%";
 }
+function setScreensaverTimeout(timeout) {
+	beo.ask();
+	beo.sendToProduct("ui-settings", {header: "setScreensaverTimeout", content: {settings:{screensaver_timeout: timeout}}});
+}
+
+})();

@@ -39,6 +39,16 @@ $(document).on("ui-settings", function(event, data) {
 	}
 });
 
+$(document).on("sources", function(event, data) {
+	if (data.header == "sources") {
+		//show the now-playing component within the screensaver overlay for 30s on song changes
+		$("#myNav .mini-now-playing").css("opacity", "1");
+		setTimeout(function() {
+			$("#myNav .mini-now-playing").css("opacity", "0");
+		}, 30000);
+	}
+});
+
 if (screensaverEnabled){
 	//all click events will reset the screensaver timer (but slider drag etc will not)
 	$(document).on("click", function() {

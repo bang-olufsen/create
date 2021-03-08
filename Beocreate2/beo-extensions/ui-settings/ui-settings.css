@@ -91,3 +91,7 @@
         transform: translateY(-2000px);
     }
 }
+
+#myNav .mini-now-playing {
+    transition: 0.5s linear 0s;
+}

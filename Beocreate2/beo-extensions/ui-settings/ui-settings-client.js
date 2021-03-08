@@ -101,3 +101,8 @@ function setScreensaverTimeout(timeout) {
 }
 
 })();
+
+var screensaverNowPlaying = new Vue({
+	el: "#myNav",
+	data: nowPlayingData
+});

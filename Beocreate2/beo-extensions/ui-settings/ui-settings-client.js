@@ -89,11 +89,11 @@ function resetScreensaverTimeout(){
 	}
 }
 function showScreenSaver(){
-	document.getElementById("myNav").style.width = "100%";
+	document.getElementById("screensaver").style.width = "100%";
 
 }
 function hideScreenSaver(){
-	document.getElementById("myNav").style.width = "0%";
+	document.getElementById("screensaver").style.width = "0%";
 }
 function setScreensaverTimeout(timeout) {
 	beo.ask();

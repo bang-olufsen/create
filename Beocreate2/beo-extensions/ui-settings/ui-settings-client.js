@@ -42,9 +42,9 @@ $(document).on("ui-settings", function(event, data) {
 $(document).on("sources", function(event, data) {
 	if (data.header == "sources") {
 		//show the now-playing component within the screensaver overlay for 30s on song changes
-		$("#myNav .mini-now-playing").css("opacity", "1");
+		$("#screensaver .mini-now-playing").css("opacity", "1");
 		setTimeout(function() {
-			$("#myNav .mini-now-playing").css("opacity", "0");
+			$("#screensaver .mini-now-playing").css("opacity", "0");
 		}, 30000);
 	}
 });
@@ -88,13 +88,21 @@ function resetScreensaverTimeout(){
 		}
 	}
 }
+var dotsTimer;
 function showScreenSaver(){
 	document.getElementById("screensaver").style.width = "100%";
-
+	redrawDots();
 }
 function hideScreenSaver(){
+	clearTimeout(dotsTimer);
 	document.getElementById("screensaver").style.width = "0%";
 }
+function redrawDots(){
+	generateDotBackground();
+	clearTimeout(dotsTimer);
+	dotsTimer = setTimeout(redrawDots, 15000);//redraw dots every 15s
+}
+
 function setScreensaverTimeout(timeout) {
 	beo.ask();
 	beo.sendToProduct("ui-settings", {header: "setScreensaverTimeout", content: {settings:{screensaver_timeout: timeout}}});
@@ -103,6 +111,26 @@ function setScreensaverTimeout(timeout) {
 })();
 
 var screensaverNowPlaying = new Vue({
-	el: "#myNav",
+	el: "#screensaver",
 	data: nowPlayingData
 });
+
+function generateDotBackground() {
+	// Regenerate a random background pattern.
+	$("#screensaver .background").css("opacity", "0");
+
+	//after the existing dots have faded, generate new ones
+	setTimeout(function(){
+		$("#screensaver .background").empty();
+		colours = ["red", "yellow", "green", "blue"];
+		for (var i = 0; i < 20; i++) {
+			randomColour = colours[Math.round(Math.random()*3)];
+			//hRandom = 16*(Math.round(Math.random()*5)+1);
+			hRandom = Math.round(Math.random()*80)+10;
+			vRandom = Math.round(Math.random()*80)+10;
+			$("#screensaver .background").append('<img class="create-dot" src="'+$("#screensaver").attr("data-asset-path")+'/create-dot-animate-'+randomColour+'.svg" style="top: '+vRandom+'%; left: '+hRandom+'%;">');
+		}
+		$("#screensaver .background").css("opacity", "1");
+	}, 1000); //coordinate this timeout with the opacity transition duration css
+
+}

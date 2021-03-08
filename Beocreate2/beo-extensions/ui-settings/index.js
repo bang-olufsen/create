@@ -81,15 +81,6 @@ beo.bus.on("ui", function(event) {
 	}
 });
 
-beo.bus.on('sources', function(event) {
-	hideScreenSaver();
-});
-beo.bus.on('ui', function(event) {
-	hideScreenSaver();
-});
-beo.bus.on('now-playing', function(event) {
-	hideScreenSaver();
-});
 
 function getExternalDisplayStatus(callback) {
 	exec("systemctl is-active --quiet weston.service cog.service").on('exit', function(code) {
@@ -128,6 +119,9 @@ function setExternalDisplayStatus(enabled, callback) {
 	}
 }
 
+/**
+ * call this function to hide the screensaver
+ */
 function hideScreenSaver(){
 	beo.sendToUI("screensaver", {header: "deactivate", content: {}});
 }

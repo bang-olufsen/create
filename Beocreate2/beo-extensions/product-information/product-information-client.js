@@ -1,6 +1,6 @@
 var product_information = (function() {
 
-
+var systemType = "beocreate";
 var systemName = "";
 var staticName = "";
 var modelName = "";
@@ -53,6 +53,8 @@ $(document).on("product-information", function(event, data) {
 	
 		document.title = systemName;
 		beo.sendToProductView({header: "systemName", content: {name: systemName}});
+		
+		hideOrShowModelNameWithSystemName();
 	}
 	
 	if (data.header == "showProductModel") {
@@ -64,9 +66,12 @@ $(document).on("product-information", function(event, data) {
 		$('.product-identity-collection .collection-item[data-model-id="'+modelID+'"]').addClass("checked");
 		$(".product-image").attr("src", productImage);
 		$(".product-image-bg").css("background-image", "url("+productImage+")");
+		
+		hideOrShowModelNameWithSystemName();
 	}
 	
 	if (data.header == "basicProductInformation") {
+		systemType = data.content.systemType;
 		systemName = data.content.systemName;
 		$(".system-name").text(systemName);
 		staticName = data.content.staticName;
@@ -102,6 +107,8 @@ $(document).on("product-information", function(event, data) {
 				window.location.reload();
 			}, 550);
 		}
+		
+		hideOrShowModelNameWithSystemName();
 	}
 	
 	if (data.header == "showSystemName") {
@@ -124,6 +131,8 @@ $(document).on("product-information", function(event, data) {
 				}
 			}
 		}
+		
+		hideOrShowModelNameWithSystemName();
 	}
 	
 	if (data.header == "allProductIdentities" && data.content.identities) {
@@ -160,6 +169,14 @@ $(document).on("ui", function(event, data) {
 	}
 });
 
+function hideOrShowModelNameWithSystemName() {
+	if (modelName == systemName) {
+		$(".model-name.with-system-name").addClass("hidden");
+	} else {
+		$(".model-name.with-system-name").removeClass("hidden");
+	}
+}
+
 function toggleSystemIDFormat(updateOnly) {
 	if (!updateOnly) {
 		showFullSystemID = (showFullSystemID == false) ? true : false;
@@ -181,17 +198,29 @@ function cycleSystemInformation(updateOnly) {
 	if (currentSystemInfo == 0 && !hifiberryVersion) currentSystemInfo = 1;
 	
 	switch (currentSystemInfo) {
-		case 0: // HiFiBerryOS version ("release")
+		case 0: // HiFiBerryOS version ("release").
 			infoText = "System software "+hifiberryVersion;
 			break;
-		case 1: // Beocreate version
-			infoText = "Beocreate "+systemVersion;
+		case 1: // Beocreate version.
+			if (systemType == "beocreate" || systemType == "hifiberry") {
+				infoText = "Beocreate "+systemVersion;
+			} else {
+				infoText = "User interface "+systemVersion;
+			}
 			break;
 		case 2:
-			infoText = "Raspberry Pi ID "+systemID.replace(/^0+/, '');
+			if (systemType == "beocreate" || systemType == "hifiberry") {
+				infoText = "Raspberry Pi ID "+systemID.replace(/^0+/, '');
+			} else {
+				infoText = "Processor ID "+systemID.replace(/^0+/, '');
+			}
 			break;
 		case 3:
-			infoText = "Raspberry Pi ID "+systemID;
+			if (systemType == "beocreate" || systemType == "hifiberry") {
+				infoText = "Raspberry Pi ID "+systemID;
+			} else {
+				infoText = "Processor ID "+systemID;
+			}
 			break;
 	}
 	$(".system-info-cycle").text(infoText);
@@ -268,12 +297,12 @@ function finishCustomisation() {
 
 function restartProduct() {
 	beo.ask();
-	beo.send({target: "product-information", header: "restartProduct"});
+	beo.send({target: "general-settings", header: "restartProduct"});
 }
 
 function shutdownProduct() {
 	beo.ask();
-	beo.send({target: "product-information", header: "shutdownProduct"});
+	beo.send({target: "general-settings", header: "shutdownProduct"});
 }
 
 function jumpToSoundAdjustments() {
@@ -281,63 +310,14 @@ function jumpToSoundAdjustments() {
 	beo.showExtension("sound");
 }
 
-interactPowerOption = null;
-function interactSetup(stage, data) {
-	switch (stage) {
-		case "setup":
-			if (data && data.option) {
-				interactSetup("option", data.option);
-			} else {
-				interactSetup("option", null);
-			}
-			$("#interact-power-setup-save").addClass("disabled");
-			beo.ask("interact-power-setup");
-			break;
-		case "option":
-			interactPowerOption = data;
-			$("#interact-power-setup-options .menu-item").removeClass("checked");
-			if (data) {
-				$('#interact-power-setup-options .menu-item[data-option="'+data+'"]').addClass("checked");
-				$("#interact-power-setup-save").removeClass("disabled");
-			}
-			break;
-		case "save":
-			beo.ask();
-			window.interact.saveAction("product-information", "power", {option: interactPowerOption});
-			break;
-		case "preview":
-			if (data.option == "shutdown") return "Shut down Raspberry Pi";
-			if (data.option == "restart") return "Restart Raspberry Pi";
-			break;
-	}
-}
 
-interactDictionary = {
-	actions: {
-		power: {
-			name: "Power",
-			icon: "common/symbols-black/power.svg",
-			once: true,
-			setup: function(data) { interactSetup("setup", data) }, 
-			preview: function(data) { return interactSetup("preview", data) },
-			illegalWith: ["triggers/product-information/systemBoot"]
-		}
-	},
-	triggers: {
-		systemBoot: {
-			name: "Product Startup",
-			icon: "common/symbols-black/power.svg",
-			once: true,
-			illegalWith: ["actions/product-information/power"]
-		}
-	}
-}
 
 return {
 	systemID: function() {return systemID},
 	systemName: function() {return systemName},
 	staticName: function() {return staticName},
 	systemVersion: function() {return systemVersion},
+	systemType: function() {return systemType},
 	modelName: function() {return modelName},
 	modelID: function() {return modelID},
 	productImage: function() {return productImage},
@@ -353,9 +333,7 @@ return {
 	restartProduct: restartProduct,
 	shutdownProduct: shutdownProduct,
 	jumpToSoundAdjustments: jumpToSoundAdjustments,
-	cycleSystemInformation: cycleSystemInformation,
-	interactDictionary: interactDictionary,
-	interactSetup: interactSetup
+	cycleSystemInformation: cycleSystemInformation
 };
 
 })();

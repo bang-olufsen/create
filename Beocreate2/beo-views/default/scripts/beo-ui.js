@@ -30,7 +30,6 @@ beo = (function() {
 uiSettings = {
 	disclosure: {}
 };
-hifiberryOS = false;
 
 os = getOS();
 
@@ -42,7 +41,6 @@ $( document ).ready(function() {
 	if (("standalone" in window.navigator) && window.navigator.standalone){
 		$("body").addClass("standalone");
 	}
-	if ($("body").hasClass("hifiberry-os")) hifiberryOS = true;
 	if (developerMode) $("body").addClass("developer");
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
@@ -56,7 +54,7 @@ $( document ).ready(function() {
 	
 	$("body").css("opacity", "1");
 	
-	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "views/default/apple-touch-icon-hifiberry.png");
+	if (systemType == "hifiberry") $('head link[rel="apple-touch-icon"]').attr("href", "views/default/apple-touch-icon-hifiberry.png");
 	
 	
 	// File selected to upload.
@@ -65,7 +63,9 @@ $( document ).ready(function() {
 	});
 	
 	// Preload animated wait icons:
-	if (!hifiberryOS) {
+	if (customisations && customisations.waitAnimation) {
+		attentionIcon.src = customisations.waitAnimation;
+	} else if (systemType == "beocreate") {
 		attentionIcon.src = "common/create-wait-animate.svg";
 	} else {
 		attentionIcon.src = "common/hifiberry-wait-animate.svg";
@@ -221,6 +221,11 @@ function prepareMenus() {
 	var unplacedExtensions = [];
 	for (e in sortedExtensions) {
 		var extensionName = sortedExtensions[e].name;
+		if (customisations && 
+			customisations.hiddenExtensions &&
+			customisations.hiddenExtensions.indexOf(extensionName) != -1) {
+			continue; // Skip adding this extension if it's hidden.
+		}
 		var extensionPlaced = false;
 		theExtension = document.querySelector(".menu-screen#"+extensionName);
 		var context = null;
@@ -233,7 +238,7 @@ function prepareMenus() {
 		if (context) {
 			
 			iconName = (theExtension.attributes["data-icon"]) ? theExtension.attributes["data-icon"].value : null;
-			if (hifiberryOS && theExtension.attributes["data-icon-hifiberry"]) {
+			if (systemType == "hifiberry" && theExtension.attributes["data-icon-hifiberry"]) {
 				iconName = theExtension.attributes["data-icon-hifiberry"].value;
 			}
 			menuOptions = {
@@ -317,12 +322,17 @@ function prepareMenus() {
 	
 	for (n in navigation) {
 		if (navigation[n].kind == "extension") {
+			if (customisations && 
+				customisations.hiddenExtensions &&
+				customisations.hiddenExtensions.indexOf(navigation[n].name) != -1) {
+				continue; // Skip adding this extension if it's hidden.
+			}
 			theExtension = document.querySelector(".menu-screen#"+navigation[n].name);
 			if (theExtension) {
 				var isMainMenu = (navigation[n].name == mainMenuExtension) ? true : false; // Checks if this is the main menu. It will always appear in top bar.
 				
 				iconName = (theExtension.attributes["data-icon"]) ? theExtension.attributes["data-icon"].value : null;
-				if (hifiberryOS && theExtension.attributes["data-icon-hifiberry"]) {
+				if (systemType == "hifiberry" && theExtension.attributes["data-icon-hifiberry"]) {
 					iconName = theExtension.attributes["data-icon-hifiberry"].value;
 				}
 				var menuOptions = {
@@ -388,14 +398,24 @@ function prepareMenus() {
 }
 
 var navigationMode = null;
+var favourites = [];
 function prepareFavourites(navSetID) {
+	var selectableNavSets = 0;
+	var navSetID = null;
 	if (!navSetID) {
 		if (localStorage.beocreateSelectedNavigationSet) {
 			navSetID = localStorage.beocreateSelectedNavigationSet;
 		} else {
-			navSetID = navigationSets[0].id;
+			for (var i = 0; i < navigationSets.length; i++) {
+				if (!navigationSets[i].hideFromShortcuts) {
+					navSetID = navigationSets[i].id;
+					break;
+				}
+			}
 		}
 	}
+	
+	if (!navSetID) navSetID = "full";
 	var setName = "";
 	if (navSetID == navigationSets[0].id) {
 		favourites = navigation;
@@ -408,11 +428,17 @@ function prepareFavourites(navSetID) {
 		for (s in navigationSets) {
 			if (navigationSets[s].id == navSetID) {
 				favourites = navigationSets[s].items;
-				setName = navigationSets[s].name;
+				try {
+					setName = navigationSets[s].name;
+				} catch (error) {
+					setName = "Shortcuts";
+				}
 			}
 		}
 	}
 	$(".nav-mode-name").text(setName);
+	
+	console.log(navSetID);
 	
 	var previousKind = null;
 	if (favourites[0].name && favourites[0].name != mainMenuExtension) {
@@ -457,6 +483,13 @@ function prepareFavourites(navSetID) {
 		}
 	}
 	$("nav.bar .nav-content").append('<div class="nav-spacer end"></div>');
+	
+	for (var i = 0; i < navigationSets.length; i++) {
+		if (!navigationSets[i].hideFromShortcuts) selectableNavSets++;
+	}
+	if (selectableNavSets > 1) {
+		$("nav.bar, nav.full").addClass("show-mode-button");
+	}
 }
 
 function chooseNavigationMode(mode) {
@@ -465,24 +498,35 @@ function chooseNavigationMode(mode) {
 		if (localStorage.beocreateSelectedNavigationSet) {
 			var navSetID = localStorage.beocreateSelectedNavigationSet;
 		} else {
-			var navSetID = navigationSets[0].id;
+			for (var i = 0; i < navigationSets.length; i++) {
+				if (!navigationSets[i].hideFromShortcuts) {
+					var navSetID = i;
+					break;
+				}
+			}
 		}
 		for (var i = 0; i < navigationSets.length; i++) {
-			var setDescription = "";
-			if (i == 0 && !navigationSets[0].name) {
-				var setName = "Main Menu";
-				if (!navigationSets[i].description) var setDescription = "Include all main menu items";
-			} else {
-				var setName = navigationSets[i].name;
-				if (navigationSets[i].description) var setDescription = navigationSets[i].description;
+			if (!navigationSets[i].hideFromShortcuts) {
+				var setDescription = "";
+				if (i == 0 && !navigationSets[0].name) {
+					var setName = "Main Menu";
+					if (!navigationSets[i].description) var setDescription = "Include all main menu items";
+				} else {
+					try {
+						var setName = navigationSets[i].name;
+					} catch (error) {
+						var setName = "Shortcuts";
+					}
+					if (navigationSets[i].description) var setDescription = navigationSets[i].description;
+				}
+				$("#navigation-mode-list").append(createMenuItem({
+					label: setName,
+					description: setDescription,
+					onclick: 'beo.chooseNavigationMode(\''+navigationSets[i].id+'\');',
+					checkmark: "left",
+					checked: (navigationSets[i].id == navSetID)
+				}));
 			}
-			$("#navigation-mode-list").append(createMenuItem({
-				label: setName,
-				description: setDescription,
-				onclick: 'beo.chooseNavigationMode(\''+navigationSets[i].id+'\');',
-				checkmark: "left",
-				checked: (navigationSets[i].id == navSetID)
-			}));
 		}
 		ask("navigation-mode-menu");
 	} else {
@@ -1441,12 +1485,7 @@ function notify(options, dismissWithID = currentNotificationID) { // Display a s
 			notificationIcon = "";
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
-				//icon = "common/symbols-black/wait-star.svg"
-				/*if (!hifiberryOS) {
-					icon = "common/create-wait-animate.svg";
-				} else {
-					icon = "common/hifiberry-wait-animate.svg";
-				}*/
+				
 				icon = attentionIcon.src;
 				$("#hud-notification-icon").addClass("beo-load");
 		

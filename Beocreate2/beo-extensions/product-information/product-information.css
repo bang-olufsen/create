@@ -103,7 +103,7 @@
 	-webkit-mask-repeat: no-repeat;
 }
 
-.hifiberry-os .create-logo {
+.hifiberry .create-logo {
 	width: 120px;
 	margin-bottom: 0;
 	margin-top: 0;
@@ -130,7 +130,7 @@
 	display: none;
 }
 
-.hifiberry-os .hifiberry-logo {
+.hifiberry .hifiberry-logo {
 	width: 200px;
 	height: 54px;
 	display: block;
@@ -138,11 +138,7 @@
 	background-color: #e11e42;
 }
 
-.beo-logo {
-	width: 180px;
-	margin-bottom: 1em;
-	margin-top: 1.5em;
-}
+
 
 
 
@@ -156,11 +152,11 @@ h1#os-name-hifiberry-os {
 	display: none;
 }
 
-.hifiberry-os h1#os-name-hifiberry-os {
+.hifiberry h1#os-name-hifiberry-os {
 	display: block;
 }
 
-.hifiberry-os h1#os-name-beocreate {
+.hifiberry h1#os-name-beocreate {
 	display: none;
 }
 
@@ -171,7 +167,7 @@ p.about-line-0 {
 	color: inherit;
 }
 
-.hifiberry-os p.about-line-0 {
+.hifiberry p.about-line-0 {
 	display: block;
 }
 
@@ -179,15 +175,15 @@ p.about-line-1 {
 	margin-bottom: 0;
 }
 
-p#copy-hifiberry-os {
+span#copy-hifiberry-os {
 	display: none;
 }
 
-.hifiberry-os p#copy-hifiberry-os {
-	display: block;
+.hifiberry span#copy-hifiberry-os {
+	display: inline;
 }
 
-.hifiberry-os p#copy-beocreate {
+.hifiberry span#copy-beocreate {
 	display: none;
 }
 
@@ -272,7 +268,7 @@ p#copy-hifiberry-os {
 		margin-top: 0;
 	}
 	
-	.hifiberry-os .hifiberry-logo {
+	.hifiberry .hifiberry-logo {
 		margin-top: 0;
 	}
 	

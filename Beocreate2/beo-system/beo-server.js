@@ -44,10 +44,11 @@ var piSystem = require('../beocreate_essentials/pi_system_tools');
 var systemVersion = require("./package.json").version;
 var defaultSystemConfiguration = {
 	"cardType": "Beocreate 4-Channel Amplifier",
-	"cardFeatures": ["dsp"],
+	"cardFeatures": [],
 	"port": 80,
 	"language": "en",
-	"defaultAppearance": "default"
+	"defaultAppearance": "default",
+	"customisationPath": "/custom/beocreate"
 };
 var systemConfiguration = JSON.parse(JSON.stringify(defaultSystemConfiguration));
 
@@ -72,8 +73,9 @@ var daemonMode = false;
 var developerMode = false;
 var quietMode = false;
 var forceBeosounds = false;
+var allowCustomisation = true;
 
-console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2020 Bang & Olufsen A/S. MIT licence.");
+console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2021 Bang & Olufsen A/S. MIT open source licence.");
 
 
 // CHECK COMMAND LINE ARGUMENTS
@@ -84,10 +86,11 @@ if (cmdArgs.indexOf("vvv") != -1) debugMode = 3;
 if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 if (cmdArgs.indexOf("dev") != -1) developerMode = true;
 if (cmdArgs.indexOf("q") != -1) quietMode = true;
-if (cmdArgs.indexOf("beosounds") != -1) forceBeosounds = true;
+if (cmdArgs.indexOf("no-custom") != -1) allowCustomisation = false;
 
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
 if (developerMode) console.log("Developer mode, user interface will not be cached.");
+if (!allowCustomisation) console.log("Customisations are disabled.");
 
 if (!fs.existsSync(dataDirectory)) {
 	fs.mkdirSync(dataDirectory);
@@ -164,10 +167,11 @@ beoBus.on('general', function(event) {
 	}
 });
 
+<<<<<<< Updated upstream
 beoBus.on('dsp', function(event) {
 	if (event.header == "amplifierUnmuted") {
 		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") {
-			if (!fs.existsSync("/etc/quiet_start") && !quietMode) {
+			if (!fs.existsSync("/etc/quiet_start")) {
 				setTimeout(function() {
 					playProductSound("startup");
 				}, 500);
@@ -178,6 +182,8 @@ beoBus.on('dsp', function(event) {
 	}
 });
 
+=======
+>>>>>>> Stashed changes
 
 // GET AND STORE SETTINGS
 
@@ -279,6 +285,7 @@ var extensionsList = {};
 var extensionsLoaded = false;
 var extensionsPath = systemDirectory+"/../beo-extensions";
 var userExtensionsPath = dataDirectory+"/beo-extensions";
+var customisations = null;
 
 var expressServer = express(); // Create Express instance.
 
@@ -286,6 +293,7 @@ global.beo = {
 	bus: beoBus,
 	systemDirectory: systemDirectory+"/..",
 	dataDirectory: dataDirectory,
+	customisationDirectory: systemConfiguration.customisationPath,
 	systemVersion: systemVersion,
 	systemConfiguration: systemConfiguration,
 	extensions: extensions,
@@ -305,8 +313,11 @@ global.beo = {
 	addDownloadRoute: addDownloadRoute,
 	removeDownloadRoute: removeDownloadRoute,
 	underscore: _,
-	expressServer: expressServer
+	expressServer: expressServer,
+	customisations: customisations
 };
+
+loadCustomisations();
 loadAllServerExtensions();
 var selectedExtension = null;
 var selectedDeepMenu = null;
@@ -321,7 +332,8 @@ beoServer.on("error", function(error) {
 			startShutdown();
 			break;
 		default:
-			console.error("HTTP server error:", error);
+			console.error("HTTP server error. Exiting just in case. Error:", error);
+			startShutdown();
 			break;
 	}
 	
@@ -331,16 +343,16 @@ beoServer.listen(systemConfiguration.port); // Create a HTTP server.
 
 etags = (developerMode) ? false : true; // Disable etags (caching) when running with debug.
 expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.
-expressServer.use("/product-images", express.static(systemDirectory+"/../beo-product-images", {etag: etags})); // Prefer product images from system directory.
-expressServer.use("/product-images", express.static(dataDirectory+"/beo-product-images", {etag: etags})); // For user product images.
+if (customisations) expressServer.use("/extensions", express.static(systemConfiguration.customisationPath+"/beo-extensions-override", {etag: etags})); // For customisation overrides/additions.
 expressServer.use("/extensions", express.static(dataDirectory+"/beo-extensions", {etag: etags})); // For user extensions.
 expressServer.use("/extensions", express.static(systemDirectory+"/../beo-extensions", {etag: etags})); // For system extensions.
 expressServer.use("/views", express.static(dataDirectory+"/beo-views", {etag: etags})); // For user appearances.
 expressServer.use("/views", express.static(systemDirectory+"/../beo-views", {etag: etags})); // For system appearances.
+if (customisations) expressServer.use("/custom", express.static(systemConfiguration.customisationPath+"/assets", {etag: etags})); // For customisations.
 expressServer.use("/misc", express.static(systemDirectory+"/../misc", {etag: etags})); // For other files.
 expressServer.get("/", function (req, res) {
 	if (debugMode) console.log("Loading user interface for default appearance...");
-	ui = loadAppearance("default");
+	ui = loadAppearance(systemConfiguration.defaultAppearance);
 	if (ui) {
 		res.status(200);
 		res.send(ui);
@@ -465,18 +477,37 @@ if (systemConfiguration.runAtStart) {
 }
 
 console.log("System startup.");
-if (!quietMode) {
-	// Play startup sound:
-	if (systemConfiguration.cardType != "Beocreate 4-Channel Amplifier" && forceBeosounds) {
-		if (!fs.existsSync("/etc/quiet_start")) {
-			playProductSound("startup");
-		} else {
-			fs.writeFileSync("/etc/quiet_start", "Used.");
-		}
+
+if (!fs.existsSync(dataDirectory+"/beo-extensions")) fs.mkdirSync(dataDirectory+"/beo-extensions");
+
+// STARTUP SOUND PLAYBACK
+// Actual sound (if any) is defined in the playback function.
+
+// Non-DSP sound devices
+if (systemConfiguration.cardFeatures.indexOf("dsp") == -1 && !quietMode) {
+	if (!fs.existsSync("/etc/quiet_start")) {
+		playProductSound("startup");
+	} else {
+		fs.writeFileSync("/etc/quiet_start", "Used.");
 	}
 }
 
-if (!fs.existsSync(dataDirectory+"/beo-extensions")) fs.mkdirSync(dataDirectory+"/beo-extensions");
+// DSP sound devices
+beoBus.on('dsp', function(event) {
+	if (event.header == "amplifierUnmuted") {
+		if (!startupSoundPlayed) {
+			if (!fs.existsSync("/etc/quiet_start") && !quietMode) {
+				setTimeout(function() {
+					playProductSound("startup");
+				}, 500);
+			} else {
+				fs.writeFileSync("/etc/quiet_start", "Used.");
+			}
+		}
+	}
+});
+
+
 
 
 
@@ -514,6 +545,8 @@ function loadAllServerExtensions() {
 	for (extensionName in masterList) {
 		loadExtensionWithPath(extensionName, masterList[extensionName].userExtension, menuName, "extensions");
 	}
+	
+	extensionsLoaded = true;
 }
 
 
@@ -552,22 +585,32 @@ function shouldLoadExtension(mode, extensionName, userExtension, menuName = null
 	// Mode 1: Check for UI existence.
 	
 	if (menuName == null) menuName = "menu";
-	excludedBySystemConfig = false;
+	var excludedBySystemConfig = false;
 	
 	if (systemConfiguration.enabledExtensions && systemConfiguration.enabledExtensions.length > 0) {
 		if (systemConfiguration.enabledExtensions.indexOf(extensionName) != -1) {
-			if (debugMode) console.log("Extension '"+extensionName+"' is listed to be loaded, excluding unlisted extensions.");
+			if (debugMode && !extensionsLoaded) console.log("Extension '"+extensionName+"' is listed to be loaded, excluding unlisted extensions.");
 		} else {
 			excludedBySystemConfig = true;
 		}
 	} else if (systemConfiguration.disabledExtensions && systemConfiguration.disabledExtensions.length > 0) {
 		if (systemConfiguration.disabledExtensions.indexOf(extensionName) != -1) {
-			if (debugMode) console.log("Extension '"+extensionName+"' is disabled and won't be loaded.");
+			if (debugMode && !extensionsLoaded) console.log("Extension '"+extensionName+"' is disabled and won't be loaded.");
 			excludedBySystemConfig = true;
 		}
 	}
 	
-	if (excludedBySystemConfig) return false;
+	var excludedByCustomisation = false;
+	if (customisations && 
+		customisations.disabledExtensions &&
+		customisations.disabledExtensions.length > 0) {
+		if (customisations.disabledExtensions.indexOf(extensionName) != -1) {
+			if (debugMode && !extensionsLoaded) console.log("Extension '"+extensionName+"' is disabled by customisation and won't be loaded.");
+			excludedByCustomisation = true;
+		}
+	}
+	
+	if (excludedByCustomisation) return false;
 	
 	paths = [
 		(!userExtension) ? extensionsPath+"/"+extensionName : userExtensionsPath+"/"+extensionName,
@@ -628,6 +671,8 @@ function shouldLoadExtension(mode, extensionName, userExtension, menuName = null
 		}
 	}
 	
+	
+	
 	if (!shouldIncludeExtension) return false;
 	
 	
@@ -653,7 +698,7 @@ function shouldLoadExtension(mode, extensionName, userExtension, menuName = null
 	} 
 	if (mode == 1) {
 		extensionExists = false;
-		
+		var menuPath = null;
 		for (p in paths) {
 			if (!extensionExists) {
 				fullPath = paths[p];
@@ -663,6 +708,7 @@ function shouldLoadExtension(mode, extensionName, userExtension, menuName = null
 						if (fs.existsSync(fullPath+'/'+menuName+'.html')){
 							extensionExists = true;
 							menuName += ".html";
+							menuPath = fullPath+"/"+menuName;
 						}
 					} else {
 						// Wildcard matching.
@@ -670,25 +716,29 @@ function shouldLoadExtension(mode, extensionName, userExtension, menuName = null
 						if (files.length == 1) {
 							menuName = files[0];
 							extensionExists = true;
+							menuPath = fullPath+"/"+menuName;
 						}
 					}
 				}
 			}
+		}
+		if (fs.existsSync(systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/'+menuName)) {
+			// Override extension markup from customisation.
+			menuPath = systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/'+menuName;
 		}
 		if (!extensionExists) return false;
 	}
 	
 	
 	if (packageJSON) {
-		return {packageJSON: packageJSON, path: fullPath+"/"+menuName, directory: fullPath};
+		return {packageJSON: packageJSON, path: menuPath, directory: fullPath};
 	} else {
-		return {packageJSON: null, path: fullPath+"/"+menuName, directory: fullPath};
+		return {packageJSON: null, path: menuPath, directory: fullPath};
 	}
 	
 }
 
 
-// The new method to load UI. Not (yet?) used for the standard Beocreate 2 UI.
 function loadAppearance(appearance) {
 
 	if (fs.existsSync(dataDirectory+"/beo-views/"+appearance)) {
@@ -779,6 +829,11 @@ function loadAppearance(appearance) {
 	// Read appearance from disk.
 	if (fs.existsSync(appearancePath+'/index.html')) {
 		
+		if (customisations) {
+			if (customisations.stylesheet) stylesheets.push(customisations.stylesheet);
+			if (customisations.navigationSets) navigationSets = customisations.navigationSets;
+		}
+		
 		stylesheetMarkup = "";
 		for (s in stylesheets) {
 			stylesheetMarkup += '\t<link rel="stylesheet" href="'+stylesheets[s]+'">\n';
@@ -789,8 +844,17 @@ function loadAppearance(appearance) {
 			scriptMarkup += '<script type="text/javascript" charset="utf-8" src="'+scripts[s]+'"></script>\n';
 		}
 		
-		bodyClass = (systemConfiguration.cardType && systemConfiguration.cardType.indexOf("Beocreate") == -1) ? '<body class="hifiberry-os ' : '<body class=" ';
-		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClass).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";</script>\n").replace("</beo-scripts>", scriptMarkup);
+		if (customisations && 
+			customisations.systemClass) {
+			var systemType = customisations.systemClass; // Use custom body class.
+		} else if (systemConfiguration.cardType && 
+			systemConfiguration.cardType.indexOf("Beocreate") != -1) {
+			var systemType = "beocreate";
+		} else {
+			var systemType = "hifiberry";
+		}
+		bodyClassString = '<body class="'+systemType+' ';
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
 		
 		return completeUI;
 	} else {
@@ -799,6 +863,25 @@ function loadAppearance(appearance) {
 	
 }
 
+
+function loadCustomisations() {
+	if (allowCustomisation && 
+		systemConfiguration.customisationPath
+		&& fs.existsSync(systemConfiguration.customisationPath+"/customisation.json")) {
+		try {
+			customisations = require(systemConfiguration.customisationPath+"/customisation.json");
+			if (customisations.brand && customisations.systemClass) {
+				beo.customisations = customisations;
+				if (customisations.appearance) systemConfiguration.defaultAppearance = customisations.appearance;
+				console.log("Customisations for '"+customisations.brand+"' loaded.");
+			} else {
+				customisations = null;
+			}
+		} catch (error) {
+			console.error("Error loading customisations:", error);
+		}
+	}
+}
 
 
 // CLIENT COMMUNICATION (BEOCOM)
@@ -862,17 +945,23 @@ beoCom.on("data", function(data, connection) {
 var startupSoundPlayed = false;
 var productSound = null;
 function playProductSound(sound) {
-	if (debugMode) console.log("Playing sound: "+sound+"...");
-	if (!productSound) productSound = new aplay();
-	soundPath = systemDirectory+"/sounds/";
-	soundFile = null;
+	
+	soundDirectory = systemDirectory+"/sounds/";
+	soundPath = null;
 	switch (sound) {
 		case "startup":
-			soundFile = "startup.wav";
+			if (systemConfiguration.cardType.indexOf("Beocreate") != -1) soundPath = soundDirectory+"startup.wav";
+			if (customisations && 
+				customisations.sounds &&
+				customisations.sounds.startup) soundPath = customisations.sounds.startup;
 			startupSoundPlayed = true;
 			break;
 	}
-	if (soundFile) productSound.play(soundPath+soundFile);
+	if (soundPath) {
+		if (debugMode) console.log("Playing sound: "+sound+"...");
+		if (!productSound) productSound = new aplay();
+		productSound.play(soundPath);
+	}
 }
 
 

@@ -128,7 +128,7 @@ body {
 
 .hidden, 
 .hidden-2, 
-.hifiberry-os .hifiberry-hide {
+.hifiberry .hifiberry-hide {
 	display: none !important;
 }
 
@@ -192,7 +192,6 @@ nav.full {
 	position: relative;
 	box-sizing: border-box;
 	flex-shrink: 0;
-	padding-bottom: var(--menu-height);
 	z-index: 5;
 	-webkit-user-select: none;
 	cursor: default;
@@ -201,7 +200,11 @@ nav.full {
 	box-shadow: inset 1px 0px rgba(255,255,255,0.1);
 }
 
-nav.full .scroll-area {
+nav.full.show-mode-button {
+	padding-bottom: var(--menu-height);
+}
+
+nav.full.show-mode-button .scroll-area {
 	margin-bottom: var(--menu-height);
 }
 
@@ -305,6 +308,11 @@ nav.full .nav-content {
 	background-color: transparent;
 	opacity: 0.3;
 	color: inherit;
+	display: none;
+}
+
+.show-mode-button #main-menu-nav-mode-button {
+	display: flex;
 }
 
 .no-touch #main-menu-nav-mode-button:hover,
@@ -452,11 +460,19 @@ nav.bar .nav-spacer {
 }
 
 nav.bar .nav-spacer.end {
+	width: 10px;
+}
+
+nav.bar.show-mode-button .nav-spacer.end {
 	width: 60px;
 }
 
 .touch nav.bar .nav-spacer {
 	width: max(10px, env(safe-area-inset-left));
+}
+
+.touch nav.bar.show-mode-button .nav-spacer {
+	width: max(60px, env(safe-area-inset-left));
 }
 
 
@@ -487,13 +503,17 @@ nav.bar #nav-bar-mode-button-wrap {
 	top: 0;
 	height: 100%;
 	width: 49px;
-	display: flex;
 	justify-content: center;
 	align-items: center;
 	background-color: inherit;
 	transition: box-shadow 0.3s ease;
 	box-shadow: -1px 0px 0px var(--alternate-bg);
 	color: var(--main-font-colour);
+	display: none;
+}
+
+nav.bar.show-mode-button #nav-bar-mode-button-wrap {
+	display: flex;
 }
 
 nav.bar:hover #nav-bar-mode-button-wrap {

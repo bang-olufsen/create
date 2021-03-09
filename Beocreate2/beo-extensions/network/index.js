@@ -448,7 +448,10 @@ var networkCore = require('../../beocreate_essentials/networking');
 		if (start) {
 			hotspotName = "";
 			hotspotPrefix = "Beocreate";
-			if (beo.systemConfiguration.cardType) {
+			if (beo.customisations &&
+				beo.customisations.hotspotPrefix) {
+				hotspotPrefix = beo.customisations.hotspotPrefix;
+			} else if (beo.systemConfiguration.cardType) {
 				if (beo.systemConfiguration.cardType.indexOf("Beocreate") != -1) {
 					hotspotPrefix = "Beocreate";
 				} else {
@@ -459,10 +462,10 @@ var networkCore = require('../../beocreate_essentials/networking');
 				info = extensions["product-information"].getProductInformation();
 				if (info.systemID) {
 					// Hotspot name contains the Raspberry Pi ID to allow multiple hotspots to coexist.
-					hotspotName = hotspotPrefix+"_Setup_"+info.systemID.replace(/^0+/, '');
+					hotspotName = hotspotPrefix+" Setup "+info.systemID.replace(/^0+/, '');
 				}
 			}
-			if (!hotspotName) hotspotName = hotspotPrefix+"_Setup";
+			if (!hotspotName) hotspotName = hotspotPrefix+" Setup";
 			if (debug) console.log("Network: starting setup hotspot with name: '"+hotspotName+"'...");
 		}
 		if (!settings.useHifiberryHotspot) {

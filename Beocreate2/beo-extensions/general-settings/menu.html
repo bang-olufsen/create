@@ -22,6 +22,35 @@
 			</div>
 		</div>
 	</div>
+	
+	<div class="ask-menu" id="product-shutdown-prompt">
+		<h2>Raspberry Pi Power</h2>
+		<div class="ask-buttons">
+			<div class="button pill grey" onclick="general_settings.shutdownProduct();">Shut Down</div>
+			<div class="button pill grey" onclick="general_settings.restartProduct();">Restart</div>
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
+	
+	
+	<div class="ask-menu" id="interact-power-setup">
+		<h2>Power</h2>
+		<p>When running the action...</p>
+		<div id="interact-power-setup-options">
+			<div class="menu-item checkmark left icon" data-option="shutdown" onclick="general_settings.interactSetup('option', 'shutdown');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Shut Down Raspberry Pi</div>
+			</div>
+			<div class="menu-item checkmark left icon" data-option="restart" onclick="general_settings.interactSetup('option', 'restart');">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Restart Raspberry Pi</div>
+			</div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black default disabled" onclick="general_settings.interactSetup('save');" id="interact-power-setup-save">Save Action</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
 </div>
 
 <!--<script type="text/javascript" charset="utf-8" src="€/system-settings-client.js"></script>-->

@@ -15,7 +15,7 @@ extensions["setup-finish"] = {
 $(document).on("general", function(event, data) {
 	if (data.header == "connection") {
 		if (data.content.status == "connected") {
-			beo.send({target: "setup", header: "getSetupStatus"});
+			beo.sendToProduct("setup", "getSetupStatus");
 		}
 	}
 	

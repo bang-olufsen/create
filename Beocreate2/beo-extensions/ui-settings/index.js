@@ -25,8 +25,12 @@ var version = require("./package.json").version;
 
 var canUseExternalDisplay = false;
 var externalDisplayOn = false;
-var defaultSettings = {screensaver_timeout:1}
+
+var defaultSettings = {
+	screensaverTimeout: 5
+}
 var settings = JSON.parse(JSON.stringify(defaultSettings));
+
 
 beo.bus.on('general', function(event) {
 	
@@ -62,11 +66,13 @@ beo.bus.on("ui-settings", function(event) {
 			beo.sendToUI("ui-settings", "externalDisplay", {enabled: externalDisplayOn, canUseExternalDisplay: true});
 		});
 	}
+
 	if (event.header == "setScreensaverTimeout") {
-		settings.screensaver_timeout = event.content.settings.screensaver_timeout
+		settings.screensaverTimeout = event.content.settings.screensaverTimeout;
 		beo.bus.emit("settings", {header: "saveSettings", content: {extension: "ui-settings", settings: settings}});
 		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
-		if (debug) console.log("Screensaver timeout set to " + settings.screensaver_timeout);
+		if (debug) console.log("Screensaver timeout set to " + settings.screensaverTimeout + ((settings.screensaverTimeout > 1) ? " minute(s)." : "."));
+
 	}
 	if (event.header == "getScreensaverTimeout") {
 		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
@@ -75,11 +81,6 @@ beo.bus.on("ui-settings", function(event) {
 	hideScreenSaver();
 });
 
-beo.bus.on("ui", function(event) {
-	if (event.header == "getUISettings") {
-		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
-	}
-});
 
 
 function getExternalDisplayStatus(callback) {

@@ -1,12 +1,19 @@
 
+var screensaverNowPlaying = new Vue({
+	el: "#screensaver",
+	data: nowPlayingData
+});
+
+
 var ui_settings = (function() {
 
 var settings = {
-	screensaver_timeout: 1
+	screensaverTimeout: 5
 }
 let timer = null;
 //current localbrowser user agent is 'Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15'
 let screensaverEnabled = navigator.userAgent.indexOf('(X11; Linux armv7l)') >= 0 && navigator.userAgent.indexOf(' (KHTML, like Gecko) Version/13.0 Safari') >= 0;
+//var screensaverEnabled = 1; // Screensaver on any platform (for testing purposes).
 
 var externalDisplayOn = false;
 $(document).on("general", function(event, data) {
@@ -31,23 +38,20 @@ $(document).on("ui-settings", function(event, data) {
 		}
 		beo.notify(false, "ui-settings");
 	}
+
 	if (data.header == "setScreensaverTimeout") {
-		settings.screensaver_timeout = data.content.screensaver_timeout;
+		settings.screensaverTimeout = data.content.screensaverTimeout;
 		$(".screensaver-timeout-selector .menu-item").removeClass("checked");
-		$("#screensaver-timeout-"+data.content.screensaver_timeout).addClass("checked");
+		$("#screensaver-timeout-"+data.content.screensaverTimeout).addClass("checked");
+		if (settings.screensaverTimeout == "never") {
+			$("#screensaver-mode .menu-value").text("Never");
+		} else {
+			$("#screensaver-mode .menu-value").text("After "+settings.screensaverTimeout+" minute"+((settings.screensaverTimeout > 1) ? "s" : ""));
+		}
 		resetScreensaverTimeout();
 	}
 });
 
-$(document).on("sources", function(event, data) {
-	if (data.header == "sources") {
-		//show the now-playing component within the screensaver overlay for 30s on song changes
-		$("#screensaver .mini-now-playing").css("opacity", "1");
-		setTimeout(function() {
-			$("#screensaver .mini-now-playing").css("opacity", "0");
-		}, 30000);
-	}
-});
 
 if (screensaverEnabled){
 	//all click events will reset the screensaver timer (but slider drag etc will not)
@@ -71,50 +75,50 @@ function toggleDisplay() {
 	}
 }
 
-return {
-	toggleDisplay: toggleDisplay,
-	setScreensaverTimeout: setScreensaverTimeout
-}
 
 function timeoutValue(){
-	return settings.screensaver_timeout * 60 * 1000; //convert minutes to milliseconds
+	return settings.screensaverTimeout * 60 * 1000; //convert minutes to milliseconds
 }
 function resetScreensaverTimeout(){
 	if (screensaverEnabled) {
 		hideScreenSaver();
 		clearTimeout(timer);
-		if (settings.screensaver_timeout!=="never"){
+		if (settings.screensaverTimeout!=="never"){
 			timer = setTimeout(showScreenSaver, timeoutValue());
 		}
 	}
 }
 var dotsTimer;
 function showScreenSaver(){
-	document.getElementById("screensaver").style.width = "100%";
+	document.getElementById("screensaver").classList.remove("hidden");
+	setTimeout(function() {
+		// Allow time for the element to become "block" before fading it in.
+		document.getElementById("screensaver").classList.add("visible");
+	}, 100);
 	redrawDots();
 }
 function hideScreenSaver(){
 	clearTimeout(dotsTimer);
-	document.getElementById("screensaver").style.width = "0%";
+	document.getElementById("screensaver").classList.remove("visible");
+	setTimeout(function() {
+		// Allow time for the element to fade out before setting it to "display: none".
+		document.getElementById("screensaver").classList.add("hidden");
+		$("#screensaver .background").empty();
+	}, 1000);
 }
 function redrawDots(){
-	generateDotBackground();
+	//generateDotBackground();
+	cycleDots();
 	clearTimeout(dotsTimer);
-	dotsTimer = setTimeout(redrawDots, 15000);//redraw dots every 15s
+	dotsTimer = setTimeout(redrawDots, 2000); // Add a new dot every 2 seconds.
 }
 
 function setScreensaverTimeout(timeout) {
 	beo.ask();
-	beo.sendToProduct("ui-settings", {header: "setScreensaverTimeout", content: {settings:{screensaver_timeout: timeout}}});
+	beo.sendToProduct("ui-settings", "setScreensaverTimeout", {settings:{screensaverTimeout: timeout}});
 }
 
-})();
-
-var screensaverNowPlaying = new Vue({
-	el: "#screensaver",
-	data: nowPlayingData
-});
-
+var colours = ["red", "yellow", "green", "blue"];
 function generateDotBackground() {
 	// Regenerate a random background pattern.
 	$("#screensaver .background").css("opacity", "0");
@@ -122,7 +126,6 @@ function generateDotBackground() {
 	//after the existing dots have faded, generate new ones
 	setTimeout(function(){
 		$("#screensaver .background").empty();
-		colours = ["red", "yellow", "green", "blue"];
 		for (var i = 0; i < 20; i++) {
 			randomColour = colours[Math.round(Math.random()*3)];
 			//hRandom = 16*(Math.round(Math.random()*5)+1);
@@ -134,3 +137,26 @@ function generateDotBackground() {
 	}, 1000); //coordinate this timeout with the opacity transition duration css
 
 }
+
+function cycleDots() {
+	// Same as above, but gradually recycles the dots.
+	var dots = $("#screensaver .background").children();
+	if (dots.length > 15) {
+		// Remove the oldest dot.
+		$(dots[0]).remove();
+	}
+	randomColour = colours[Math.round(Math.random()*3)];
+	//hRandom = 16*(Math.round(Math.random()*5)+1);
+	hRandom = Math.round(Math.random()*80)+10;
+	vRandom = Math.round(Math.random()*80)+10;
+	$("#screensaver .background").append('<img class="create-dot" src="'+$("#screensaver").attr("data-asset-path")+'/create-dot-animate-'+randomColour+'.svg" style="top: '+vRandom+'%; left: '+hRandom+'%;">');
+	// CSS animation takes care of fading dots in and out, no JS required.
+}
+
+return {
+	toggleDisplay: toggleDisplay,
+	setScreensaverTimeout: setScreensaverTimeout,
+	startScreenSaver: showScreenSaver
+}
+
+})();

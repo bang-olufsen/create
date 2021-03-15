@@ -1,0 +1,79 @@
+
+/* @override 
+	http://beocreate-core.local/extensions/ui-settings/ui-settings.css */
+
+.overlay {
+    /* Height & width depends on how you want to reveal the overlay (see JS below) */
+    height: 100%;
+    width: 100%;
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top */
+    left: 0;
+    top: 0;
+    background-color: rgb(0,0,0); /* Black fallback color */
+    background-color: rgba(0,0,0, 1.0); /* Black w/opacity */
+    overflow: hidden; /* Disable horizontal scroll */
+    transition: opacity 1s ease;
+    opacity: 0;
+    pointer-events: none;
+	color: white;
+}
+
+.overlay.visible {
+	opacity: 1;
+	pointer-events: all;
+}
+
+@keyframes screensaver-dot {
+  	0%   { opacity: 0; }
+  	5%   { opacity: 1; }
+	95% { opacity: 1; }
+  	100% { opacity: 0; }
+}
+
+#screensaver .mini-now-playing {
+    transition: 0.5s linear 0s;
+}
+
+#screensaver .background {
+    transition: 1s linear 0s;
+    opacity: 1;
+}
+
+#screensaver .create-dot {
+    position: absolute;
+    margin-left: -50px;
+    width: 100px;
+    height: 100px;
+    margin-top: -50px;
+    animation: screensaver-dot 30s linear 0s forwards;
+}
+
+#screensaver-now-playing {
+	opacity: 0;
+	transition: opacity 1s ease;
+	margin: 5%;
+	width: 320px;
+}
+
+#screensaver-now-playing.visible {
+	opacity: 1;
+}
+
+#screensaver-now-playing h1 span,
+#screensaver-now-playing h2 span {
+	transition: opacity 0.5s ease;
+}
+
+#screensaver-now-playing h1 {
+	font-size: 1.2em;
+	margin-bottom: 0;
+}
+
+#screensaver-now-playing h2 {
+	font-size: 0.9em;
+	margin-top: 0.5em;
+	text-transform: none;
+	letter-spacing: 0;
+	color: rgba(255, 255, 255, 0.5);
+}

@@ -65,6 +65,13 @@
 					<div class="menu-label">Use Connected Display</div>
 					<div class="menu-toggle"></div>
 				</div>
+
+
+				<div class="menu-item" id="screensaver-mode" onclick="beo.ask('screensaver-settings-prompt');">
+					<div class="menu-label">Screensaver</div>
+					<div class="menu-value"></div>
+				</div>
+
 				<p class="experiment">Show the user interface on a display connected to the Raspberry Pi (experimental feature).</p>
 			</div>
 			
@@ -80,6 +87,55 @@
 			<div class="button pill grey default cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
+
+	<div class="ask-menu" id="screensaver-settings-prompt">
+		<h2>Screensaver</h2>
+		<p>Select how long before the screensaver starts.</p>
+
+		<div class="screensaver-timeout-selector">
+			<div class="menu-item checkmark left icon" onclick="ui_settings.setScreensaverTimeout(1);" id="screensaver-timeout-1">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">1 Minute</div>
+			</div>
+			<div class="menu-item checkmark left icon" onclick="ui_settings.setScreensaverTimeout(5);" id="screensaver-timeout-5">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">5 Minutes</div>
+			</div>
+			<div class="menu-item checkmark left icon" onclick="ui_settings.setScreensaverTimeout(10);" id="screensaver-timeout-10">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">10 Minutes</div>
+			</div>
+			<div class="menu-item checkmark left icon" onclick="ui_settings.setScreensaverTimeout(15);" id="screensaver-timeout-15">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">15 Minutes</div>
+			</div>
+
+			<hr>
+			
+			<div class="menu-item checkmark left icon" onclick="ui_settings.setScreensaverTimeout('never');" id="screensaver-timeout-never">
+				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
+				<div class="menu-label">Never</div>
+			</div>
+		</div>
+		<div class="ask-buttons">
+			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+		</div>
+	</div>
 </div>
 
+<div id="screensaver" class="overlay hidden" data-asset-path="extensions/setup" data-stylesheet="screensaver.css">
+	<div class="background"></div>
+	<div id="screensaver-now-playing" class="now-playing-titles" v-bind:class="{visible: notifyLong > 0}">
+		<h1>
+			<transition name="now-playing-fade" mode="out-in">
+				<span class="title" :key="metadata.title" v-if="metadata.title">{{ metadata.title }}&nbsp;</span>
+			</transition>
+		</h1>
+		<h2>
+			<transition name="now-playing-fade" mode="out-in">
+				<span class="artist" :key="metadata.artist" v-if="metadata.title && metadata.artist">{{ metadata.artist }}&nbsp;</span>
+			</transition>
+		</h2>
+	</div>
+</div>
 <script type="text/javascript" charset="utf-8" src="€/ui-settings-client.js"></script>

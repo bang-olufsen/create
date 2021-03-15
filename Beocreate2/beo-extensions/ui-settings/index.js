@@ -26,6 +26,12 @@ var version = require("./package.json").version;
 var canUseExternalDisplay = false;
 var externalDisplayOn = false;
 
+var defaultSettings = {
+	screensaverTimeout: 5
+}
+var settings = JSON.parse(JSON.stringify(defaultSettings));
+
+
 beo.bus.on('general', function(event) {
 	
 	if (event.header == "startup") {
@@ -39,6 +45,7 @@ beo.bus.on('general', function(event) {
 			if (canUseExternalDisplay) {
 				getExternalDisplayStatus(function() {
 					beo.sendToUI("ui-settings", "externalDisplay", {enabled: externalDisplayOn, canUseExternalDisplay: true});
+					beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
 				});
 			} else {
 				beo.sendToUI("ui-settings", "externalDisplay", {enabled: false, canUseExternalDisplay: false});
@@ -48,13 +55,32 @@ beo.bus.on('general', function(event) {
 });
 
 beo.bus.on("ui-settings", function(event) {
-
+	if (event.header == "settings") {
+		if (event.content.settings) {
+			settings = Object.assign(settings, event.content.settings);
+			beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+		}
+	}
 	if (event.header == "externalDisplayOn") {
 		setExternalDisplayStatus(event.content.enabled, function() {
 			beo.sendToUI("ui-settings", "externalDisplay", {enabled: externalDisplayOn, canUseExternalDisplay: true});
 		});
 	}
+
+	if (event.header == "setScreensaverTimeout") {
+		settings.screensaverTimeout = event.content.settings.screensaverTimeout;
+		beo.bus.emit("settings", {header: "saveSettings", content: {extension: "ui-settings", settings: settings}});
+		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+		if (debug) console.log("Screensaver timeout set to " + settings.screensaverTimeout + ((settings.screensaverTimeout > 1) ? " minute(s)." : "."));
+
+	}
+	if (event.header == "getScreensaverTimeout") {
+		beo.sendToUI("ui-settings", "setScreensaverTimeout", settings);
+	}
+
+	hideScreenSaver();
 });
+
 
 
 function getExternalDisplayStatus(callback) {
@@ -94,7 +120,13 @@ function setExternalDisplayStatus(enabled, callback) {
 	}
 }
 
-	
+/**
+ * call this function to hide the screensaver
+ */
+function hideScreenSaver(){
+	beo.sendToUI("screensaver", {header: "deactivate", content: {}});
+}
+
 module.exports = {
 	version: version
 };

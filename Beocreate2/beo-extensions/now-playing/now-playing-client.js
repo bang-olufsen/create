@@ -496,7 +496,7 @@ function setPlaceholderArtwork() {
 		extensions[focusedSource].icon) {
 		nowPlayingController.placeholderPicture = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
 	} else {
-		if (document.body.classList.contains("hifiberry-os")) {
+		if (document.body.classList.contains("hifiberry")) {
 			nowPlayingController.placeholderPicture = extensions["now-playing"].assetPath+"/placeholder-hifiberry.svg";
 		} else {
 			nowPlayingController.placeholderPicture = extensions["now-playing"].assetPath+"/placeholder.svg";

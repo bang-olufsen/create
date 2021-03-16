@@ -394,27 +394,7 @@ function updateProductIdentities() {
 			}
 		}
 	}
-<<<<<<< Updated upstream
-	
-	
-	function updateProductIdentities() {
-		// Combines product identities from beo-product-identities and beo-sound-presets directories, from system and user locations.
-		linkedProductImages = [];
-		
-		if (fs.existsSync(systemSpeakerPresetDirectory)) {
-			presetFiles = fs.readdirSync(systemSpeakerPresetDirectory);
-			for (var i = 0; i < presetFiles.length; i++) {
-				try {
-					preset = JSON.parse(fs.readFileSync(systemSpeakerPresetDirectory+"/"+presetFiles[i], "utf8"));
-					if (preset["product-information"]) {
-						checkAndAddProductIdentity(preset["product-information"]);
-					} else {
-						if (debug == 2) console.log("No product identity data in speaker preset '"+presetFiles[i]+"'.");
-					}
-				} catch (error) {
-					console.error("Invalid JSON data for speaker preset '"+presetFiles[i]+"':", error);
-				}
-=======
+
 	if (fs.existsSync(productIdentityDirectory)) {
 		identityFiles = fs.readdirSync(productIdentityDirectory);
 		for (var i = 0; i < identityFiles.length; i++) {
@@ -422,7 +402,6 @@ function updateProductIdentities() {
 				checkAndAddProductIdentity(JSON.parse(fs.readFileSync(productIdentityDirectory+"/"+identityFiles[i], "utf8")), true, identityFiles[i]);
 			} catch (error) {
 				console.error("Invalid JSON data for product identity '"+identityFiles[i]+"':", error);
->>>>>>> Stashed changes
 			}
 		}
 	}
@@ -510,14 +489,6 @@ function deleteProductIdentity(identity, internal) {
 			delete productIdentities[identity];
 		}
 	}
-<<<<<<< Updated upstream
-	
-	function getProductIdentity(identity) {
-		if (productIdentities[identity]) {
-			return productIdentities[identity];
-		} else {
-			return null;
-=======
 }
 
 function getProductIdentity(identityID = settings.modelID, clean = false) {
@@ -534,7 +505,6 @@ function getProductIdentity(identityID = settings.modelID, clean = false) {
 			} else if (identityToSend.productImage[2]) {
 				identityToSend.productImage = identityToSend.productImage[2];
 			}
->>>>>>> Stashed changes
 		}
 		return identityToSend;
 	} else {

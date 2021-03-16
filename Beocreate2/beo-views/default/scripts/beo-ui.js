@@ -221,11 +221,6 @@ function prepareMenus() {
 	var unplacedExtensions = [];
 	for (e in sortedExtensions) {
 		var extensionName = sortedExtensions[e].name;
-		if (customisations && 
-			customisations.hiddenExtensions &&
-			customisations.hiddenExtensions.indexOf(extensionName) != -1) {
-			continue; // Skip adding this extension if it's hidden.
-		}
 		var extensionPlaced = false;
 		theExtension = document.querySelector(".menu-screen#"+extensionName);
 		var context = null;
@@ -269,7 +264,14 @@ function prepareMenus() {
 			if (theExtension.attributes["data-menu-class"]) {
 				menuOptions.classes.push(theExtension.attributes["data-menu-class"].value);
 			}
-			if (!theExtension.attributes["data-hidden"]) {
+			var hideExtension = false;
+			if (theExtension.attributes["data-hidden"]) hideExtension = true;
+			if (customisations && 
+				customisations.hiddenExtensions &&
+				customisations.hiddenExtensions.indexOf(navigation[n].name) != -1) {
+				hideExtension = true; // Skip adding this extension if it's hidden.
+			}
+			if (!hideExtension) {
 				if (context[1]) {
 					if ($(".menu-screen#"+context[0]+" .beo-dynamic-menu."+context[1])) {
 						$(".menu-screen#"+context[0]+" .beo-dynamic-menu."+context[1]).append(createMenuItem(menuOptions));
@@ -354,7 +356,14 @@ function prepareMenus() {
 				}
 				menuOptions.label = theExtension.attributes["data-menu-title"].value;
 				
-				if (!theExtension.attributes["data-hidden"]) {
+				hideExtension = false;
+				if (theExtension.attributes["data-hidden"]) hideExtension = true;
+				if (customisations && 
+					customisations.hiddenExtensions &&
+					customisations.hiddenExtensions.indexOf(navigation[n].name) != -1) {
+					hideExtension = true; // Skip adding this extension if it's hidden.
+				}
+				if (!hideExtension) {
 					
 					if (navDestination == 0) {
 						$("nav.full .nav-content").append(createMenuItem(menuOptions));
@@ -438,8 +447,6 @@ function prepareFavourites(navSetID) {
 	}
 	$(".nav-mode-name").text(setName);
 	
-	console.log(navSetID);
-	
 	var previousKind = null;
 	if (favourites[0].name && favourites[0].name != mainMenuExtension) {
 		favourites.unshift({kind: "extension", name: mainMenuExtension}, {kind: "separator"});
@@ -448,6 +455,11 @@ function prepareFavourites(navSetID) {
 	$("nav.bar .nav-content").append('<div class="nav-spacer begin"></div>');
 	for (f in favourites) {
 		if (favourites[f].kind == "extension") {
+			if (customisations && 
+				customisations.hiddenExtensions &&
+				customisations.hiddenExtensions.indexOf(favourites[f].name) != -1) {
+				continue; // Skip adding this extension if it's hidden.
+			}
 			var theExtension = document.querySelector(".menu-screen#"+favourites[f].name);
 			var fav = favourites[f].name;
 			if (theExtension && extensions[fav]) {

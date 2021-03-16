@@ -167,23 +167,6 @@ beoBus.on('general', function(event) {
 	}
 });
 
-<<<<<<< Updated upstream
-beoBus.on('dsp', function(event) {
-	if (event.header == "amplifierUnmuted") {
-		if (!startupSoundPlayed && systemConfiguration.cardType == "Beocreate 4-Channel Amplifier") {
-			if (!fs.existsSync("/etc/quiet_start")) {
-				setTimeout(function() {
-					playProductSound("startup");
-				}, 500);
-			} else {
-				fs.writeFileSync("/etc/quiet_start", "Used.");
-			}
-		}
-	}
-});
-
-=======
->>>>>>> Stashed changes
 
 // GET AND STORE SETTINGS
 
@@ -895,9 +878,10 @@ beoCom.on("open", function(connectionID, protocol) {
 
 beoCom.on("data", function(data, connection) {
 	// When data is received from the client, it is restructured as a targeted BeoBus event (so that the backend of an extension can receive data from its front end).
-	eventType = undefined;
-	eventHeader = undefined;
-	eventContent = undefined;
+	var eventType = undefined;
+	var eventHeader = undefined;
+	var eventContent = undefined;
+	var suppressError = false;
 	
 	//console.log(data);
 	
@@ -916,6 +900,7 @@ beoCom.on("data", function(data, connection) {
 			}
 			if (data.header == "reload") {
 				content = (data.content) ? data.content : null;
+				suppressError = true;
 				sendToUI("general", "reload", data.content);
 			}
 			break;
@@ -936,7 +921,7 @@ beoCom.on("data", function(data, connection) {
 	} else if (eventType != undefined && eventHeader != undefined) {
 		beoBus.emit(eventType, {header: eventHeader});
 	} else {
-		if (debugMode) console.log("Received insufficient data for processing.");
+		if (debugMode && !suppressError) console.error("Received insufficient data for processing:", data);
 	}
 });
 

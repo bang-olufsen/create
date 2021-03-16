@@ -268,7 +268,7 @@ function prepareMenus() {
 			if (theExtension.attributes["data-hidden"]) hideExtension = true;
 			if (customisations && 
 				customisations.hiddenExtensions &&
-				customisations.hiddenExtensions.indexOf(navigation[n].name) != -1) {
+				customisations.hiddenExtensions.indexOf(extensionName) != -1) {
 				hideExtension = true; // Skip adding this extension if it's hidden.
 			}
 			if (!hideExtension) {

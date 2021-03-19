@@ -1128,10 +1128,12 @@ async function listStorage() {
 
 async function removeStorage(id) {
 	storageList = await listStorage();
-	errors = 0;
+	var errors = 0;
+	var storageFound = false;
 	for (s in storageList) {
 		if (storageList[s].id == id) {
 			// The correct storage was found.
+			storageFound = true;
 			if (storageList[s].mount) {
 				try {
 					await execPromise("umount "+storageList[s].mount);
@@ -1166,17 +1168,21 @@ async function removeStorage(id) {
 			break;
 		}
 	}
-	if (errors == 0 && debug) console.log("Storage device '"+storageList[s].id+"' was ejected.");
-	storage = await listStorage();
-	beo.sendToUI("mpd", "mountedStorage", {storage: storage, unmountErrors: errors});
 	try {
-		if (debug) console.log("Triggering MPD database update.");
-		spawn("/opt/hifiberry/bin/update-mpd-db", {
-			stdio: "ignore",
-			detached: true
-		}).unref();
+		if (errors == 0 && debug) console.log("Storage device '"+id+"' was ejected.");
+		storage = await listStorage();
+		beo.sendToUI("mpd", "mountedStorage", {storage: storage, unmountErrors: errors});
+		try {
+			if (debug) console.log("Triggering MPD database update.");
+			spawn("/opt/hifiberry/bin/update-mpd-db", {
+				stdio: "ignore",
+				detached: true
+			}).unref();
+		} catch (error) {
+			console.error("Error triggering MPD database update:", error);
+		}
 	} catch (error) {
-		console.error("Error triggering MPD database update:", error);
+		console.error("Error in finalising ejection of the storage device:", error);
 	}
 }
 

@@ -157,9 +157,13 @@ function processReceivedData(data) {
 	}
 }
 
+var encoder = new TextEncoder();
+
 function send(data) {
 	if (productConnection && connected) {
-		productConnection.send(JSON.stringify(data));
+		var serialisedData = JSON.stringify(data);
+		if (debug) console.log(serialisedData);
+		productConnection.send(encoder.encode(serialisedData));
 	} else if (simulation) {
 		console.log("Simulated send of data:"+data);
 	} else {

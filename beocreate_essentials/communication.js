@@ -40,6 +40,8 @@ var socket;
 var wsPort = 0;
 var connectionID = 0;
 
+const decoder = new TextDecoder();
+
 function BeoCom() {
 	if (!(this instanceof BeoCom)) return new BeoCom();
 	eventEmitter.call(this);
@@ -110,11 +112,27 @@ BeoCom.prototype.startSocket = function(options, callback) {
 			connection.on('message', function(message) {
 				// Incoming data.
 				// data should always be in serialised JSON format.
-				try {
-					jsonObject = JSON.parse(message.utf8Data);
-					self.emit('data', jsonObject, findID(connection));
-				} catch (error) {
-					console.error("Error in processing received data:", error);
+				if (message.type == "utf8") {
+					try {
+						jsonObject = JSON.parse(message.utf8Data);
+						self.emit('data', jsonObject, findID(connection));
+					} catch (error) {
+						// Try cleaning up garbage from the message and run it through parser again.
+						try {
+							var utf8Data = message.utf8Data.slice(0, message.utf8Data.lastIndexOf("}")+1);
+							jsonObject = JSON.parse(utf8Data);
+							self.emit('data', jsonObject, findID(connection));
+						} catch (error2) {
+							console.error("Error in processing received data:", error2, message);
+						}
+					}
+				} else if (message.type == "binary") {
+					try {
+						jsonObject = JSON.parse(decoder.decode(message.binaryData));
+						self.emit('data', jsonObject, findID(connection));
+					} catch (error) {
+						console.error("Error in processing received data:", error, message);
+					}
 				}
 				
 			});

@@ -84,7 +84,7 @@ Action functions can take three arguments:
 
 On the client side, extensions should return an *interactDictionary* object, containing the client-side listing of the corresponding triggers and actions. This includes their names, custom icons, setup and preview functions. 
 
-In addition, to allow Interact to automatically discover your interactDictionary, make sure to define the *data-namespace* attribute in the *.menu-screen* element of your extension. Client-side code for your extension should be contained within a self-invoked function whose name matches this attribute value. You can see this in action in any of the Beocreate 2 system extensions.
+In addition, to allow Interact to automatically discover your interactDictionary, make sure to define the *data-namespace* attribute in the *.menu-screen* element of your extension. Client-side code for your extension should be contained within a self-invoked function (so that variables don't "leak" out of it) whose name matches this attribute value. You can see this in action in any of the Beocreate 2 system extensions.
 
 The following example shows the Sound extension's *interactDictionary* object, exposing the triggers and actions to the user interface:
 

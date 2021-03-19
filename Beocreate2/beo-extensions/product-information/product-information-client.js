@@ -184,7 +184,7 @@ function toggleSystemIDFormat(updateOnly) {
 	if (showFullSystemID) {
 		systemIDString = systemID;
 	} else {
-		systemIDString = systemID.replace(/^0+/, '');
+		systemIDString = systemID.substr(1).replace(/^0+/, '');
 	}
 	$(".serial-number").text(systemIDString);
 }
@@ -210,9 +210,9 @@ function cycleSystemInformation(updateOnly) {
 			break;
 		case 2:
 			if (systemType == "beocreate" || systemType == "hifiberry") {
-				infoText = "Raspberry Pi ID "+systemID.replace(/^0+/, '');
+				infoText = "Raspberry Pi ID "+systemID.substr(1).replace(/^0+/, '');
 			} else {
-				infoText = "Processor ID "+systemID.replace(/^0+/, '');
+				infoText = "Processor ID "+systemID.substr(1).replace(/^0+/, '');
 			}
 			break;
 		case 3:

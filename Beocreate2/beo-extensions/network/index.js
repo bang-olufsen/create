@@ -462,7 +462,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 				info = extensions["product-information"].getProductInformation();
 				if (info.systemID) {
 					// Hotspot name contains the Raspberry Pi ID to allow multiple hotspots to coexist.
-					hotspotName = hotspotPrefix+" Setup "+info.systemID.replace(/^0+/, '');
+					hotspotName = hotspotPrefix+" Setup "+info.systemID.substr(1).replace(/^0+/, '');
 				}
 			}
 			if (!hotspotName) hotspotName = hotspotPrefix+" Setup";

@@ -430,7 +430,10 @@ expressServer.get("/:extension/download/:urlPath", function (req, res) {
 	}
 });
 
-
+// For captive portal wifi setup, redirect all other requests to the hardcoded local wlan0 IP. 
+expressServer.get("*", function(req,res){
+        res.redirect("http://10.0.0.1/");
+});
 
 function addDownloadRoute(extension, urlPath, filePath, permanent = false) {
 	if (extension && urlPath && filePath) {

@@ -1057,18 +1057,18 @@ section.faded-out .menu-screen {
 }
 
 .scroll-invitation {
-	position: absolute;
-	bottom: 2em;
 	text-align: center;
 	left: 0;
 	right: 0;
 	pointer-events: none;
+	margin-bottom: 22px;
+	opacity: 0.6;
 }
 
 .scroll-invitation:after {
 	content: "";
-	-webkit-mask-image: url(/common/symbols-black/chevron-down.svg);
-	mask-image: url(/common/symbols-black/chevron-down.svg);
+	-webkit-mask-image: url(/common/symbols-black/chevron-thin-small-down.svg);
+	mask-image: url(/common/symbols-black/chevron-thin-small-down.svg);
 	width: 22px;
 	height: 22px;
 	position: absolute;

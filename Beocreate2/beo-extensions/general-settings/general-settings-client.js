@@ -1,5 +1,24 @@
 var general_settings = (function() {
 
+$(document).on("general", function(event, data) {
+	if (data.header == "activatedExtension") {
+		if (data.content.extension == "general-settings") {
+			// Check if sections have content, hide those that do not.
+			if (document.querySelectorAll("#general-settings .beo-dynamic-menu.services > *").length > 0) {
+				document.getElementById("general-services-title").classList.remove("hidden");
+			} else {
+				document.getElementById("general-services-title").classList.add("hidden");
+			}
+			
+			if (document.querySelectorAll("#general-settings .beo-dynamic-menu.more > *").length > 0) {
+				document.getElementById("general-more-title").classList.remove("hidden");
+			} else {
+				document.getElementById("general-more-title").classList.add("hidden");
+			}
+		}
+	}
+	
+});
 
 
 function restartProduct() {

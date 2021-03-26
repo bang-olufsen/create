@@ -61,13 +61,17 @@ $(document).on("software-update", function(event, data) {
 					value: mostRecentVersion,
 					static: true
 				}
-				if ($("body").hasClass("hifiberry-os")) {
+				if (customisations && 
+					(customisations.brand || customisations.osName)) {
+					if (customisations.brand) menuOptions.label = customisations.brand;
+					if (customisations.osName) menuOptions.label = customisations.osName;
+				} else if ($("body").hasClass("hifiberry")) {
 					menuOptions.label = "HiFiBerryOS";
-					menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/hifiberry.svg"
 				} else {
 					menuOptions.label = "Beocreate 2";
-					menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/create.svg"
 				}
+				menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/"+extensions["product-information"].icon;
+				
 				$("#update-available-container").empty();
 				$("#update-available-container").append(beo.createMenuItem(menuOptions));
 				

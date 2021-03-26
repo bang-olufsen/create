@@ -408,12 +408,19 @@ function prepareMenus() {
 
 var navigationMode = null;
 var favourites = [];
-function prepareFavourites(navSetID) {
+function prepareFavourites(navSetID = null) {
 	var selectableNavSets = 0;
-	var navSetID = null;
 	if (!navSetID) {
 		if (localStorage.beocreateSelectedNavigationSet) {
 			navSetID = localStorage.beocreateSelectedNavigationSet;
+			var setFound = false;
+			for (var i = 0; i < navigationSets.length; i++) {
+				if (navigationSets[i].id == navSetID) {
+					setFound = true;
+					break;
+				}
+			}
+			if (!setFound) navSetID = "full";
 		} else {
 			for (var i = 0; i < navigationSets.length; i++) {
 				if (!navigationSets[i].hideFromShortcuts) {
@@ -424,27 +431,26 @@ function prepareFavourites(navSetID) {
 		}
 	}
 	
-	if (!navSetID) navSetID = "full";
 	var setName = "";
-	if (navSetID == navigationSets[0].id) {
-		favourites = navigation;
-		if (!navigationSets[0].name) {
-			setName = "Main Menu";
-		} else {
-			setName = navigationSets[0].name;
-		}
-	} else {
-		for (s in navigationSets) {
-			if (navigationSets[s].id == navSetID) {
+	for (s in navigationSets) {
+		if (navigationSets[s].id == navSetID) {
+			if (s == 0) {
+				favourites = navigation;
+			} else {
 				favourites = navigationSets[s].items;
-				try {
-					setName = navigationSets[s].name;
-				} catch (error) {
+			}
+			try {
+				setName = navigationSets[s].name;
+			} catch (error) {
+				if (s == 0) {
+					setName = "Main Menu";
+				} else {
 					setName = "Shortcuts";
 				}
 			}
 		}
 	}
+	
 	$(".nav-mode-name").text(setName);
 	
 	var previousKind = null;

@@ -109,13 +109,11 @@ $(document).on("setup", function(event, data) {
 		if (data.content.now) {
 			doingPostSetup = true;
 			beo.notify({title: "Setting up product...", message: "Please wait, this may take some time", icon: "attention", timeout: false});
-			noConnectionNotifications = true;
-			maxConnectionAttempts = 10;
+			beoCom.setConnectionOptions({maxAttempts: 10, notifications: false});
 		} else {
 			if (doingPostSetup) {
 				beo.notify();
-				noConnectionNotifications = false;
-				maxConnectionAttempts = 5;
+				beoCom.setConnectionOptions({maxAttempts: false, notifications: true});
 			}
 		}
 	}

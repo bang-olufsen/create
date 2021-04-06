@@ -61,9 +61,8 @@ $(document).on("software-update", function(event, data) {
 					value: mostRecentVersion,
 					static: true
 				}
-				if (customisations && 
-					(customisations.brand || customisations.osName)) {
-					if (customisations.brand) menuOptions.label = customisations.brand;
+				if (customisations && customisations.brand) {
+					menuOptions.label = "System Software";
 					if (customisations.osName) menuOptions.label = customisations.osName;
 				} else if ($("body").hasClass("hifiberry")) {
 					menuOptions.label = "HiFiBerryOS";
@@ -83,7 +82,6 @@ $(document).on("software-update", function(event, data) {
 			$("#earlier-updates-container").empty();
 			for (track in versions) {
 				if (track != mostRecentTrack) {
-					//if (versions[track].version) {
 					if (versions[track].version && parseInt(versions[track].version) != mostRecentVersion) {
 						$("#earlier-updates").removeClass("hidden");
 						menuOptions = {
@@ -91,10 +89,13 @@ $(document).on("software-update", function(event, data) {
 							label: getTrackName(track),
 							onclick: "software_update.showEarlierUpdate('"+track+"');"
 						}
-						if ($("body").hasClass("hifiberry-os")) {
-							menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/hifiberry.svg"
+						if (customisations && customisations.brand) {
+							menuOptions.label = "System Software";
+							if (customisations.osName) menuOptions.label = customisations.osName;
+						} else if ($("body").hasClass("hifiberry")) {
+							menuOptions.label = "HiFiBerryOS";
 						} else {
-							menuOptions.icon = extensions["product-information"].assetPath+"/symbols-black/create.svg"
+							menuOptions.label = "Beocreate 2";
 						}
 						
 						$("#earlier-updates-container").append(beo.createMenuItem(menuOptions));
@@ -134,9 +135,11 @@ $(document).on("software-update", function(event, data) {
 					updateMode = "Pre-release";
 					break;
 				case false:
+					$("#auto-update-toggle").removeClass("on");
 					updateMode = "Off";
 					break;
 			}
+			if (data.content.mode != false) $("#auto-update-toggle").addClass("on");
 			if (updateMode) {
 				$(".auto-update-mode").text(updateMode);
 			}
@@ -144,6 +147,13 @@ $(document).on("software-update", function(event, data) {
 				$("#show-experimental-updates").removeClass("hidden");
 			} else {
 				$("#show-experimental-updates").addClass("hidden");
+			}
+			if (data.content.tracks && data.content.tracks.length > 1) {
+				$("#auto-update-menu-item").removeClass("hidden");
+				$("#auto-update-toggle").addClass("hidden");
+			} else {
+				$("#auto-update-menu-item").addClass("hidden");
+				$("#auto-update-toggle").removeClass("hidden");
 			}
 		}
 	}
@@ -213,9 +223,7 @@ $(document).on("software-update", function(event, data) {
 				notifyOptions.title = "Product updated";
 				notifyOptions.message = "The product has been updated and it will now restart to finish the process. This may take some time, please wait.";
 				beo.sendToProductView({header: "autoReconnect", content: {status: "updateComplete", systemID: product_information.systemID(), systemName: product_information.systemName()}});
-				noConnectionNotifications = true;
-				maxConnectionAttempts = 60;
-				reloadOnReconnect = true;
+				beoCom.setConnectionOptions({maxAttempts: 60, notifications: false, reloadOnReconnect: true});
 				break;
 			case "doneSimulation":
 				notifyOptions.title = "Product updated";
@@ -255,15 +263,11 @@ $(document).on("software-update", function(event, data) {
 	
 	if (data.header == "restoringPreviousVersion") {
 		if (data.content.stage == "start") {
-			noConnectionNotifications = true;
-			maxConnectionAttempts = 30;
-			reloadOnReconnect = true;
+			beoCom.setConnectionOptions({maxAttempts: 60, notifications: false, reloadOnReconnect: true});
 			beo.notify({title: "Restoring previous version...", message: "The product will restart with the previous software version and settings. If the product name or network settings have changed, you may need to reconnect to the product manually.", timeout: false, icon: "attention"}, "software-update");
 		}
 		if (data.content.stage == "fail") {
-			noConnectionNotifications = false;
-			maxConnectionAttempts = 5;
-			reloadOnReconnect = false;
+			beoCom.setConnectionOptions({maxAttempts: false, notifications: true, reloadOnReconnect: false});
 			notifyOptions = {title: "Restore unsuccesful", timeout: false, buttonTitle: "Dismiss", buttonAction: "close"};
 			if (data.content.reason == "notFound") notifyOptions.message = "Previous version was not found.";
 			if (data.content.reason == "unknownPartition") notifyOptions.message = "Unknown backup partition.";
@@ -340,6 +344,7 @@ function showEarlierUpdate(track) {
 
 
 function install(track = mostRecentTrack) {
+	beo.notify({title: "Updating product...", icon: "attention"});
 	beo.sendToProduct("software-update", "install", {track: mostRecentTrack});
 }
 

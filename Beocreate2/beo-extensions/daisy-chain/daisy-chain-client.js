@@ -154,7 +154,7 @@ function showStep(step = null) {
 			buttonText = "Raspberry Pi Moved";
 			beo.sendToProductView({header: "autoReconnect", content: {status: "daisyChainShutdown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 			beo.notify({title: "Shutting down product…", message: "Wait until the shutdown is complete before unplugging.", icon: "attention", timeout: 20, id: "daisyChain"});
-			noConnectionNotifications = true;
+			beoCom.setConnectionOptions({notifications: false});
 			showScreen = "daisy-chain-move-pi";
 			break;
 		case 3:

@@ -235,8 +235,7 @@ $(document).on("dsp-programs", function(event, data) {
 	
 	if (data.header == "configuringSystem") {
 		beo.notify({title: "Setting up...", message: "Please wait...", icon: "attention", timeout: false});
-		noConnectionNotifications = true;
-		maxConnectionAttempts = 10;
+		beoCom.setConnectionOptions({maxAttempts: 10, notifications: false});
 	}
 	
 	if (data.header == "systemConfigured") {

@@ -830,14 +830,17 @@ function loadAppearance(appearance) {
 		if (customisations && 
 			customisations.systemClass) {
 			var systemType = customisations.systemClass; // Use custom body class.
+			var pageTitle = customisations.brand;
 		} else if (systemConfiguration.cardType && 
 			systemConfiguration.cardType.indexOf("Beocreate") != -1) {
 			var systemType = "beocreate";
+			var pageTitle = "Beocreate";
 		} else {
 			var systemType = "hifiberry";
+			var pageTitle = "HiFiBerry";
 		}
 		bodyClassString = '<body class="'+systemType+' ';
-		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title>", '<title>'+pageTitle).replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
 		
 		return completeUI;
 	} else {

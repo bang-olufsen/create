@@ -1271,7 +1271,7 @@ function createMenuItem(options) {
 	}
 	menuItem += '"';
 	if (options.translation && options.translation.label) {
-		menuItem += ' data-translation="'+options.translation.label+'"'
+		menuItem += ' data-localisation="'+options.translation.label+'"'
 	}
 	menuItem += '>'+options.label+'</div>\n';
 	
@@ -1290,7 +1290,7 @@ function createMenuItem(options) {
 		if (options.valueAsBadge) menuItem += ' badge';
 		menuItem += '"';
 		if (options.translation && options.translation.value) {
-			menuItem += ' data-translation="'+options.translation.value+'"'
+			menuItem += ' data-localisation="'+options.translation.value+'"'
 		}
 		menuItem += '>'+options.value+'</div>\n';
 	}
@@ -1626,9 +1626,9 @@ function localiseExtension(theExtension, extensionID) {
 	// Translate this screen or title.
 	theExtension.setAttribute("data-menu-title", localisedString(theExtension.getAttribute("data-menu-title"), "menuTitle", extensionID));
 	
-	var elements = theExtension.querySelectorAll("*[data-translation]");
+	var elements = theExtension.querySelectorAll("*[data-localisation]");
 	for (var element of elements) {
-		element.innerText = localisedString(element.innerText, element.getAttribute("data-translation"), extensionID);
+		element.innerText = localisedString(element.innerText, element.getAttribute("data-localisation"), extensionID);
 	}
 }
 

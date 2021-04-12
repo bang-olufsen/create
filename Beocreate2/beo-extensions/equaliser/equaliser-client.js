@@ -1548,36 +1548,36 @@ function generateSettingsPreview(settings) {
 	
 	
 	if (nonFlatChannels.length == 4) {
-		previewString += beo.translatedString("Filters for all channels. ", "allActiveFilters", "equaliser");
+		previewString += beo.localisedString("Filters for all channels. ", "allActiveFilters", "equaliser");
 	} else if (nonFlatChannels.length > 1) {
-		previewString += beo.translatedStringWithFormat("Filters for channels %@. ", beo.commaAndList(nonFlatChannels, "and", "and", "equaliser"), "activeFiltersPlural", "equaliser");
+		previewString += beo.localisedStringWithFormat("Filters for channels %@. ", beo.commaAndList(nonFlatChannels, "and", "and", "equaliser"), "activeFiltersPlural", "equaliser");
 	} else if (nonFlatChannels.length == 1) {
-		previewString += beo.translatedStringWithFormat("Filters for channel %@. ", nonFlatChannels[0], "activeFiltersSingular", "equaliser");
+		previewString += beo.localisedStringWithFormat("Filters for channel %@. ", nonFlatChannels[0], "activeFiltersSingular", "equaliser");
 	}
 	
 	if (flatChannels.length == 4) {
-		previewString += beo.translatedString("All channels are flat. ", "allChannelsFlat", "equaliser");
+		previewString += beo.localisedString("All channels are flat. ", "allChannelsFlat", "equaliser");
 	} else if (flatChannels.length > 1) {
-		previewString += beo.translatedStringWithFormat("Channels %@ are flat. ", beo.commaAndList(flatChannels, "and", "and", "equaliser"), "noActiveFiltersPlural", "equaliser");
+		previewString += beo.localisedStringWithFormat("Channels %@ are flat. ", beo.commaAndList(flatChannels, "and", "and", "equaliser"), "noActiveFiltersPlural", "equaliser");
 	} else if (flatChannels.length == 1) {
-		previewString += beo.translatedStringWithFormat("Channel %@ is flat. ", flatChannels[0], "noActiveFiltersSingular", "equaliser");
+		previewString += beo.localisedStringWithFormat("Channel %@ is flat. ", flatChannels[0], "noActiveFiltersSingular", "equaliser");
 	}
 	
 	if (eqNotSupported.length == 4) {
-		compatibilityNote += beo.translatedString("Adjusting equaliser filters is not supported. ", "eqNotSupportedAll", "equaliser");
+		compatibilityNote += beo.localisedString("Adjusting equaliser filters is not supported. ", "eqNotSupportedAll", "equaliser");
 	} else if (eqNotSupported.length > 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channels %@ do not support adjusting equaliser filters. ", beo.commaAndList(eqNotSupported, "and", "and", "equaliser"), "eqNotSupportedPlural", "equaliser");
+		compatibilityNote += beo.localisedStringWithFormat("Channels %@ do not support adjusting equaliser filters. ", beo.commaAndList(eqNotSupported, "and", "and", "equaliser"), "eqNotSupportedPlural", "equaliser");
 	} else if (eqNotSupported.length == 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channel %@ does not support adjusting equaliser filters. ", eqNotSupported[0], "eqNotSupportedSingular", "equaliser");
+		compatibilityNote += beo.localisedStringWithFormat("Channel %@ does not support adjusting equaliser filters. ", eqNotSupported[0], "eqNotSupportedSingular", "equaliser");
 	}
 	
 	if (tooManyFilters.length > 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channels %@ have too many filters. ", beo.commaAndList(tooManyFilters, "and", "and", "equaliser"), "tooManyFiltersPlural", "equaliser");
+		compatibilityNote += beo.localisedStringWithFormat("Channels %@ have too many filters. ", beo.commaAndList(tooManyFilters, "and", "and", "equaliser"), "tooManyFiltersPlural", "equaliser");
 	} else if (tooManyFilters.length == 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channel %@ has too many filters. ", tooManyFilters[0], "tooManyFiltersSingular", "equaliser");
+		compatibilityNote += beo.localisedStringWithFormat("Channel %@ has too many filters. ", tooManyFilters[0], "tooManyFiltersSingular", "equaliser");
 	}
 	
-	return [beo.translatedString("Speaker Equaliser", "equaliserTitle", "equaliser"), '<p>'+previewString+'</p>', compatibilityNote];
+	return [beo.localisedString("Speaker Equaliser", "equaliserTitle", "equaliser"), '<p>'+previewString+'</p>', compatibilityNote];
 }
 
 

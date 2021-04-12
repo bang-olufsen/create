@@ -705,7 +705,8 @@ function shouldLoadExtension(mode, extensionName, userExtension, menuName = null
 				}
 			}
 		}
-		if (fs.existsSync(systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/'+menuName)) {
+		if (customisations && 
+			fs.existsSync(systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/'+menuName)) {
 			// Override extension markup from customisation.
 			menuPath = systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/'+menuName;
 		}
@@ -756,9 +757,10 @@ function loadAppearance(appearance) {
 		}
 	}
 	
-	menus = [];
-	scripts = [];
-	stylesheets = [];
+	var menus = [];
+	var scripts = [];
+	var stylesheets = [];
+	var strings = {};
 	
 	if (Object.keys(masterList).length > 0) {
 		
@@ -805,6 +807,22 @@ function loadAppearance(appearance) {
 						if (i != -1) stylesheets.push("/extensions/"+extensionName+"/"+files.i);
 					}
 				}
+				
+				// Read strings (translations);
+				var stringsPath = null;
+				if (customisations &&
+					fs.existsSync(systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/strings/'+systemConfiguration.language+'.json')) {
+					stringsPath = systemConfiguration.customisationPath+'/beo-extensions-override/'+extensionName+'/strings/'+systemConfiguration.language+'.json';
+				} else if (fs.existsSync(shouldLoad.directory+'/strings/'+systemConfiguration.language+'.json')) {
+					stringsPath = shouldLoad.directory+'/strings/'+systemConfiguration.language+'.json';
+				}
+				if (stringsPath) {
+					try {
+						strings[extensionName] = require(stringsPath);
+					} catch (error) {
+						console.error("Error loading strings for extension '"+extensionName+"':", error);
+					}
+				}	
 			}
 		}
 	}
@@ -840,7 +858,7 @@ function loadAppearance(appearance) {
 			var pageTitle = "HiFiBerry";
 		}
 		bodyClassString = '<body class="'+systemType+' ';
-		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title>", '<title>'+pageTitle).replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title>", '<title>'+pageTitle).replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+";\ntranslations = "+JSON.stringify(strings)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
 		
 		return completeUI;
 	} else {

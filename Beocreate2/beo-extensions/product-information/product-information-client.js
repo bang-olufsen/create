@@ -247,7 +247,7 @@ function generateSettingsPreview(identity, presetName) {
 	if (!identity) identity = {};
 	infoString = "";
 	if (identity.designer) {
-		infoString = beo.translatedString("Designed by", "designedBy", "product-information") + " " + identity.designer;
+		infoString = beo.localisedString("Designed by", "designedBy", "product-information") + " " + identity.designer;
 	}
 	if (identity.produced) {
 		if (!Array.isArray(identity.produced)) {
@@ -256,9 +256,9 @@ function generateSettingsPreview(identity, presetName) {
 			produced = identity.produced[0] + "–" + identity.produced[1];
 		}
 		if (infoString != "") {
-			infoString += ", " + beo.translatedString("Manufactured", "manufactured", "product-information").toLowerCase() + " " + produced;
+			infoString += ", " + beo.localisedString("Manufactured", "manufactured", "product-information").toLowerCase() + " " + produced;
 		} else {
-			infoString += beo.translatedString("Manufactured", "manufactured", "product-information") + " " + produced;
+			infoString += beo.localisedString("Manufactured", "manufactured", "product-information") + " " + produced;
 		}
 	}
 	$(".speaker-preset-information p.product").text(infoString);
@@ -276,7 +276,7 @@ function generateSettingsPreview(identity, presetName) {
 	if (identity.manufacturer) previewString += identity.manufacturer+" ";
 	if (identity.modelName) previewString += identity.modelName;
 	
-	return [beo.translatedString("Icon & Model Name", "iconAndModelName", "product-information"), "<p>"+previewString+"</p>"];
+	return [beo.localisedString("Icon & Model Name", "iconAndModelName", "product-information"), "<p>"+previewString+"</p>"];
 }
 
 function clearPresetPreview() {

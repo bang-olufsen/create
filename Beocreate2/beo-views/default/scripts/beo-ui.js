@@ -232,10 +232,14 @@ function prepareMenus() {
 		
 		if (context) {
 			
+			// Localise this screen or title.
+			localiseExtension(theExtension, extensionName);
+			
 			iconName = (theExtension.attributes["data-icon"]) ? theExtension.attributes["data-icon"].value : null;
 			if (systemType == "hifiberry" && theExtension.attributes["data-icon-hifiberry"]) {
 				iconName = theExtension.attributes["data-icon-hifiberry"].value;
 			}
+			
 			menuOptions = {
 				label: theExtension.attributes["data-menu-title"].value,
 				onclick: 'beo.showExtension(\''+extensionName+'\');',
@@ -1618,7 +1622,17 @@ function disclosure(element, isOn) {
 // LANGUAGE FEATURES
 
 // Return a translation for a given translation ID, if exists. Otherwise return the default string that was supplied.
-function translatedString(defaultString, translationID, extensionID) {
+function localiseExtension(theExtension, extensionID) {
+	// Translate this screen or title.
+	theExtension.setAttribute("data-menu-title", localisedString(theExtension.getAttribute("data-menu-title"), "menuTitle", extensionID));
+	
+	var elements = theExtension.querySelectorAll("*[data-translation]");
+	for (var element of elements) {
+		element.innerText = localisedString(element.innerText, element.getAttribute("data-translation"), extensionID);
+	}
+}
+
+function localisedString(defaultString, translationID, extensionID) {
 	if (typeof translations !== 'undefined' && translations[extensionID]) {
 		if (translations[extensionID][translationID]) {
 			finalString = translations[extensionID][translationID];
@@ -1633,9 +1647,9 @@ function translatedString(defaultString, translationID, extensionID) {
 }
 
 
-function translatedStringWithFormat(format, dynamics, translationID, extensionID) {
+function localisedStringWithFormat(format, dynamics, translationID, extensionID) {
 	if (translationID && extensionID) {
-		format = translatedString(format, translationID, extensionID);
+		format = localisedString(format, translationID, extensionID);
 	}
 	
 	finalString = format;
@@ -1664,7 +1678,7 @@ function capitaliseFirst(string) {
 function commaAndList(list, andWord, translationID, extensionID) {
 
 	if (translationID && extensionID) {
-		andWord = translatedString(andWord, translationID, extensionID);
+		andWord = localisedString(andWord, translationID, extensionID);
 	}
 	if (list.length > 1) {
 		for (var i = 0; i < list.length; i++) {
@@ -2393,8 +2407,8 @@ return {
 	uploadFile: uploadFile,
 	executeFunction: executeFunction,
 	functionExists: functionExists,
-	translatedString: translatedString,
-	translatedStringWithFormat: translatedStringWithFormat,
+	localisedString: localisedString,
+	localisedStringWithFormat: localisedStringWithFormat,
 	capitaliseFirst: capitaliseFirst,
 	commaAndList: commaAndList,
 	showMenuTab: showMenuTab,

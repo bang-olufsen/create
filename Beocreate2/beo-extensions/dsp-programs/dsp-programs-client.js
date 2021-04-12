@@ -65,7 +65,7 @@ $(document).on("dsp-programs", function(event, data) {
 			$(".dsp-program-information h1").text("Unknown Program");
 		}
 		if (data.content.version) {
-			$(".dsp-program-information p").text(beo.translatedString("Version", "version", "dsp-programs")+" "+data.content.version);
+			$(".dsp-program-information p").text(beo.localisedString("Version", "version", "dsp-programs")+" "+data.content.version);
 		} else {
 			$(".dsp-program-information p").text("");
 		}

@@ -23,6 +23,6 @@
     "aplay": "^1.2.0",
     "eventemitter3": "^3.1.2",
     "express": "^4.17.1",
-	"underscore": "^1.9.1"
+	"underscore": "^1.12.1"
   }
 }

@@ -53,6 +53,12 @@ var defaultSettings = {
 	"systemNameApprovedByUser": false
 };
 
+var genericProductImage = "";
+if (systemType == "beocreate") {
+	genericProductImage = "/common/beocreate-generic.png";
+} else {
+	genericProductImage = "/common/hifiberry-generic.png";
+}
 
 if (beo.customisations) {
 	if (beo.customisations.productInformation) {
@@ -60,6 +66,7 @@ if (beo.customisations) {
 		if (beo.customisations.productInformation.defaultModelID) defaultSettings.modelID = beo.customisations.productInformation.defaultModelID;
 		if (beo.customisations.productInformation.defaultModelName) defaultSettings.modelName = beo.customisations.productInformation.defaultModelName;
 		if (beo.customisations.productInformation.defaultProductImage) defaultSettings.productImage = beo.customisations.productInformation.defaultProductImage;
+		if (beo.customisations.productInformation.genericProductImage) genericProductImage = beo.customisations.productInformation.genericProductImage;
 	}
 	if (beo.customisations.systemClass) systemType = beo.customisations.systemClass;
 }
@@ -71,13 +78,6 @@ if (systemType == "hifiberry") {
 }
 
 var settings = JSON.parse(JSON.stringify(defaultSettings));
-
-var genericProductImage = "";
-if (systemType == "beocreate") {
-	genericProductImage = "/common/beocreate-generic.png";
-} else {
-	genericProductImage = "/common/hifiberry-generic.png";
-}
 
 var currentProductImage = (!settings.productImage) ? genericProductImage : settings.productImage;
 

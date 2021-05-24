@@ -434,47 +434,47 @@ function generateSettingsPreview(settings) {
 	}
 	
 	if (roleIssues.length == 4) {
-		compatibilityNote += beo.translatedString("Setting speaker role is not supported. ", "roleNotSupportedAll", "channels");
+		compatibilityNote += beo.localisedString("Setting speaker role is not supported. ", "roleNotSupportedAll", "channels");
 	} else if (roleIssues.length > 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channels %@ do not support setting speaker role. ", beo.commaAndList(roleIssues, "and", "and", "channels"), "roleNotSupportedPlural", "channels");
+		compatibilityNote += beo.localisedStringWithFormat("Channels %@ do not support setting speaker role. ", beo.commaAndList(roleIssues, "and", "and", "channels"), "roleNotSupportedPlural", "channels");
 	} else if (roleIssues.length == 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channel %@ does not support setting speaker role. ", roleIssues[0], "roleNotSupportedSingular", "channels");
+		compatibilityNote += beo.localisedStringWithFormat("Channel %@ does not support setting speaker role. ", roleIssues[0], "roleNotSupportedSingular", "channels");
 	}
 	
 	if (levelIssues.length == 4) {
-		compatibilityNote += beo.translatedString("Adjusting channel level is not supported. ", "levelNotSupportedAll", "channels");
+		compatibilityNote += beo.localisedString("Adjusting channel level is not supported. ", "levelNotSupportedAll", "channels");
 	} else if (levelIssues.length > 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channels %@ do not support adjusting level. ", beo.commaAndList(roleIssues, "and", "and", "channels"), "levelNotSupportedPlural", "channels");
+		compatibilityNote += beo.localisedStringWithFormat("Channels %@ do not support adjusting level. ", beo.commaAndList(roleIssues, "and", "and", "channels"), "levelNotSupportedPlural", "channels");
 	} else if (levelIssues.length == 1) {
-		compatibilityNote += beo.translatedStringWithFormat("Channel %@ does not support adjusting level. ", roleIssues[0], "levelNotSupportedSingular", "channels");
+		compatibilityNote += beo.localisedStringWithFormat("Channel %@ does not support adjusting level. ", roleIssues[0], "levelNotSupportedSingular", "channels");
 	}
 	
 	previewString = "";
 	
 	// Check for what's common with all channels:
 	forAllChannels = [];
-	if (level.length == 4) forAllChannels.push(beo.translatedString("levels", "levels", "channels"));
-	if (delay.length == 4) forAllChannels.push(beo.translatedString("delays", "delays", "channels"));
-	if (role.length == 4) forAllChannels.push(beo.translatedString("roles", "roles", "channels"));
+	if (level.length == 4) forAllChannels.push(beo.localisedString("levels", "levels", "channels"));
+	if (delay.length == 4) forAllChannels.push(beo.localisedString("delays", "delays", "channels"));
+	if (role.length == 4) forAllChannels.push(beo.localisedString("roles", "roles", "channels"));
 	
 	if (forAllChannels.length == 1) {
-		previewString += beo.capitaliseFirst(forAllChannels[0]) + " " + beo.translatedString("for all channels", "forAllChannels", "channels") + ". "
+		previewString += beo.capitaliseFirst(forAllChannels[0]) + " " + beo.localisedString("for all channels", "forAllChannels", "channels") + ". "
 	} else if (forAllChannels.length > 1) {
-		previewString += beo.capitaliseFirst(beo.commaAndList(forAllChannels, "and", "and", "channels")) + " " + beo.translatedString("for all channels", "forAllChannels", "channels") + ". ";
+		previewString += beo.capitaliseFirst(beo.commaAndList(forAllChannels, "and", "and", "channels")) + " " + beo.localisedString("for all channels", "forAllChannels", "channels") + ". ";
 	}
 	
 	if (muted.length == 4) {
-		previewString += beo.translatedString("All channels are muted.", "allChannelsMuted", "channels");
+		previewString += beo.localisedString("All channels are muted.", "allChannelsMuted", "channels");
 	} else if (muted.length > 1) {
-		previewString += beo.translatedStringWithFormat("Channels %@ are muted.", beo.commaAndList(muted, "and", "and", "channels"), "channelsAreMuted", "channels");
+		previewString += beo.localisedStringWithFormat("Channels %@ are muted.", beo.commaAndList(muted, "and", "and", "channels"), "channelsAreMuted", "channels");
 	} else if (muted.length == 1) {
-		previewString += beo.translatedStringWithFormat("Channel %@ is muted.", muted[0], "channelIsMuted", "channels");
+		previewString += beo.localisedStringWithFormat("Channel %@ is muted.", muted[0], "channelIsMuted", "channels");
 	}
 	
 	/*
 	
 	*/
-	return [beo.translatedString("Channels", "channelsTitle", "channels"), '<p>'+previewString+'</p>', compatibilityNote];
+	return [beo.localisedString("Channels", "channelsTitle", "channels"), '<p>'+previewString+'</p>', compatibilityNote];
 }
 
 function getSpeakerTypeNameAndIcon(type) {

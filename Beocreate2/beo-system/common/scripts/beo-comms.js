@@ -21,12 +21,14 @@ var productConnection;
 var productAddress = "";
 var connecting = false;
 var connected = false;
+
+
+beoCom = (function() {
+
 var connectionAttempts = 0;
 var maxConnectionAttempts = 5;
 var noConnectionNotifications = false;
 var reloadOnReconnect = false;
-
-beoCom = (function() {
 
 var productConnectionTimeout;
 var productReconnectTimeout;
@@ -143,6 +145,31 @@ function connectProduct() {
 	};
 }
 
+function setConnectionOptions(options) {
+	infoString = "";
+	for (o in options) {
+		switch (o) {
+			case "notifications":
+				noConnectionNotifications = !(options[o]);
+				infoString += "Notifications on disconnect: "+options[o]+". ";
+				break;
+			case "maxAttempts":
+				if (!options[o]) {
+					maxConnectionAttempts = 5;
+				} else {
+					maxConnectionAttempts = options[o];
+				}
+				infoString += "Maximum amount of connection attempts: "+maxConnectionAttempts+". ";
+				break;
+			case "reloadOnReconnect":
+				reloadOnReconnect = options[o];
+				infoString += "Reload interface on reconnect: "+reloadOnReconnect+". ";
+				break;
+		}
+	}
+	console.log(infoString);
+}
+
 
 function processReceivedData(data) {
 	if (debug) console.log(data);
@@ -157,9 +184,13 @@ function processReceivedData(data) {
 	}
 }
 
+var encoder = new TextEncoder();
+
 function send(data) {
 	if (productConnection && connected) {
-		productConnection.send(JSON.stringify(data));
+		var serialisedData = JSON.stringify(data);
+		if (debug) console.log(serialisedData);
+		productConnection.send(encoder.encode(serialisedData));
 	} else if (simulation) {
 		console.log("Simulated send of data:"+data);
 	} else {
@@ -186,7 +217,8 @@ beo.sendToProduct = sendToProduct
 return {
 	connectToCurrentProduct: connectToCurrentProduct,
 	send: send,
-	sendToProduct: sendToProduct
+	sendToProduct: sendToProduct,
+	setConnectionOptions: setConnectionOptions
 }
 
 })();

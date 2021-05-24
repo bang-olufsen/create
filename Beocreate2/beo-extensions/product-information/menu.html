@@ -6,7 +6,7 @@
 	
 	<header class="transparent opaque-scroll top-hide-title">
 		<div class="back-button master setup"></div>
-		<h1 class="compact-only">Beocreate Core</h1>
+		<h1 class="compact-only system-name">Sound System</h1>
 		<div class="product-overview-image product-image-bg normal-only" id="product-overview-image-sidebar"></div>
 	</header>
 	
@@ -22,11 +22,11 @@
 				<h2 class="model-name">Beocreate 2</h2>
 				<h1 class="system-name">Sound System</h1>
 				<div class="button-row centre">
-					<div data-translation="changeNameButton" class="button pill black compact" onclick="product_information.changeProductName();">Change Name…</div>
-					<!--<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>-->
+					<div data-localisation="changeNameButton" class="button pill black compact" onclick="product_information.changeProductName();">Change Name…</div>
+					<!--<div data-localisation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>-->
 				</div>
 			</div>
-			<!--<h2 class="scroll-invitation setup-hide" data-translation="aboutInvitation">About</h2>-->
+			<!--<h2 class="scroll-invitation setup-hide" data-localisation="aboutInvitation">About</h2>-->
 		</div>
 		
 		<div class="menu-content setup-hide">
@@ -35,18 +35,20 @@
 			</div>
 			
 			<div id="product-identity-area" class="product-identity-area">
-				<h2 class="model-name">Beocreate 2</h2>
+				<h2 class="model-name hidden with-system-name">Beocreate 2</h2>
 				<h1 class="system-name">Sound System</h1>
 				<!--<div class="button-row">
-					<div data-translation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>
+					<div data-localisation="changeNameButton" class="button pill compact setup-hide" onclick="beo.ask('product-appearance-prompt');">Change…</div>
 				</div>-->
 				<div class="button symbol" onclick="beo.ask('product-appearance-prompt');" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);"></div>
 			</div>
+			<!--<div class="button pill black" onclick='beo.sendToProduct("setup", "getSetupStatus");'>Get Setup Status</div>-->
 			<div class="beo-dynamic-menu main-menu"></div>
 			<!--<hr>
 			<div class="menu-item icon chevron">
 				<div class="menu-label">About</div>
 			</div>-->
+			<h2 class="scroll-invitation setup-hide" data-localisation="aboutInvitation">About</h2>
 		</div>
 			
 	
@@ -59,15 +61,16 @@
 					
 					
 			<div id="about-texts">
-				<!--<h1 class="no-margin-top" id="os-name-beocreate">Beocreate 2</h1>
-				<h1 class="no-margin-top" id="os-name-hifiberry-os">HiFiBerryOS</h1>-->
 				
 				<p class="about-line-0 card-type">Sound device not available</p>
 				
 				<p class="about-line-1 system-info-cycle" onclick="product_information.cycleSystemInformation();"></p>
 				
-				<p class="about-line-2" id="copy-beocreate">&copy; 2017–2020 Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry.<br>MIT open source licence.</p>
-				<p class="about-line-2" id="copy-hifiberry-os">&copy; 2017–2020 HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen.<br>MIT open source licence.</p>
+				<p class="about-line-2">&copy; 2017–2021 
+					<span id="copy-beocreate">Bang&nbsp;&amp;&nbsp;Olufsen <span class="collab-x">✕</span> HiFiBerry.</span>
+					<span id="copy-hifiberry-os">HiFiBerry <span class="collab-x">✕</span> Bang&nbsp;&amp;&nbsp;Olufsen.</span>
+					<br>MIT open source licence.
+				</p>
 				
 				<!-- EXIST TO CREATE -->
 			</div>
@@ -75,32 +78,6 @@
 		</div>
 	</div>
 	
-	<div class="ask-menu" id="product-appearance-prompt">
-		<div class="ask-buttons">
-			<div class="button pill grey" onclick="beo.ask();product_information.changeProductName();">Change Name…</div>
-			<div class="button pill grey" onclick="beo.ask();product_information.startCustomisation();">Change Icon &amp; Model…</div>
-			<div class="button pill black cancel" onclick="beo.ask();">Cancel</div>
-		</div>
-	</div>
-	
-	<div class="ask-menu" id="product-name-restart-prompt">
-		<h2>Restart Needed</h2>
-		<p>The product needs to restart for the name change to take effect.</p>
-		<div class="ask-buttons">
-			
-			<div class="button pill black default" onclick="product_information.restartProduct();">Restart Now</div>
-			<div class="button pill grey cancel" onclick="beo.ask();">Restart Later</div>
-		</div>
-	</div>
-	
-	<div class="ask-menu" id="product-shutdown-prompt">
-		<h2>Raspberry Pi Power</h2>
-		<div class="ask-buttons">
-			<div class="button pill grey" onclick="product_information.shutdownProduct();">Shut Down</div>
-			<div class="button pill grey" onclick="product_information.restartProduct();">Restart</div>
-			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
-		</div>
-	</div>
 	
 	<div class="popup-content hidden" id="customise-product-popup">
 		<header class="popup">
@@ -131,24 +108,25 @@
 		</div>
 	</div>
 	
-	<div class="ask-menu" id="interact-power-setup">
-		<h2>Power</h2>
-		<p>When running the action...</p>
-		<div id="interact-power-setup-options">
-			<div class="menu-item checkmark left icon" data-option="shutdown" onclick="product_information.interactSetup('option', 'shutdown');">
-				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
-				<div class="menu-label">Shut Down Raspberry Pi</div>
-			</div>
-			<div class="menu-item checkmark left icon" data-option="restart" onclick="product_information.interactSetup('option', 'restart');">
-				<div class="menu-icon" style="-webkit-mask-image: url(common/symbols-black/checkmark.svg); mask-image: url(common/symbols-black/checkmark.svg);"></div>
-				<div class="menu-label">Restart Raspberry Pi</div>
-			</div>
-		</div>
+	<div class="ask-menu" id="product-appearance-prompt">
 		<div class="ask-buttons">
-			<div class="button pill black default disabled" onclick="product_information.interactSetup('save');" id="interact-power-setup-save">Save Action</div>
-			<div class="button pill grey cancel" onclick="beo.ask();">Cancel</div>
+			<div class="button pill grey" onclick="beo.ask();product_information.changeProductName();">Change Name…</div>
+			<div class="button pill grey" onclick="beo.ask();product_information.startCustomisation();">Change Icon &amp; Model…</div>
+			<div class="button pill black cancel" onclick="beo.ask();">Cancel</div>
 		</div>
 	</div>
+	
+	<div class="ask-menu" id="product-name-restart-prompt">
+		<h2>Restart Needed</h2>
+		<p>The product needs to restart for the name change to take effect.</p>
+		<div class="ask-buttons">
+			
+			<div class="button pill black default" onclick="general_settings.restartProduct();">Restart Now</div>
+			<div class="button pill grey cancel" onclick="beo.ask();">Restart Later</div>
+		</div>
+	</div>
+	
+	
 </div>
 
 <script type="text/javascript" charset="utf-8" src="€/product-information-client.js"></script>

@@ -220,16 +220,12 @@ $(document).on("network", function(event, data) {
 		// When the product applies new network settings, the connection will be temporarily lost. Inform Beocreate app of this so that it knows to auto-reconnect.
 		beo.sendToProductView({header: "autoReconnect", content: {status: "networkConnect", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 		beo.notify({title: "Applying network settings…", message: "Make sure your "+os[1]+" is connected to the same network as the product.", icon: "attention", timeout: false, id: "applyingNetworkSettings"});
-		noConnectionNotifications = true;
-		maxConnectionAttempts = 20;
+		beoCom.setConnectionOptions({maxAttempts: 20, notifications: false});
 	}
 	
 	if (data.header == "connected") {
-		if (noConnectionNotifications) {
-			beo.notify(false, "applyingNetworkSettings");
-			noConnectionNotifications = false;
-			maxConnectionAttempts = 5;
-		}
+		beo.notify(false, "applyingNetworkSettings");
+		beoCom.setConnectionOptions({maxAttempts: false, notifications: true});
 	}
 });
 

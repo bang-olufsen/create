@@ -45,10 +45,16 @@
 			</div>
 			
 			<hr>
-			<div class="menu-item" onclick="beo.ask('auto-update-prompt');">
+			<div class="menu-item hidden" id="auto-update-menu-item" onclick="beo.ask('auto-update-prompt');">
 					<div class="menu-text-wrap">
 						<div class="menu-label">Automatic Updates</div>
 						<div class="menu-value auto-update-mode"></div>
+					</div>
+			</div>
+			<div class="menu-item toggle hidden" id="auto-update-toggle" onclick="software_update.toggleAutoUpdate();">
+					<div class="menu-text-wrap">
+						<div class="menu-label">Update Automatically</div>
+						<div class="menu-toggle"></div>
 					</div>
 			</div>
 			<div class="menu-item disabled toggle on" id="show-experimental-updates">

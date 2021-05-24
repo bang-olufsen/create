@@ -65,7 +65,7 @@ $(document).on("dsp-programs", function(event, data) {
 			$(".dsp-program-information h1").text("Unknown Program");
 		}
 		if (data.content.version) {
-			$(".dsp-program-information p").text(beo.translatedString("Version", "version", "dsp-programs")+" "+data.content.version);
+			$(".dsp-program-information p").text(beo.localisedString("Version", "version", "dsp-programs")+" "+data.content.version);
 		} else {
 			$(".dsp-program-information p").text("");
 		}
@@ -235,8 +235,7 @@ $(document).on("dsp-programs", function(event, data) {
 	
 	if (data.header == "configuringSystem") {
 		beo.notify({title: "Setting up...", message: "Please wait...", icon: "attention", timeout: false});
-		noConnectionNotifications = true;
-		maxConnectionAttempts = 10;
+		beoCom.setConnectionOptions({maxAttempts: 10, notifications: false});
 	}
 	
 	if (data.header == "systemConfigured") {

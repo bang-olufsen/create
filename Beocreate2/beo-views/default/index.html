@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	
-	<title>Beocreate</title>
+	<title></title>
 	
 	
 	<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -26,7 +26,7 @@
 	<script src='common/scripts/vue.js'></script>
 	<script src='views/default/scripts/beo-ui.js'></script>
 	<script src='common/scripts/beo-drag.js'></script>
-	<script src='common/scripts/beo-comms.js'></script>
+	<script src='common/scripts/beo-comms.js' charset='UTF-8'></script>
 	<script src='common/scripts/beo-dspcalc.js'></script>
 	<script src='common/scripts/beo-graph.js'></script>
 </head>
@@ -113,7 +113,10 @@
 					<p id="text-prompt">Text prompt.</p>
 					<form id="text-fields" action="javascript:;" onsubmit="beo.submitText();">
 						<input type="text" name="text-input" value="" id="text-input-plain" autocorrect="off" autocapitalize="off" placeholder="Placeholder">
-						<input type="password" name="password-input" id="text-input-password" placeholder="Password" value="" autocomplete="current-password">
+						<div id="password-group">
+							<input type="password" name="password-input" id="text-input-password" placeholder="Password" value="" autocomplete="current-password">
+							<div class="button symbol" id="text-input-password-reveal" onclick="beo.togglePasswordReveal();" style="-webkit-mask-image: url(common/symbols-black/eye.svg); mask-image: url(common/symbols-black/eye.svg);"></div>
+						</div>
 						<input type="submit" value="Submit" id="submit-text">
 					</form>
 				</div>

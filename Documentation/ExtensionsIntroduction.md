@@ -23,8 +23,6 @@ To create more useful extensions, a few more ingredients are needed. A typical, 
 	├╴ my-extension.css
 	├╴ symbols-black
 	│  └╴ my-extension.svg
-	├╴ symbols-white
-	│  └╴ my-extension.svg
 	└╴ node_modules
 	   └╴ ...
 	   
@@ -59,9 +57,9 @@ When creating custom interface elements, target them in your stylesheet as speci
 
 How to include a stylesheet is described here.
 
-### symbols-black & symbols-white
+### symbols-black
 
-Your extension should have a representative symbol that is automatically shown in the user interface. Black and white versions should be placed in these directories. If your interface needs other symbols, it is a good idea to place them here as well.
+Your extension should have a representative symbol that is automatically shown in the user interface. If your interface needs other symbols, it is a good idea to place them here as well. The system only needs a black version of the symbol – it will be adapted automatically to the light and dark appearances.
 
 Symbols should always adhere to the [design guidelines](DesignGuidelines.md) to maintain a consistent, beautiful and minimalist look.
 

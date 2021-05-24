@@ -159,6 +159,7 @@
 			event.preventDefault();
 		} else if (dragging == 0) {
 			// Do nothing.
+			dragEvent = null;
 			clearTimeout(dragTimeout);
 		} else if (dragEvent) {
 			if (this.options.cancel) this.options.cancel(event, positions, dragEvent.target);
@@ -170,10 +171,12 @@
  	}
  	
  	this.onClick = function(event) {
- 		if (elementFound && (this.options.preventClick || dragging > 0)) {
- 			dragging = 0;
- 			elementFound = false;
- 			event.stopPropagation();
+ 		if (elementFound) {
+ 			if (this.options.preventClick || dragging > 0) {
+	 			dragging = 0;
+	 			elementFound = false;
+	 			event.stopPropagation();
+	 		}
  		}
  	}
  	

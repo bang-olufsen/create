@@ -55,30 +55,24 @@ We're working to add documentation for Beocreate 2 to make it easier to tap into
 
 Design and develop extensions to expand the functionality of the system.
 
-- [Introduction to Extensions](Documentation/ExtensionsIntroduction.md)
-- [Implementing Server-side Code](Documentation/ExtensionsServer.md)
-- Implementing User Interface
+- [Introduction to extensions](Documentation/ExtensionsIntroduction.md)
+- [Implementing server-side code](Documentation/ExtensionsServer.md)
+- Implementing user interface
+- [Interact – creating triggers and actions](Documentation/Interact.md)
 
 ### Sound & Customisation
 
 Create speaker presets, DSP programs and product identities to customise the sound system.
 
-- [Speaker Presets](Documentation/SoundPresets.md)
-- DSP Programs
-- [Product Identities](Documentation/ProductIdentities.md)
+- [Speaker presets](Documentation/SoundPresets.md)
+- DSP programs
+- [Product identities](Documentation/ProductIdentities.md)
 
 ### Design
 
 Guidelines and best practices for design within Beocreate 2 ecosystem.
 
-- [Beocreate 2 Design Guidelines](Documentation/DesignGuidelines.md)
-
-
-## Known Issues
-
-Some issues in the current release that aren't acknowledged in the user interface:
-
-(No current issues)
+- [Beocreate 2 design guidelines](Documentation/DesignGuidelines.md)
 
 
 ## Legacy Code

@@ -30,7 +30,6 @@ beo = (function() {
 uiSettings = {
 	disclosure: {}
 };
-hifiberryOS = false;
 
 os = getOS();
 
@@ -42,7 +41,6 @@ $( document ).ready(function() {
 	if (("standalone" in window.navigator) && window.navigator.standalone){
 		$("body").addClass("standalone");
 	}
-	if ($("body").hasClass("hifiberry-os")) hifiberryOS = true;
 	if (developerMode) $("body").addClass("developer");
 	getWindowDimensions();
 	sendToProductView({header: "isShownInBeoApp"});
@@ -56,7 +54,7 @@ $( document ).ready(function() {
 	
 	$("body").css("opacity", "1");
 	
-	if (hifiberryOS) $('head link[rel="apple-touch-icon"]').attr("href", "views/default/apple-touch-icon-hifiberry.png");
+	if (systemType == "hifiberry") $('head link[rel="apple-touch-icon"]').attr("href", "views/default/apple-touch-icon-hifiberry.png");
 	
 	
 	// File selected to upload.
@@ -65,7 +63,9 @@ $( document ).ready(function() {
 	});
 	
 	// Preload animated wait icons:
-	if (!hifiberryOS) {
+	if (customisations && customisations.waitAnimation) {
+		attentionIcon.src = customisations.waitAnimation;
+	} else if (systemType == "beocreate") {
 		attentionIcon.src = "common/create-wait-animate.svg";
 	} else {
 		attentionIcon.src = "common/hifiberry-wait-animate.svg";
@@ -117,16 +117,14 @@ $(document).on("general", function(event, data) {
 				notify({title: "Shutting down product…", icon: "attention", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", timeout: false});
 				setTimeout(function() {
 					beo.notify({title: "Shutdown complete", message: "You may now unplug the product from power.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Connect Again", timeout: false});
-					noConnectionNotifications = false;
-					maxConnectionAttempts = 5;
+					beoCom.setConnectionOptions({maxAttempts: 5, notifications: true});
 				}, 20000);
 				noConnectionNotifications = true;
 				maxConnectionAttempts = 0;
 			} else if (data.content.status == "rebooting") {
 				sendToProductView({header: "powerStatus", content: {status: "rebooting", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				notify({title: "Restarting product…", message: "This will take a moment, please wait.", icon: "attention", timeout: false});
-				noConnectionNotifications = true;
-				maxConnectionAttempts = 10;
+				beoCom.setConnectionOptions({maxAttempts: 10, notifications: true});
 			}
 		}
 	}
@@ -232,10 +230,14 @@ function prepareMenus() {
 		
 		if (context) {
 			
+			// Localise this screen or title.
+			localiseExtension(theExtension, extensionName);
+			
 			iconName = (theExtension.attributes["data-icon"]) ? theExtension.attributes["data-icon"].value : null;
-			if (hifiberryOS && theExtension.attributes["data-icon-hifiberry"]) {
+			if (systemType == "hifiberry" && theExtension.attributes["data-icon-hifiberry"]) {
 				iconName = theExtension.attributes["data-icon-hifiberry"].value;
 			}
+			
 			menuOptions = {
 				label: theExtension.attributes["data-menu-title"].value,
 				onclick: 'beo.showExtension(\''+extensionName+'\');',
@@ -264,7 +266,14 @@ function prepareMenus() {
 			if (theExtension.attributes["data-menu-class"]) {
 				menuOptions.classes.push(theExtension.attributes["data-menu-class"].value);
 			}
-			if (!theExtension.attributes["data-hidden"]) {
+			var hideExtension = false;
+			if (theExtension.attributes["data-hidden"]) hideExtension = true;
+			if (customisations && 
+				customisations.hiddenExtensions &&
+				customisations.hiddenExtensions.indexOf(extensionName) != -1) {
+				hideExtension = true; // Skip adding this extension if it's hidden.
+			}
+			if (!hideExtension) {
 				if (context[1]) {
 					if ($(".menu-screen#"+context[0]+" .beo-dynamic-menu."+context[1])) {
 						$(".menu-screen#"+context[0]+" .beo-dynamic-menu."+context[1]).append(createMenuItem(menuOptions));
@@ -317,12 +326,17 @@ function prepareMenus() {
 	
 	for (n in navigation) {
 		if (navigation[n].kind == "extension") {
+			if (customisations && 
+				customisations.hiddenExtensions &&
+				customisations.hiddenExtensions.indexOf(navigation[n].name) != -1) {
+				continue; // Skip adding this extension if it's hidden.
+			}
 			theExtension = document.querySelector(".menu-screen#"+navigation[n].name);
 			if (theExtension) {
 				var isMainMenu = (navigation[n].name == mainMenuExtension) ? true : false; // Checks if this is the main menu. It will always appear in top bar.
 				
 				iconName = (theExtension.attributes["data-icon"]) ? theExtension.attributes["data-icon"].value : null;
-				if (hifiberryOS && theExtension.attributes["data-icon-hifiberry"]) {
+				if (systemType == "hifiberry" && theExtension.attributes["data-icon-hifiberry"]) {
 					iconName = theExtension.attributes["data-icon-hifiberry"].value;
 				}
 				var menuOptions = {
@@ -344,7 +358,14 @@ function prepareMenus() {
 				}
 				menuOptions.label = theExtension.attributes["data-menu-title"].value;
 				
-				if (!theExtension.attributes["data-hidden"]) {
+				hideExtension = false;
+				if (theExtension.attributes["data-hidden"]) hideExtension = true;
+				if (customisations && 
+					customisations.hiddenExtensions &&
+					customisations.hiddenExtensions.indexOf(navigation[n].name) != -1) {
+					hideExtension = true; // Skip adding this extension if it's hidden.
+				}
+				if (!hideExtension) {
 					
 					if (navDestination == 0) {
 						$("nav.full .nav-content").append(createMenuItem(menuOptions));
@@ -388,30 +409,50 @@ function prepareMenus() {
 }
 
 var navigationMode = null;
-function prepareFavourites(navSetID) {
+var favourites = [];
+function prepareFavourites(navSetID = null) {
+	var selectableNavSets = 0;
 	if (!navSetID) {
 		if (localStorage.beocreateSelectedNavigationSet) {
 			navSetID = localStorage.beocreateSelectedNavigationSet;
+			var setFound = false;
+			for (var i = 0; i < navigationSets.length; i++) {
+				if (navigationSets[i].id == navSetID) {
+					setFound = true;
+					break;
+				}
+			}
+			if (!setFound) navSetID = "full";
 		} else {
-			navSetID = navigationSets[0].id;
-		}
-	}
-	var setName = "";
-	if (navSetID == navigationSets[0].id) {
-		favourites = navigation;
-		if (!navigationSets[0].name) {
-			setName = "Main Menu";
-		} else {
-			setName = navigationSets[0].name;
-		}
-	} else {
-		for (s in navigationSets) {
-			if (navigationSets[s].id == navSetID) {
-				favourites = navigationSets[s].items;
-				setName = navigationSets[s].name;
+			for (var i = 0; i < navigationSets.length; i++) {
+				if (!navigationSets[i].hideFromShortcuts) {
+					navSetID = navigationSets[i].id;
+					break;
+				}
 			}
 		}
 	}
+	
+	var setName = "";
+	for (s in navigationSets) {
+		if (navigationSets[s].id == navSetID) {
+			if (s == 0) {
+				favourites = navigation;
+			} else {
+				favourites = navigationSets[s].items;
+			}
+			try {
+				setName = navigationSets[s].name;
+			} catch (error) {
+				if (s == 0) {
+					setName = "Main Menu";
+				} else {
+					setName = "Shortcuts";
+				}
+			}
+		}
+	}
+	
 	$(".nav-mode-name").text(setName);
 	
 	var previousKind = null;
@@ -422,6 +463,11 @@ function prepareFavourites(navSetID) {
 	$("nav.bar .nav-content").append('<div class="nav-spacer begin"></div>');
 	for (f in favourites) {
 		if (favourites[f].kind == "extension") {
+			if (customisations && 
+				customisations.hiddenExtensions &&
+				customisations.hiddenExtensions.indexOf(favourites[f].name) != -1) {
+				continue; // Skip adding this extension if it's hidden.
+			}
 			var theExtension = document.querySelector(".menu-screen#"+favourites[f].name);
 			var fav = favourites[f].name;
 			if (theExtension && extensions[fav]) {
@@ -457,6 +503,13 @@ function prepareFavourites(navSetID) {
 		}
 	}
 	$("nav.bar .nav-content").append('<div class="nav-spacer end"></div>');
+	
+	for (var i = 0; i < navigationSets.length; i++) {
+		if (!navigationSets[i].hideFromShortcuts) selectableNavSets++;
+	}
+	if (selectableNavSets > 1) {
+		$("nav.bar, nav.full").addClass("show-mode-button");
+	}
 }
 
 function chooseNavigationMode(mode) {
@@ -465,24 +518,35 @@ function chooseNavigationMode(mode) {
 		if (localStorage.beocreateSelectedNavigationSet) {
 			var navSetID = localStorage.beocreateSelectedNavigationSet;
 		} else {
-			var navSetID = navigationSets[0].id;
+			for (var i = 0; i < navigationSets.length; i++) {
+				if (!navigationSets[i].hideFromShortcuts) {
+					var navSetID = i;
+					break;
+				}
+			}
 		}
 		for (var i = 0; i < navigationSets.length; i++) {
-			var setDescription = "";
-			if (i == 0 && !navigationSets[0].name) {
-				var setName = "Main Menu";
-				if (!navigationSets[i].description) var setDescription = "Include all main menu items";
-			} else {
-				var setName = navigationSets[i].name;
-				if (navigationSets[i].description) var setDescription = navigationSets[i].description;
+			if (!navigationSets[i].hideFromShortcuts) {
+				var setDescription = "";
+				if (i == 0 && !navigationSets[0].name) {
+					var setName = "Main Menu";
+					if (!navigationSets[i].description) var setDescription = "Include all main menu items";
+				} else {
+					try {
+						var setName = navigationSets[i].name;
+					} catch (error) {
+						var setName = "Shortcuts";
+					}
+					if (navigationSets[i].description) var setDescription = navigationSets[i].description;
+				}
+				$("#navigation-mode-list").append(createMenuItem({
+					label: setName,
+					description: setDescription,
+					onclick: 'beo.chooseNavigationMode(\''+navigationSets[i].id+'\');',
+					checkmark: "left",
+					checked: (navigationSets[i].id == navSetID)
+				}));
 			}
-			$("#navigation-mode-list").append(createMenuItem({
-				label: setName,
-				description: setDescription,
-				onclick: 'beo.chooseNavigationMode(\''+navigationSets[i].id+'\');',
-				checkmark: "left",
-				checked: (navigationSets[i].id == navSetID)
-			}));
 		}
 		ask("navigation-mode-menu");
 	} else {
@@ -1205,7 +1269,7 @@ function createMenuItem(options) {
 	}
 	menuItem += '"';
 	if (options.translation && options.translation.label) {
-		menuItem += ' data-translation="'+options.translation.label+'"'
+		menuItem += ' data-localisation="'+options.translation.label+'"'
 	}
 	menuItem += '>'+options.label+'</div>\n';
 	
@@ -1224,7 +1288,7 @@ function createMenuItem(options) {
 		if (options.valueAsBadge) menuItem += ' badge';
 		menuItem += '"';
 		if (options.translation && options.translation.value) {
-			menuItem += ' data-translation="'+options.translation.value+'"'
+			menuItem += ' data-localisation="'+options.translation.value+'"'
 		}
 		menuItem += '>'+options.value+'</div>\n';
 	}
@@ -1441,12 +1505,7 @@ function notify(options, dismissWithID = currentNotificationID) { // Display a s
 			notificationIcon = "";
 		} else if (options.icon == "attention") {
 			if (notificationIcon != "attention") {
-				//icon = "common/symbols-black/wait-star.svg"
-				/*if (!hifiberryOS) {
-					icon = "common/create-wait-animate.svg";
-				} else {
-					icon = "common/hifiberry-wait-animate.svg";
-				}*/
+				
 				icon = attentionIcon.src;
 				$("#hud-notification-icon").addClass("beo-load");
 		
@@ -1561,7 +1620,17 @@ function disclosure(element, isOn) {
 // LANGUAGE FEATURES
 
 // Return a translation for a given translation ID, if exists. Otherwise return the default string that was supplied.
-function translatedString(defaultString, translationID, extensionID) {
+function localiseExtension(theExtension, extensionID) {
+	// Translate this screen or title.
+	theExtension.setAttribute("data-menu-title", localisedString(theExtension.getAttribute("data-menu-title"), "menuTitle", extensionID));
+	
+	var elements = theExtension.querySelectorAll("*[data-localisation]");
+	for (var element of elements) {
+		element.innerText = localisedString(element.innerText, element.getAttribute("data-localisation"), extensionID);
+	}
+}
+
+function localisedString(defaultString, translationID, extensionID) {
 	if (typeof translations !== 'undefined' && translations[extensionID]) {
 		if (translations[extensionID][translationID]) {
 			finalString = translations[extensionID][translationID];
@@ -1576,9 +1645,9 @@ function translatedString(defaultString, translationID, extensionID) {
 }
 
 
-function translatedStringWithFormat(format, dynamics, translationID, extensionID) {
+function localisedStringWithFormat(format, dynamics, translationID, extensionID) {
 	if (translationID && extensionID) {
-		format = translatedString(format, translationID, extensionID);
+		format = localisedString(format, translationID, extensionID);
 	}
 	
 	finalString = format;
@@ -1607,7 +1676,7 @@ function capitaliseFirst(string) {
 function commaAndList(list, andWord, translationID, extensionID) {
 
 	if (translationID && extensionID) {
-		andWord = translatedString(andWord, translationID, extensionID);
+		andWord = localisedString(andWord, translationID, extensionID);
 	}
 	if (list.length > 1) {
 		for (var i = 0; i < list.length; i++) {
@@ -1927,26 +1996,26 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 	
 	if (options.autocapitalise) {
 		if (options.autocapitalise == true) { 
-			$("#text-input input[type=text]").attr("autocapitalize", "sentences");
+			$("#text-input-plain").attr("autocapitalize", "sentences");
 		} else {
-			$("#text-input input[type=text]").attr("autocapitalize", options.autocapitalise);
+			$("#text-input-plain").attr("autocapitalize", options.autocapitalise);
 		}
 	} else {
-		$("#text-input input[type=text]").attr("autocapitalize", "off");
+		$("#text-input-plain").attr("autocapitalize", "off");
 	}
 	
 	if (options.autocorrect) {
-		$("#text-input input[type=text]").attr("autocorrect", "on");
+		$("#text-input-plain").attr("autocorrect", "on");
 	} else {
-		$("#text-input input[type=text]").attr("autocorrect", "off");
+		$("#text-input-plain").attr("autocorrect", "off");
 	}
-	$("#text-input input[type=password]").attr("placeholder", "");
-	$("#text-input input[type=text]").attr("placeholder", "");
-	if (options.placeholders.text) $("#text-input input[type=text]").attr("placeholder", options.placeholders.text);
-	if (options.placeholders.password) $("#text-input input[type=password]").attr("placeholder", options.placeholders.password);
+	$("#text-input-password").attr("placeholder", "");
+	$("#text-input-plain").attr("placeholder", "");
+	if (options.placeholders.text) $("#text-input-plain").attr("placeholder", options.placeholders.text);
+	if (options.placeholders.password) $("#text-input-password").attr("placeholder", options.placeholders.password);
 	
-	$("#text-input input[type=text], #text-input input[type=password]").val("");
-	if (options.text) $("#text-input input[type=text]").val(options.text);
+	$("#text-input-plain, #text-input-password").val("");
+	if (options.text) $("#text-input-plain").val(options.text);
 	
 	$("#text-prompt").text(prompt);
 	$("#text-input h1").text(title);
@@ -1954,9 +2023,9 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 	
 	//setTimeout(function() {
 	if (type == 2) {
-		$("#text-input input[type=password]").focus();
+		$("#text-input-password").focus();
 	} else {
-		$("#text-input input[type=text]").focus();
+		$("#text-input-plain").focus();
 	}
 	//}, 600);
 	validateTextInput();
@@ -1966,8 +2035,8 @@ function startTextInput(type, title, prompt, options, callback, cancelCallback) 
 var textInputValid = false;
 function validateTextInput() {
 	textInputValid = true;
-	txt = $("#text-input input[type=text]").val();
-	passwd = $("#text-input input[type=password]").val();
+	txt = $("#text-input-plain").val();
+	passwd = $("#text-input-password").val();
 	if (textInputMode == 1 || textInputMode == 3) {
 		if (!txt) {
 			if (textInputOptions.optional && textInputOptions.optional.text) {
@@ -1999,10 +2068,21 @@ function validateTextInput() {
 	}
 }
 
+function togglePasswordReveal() {
+	var fieldType = "password" // default
+	
+	if($("#text-input-password").prop("type") == "password") {
+		fieldType = "text";
+	}
+	
+	$("#text-input-password").prop("type", fieldType);
+	$("#text-input-password").focus();
+}
+
 function submitText() {
 	if (textInputValid) {
-		txt = $("#text-input input[type=text]").val();
-		passwd = $("#text-input input[type=password]").val();
+		txt = $("#text-input-plain").val();
+		passwd = $("#text-input-password").val();
 		cancelText(true);
 		textInputCallback({text: txt, password: passwd});
 		return true;
@@ -2013,12 +2093,12 @@ function submitText() {
 
 
 function cancelText(hideOnly) {
-	$("#text-input input[type=text], #text-input input[type=password]").blur();
+	$("#text-input-plain, #text-input-password").blur();
 	$("#text-input, #text-input-back-plate").removeClass("visible");
 	textInputCloseTimeout = setTimeout(function() {
 		$("#text-input, #text-input-back-plate").removeClass("block");
-		$("#text-input input[type=text]").val("");
-		$("#text-input input[type=password]").val("");
+		$("#text-input-plain").val("");
+		$("#text-input-password").val("");
 	}, 500);
 	if (!hideOnly) {
 		textInputCallback();
@@ -2319,13 +2399,14 @@ return {
 	hidePopupView: hidePopupView,
 	popupBackplateClick: popupBackplateClick,
 	startTextInput: startTextInput,
+	togglePasswordReveal: togglePasswordReveal,
 	submitText: submitText,
 	cancelText: cancelText,
 	uploadFile: uploadFile,
 	executeFunction: executeFunction,
 	functionExists: functionExists,
-	translatedString: translatedString,
-	translatedStringWithFormat: translatedStringWithFormat,
+	localisedString: localisedString,
+	localisedStringWithFormat: localisedStringWithFormat,
 	capitaliseFirst: capitaliseFirst,
 	commaAndList: commaAndList,
 	showMenuTab: showMenuTab,

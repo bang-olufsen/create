@@ -146,10 +146,13 @@ function processReceivedData(data) {
 	}
 }
 
+var encoder = new TextEncoder();
 
 function sendToProduct(target, header, content = undefined) {
 	if (productConnection && connected) {
-		productConnection.send(JSON.stringify({target: target, header: header, content: content}));
+		var serialisedData = JSON.stringify({target: target, header: header, content: content});
+		//console.log(serialisedData);
+		productConnection.send(encoder.encode(serialisedData));
 	} else if (simulation) {
 		console.log("Simulated send of data:"+{target: target, header: header, content: content});
 	} else {

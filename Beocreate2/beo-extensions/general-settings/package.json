@@ -1,7 +1,7 @@
 {
-  "name": "@beocreate/product-information",
-  "version": "0.8.1",
-  "description": "Product identity controller and main menu for Beocreate sound systems.",
+  "name": "@beocreate/general-settings",
+  "version": "0.5.1",
+  "description": "General settings menu for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,8 +11,7 @@
     "url": "github.com/bang-olufsen/create"
   },
   "keywords": [
-    "product",
-    "information",
+    "settings",
     "beocreate",
     "bang",
     "olufsen"

@@ -34,6 +34,13 @@ var defaultSettings = {
 	updateTracks: ["experimental", "latest", "stable", "critical"]
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
+var updateTracks = settings.updateTracks;
+
+if (beo.customisations && 
+	beo.customisations.updateTracks &&
+	beo.customisations.updateTracks.length > 0) {
+	updateTracks = beo.customisations.updateTracks;
+}
 
 var autoUpdate = "latest";
 var previousVersionChecked = false;
@@ -122,10 +129,10 @@ async function checkForAllUpdates(forceCheck) {
 	if (!checkingForUpdates) {
 		beo.sendToUI("software-update", "checking", {checking: true});
 		checkingForUpdates = true;
-		for (var i = 0; i < settings.updateTracks.length; i++) {
-			if (settings.updateTracks[i] != "experimental" ||
-				settings.updateTracks[i] == "experimental" && settings.showExperimental == true) {
-				await checkForUpdate(settings.updateTracks[i], forceCheck);
+		for (var i = 0; i < updateTracks.length; i++) {
+			if (updateTracks[i] != "experimental" ||
+				updateTracks[i] == "experimental" && settings.showExperimental == true) {
+				await checkForUpdate(updateTracks[i], forceCheck);
 				beo.sendToUI("software-update", "updateList", {versions: versions, checking: true});
 			}
 		}
@@ -147,7 +154,7 @@ async function checkForUpdate(updateTrack, forceCheck) {
 	 	forceCheck) {
 		updateLines = {};
 		try {
-			updateLines = await execPromise("/opt/hifiberry/bin/update --"+updateTrack+" --check");
+			updateLines = await execPromise("/opt/hifiberry/bin/update "+updateTrack+" --check");
 			if (updateLines.stdout) {
 				updateLines = updateLines.stdout.trim().split("\n");
 				newVersion = updateLines[0];
@@ -202,7 +209,7 @@ function installUpdate(updateTrack) {
 			updateProcess = spawn("/opt/hifiberry/bin/update", ["--simulate", "--"+updateTrack]);
 		} else {*/
 			if (debug) console.log("Starting software update.");
-			updateProcess = spawn("/opt/hifiberry/bin/update", ["--"+updateTrack]);
+			updateProcess = spawn("/opt/hifiberry/bin/update", [updateTrack]);
 		//}
 		
 		updateProcess.stdout.on('data', function (data) {
@@ -303,37 +310,41 @@ function startAutoCheckTimeout() {
 function autoUpdateMode(mode) {
 	if (mode != undefined) {
 		switch (mode) {
-			case "critical":
-			case "stable":
-			case "latest":
-			case "experimental":
-				fs.writeFileSync("/etc/updater.release", mode);
-				autoUpdate = mode;
+			case true:
+				fs.writeFileSync("/etc/updater.release", updateTracks[0]);
+				autoUpdate = updateTracks[0];
 				break;
 			case false:
 				fs.writeFileSync("/etc/updater.release", "off");
 				autoUpdate = false;
+				break;
+			default:
+				if (updateTracks.indexOf(mode) != -1) {
+					fs.writeFileSync("/etc/updater.release", mode);
+					autoUpdate = mode;
+				} else {
+					fs.writeFileSync("/etc/updater.release", updateTracks[0]);
+					autoUpdate = updateTracks[0];
+				}
 				break;
 		}
 	} else {
 		if (fs.existsSync("/etc/updater.release")) {
 			modeRead = fs.readFileSync("/etc/updater.release", "utf8").trim();
 			switch (modeRead) {
-				case "critical":
-				case "stable":
-				case "latest":
-				case "experimental":
-					autoUpdate = modeRead;
+				case "off":
+				case "":
+					autoUpdate = false;
 					break;
 				default:
-					autoUpdate = false;
+					autoUpdate = modeRead;
 					break;
 			}
 		} else {
 			autoUpdate = false;
 		}
 	}
-	beo.sendToUI("software-update", {header: "autoUpdateMode", content: {mode: autoUpdate, showExperimental: settings.showExperimental}});
+	beo.sendToUI("software-update", "autoUpdateMode", {mode: autoUpdate, showExperimental: settings.showExperimental, tracks: updateTracks});
 }
 
 function checkForPreviousVersion() {

@@ -47,6 +47,11 @@ $(document).on("mpd", function(event, data) {
 				}
 				$("#mpd-mounted-storage").append(beo.createMenuItem(menuOptions));
 			}
+			if (data.content.storage.length == 0) {
+				$("#mpd-mounted-storage-title").addClass("hidden");
+			} else {
+				$("#mpd-mounted-storage-title").removeClass("hidden");
+			}
 		}
 		//beo.notify(false, "mpd");
 	}

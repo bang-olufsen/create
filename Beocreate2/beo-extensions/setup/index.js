@@ -30,6 +30,13 @@ SOFTWARE.*/
 	var version = require("./package.json").version;
 	
 	var doPostSetup = false;
+	var setupFlowOrder = ["choose-country", "network", "speaker-preset", "product-information", "privacy"];
+	
+	if (beo.customisations && 
+		beo.customisations.setupFlowOrder &&
+		typeof beo.customisations.setupFlowOrder == "object") {
+		setupFlowOrder = beo.customisations.setupFlowOrder;
+	}
 	
 	beo.bus.on('general', function(event) {
 		
@@ -75,10 +82,10 @@ SOFTWARE.*/
 					//setupFlow.unshift({extension: "setup", shown: false, allowAdvancing: true}); // Add the "welcome" screen to the beginning of the flow.
 					selectedExtension = setupFlow[0].extension;
 					beo.bus.emit("setup", {header: "startingSetup", content: {withExtension: setupFlow[0].extension}});
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, firstTime: settings.firstTimeSetup}});
+					beo.sendToUI("setup", "setupStatus", {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, reset: true, firstTime: settings.firstTimeSetup});
 				} else {
 					// If setup is already underway, just send the current status. The UI should pick up.
-					beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, firstTime: settings.firstTimeSetup}});
+					beo.sendToUI("setup", "setupStatus", {setupFlow: setupFlow, setup: beo.setup, selectedExtension: selectedExtension, firstTime: settings.firstTimeSetup});
 				}
 			}
 			
@@ -90,7 +97,7 @@ SOFTWARE.*/
 					if (setupFlow[i+1]) {
 						// Command the next step.
 						beo.bus.emit("setup", {header: "advancing", content: {fromExtension: selectedExtension}});
-						beo.bus.emit("ui", {target: "setup", header: "showExtension", content: {extension: setupFlow[i+1].extension}});
+						beo.sendToUI("setup", "showExtension", {extension: setupFlow[i+1].extension});
 						if (setupFlow[i+1].extension == "setup-finish") {
 							if (doPostSetup) {
 								settings.doingPostSetup = true;
@@ -104,7 +111,7 @@ SOFTWARE.*/
 						setupFlow = [{extension: "setup", shown: false, allowAdvancing: true}, {extension: "setup-finish", shown: false, allowAdvancing: true}];
 						beo.setup = false;
 						beo.bus.emit("setup", {header: "finishingSetup"});
-						beo.bus.emit("ui", {target: "setup", header: "setupStatus", content: {setupFlow: [], setup: "finished", selectedExtension: selectedExtension}});
+						beo.sendToUI("setup", "setupStatus", {setupFlow: [], setup: "finished", selectedExtension: selectedExtension});
 						settings.firstTimeSetup = false;
 						setupFinished = true;
 						beo.saveSettings("setup", settings);
@@ -118,7 +125,7 @@ SOFTWARE.*/
 	
 	
 	function joinSetupFlow(extension, options) {
-		// An extension can join the setup flow at any time, but it might not get its preferred placement if some extension have already been shown to the user.
+		// An extension can join the setup flow at any time, but it might not get its preferred placement if some extensions have already been shown to the user.
 		
 		joins = true;
 		for (var i = 0; i < setupFlow.length; i++) {
@@ -133,63 +140,33 @@ SOFTWARE.*/
 			// Create an entry.
 			allowAdvancing = (options.allowAdvancing) ? true : false
 			newStep = {extension: extension, shown: false, allowAdvancing: allowAdvancing};
-			/*if (options.before) newStep.before = options.before;
-			if (options.after) newStep.after = options.after;
-			// Next, determine the placement.
-			endIndex = setupFlow.length-1; // Default to adding the extension to the end, but before the finishing step.
 			
-			// First fill out these indexes, then check if we need to resolve conflicts:
-			beforeExisting = null; // If the new extension wants to be before an existing one.
-			beforeNew = null; // If an existing extension wants to be before the new one.
-			afterExisting = null; // If the new extension wants to be after an existing one.
-			afterNew = null; // If an existing extension wants to be after the new one.
-			lastShown = 0;
-						
-			for (var i = 1; i < setupFlow.length; i++) {
-				if (newStep.before) {
-					if (newStep.before.indexOf(setupFlow[i].extension) != -1) {
-						// Only find the first extension that matches.
-						if (beforeExisting == null) beforeExisting = i;
-					}
-				}
-				if (newStep.after) {
-					if (newStep.after.indexOf(setupFlow[i].extension) != -1) {
-						afterExisting = i+1;
-					}
-				}
-				if (setupFlow[i].before) {
-					if (setupFlow[i].before.indexOf(newStep.extension) != -1) {
-						beforeNew = i+1;
-					}
-				}
-				if (setupFlow[i].after) {
-					if (setupFlow[i].after.indexOf(newStep.extension) != -1) {
-						afterNew = i;
-					}
-				}
-				if (setupFlow[i].shown) lastShown = i+1;
-			}
-			if (beforeExisting == null && afterExisting == null && beforeNew == null && afterNew == null) {
-				placedIndex = endIndex;
-			} else {
-				placedIndex = Math.max(beforeExisting, afterExisting, beforeNew, afterNew, lastShown);
-			}
+			var flowStart = (setupFlowOrder[0] != "setup") ? ["setup"] : [];
+			var flowEnd = (setupFlowOrder[setupFlowOrder.length - 1] != "setup-finish") ? ["setup-finish"] : [];
+			var theOrder = flowStart.concat(setupFlowOrder, flowEnd);
 			
-			setupFlow.splice(placedIndex, 0, newStep); // Add to the flow.*/
-			
-			// Temporary fixed sort.
-			theOrder = ["setup", "choose-country", "network", "speaker-preset", "product-information", "privacy", "setup-finish"];
 			tempFlow = [];
 			for (i in setupFlow) {
 				tempFlow[theOrder.indexOf(setupFlow[i].extension)] = setupFlow[i];
 			}
-			index = theOrder.indexOf(extension);
-			tempFlow[index] = newStep;
+			var index = theOrder.indexOf(extension);
+			if (index == -1) index = tempFlow.length - 1; // Add to the end but before setup-finish.
+			
+			var lastShown = 0;
+			for (var i = 0; i < setupFlow.length; i++) {
+				if (setupFlow[i].shown) lastShown = i;
+			}
+			
+			if (lastShown > index) {
+				tempFlow[index] = newStep;
+			} else {
+				tempFlow[lastShown+1] = newStep;
+			}
 			setupFlow = tempFlow.filter(function (el) {
 		  		return el != null;
 			});
 			
-			beo.bus.emit("ui", {target: "setup", header: "joinSetupFlow", content: {extension: extension, setupFlow: setupFlow}});
+			beo.sendToUI("setup", "joinSetupFlow", {extension: extension, setupFlow: setupFlow});
 			if (debug) console.log("Extension '"+extension+"' joined setup flow.");
 			checkIfMoreSteps();
 		}
@@ -202,7 +179,7 @@ SOFTWARE.*/
 			for (var i = 0; i < setupFlow.length; i++) {
 				if (setupFlow[i].extension == extension) {
 					setupFlow[i].allowAdvancing = allow;
-					beo.bus.emit("ui", {target: "setup", header: "allowAdvancing", content: {extension: extension, allow: allow}});
+					beo.sendToUI("setup", "allowAdvancing", {extension: extension, allow: allow});
 					break;
 				}
 			}
@@ -240,14 +217,14 @@ SOFTWARE.*/
 					} else {
 						// If the extension can't be removed (it has been already shown), allow advancing over it.
 						setupFlow[i].allowAdvancing = true;
-						beo.bus.emit("ui", {target: "setup", header: "allowAdvancing", content: {extension: extension, allow: true}});
+						beo.sendToUI("setup", "allowAdvancing", {extension: extension, allow: true});
 					}
 					break;
 				}
 			}
 			if (leaves) {
 				setupFlow.splice(i, 1);
-				beo.bus.emit("ui", {target: "setup", header: "leaveSetupFlow", content: {extension: extension, setupFlow: setupFlow}});
+				beo.sendToUI("setup", "leaveSetupFlow", {extension: extension, setupFlow: setupFlow});
 				checkIfMoreSteps();
 			}
 		}
@@ -260,9 +237,9 @@ SOFTWARE.*/
 			if (setupFlow[i].extension == selectedExtension) {
 				if (setShown) setupFlow[i].shown = true;
 				if (i < setupFlow.length-1) {
-					beo.bus.emit("ui", {target: "setup", header: "assistantButton", content: {lastStep: false}});
+					beo.sendToUI("setup", "assistantButton", {lastStep: false});
 				} else {
-					beo.bus.emit("ui", {target: "setup", header: "assistantButton", content: {lastStep: true}});
+					beo.sendToUI("setup", "assistantButton", {lastStep: true});
 				}
 				break;
 			}

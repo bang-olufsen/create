@@ -129,20 +129,20 @@ function showCanReadToslinkStatus() {
 
 function showToslinkStatus() {
 	if (!canReadToslinkStatus) {
-		$(".toslink-status").removeClass("fill").text(beo.translatedString("Unknown", "unknown", "toslink"));
+		$(".toslink-status").removeClass("fill").text(beo.localisedString("Unknown", "unknown", "toslink"));
 	} else {
 		if (toslinkStatus) {
 			if (toslinkEnabled) {
-				$(".toslink-status").addClass("fill").text(beo.translatedString("Playing", "active", "toslink"));
+				$(".toslink-status").addClass("fill").text(beo.localisedString("Playing", "active", "toslink"));
 			} else {
-				$(".toslink-status").removeClass("fill").text(beo.translatedString("Off, has signal", "disabledHasSignal", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.localisedString("Off, has signal", "disabledHasSignal", "toslink"));
 			}
 		} else {
 			
 			if (toslinkEnabled) {
-				$(".toslink-status").removeClass("fill").text(beo.translatedString("Not active", "inactive", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.localisedString("Not active", "inactive", "toslink"));
 			} else {
-				$(".toslink-status").removeClass("fill").text(beo.translatedString("Off", "disabled", "toslink"));
+				$(".toslink-status").removeClass("fill").text(beo.localisedString("Off", "disabled", "toslink"));
 			}
 		}
 	}

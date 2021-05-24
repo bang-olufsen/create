@@ -446,7 +446,7 @@ function savePresetToFile(withName, withAdjustments) {
 	if (settings.presetOrder.indexOf(newID) == -1) settings.presetOrder.push(newID);
 	beo.sendToUI("beosonic", {header: "beosonicSettings", content: {settings: settings, presets: compactPresetList, presetSaved: newID}});
 	beo.saveSettings("beosonic", settings);
-	if (debug) console.log("Beosonic preset '"+withName+"' was saved.")
+	if (debug) console.log("Beosonic preset '"+withName+"' was saved.");
 }
 
 function generateFilename(name) {

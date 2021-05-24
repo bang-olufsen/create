@@ -30,6 +30,7 @@ var nowPlayingData = {
 	canSeek: false,
 	visible: false,
 	notify: false,
+	notifyLong: false,
 	scrollH1: false,
 	scrollH2: false,
 	reveal: false,
@@ -362,6 +363,7 @@ $(document).on("sources", function(event, data) {
 });
 
 var nowPlayingNotificationTimeout;
+var nowPlayingNotificationLongTimeout;
 nowPlayingController.$watch('trackInfo', function() {
 	evaluateTextScrolling();
 	if (nowPlayingController.trackInfo) showNowPlayingNotification();
@@ -372,13 +374,19 @@ nowPlayingController.$watch('playerState', function(state) {
 
 function showNowPlayingNotification() {
 	nowPlayingController.notify = 1;
+	nowPlayingController.notifyLong = 1;
 	clearTimeout(nowPlayingNotificationTimeout);
+	clearTimeout(nowPlayingNotificationLongTimeout);
 	nowPlayingNotificationTimeout = setTimeout(function() {
 		nowPlayingController.notify = 2;
+		nowPlayingController.notifyLong = 2;
 		nowPlayingNotificationTimeout = setTimeout(function() {
 			nowPlayingController.notify = 0;
 		}, 5000);
 	}, 700);
+	nowPlayingNotificationLongTimeout = setTimeout(function() {
+		nowPlayingController.notifyLong = 0;
+	}, 20000);
 }
 
 
@@ -488,7 +496,7 @@ function setPlaceholderArtwork() {
 		extensions[focusedSource].icon) {
 		nowPlayingController.placeholderPicture = extensions[focusedSource].assetPath+"/symbols-black/"+extensions[focusedSource].icon;
 	} else {
-		if (document.body.classList.contains("hifiberry-os")) {
+		if (document.body.classList.contains("hifiberry")) {
 			nowPlayingController.placeholderPicture = extensions["now-playing"].assetPath+"/placeholder-hifiberry.svg";
 		} else {
 			nowPlayingController.placeholderPicture = extensions["now-playing"].assetPath+"/placeholder.svg";

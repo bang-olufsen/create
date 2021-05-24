@@ -114,6 +114,7 @@ $(document).on("general", function(event, data) {
 		if (product_information && product_information.systemID && product_information.systemName) {
 			if (data.content.status == "shuttingDown") {
 				sendToProductView({header: "powerStatus", content: {status: "shuttingDown", systemID: product_information.systemID(), systemName: product_information.systemName()}});
+				beoCom.setConnectionOptions({maxAttempts: 10, notifications: false});
 				notify({title: "Shutting down product…", icon: "attention", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", timeout: false});
 				setTimeout(function() {
 					beo.notify({title: "Shutdown complete", message: "You may now unplug the product from power.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Connect Again", timeout: false});

@@ -128,7 +128,8 @@ body {
 
 .hidden, 
 .hidden-2, 
-.hifiberry .hifiberry-hide {
+.hifiberry .hifiberry-hide,
+body:not(.developer) .developer-only {
 	display: none !important;
 }
 

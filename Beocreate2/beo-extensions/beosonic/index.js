@@ -245,7 +245,7 @@ beo.bus.on('dsp', function(event) {
 					if (metadata["toneControlLeftRegisters"].value[0].split("/")[1] == metadata["toneControlRightRegisters"].value[0].split("/")[1]) {
 						canDoToneControl.toneControls = parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[1])/5; // Save how many filters are in this bank.
 						
-						applyBeosonicFromSettings(true);
+						applyBassAndTrebleFromSettings(true);
 					}
 				} else {
 					canDoToneControl.toneControls = 0;

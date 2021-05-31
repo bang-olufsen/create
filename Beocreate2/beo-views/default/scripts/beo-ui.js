@@ -31,7 +31,8 @@ uiSettings = {
 	disclosure: {}
 };
 
-os = getOS();
+var os = getOS();
+var inBeoApp = false;
 
 $( document ).ready(function() {
 	// FASTCLICK
@@ -90,6 +91,7 @@ window.addEventListener('message',function(event) {
 			case "isShownInBeoApp":
 				if (data.content == true) {
 					$("body").addClass("in-beo-app");
+					inBeoApp = true;
 				}
 				break;
 			case "hasDarkAppearance":
@@ -2425,6 +2427,7 @@ return {
 	sendToProductView: sendToProductView,
 	setAppearance: setAppearance,
 	isDarkAppearance: function() {return darkAppearance},
+	isShownInBeoApp: function() {return inBeoApp},
 	insertConnectionGuide: insertConnectionGuide,
 	wizard: wizard,
 	getOS: getOS,

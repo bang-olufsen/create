@@ -31,7 +31,7 @@ uiSettings = {
 	disclosure: {}
 };
 
-var os = getOS();
+os = getOS();
 var inBeoApp = false;
 
 $( document ).ready(function() {

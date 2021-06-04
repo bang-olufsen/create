@@ -1,12 +1,15 @@
 
 beosonic = (function() {
 
+var getSettingsAtExtension = null;
 
 $(document).on("general", function(event, data) {
 	
 	if (data.header == "activatedExtension") {
-		if (data.content.extension == "sound") {
-			
+		if (data.content.extension != "beosonic" &&
+			getSettingsAtExtension &&
+			data.content.extension == getSettingsAtExtension) {
+			beo.sendToProduct("beosonic", "beosonicSettings");
 		}
 		
 		if (data.content.extension == "beosonic") {
@@ -26,8 +29,6 @@ $(document).on("beosonic", function(event, data) {
 				beosonicDistance = data.content.settings.beosonicDistance;
 				beosonicAngle = data.content.settings.beosonicAngle;
 				updateBeosonicUI();
-				
-				
 			}
 			if (data.content.settings.loudness != undefined) {
 				if (!data.content.settings.loudness) {
@@ -37,6 +38,15 @@ $(document).on("beosonic", function(event, data) {
 				}
 				$(".loudness-slider").slider("value", data.content.settings.loudness);
 			}
+		}
+		
+		try {
+			$(".treble-slider").slider("value", data.content.settings.trebleGain*20);
+			$(".treble-slider span").attr("data-content", toneValueToText(data.content.settings.trebleGain*20));
+			$(".bass-slider").slider("value", data.content.settings.bassGain*20);
+			$(".bass-slider span").attr("data-content", toneValueToText(data.content.settings.bassGain*20));
+		} catch (error) {
+			// No bass and treble sliders.
 		}
 		
 		$(".beosonic-menu-preset").removeClass("selected");
@@ -53,11 +63,11 @@ $(document).on("beosonic", function(event, data) {
 		if (data.content.canDoToneControl) {
 			if (!data.content.canDoToneControl.toneControls) {
 				// No ToneTouch or loudness.
-				$("#beosonic-dot").addClass("disabled");
+				$("#beosonic-dot, .bass-slider, .treble-slider").addClass("disabled");
 			} 
 			if (data.content.canDoToneControl.toneControls >= 2) {
 				// Enable ToneTouch.
-				$("#beosonic-dot").removeClass("disabled");
+				$("#beosonic-dot, .bass-slider, .treble-slider").removeClass("disabled");
 			}
 			if (data.content.canDoToneControl.toneControls >= 4) {
 				// Enable loudness.
@@ -480,6 +490,49 @@ function deletePreset(confirmed) {
 	} else {
 		beo.ask("delete-beosonic-preset-prompt", [beosonicPresets[selectedPreset].presetName]);
 	}
+}
+
+
+// BASS AND TREBLE SLIDERS (if they exist, don't use with Beosonic, UI goes out of sync)
+
+$(".treble-slider").slider({
+	range: "min",
+	min: -20,
+	max: 20,
+	value: 0,
+	slide: function( event, ui ) {
+		$(".treble-slider span").attr("data-content", toneValueToText(ui.value));
+		beo.sendToProduct("beosonic", "setTreble", {gain: ui.value/20});
+	},
+	create: function(event, ui) {
+		getSettingsAtExtension = $(".treble-slider").parents(".menu-screen").attr("id");
+	}
+});
+$(".treble-slider .ui-slider-range").append("<div></div>");
+$(".treble-slider span").attr("data-content", "0");
+
+$(".bass-slider").slider({
+	range: "min",
+	min: -20,
+	max: 20,
+	value: 0,
+	slide: function( event, ui ) {
+		$(".bass-slider span").attr("data-content", toneValueToText(ui.value));
+		beo.sendToProduct("beosonic", "setBass", {gain: ui.value/20});
+	}
+});
+$(".bass-slider .ui-slider-range").append("<div></div>");
+$(".bass-slider span").attr("data-content", "0");
+
+function toneValueToText(value) {
+	if (value < 0) {
+		text = "–"+(value)*-1;
+	} else if (value > 0) {
+		text = "+"+value;
+	} else {
+		text = "0";
+	}
+	return text;
 }
 
 

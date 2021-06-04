@@ -33,7 +33,15 @@ var	defaultSettings = {
 	"beosonicAngle": 0,
 	"beosonicAmbience": 0,
 	"presetOrder": ["optimal"],
-	"selectedPreset": "optimal"
+	"selectedPreset": "optimal",
+	"bassGain": 0,
+	"trebleGain": 0,
+	"bassQ": 0.707,
+	"trebleQ": 0.707,
+	"bassFc": 120,
+	"trebleFc": 8000,
+	"bassMaxGain": 6,
+	"trebleMaxGain": 8
 };
 var settings = JSON.parse(JSON.stringify(defaultSettings));
 
@@ -90,15 +98,40 @@ beo.bus.on('beosonic', function(event) {
 	}
 	
 	if (event.header == "beosonicSettings") {
-		if (event.content.beosonicDistance != undefined && event.content.beosonicAngle != undefined) {
+		if (!event.content) {
+			beo.sendToUI("beosonic", "beosonicSettings", {settings: settings, canDoToneControl: canDoToneControl, presets: compactPresetList});
+		} else {
+			if (event.content.beosonicDistance != undefined && event.content.beosonicAngle != undefined) {
+				if (event.content.changedFromPreset) {
+					settings.selectedPreset = null;
+				}
+				settings.beosonicAngle = event.content.beosonicAngle;
+				settings.beosonicDistance = event.content.beosonicDistance;
+				
+				applyBeosonicFromSettings(null, true);
+			}
+		}
+	}
+	
+	if (event.header == "setBass") {
+		if (event.content.gain >= -1 || event.content.gain <= 1) {
 			if (event.content.changedFromPreset) {
 				settings.selectedPreset = null;
 			}
-			settings.beosonicAngle = event.content.beosonicAngle;
-			settings.beosonicDistance = event.content.beosonicDistance;
+			settings.bassGain = event.content.gain;
 			
-			beo.saveSettings("beosonic", settings);
-			applyBeosonicFromSettings();
+			applyBassAndTrebleFromSettings(null, true);
+		}
+	}
+	
+	if (event.header == "setTreble") {
+		if (event.content.gain >= -1 || event.content.gain <= 1) {
+			if (event.content.changedFromPreset) {
+				settings.selectedPreset = null;
+			}
+			settings.trebleGain = event.content.gain;
+			
+			applyBassAndTrebleFromSettings(null, true);
 		}
 	}
 	
@@ -212,7 +245,7 @@ beo.bus.on('dsp', function(event) {
 					if (metadata["toneControlLeftRegisters"].value[0].split("/")[1] == metadata["toneControlRightRegisters"].value[0].split("/")[1]) {
 						canDoToneControl.toneControls = parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[1])/5; // Save how many filters are in this bank.
 						
-						applyBeosonicFromSettings(true);
+						applyBassAndTrebleFromSettings(true);
 					}
 				} else {
 					canDoToneControl.toneControls = 0;
@@ -231,18 +264,12 @@ beo.bus.on('dsp', function(event) {
 	}
 });
 
-// Beosonic parametres.
-var maxGainBass = 6;
-var maxGainTreble = 8;
-var bassFc = 100;
-var trebleFc = 10000;
-var bassQ = 0.7;
-var trebleQ = 0.7;
+// Beosonic parametres, moved to default settings.
 
 var toneTouchLogTimeout = null;
 
 
-function applyBeosonicFromSettings(log) {
+function applyBeosonicFromSettings(log, saveSettings = false) {
 	if (canDoToneControl.toneControls >= 2) {
 		// Calculate gains.
 		gainEffect = settings.beosonicDistance/50;
@@ -266,32 +293,11 @@ function applyBeosonicFromSettings(log) {
 			gainDiag = [gDiag[3], gDiag[2], gDiag[0], gDiag[1]];
 		}
 		
-		trebleGain = gainDiag[3] * maxGainTreble;
-		bassGain = gainDiag[1] * maxGainBass;
+		settings.trebleGain = gainDiag[3];
+		settings.bassGain = gainDiag[1];
 		
-		if (!disabledTemporarily) {
-			// Calculate shelving filters.
-			trebleCoeffs = beoDSP.highShelf(Fs, trebleFc, trebleGain, trebleQ, 0);
-			bassCoeffs = beoDSP.lowShelf(Fs, bassFc, bassGain, bassQ, 0);
-		} else {
-			trebleCoeffs = [1,0,0,1,0,0];
-			bassCoeffs = [1,0,0,1,0,0];
-		}
+		applyBassAndTrebleFromSettings(log, saveSettings);
 		
-		// Apply treble to both channels.
-		beoDSP.safeloadWrite(parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[0]), [trebleCoeffs[5], trebleCoeffs[4], trebleCoeffs[3], trebleCoeffs[2]*-1, trebleCoeffs[1]*-1], true);
-		beoDSP.safeloadWrite(parseInt(metadata["toneControlRightRegisters"].value[0].split("/")[0]), [trebleCoeffs[5], trebleCoeffs[4], trebleCoeffs[3], trebleCoeffs[2]*-1, trebleCoeffs[1]*-1], true);
-		
-		// Apply bass to both channels.
-		beoDSP.safeloadWrite(parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[0])+5, [bassCoeffs[5], bassCoeffs[4], bassCoeffs[3], bassCoeffs[2]*-1, bassCoeffs[1]*-1], true);
-		beoDSP.safeloadWrite(parseInt(metadata["toneControlRightRegisters"].value[0].split("/")[0])+5, [bassCoeffs[5], bassCoeffs[4], bassCoeffs[3], bassCoeffs[2]*-1, bassCoeffs[1]*-1], true);
-		
-		if (debug == 2 || log) {
-			clearTimeout(toneTouchLogTimeout);
-			toneTouchLogTimeout = setTimeout(function() {
-				console.log("Beosonic: treble is at "+Math.round(trebleGain*10)/10+" dB, bass is at "+Math.round(bassGain*10)/10+" dB.");
-			}, 500);
-		}
 	}
 }
 
@@ -315,6 +321,37 @@ function getOffsetAndQuadrant(distance, angle, withOffset = 0) {
 	}
 	return [offset, quadrant];
 }
+
+
+function applyBassAndTrebleFromSettings(log, saveSettings = false) {
+	
+	if (saveSettings) beo.saveSettings("beosonic", settings);
+	
+	if (!disabledTemporarily) {
+		// Calculate shelving filters.
+		trebleCoeffs = beoDSP.highShelf(Fs, settings.trebleFc, settings.trebleGain * settings.trebleMaxGain, settings.trebleQ, 0);
+		bassCoeffs = beoDSP.lowShelf(Fs, settings.bassFc, settings.bassGain * settings.bassMaxGain, settings.bassQ, 0);
+	} else {
+		trebleCoeffs = [1,0,0,1,0,0];
+		bassCoeffs = [1,0,0,1,0,0];
+	}
+	
+	// Apply treble to both channels.
+	beoDSP.safeloadWrite(parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[0]), [trebleCoeffs[5], trebleCoeffs[4], trebleCoeffs[3], trebleCoeffs[2]*-1, trebleCoeffs[1]*-1], true);
+	beoDSP.safeloadWrite(parseInt(metadata["toneControlRightRegisters"].value[0].split("/")[0]), [trebleCoeffs[5], trebleCoeffs[4], trebleCoeffs[3], trebleCoeffs[2]*-1, trebleCoeffs[1]*-1], true);
+	
+	// Apply bass to both channels.
+	beoDSP.safeloadWrite(parseInt(metadata["toneControlLeftRegisters"].value[0].split("/")[0])+5, [bassCoeffs[5], bassCoeffs[4], bassCoeffs[3], bassCoeffs[2]*-1, bassCoeffs[1]*-1], true);
+	beoDSP.safeloadWrite(parseInt(metadata["toneControlRightRegisters"].value[0].split("/")[0])+5, [bassCoeffs[5], bassCoeffs[4], bassCoeffs[3], bassCoeffs[2]*-1, bassCoeffs[1]*-1], true);
+	
+	if (debug == 2 || log) {
+		clearTimeout(toneTouchLogTimeout);
+		toneTouchLogTimeout = setTimeout(function() {
+			console.log("Beosonic: treble is at "+Math.round(settings.trebleGain * settings.trebleMaxGain * 10)/10+" dB, bass is at "+Math.round(settings.bassGain * settings.bassMaxGain * 10)/10+" dB.");
+		}, 500);
+	}
+}
+
 	
 Math.radians = function(degrees) {
 	return degrees * Math.PI / 180;
@@ -324,11 +361,11 @@ function tempDisable(disable) {
 	if (disable && !disabledTemporarily) {
 		disabledTemporarily = true;
 		if (debug) console.log("Disabling Beosonic temporarily.");
-		applyBeosonicFromSettings(false);
+		applyBassAndTrebleFromSettings(false);
 	} else if (!disable && disabledTemporarily) {
 		disabledTemporarily = false;
 		if (debug) console.log("Re-enabling Beosonic.");
-		applyBeosonicFromSettings(true);
+		applyBassAndTrebleFromSettings(true);
 	}
 }
 
@@ -339,7 +376,7 @@ function applyBeosonicPreset(presetID) {
 			if (fullPresetList[presetID].beosonic.beosonicAngle != undefined) settings.beosonicAngle = fullPresetList[presetID].beosonic.beosonicAngle;
 			if (fullPresetList[presetID].beosonic.beosonicDistance != undefined) settings.beosonicDistance = fullPresetList[presetID].beosonic.beosonicDistance;
 			if (fullPresetList[presetID].beosonic.beosonicAmbience != undefined) settings.beosonicAmbience = fullPresetList[presetID].beosonic.beosonicAmbience;
-			applyBeosonicFromSettings(true);
+			applyBeosonicFromSettings(true, true);
 		} else {
 			if (beo.extensions[adjustment] &&
 				beo.extensions[adjustment].applyBeosonicPreset) {

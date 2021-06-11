@@ -120,7 +120,7 @@ $(document).on("general", function(event, data) {
 				notify({title: "Shutting down product…", icon: "attention", message: "Leave power connected for at least 20 seconds to allow shutdown to finish.", timeout: false});
 				setTimeout(function() {
 					beo.notify({title: "Shutdown complete", message: "You may now unplug the product from power.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Connect Again", timeout: false});
-					beoCom.setConnectionOptions({maxAttempts: 5, notifications: true});
+					beoCom.setConnectionOptions({maxAttempts: 5, notifications: false});
 				}, 20000);
 				noConnectionNotifications = true;
 				maxConnectionAttempts = 0;

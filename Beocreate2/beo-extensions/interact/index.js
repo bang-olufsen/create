@@ -322,11 +322,23 @@ function getInteractionByName(name) {
 function getAllTriggersAndActions() {
 	for (extension in beo.extensions) {
 		if (extension != "interact" && beo.extensions[extension].interact) {
+			var imported = 0;
 			if (beo.extensions[extension].interact.triggers) {
 				allTriggers[extension] = beo.extensions[extension].interact.triggers;
+				imported = 1;
 			}
 			if (beo.extensions[extension].interact.actions) {
 				allActions[extension] = beo.extensions[extension].interact.actions;
+				imported = (imported) ? 3 : 2;
+			}
+			if (debug > 2) {
+				if (imported == 1) {
+					if (debug > 2) console.log("Interact imported triggers from '"+extension+"'.");
+				} else if (imported == 2) {
+					if (debug > 2) console.log("Interact imported actions from '"+extension+"'.");
+				} else if (imported == 3) {
+					if (debug > 2) console.log("Interact imported triggers and actions from '"+extension+"'.");
+				}
 			}
 		}
 	}

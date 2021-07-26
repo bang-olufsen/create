@@ -122,12 +122,10 @@ $(document).on("general", function(event, data) {
 					beo.notify({title: "Shutdown complete", message: "You may now unplug the product from power.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Connect Again", timeout: false});
 					beoCom.setConnectionOptions({maxAttempts: 5, notifications: false});
 				}, 20000);
-				noConnectionNotifications = true;
-				maxConnectionAttempts = 0;
 			} else if (data.content.status == "rebooting") {
 				sendToProductView({header: "powerStatus", content: {status: "rebooting", systemID: product_information.systemID(), systemName: product_information.systemName()}});
 				notify({title: "Restarting product…", message: "This will take a moment, please wait.", icon: "attention", timeout: false});
-				beoCom.setConnectionOptions({maxAttempts: 10, notifications: true});
+				beoCom.setConnectionOptions({maxAttempts: 10, notifications: false});
 			}
 		}
 	}

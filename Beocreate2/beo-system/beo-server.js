@@ -89,7 +89,7 @@ if (cmdArgs.indexOf("q") != -1) quietMode = true;
 if (cmdArgs.indexOf("no-custom") != -1) allowCustomisation = false;
 
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
-if (developerMode) console.log("Developer mode, user interface will not be cached.");
+if (developerMode) console.log("Developer mode.");
 if (!allowCustomisation) console.log("Customisations are disabled.");
 
 if (!fs.existsSync(dataDirectory)) {
@@ -194,7 +194,7 @@ function getSettings(extension) {
 		if (fs.existsSync(dataDirectory+"/"+extension+".json")) { 
 			try {
 				file = fs.readFileSync(dataDirectory+"/"+extension+".json", "utf8").trim();
-					if (file) {
+				if (file) {
 					settings = JSON.parse(file);
 					// Return the parsed JSON.
 					if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
@@ -207,8 +207,26 @@ function getSettings(extension) {
 				settings = null;
 			}
 		} else {
-			// If the settings file doesn't exist, return null.
-			settings = null;
+			// If the settings file doesn't exist, load OEM custom defaults or return null.
+			if (customisations && fs.existsSync(systemConfiguration.customisationPath+"/defaults/"+extension+".json")) { 
+				try {
+					file = fs.readFileSync(systemConfiguration.customisationPath+"/defaults/"+extension+".json", "utf8").trim();
+					if (file) {
+						settings = JSON.parse(file);
+						// Return the parsed JSON.
+						if (debugMode >= 1) console.log("OEM default settings loaded for '"+extension+"'.");
+					} else {
+						if (debugMode >= 1) console.log("OEM default settings file for '"+extension+"' is empty.");
+						settings = null;
+					}
+				} catch (error) {
+					console.error("Error loading OEM default settings for '"+extension+"':", error);
+					settings = null;
+				}
+			} else {
+				// If the settings file doesn't exist, return null.
+				settings = null;
+			}
 		}
 	} else {
 		settings = null;
@@ -858,7 +876,7 @@ function loadAppearance(appearance) {
 			var pageTitle = "HiFiBerry";
 		}
 		bodyClassString = '<body class="'+systemType+' ';
-		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title>", '<title>'+pageTitle).replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+";\ntranslations = "+JSON.stringify(strings)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title></", '<title>'+pageTitle+"</").replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+";\ntranslations = "+JSON.stringify(strings)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
 		
 		return completeUI;
 	} else {

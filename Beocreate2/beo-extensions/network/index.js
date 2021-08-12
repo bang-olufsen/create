@@ -327,7 +327,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 					connectionCheckMax = 10;
 					if (debug) console.log("Network: checking for local network...");
 					setupNetwork();
-					beo.bus.emit("led", {header: "blink", content: {options: {interval: 0.5, colour: "white"}}});
+					beo.bus.emit("network", {header: "status", content: "connecting"});
 					interval = 3;
 					break;
 				case "connected":
@@ -344,12 +344,13 @@ var networkCore = require('../../beocreate_essentials/networking');
 						if (debug && status == true) console.log("Network: internet connection is working.");
 					});
 					beo.bus.emit("ui", {target: "network", header: "connected"});
-					beo.bus.emit("led", {header: "fadeTo", content: {options: {colour: "white", then: {action: "fadeTo", colour: "red", after: 2, speed: "slow"}}}});
+					beo.bus.emit("network", {header: "status", content: "connected"});
 					interval = 60;
 					break;
 				case "disconnected":
 					// A bit faster checks when there is no connection. This mode is really only for systems without Wi-Fi.
 					if (debug) console.log("Network: local network connection was not detected.");
+					beo.bus.emit("network", {header: "status", content: "disconnected"});
 					interval = 30;
 					break;
 				case "hotspot":
@@ -467,6 +468,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 			}
 			if (!hotspotName) hotspotName = hotspotPrefix+" Setup";
 			if (debug) console.log("Network: starting setup hotspot with name: '"+hotspotName+"'...");
+			beo.bus.emit("network", {header: "status", content: "setup"});
 		}
 		if (!settings.useHifiberryHotspot) {
 			if (start) {

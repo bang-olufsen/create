@@ -408,6 +408,11 @@
 	display: inline;
 }
 
+#now-playing-info-area .scroll-invitation {
+	position: absolute;
+	bottom: 0;
+}
+
 /* @end */
 
 /* @group Queue Area */

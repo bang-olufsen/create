@@ -170,6 +170,7 @@ function startSerialPort() {
 			
 			port.on('open', function() {
 				if (debug) console.log("Interact: serial port opened to '"+settings.serialPortDevice+"'.");
+				beo.bus.emit("interact", {header: "serialPortStatus", content: {status: "opened", port: settings.serialPortDevice}});
 				sendSerialPortList();
 				clearInterval(portReconnectInterval);
 				portReconnectInterval = null;
@@ -194,6 +195,7 @@ function startSerialPort() {
 					if (debug) console.log("Interact: serial port to '"+port.path+"' was closed.");
 				}
 				beo.sendToUI("interact", {header: "serialPortClosed", content: {port: port.path}});
+				beo.bus.emit("interact", {header: "serialPortStatus", content: {status: "opened", port: port.path}});
 			});
 		
 		}

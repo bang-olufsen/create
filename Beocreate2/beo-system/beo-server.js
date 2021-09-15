@@ -46,6 +46,7 @@ var defaultSystemConfiguration = {
 	"cardType": "Beocreate 4-Channel Amplifier",
 	"cardFeatures": [],
 	"port": 80,
+	"httpsPort": 443,
 	"language": "en",
 	"defaultAppearance": "default",
 	"customisationPath": "/custom/beocreate"
@@ -74,6 +75,7 @@ var developerMode = false;
 var quietMode = false;
 var forceBeosounds = false;
 var allowCustomisation = true;
+var useHTTPS = null;
 
 console.log("Beocreate 2 ("+systemVersion+"), copyright 2017-2021 Bang & Olufsen A/S. MIT open source licence.");
 
@@ -87,9 +89,10 @@ if (cmdArgs.indexOf("d") != -1) daemonMode = true;
 if (cmdArgs.indexOf("dev") != -1) developerMode = true;
 if (cmdArgs.indexOf("q") != -1) quietMode = true;
 if (cmdArgs.indexOf("no-custom") != -1) allowCustomisation = false;
+if (cmdArgs.indexOf("no-https") != -1) useHTTPS = false;
 
 if (debugMode) console.log("Debug logging level: "+debugMode+".");
-if (developerMode) console.log("Developer mode, user interface will not be cached.");
+if (developerMode) console.log("Developer mode.");
 if (!allowCustomisation) console.log("Customisations are disabled.");
 
 if (!fs.existsSync(dataDirectory)) {
@@ -194,7 +197,7 @@ function getSettings(extension) {
 		if (fs.existsSync(dataDirectory+"/"+extension+".json")) { 
 			try {
 				file = fs.readFileSync(dataDirectory+"/"+extension+".json", "utf8").trim();
-					if (file) {
+				if (file) {
 					settings = JSON.parse(file);
 					// Return the parsed JSON.
 					if (debugMode >= 2) console.log("Settings loaded for '"+extension+"'.");
@@ -207,8 +210,26 @@ function getSettings(extension) {
 				settings = null;
 			}
 		} else {
-			// If the settings file doesn't exist, return null.
-			settings = null;
+			// If the settings file doesn't exist, load OEM custom defaults or return null.
+			if (customisations && fs.existsSync(systemConfiguration.customisationPath+"/defaults/"+extension+".json")) { 
+				try {
+					file = fs.readFileSync(systemConfiguration.customisationPath+"/defaults/"+extension+".json", "utf8").trim();
+					if (file) {
+						settings = JSON.parse(file);
+						// Return the parsed JSON.
+						if (debugMode >= 1) console.log("OEM default settings loaded for '"+extension+"'.");
+					} else {
+						if (debugMode >= 1) console.log("OEM default settings file for '"+extension+"' is empty.");
+						settings = null;
+					}
+				} catch (error) {
+					console.error("Error loading OEM default settings for '"+extension+"':", error);
+					settings = null;
+				}
+			} else {
+				// If the settings file doesn't exist, return null.
+				settings = null;
+			}
 		}
 	} else {
 		settings = null;
@@ -307,7 +328,20 @@ var selectedDeepMenu = null;
 
 
 // HTTP & EXPRESS SERVERS
+if (useHTTPS != false && // By specifying false HTTPS can be disabled ('http' command argument).
+	fs.existsSync(dataDirectory+"/server.key") && 
+	fs.existsSync(dataDirectory+"/server.cert")) {
+	// Create HTTPS server if certificate and keys are found on the system (experimental).
+	var beoServerHTTPS = https.createServer({
+		key: fs.readFileSync(dataDirectory+"/server.key"),
+		cert: fs.readFileSync(dataDirectory+"/server.cert")
+	}, expressServer);
+	if (debugMode) console.log("HTTPS is enabled on the server.");
+	useHTTPS = true;
+} 
+// Create normal HTTP server.
 var beoServer = http.createServer(expressServer);
+	
 beoServer.on("error", function(error) {
 	switch (error.code) {
 		case "EADDRINUSE":
@@ -321,8 +355,24 @@ beoServer.on("error", function(error) {
 	}
 	
 });
+beoServerHTTPS.on("error", function(error) {
+	switch (error.code) {
+		case "EADDRINUSE":
+			console.error("HTTP server port is already in use. Exiting...")
+			startShutdown();
+			break;
+		default:
+			console.error("HTTP server error. Exiting just in case. Error:", error);
+			startShutdown();
+			break;
+	}
+});
 
-beoServer.listen(systemConfiguration.port); // Create a HTTP server.
+if (useHTTPS) {
+	beoServerHTTPS.listen(systemConfiguration.httpsPort); // Listen on the HTTPS port.
+}
+beoServer.listen(systemConfiguration.port); // Listen on the HTTP port.
+
 
 etags = (developerMode) ? false : true; // Disable etags (caching) when running with debug.
 expressServer.use("/common", express.static(systemDirectory+"/common", {etag: etags})); // For common system assets.
@@ -444,7 +494,11 @@ function removeDownloadRoute(extension, urlPath) {
 }
 
 // START WEBSOCKET
-beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});
+if (useHTTPS) {
+	beoCom.startSocket({server: [beoServer, beoServerHTTPS], acceptedProtocols: ["beocreate"]});
+} else {
+	beoCom.startSocket({server: beoServer, acceptedProtocols: ["beocreate"]});
+}
 
 
 getAllSettings();
@@ -858,7 +912,7 @@ function loadAppearance(appearance) {
 			var pageTitle = "HiFiBerry";
 		}
 		bodyClassString = '<body class="'+systemType+' ';
-		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title>", '<title>'+pageTitle).replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+";\ntranslations = "+JSON.stringify(strings)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
+		completeUI = fs.readFileSync(appearancePath+'/index.html', "utf8").replace("<html>", '<html lang="'+systemConfiguration.language+'">').replace("<title></", '<title>'+pageTitle+"</").replace('<body class="', bodyClassString).replace("</beo-dynamic-ui>", "").replace("<beo-dynamic-ui>", menus.join("\n\n")).replace("</beo-styles>", "").replace("<beo-styles>", stylesheetMarkup).replace("<beo-scripts>", "<script>systemType = '"+systemType+"';extensions = "+JSON.stringify(extensionsListClient)+";\n navigationSets = "+JSON.stringify(navigationSets)+";\ndebug = "+debugMode+";\ndeveloperMode = "+(developerMode)+";\ncustomisations = "+JSON.stringify(customisations)+";\ntranslations = "+JSON.stringify(strings)+"</script>\n").replace("</beo-scripts>", scriptMarkup);
 		
 		return completeUI;
 	} else {

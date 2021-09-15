@@ -81,7 +81,7 @@ beo.bus.on("sources", function(event) {
 			}
 			break;
 		case "getSources":
-			beo.bus.emit("ui", {target: "sources", header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource, sourceOrder: settings.sourceOrder}});
+			beo.sendToUI("sources", "sources", {sources: allSources, currentSource: currentSource, focusedSource: focusedSource, sourceOrder: settings.sourceOrder});
 			break;
 		case "getDefaultAliases":
 			beo.bus.emit("ui", {target: "sources", header: "defaultAliases", content: {aliases: defaultAliases}});
@@ -542,7 +542,7 @@ function sourceActivated(extension, playerState) {
 			allSources[extension].playerState = playerState;
 		}
 		
-		fromStandby = (currentSource == null);
+		var fromStandby = (currentSource == null);
 		
 		determineCurrentSource();
 		if (debug) {
@@ -586,6 +586,7 @@ function sourceDeactivated(extension, playerState) {
 }
 
 function determineCurrentSource() {
+	var fromStandby = (currentSource == null);
 	activeSourceCount = 0;
 	latestSource = null;
 	highestFocusIndex = 0;
@@ -611,7 +612,7 @@ function determineCurrentSource() {
 		}
 	}
 	
-	beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
+	beo.bus.emit("sources", {header: "sourcesChanged", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource, fromStandby: fromStandby, toStandby: (currentSource == null)}});
 	beo.sendToUI("sources", {header: "sources", content: {sources: allSources, currentSource: currentSource, focusedSource: focusedSource}});
 	logSourceStatus();
 }
@@ -754,9 +755,7 @@ function setSourceOptions(extension, options, noUpdate) {
 						titles = [];
 						for (o in settings.sourceOrder) {
 							titles.push(allSources[settings.sourceOrder[o]].sortName);
-							//if (beo.extensionsList[settings.sourceOrder[o]]) titles.push(beo.extensionsList[settings.sourceOrder[o]].menuTitle);
 						}
-						//newTitle = beo.extensionsList[source].menuTitle;
 						newTitle = allSources[source].sortName;
 						newIndex = 0;
 						for (t in titles) {

@@ -1,6 +1,6 @@
 {
   "name": "beocreate-2",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "Software for Beocreate sound systems",
   "main": "beo-server.js",
   "scripts": {

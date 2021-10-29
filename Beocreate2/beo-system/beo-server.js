@@ -1,4 +1,4 @@
-/*Copyright 2017-2020 Bang & Olufsen A/S
+/*Copyright 2017-2021 Bang & Olufsen A/S
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -417,13 +417,12 @@ expressServer.post("/:extension/:header/:extra*?", function (req, res) {
 			} else {
 				customData = null;
 			}
-			if (req.header("path")) {
-				filePath = req.header("path")+"/"+req.header("fileName");
-			} else {
-				if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
-				filePath = dataDirectory+"/beo-uploads/"+req.header("fileName");
-			}
-			fileStream = fs.createWriteStream(filePath);
+			if (!fs.existsSync(dataDirectory+"/beo-uploads")) fs.mkdirSync(dataDirectory+"/beo-uploads");
+			if (!fs.existsSync(dataDirectory+"/beo-uploads/"+req.params.extension)) fs.mkdirSync(dataDirectory+"/beo-uploads/"+req.params.extension);
+			var fileName = req.header("fileName").replace("/", "-").replace("..", "-");
+			var filePath = dataDirectory+"/beo-uploads/"+req.params.extension+"/"+fileName;
+			
+			var fileStream = fs.createWriteStream(filePath);
 			fileStream.on("finish", function() {
 				try {
 					extensions[req.params.extension].processUpload(filePath, customData);
@@ -438,7 +437,7 @@ expressServer.post("/:extension/:header/:extra*?", function (req, res) {
 				
 			});
 		} else {
-			console.error("'"+req.params.extension+"' cannot process uploaded files.");
+			console.error("'"+req.params.extension+"' does not support uploading files.");
 			res.status(501);
 			res.send("cannotReceive");
 		}

@@ -112,7 +112,7 @@ function connectProduct() {
 				console.log("Stopping attempts to connect to " + productAddress + ".");
 				clearTimeout(productConnectionNotificationTimeout);
 				document.body.classList.add("disconnected");
-				document.body.classList.remove("disconnected", "connected");
+				document.body.classList.remove("connecting", "connected");
 				if (beo.sendToProductView) beo.sendToProductView({header: "connection", content: {status: "disconnected", reconnecting: false}});
 				if (maxConnectionAttempts > 0 && !noConnectionNotifications && beo.notify) beo.notify({title: "Product is unreachable", message: "Make sure the product is on and that the product and your "+os[1]+" are connected to the same network.", buttonAction: "beoCom.connectToCurrentProduct();", buttonTitle: "Try Again", id: "connection", timeout: false});
 				clearTimeout(productConnectionTimeout);

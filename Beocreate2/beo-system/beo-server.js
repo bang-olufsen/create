@@ -355,20 +355,20 @@ beoServer.on("error", function(error) {
 	}
 	
 });
-beoServerHTTPS.on("error", function(error) {
-	switch (error.code) {
-		case "EADDRINUSE":
-			console.error("HTTP server port is already in use. Exiting...")
-			startShutdown();
-			break;
-		default:
-			console.error("HTTP server error. Exiting just in case. Error:", error);
-			startShutdown();
-			break;
-	}
-});
-
 if (useHTTPS) {
+	beoServerHTTPS.on("error", function(error) {
+		switch (error.code) {
+			case "EADDRINUSE":
+				console.error("HTTP server port is already in use. Exiting...")
+				startShutdown();
+				break;
+			default:
+				console.error("HTTP server error. Exiting just in case. Error:", error);
+				startShutdown();
+				break;
+		}
+	});
+
 	beoServerHTTPS.listen(systemConfiguration.httpsPort); // Listen on the HTTPS port.
 }
 beoServer.listen(systemConfiguration.port); // Listen on the HTTP port.

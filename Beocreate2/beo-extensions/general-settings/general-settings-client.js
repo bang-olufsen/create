@@ -53,7 +53,7 @@ function interactSetup(stage, data) {
 			break;
 		case "save":
 			beo.ask();
-			window.interact.saveAction("product-information", "power", {option: interactPowerOption});
+			window.interact.saveAction("general-settings", "power", {option: interactPowerOption});
 			break;
 		case "preview":
 			if (data.option == "shutdown") return "Shut down Raspberry Pi";

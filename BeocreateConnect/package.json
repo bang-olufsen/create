@@ -24,7 +24,7 @@
   "electron-window-state": "^5.0.3",
   "etcher-image-write": "^9.1.6",
   "multicast-dns": "^7.2.2",
-  "node-fetch": "^2.6.1",
+  "node-fetch": "^3.1.1",
   "sudo-prompt": "^9.2.1",
   "tinkerhub-mdns": "^0.5.1"
  },

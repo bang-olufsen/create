@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/equaliser",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "description": "Parametric equaliser and crossover for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {

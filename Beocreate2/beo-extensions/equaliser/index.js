@@ -236,6 +236,25 @@ var _ = beo.underscore;
 			beo.saveSettings("equaliser", settings);
 		}
 		
+		if (event.header == "pasteFilter" && event.content.channel && event.content.clipboard) {
+			pasteToChannel = getGroupedChannels(event.content.channel);
+			sendChannels = {};
+			for (var c = 0; c < pasteToChannel.length; c++) {
+				channel = pasteToChannel.charAt(c);
+				if (event.content.filter != undefined) {
+					// Paste one.
+					settings[channel][event.content.filter] = event.content.clipboard[0];
+				} else {
+					// Paste all.
+					settings[channel] = event.content.clipboard;
+				}
+				applyAllFiltersFromSettings(channel);
+				sendChannels[channel] = settings[channel];
+			}
+			beo.sendToUI("equaliser", {header: "settings", content: {channels: sendChannels}});
+			beo.saveSettings("equaliser", settings);
+		}
+		
 		if (event.header == "deleteFilter" && event.content.channel && event.content.filter != undefined) {
 			deleteFromChannel = getGroupedChannels(event.content.channel);
 			
@@ -299,7 +318,7 @@ var _ = beo.underscore;
 					item.index != undefined &&
 					item.filter) {
 					setChannel = getGroupedChannels(item.channel);
-					
+					if (event.content.sendSettings) sendChannels = {};
 					for (var c = 0; c < setChannel.length; c++) {
 						channel = setChannel.charAt(c);
 						if (debug >= 3) console.log("Setting filter "+item.index+" on channel "+channel.toUpperCase()+".");
@@ -309,9 +328,11 @@ var _ = beo.underscore;
 							roomCompensationModified = true;
 						}
 						applyFilterFromSettings(channel, item.index);
+						if (event.content.sendSettings) sendChannels[channel] = settings[channel];
 					}
 				}
 			}
+			if (event.content.sendSettings) beo.sendToUI("equaliser", {header: "settings", content: {channels: sendChannels}});
 			beo.saveSettings("equaliser", settings);
 		}
 		

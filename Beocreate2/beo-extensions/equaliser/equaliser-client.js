@@ -14,6 +14,8 @@ var groupLR = false;
 var equaliserMode = null // 0 for speaker equaliser, 1 for sound design.
 var channelsToUse = "abcd";
 
+var clipboard = {all: false, items: []};
+
 var dspFilters = {
 	a: [],
 	b: [],
@@ -374,7 +376,7 @@ function populateFilterBar() {
 		}
 		if (uiFilters[selectedChannel][f].bypass) classes += "bypass ";
 		
-		$("#equaliser-filters > #add-filter-button").before('<div class="collection-row-item button pill grey hold ui-equaliser-item '+classes+'" onclick="equaliser.selectFilter('+f+', true);" data-hold="equaliser.deleteFilter(false, '+f+', holdPosition);" data-ui-filter-index="'+f+'"><div class="collection-row-item-content"><div class="symbol" style="-webkit-mask-image: url('+extensions.equaliser.assetPath+'/symbols-black/'+icon+'); mask-image: url('+extensions.equaliser.assetPath+'/symbols-black/'+icon+');"></div><div class="collection-row-item-text">'+label+'</div></div></div>');
+		$("#equaliser-filters > #add-filter-button").before('<div class="collection-row-item button pill grey hold ui-equaliser-item '+classes+'" onclick="equaliser.selectFilter('+f+', true);" data-hold="equaliser.contextMenu('+f+', holdPosition);" data-ui-filter-index="'+f+'"><div class="collection-row-item-content"><div class="symbol" style="-webkit-mask-image: url('+extensions.equaliser.assetPath+'/symbols-black/'+icon+'); mask-image: url('+extensions.equaliser.assetPath+'/symbols-black/'+icon+');"></div><div class="collection-row-item-text">'+label+'</div></div></div>');
 		if (uiFilters[selectedChannel][f].separateRight) {
 			$("#equaliser-filters > #add-filter-button").before('<div class="separator"></div>');
 		} 
@@ -1054,6 +1056,40 @@ function deleteAllFilters(confirmed) {
 		}, 500);
 	} else {
 		beo.ask("equaliser-delete-all-prompt");
+	}
+}
+
+function showChannelOptions() {
+	if (clipboard.items.length > 0) {
+		$('#equaliser-paste-all').removeClass("disabled");
+	} else {
+		$('#equaliser-paste-all').addClass("disabled");
+	}
+	if (uiFilters[selectedChannel].length > 0) {
+		$('#equaliser-copy-all').removeClass("disabled");
+	} else {
+		$('#equaliser-copy-all').addClass("disabled");
+	}
+	beo.ask("equaliser-options-prompt");
+}
+
+var contextIndex = null;
+function contextMenu(filterIndex, holdPosition) {
+	contextIndex = filterIndex;
+	beo.ask("equaliser-context-prompt", null, null, function() {
+		contextIndex = null;
+	});
+	if (clipboard.items.length == 1) {
+		$('#equaliser-paste').removeClass("disabled");
+	} else {
+		$('#equaliser-paste').addClass("disabled");
+	}
+	if (uiFilters[selectedChannel][filterIndex].type != "highPass" &&
+		uiFilters[selectedChannel][filterIndex].type != "lowPass") {
+		$('#equaliser-copy').removeClass("disabled");
+	} else {
+		$('#equaliser-copy').addClass("disabled");
+		$('#equaliser-paste').addClass("disabled");
 	}
 }
 
@@ -1762,6 +1798,29 @@ function toggleLink(channel) {
 	showLinked();
 }
 
+function copyFilter(all) {
+	clipboard.items = [];
+	if (!all) {
+		clipboard = {all: false, items: [dspFilters[selectedChannel][uiFilters[selectedChannel][contextIndex].index]]};
+	} else {
+		clipboard = {all: true, items: [dspFilters[selectedChannel].slice()]};
+	}
+	beo.ask();
+}
+
+function pasteFilter(all) {
+	if (!all) {
+		if (clipboard.items.length == 1) {
+			beo.sendToProduct("equaliser", {header: "setFilter", content: {items: [{channel: selectedChannel, index: uiFilters[selectedChannel][contextIndex].index, filter: clipboard.items[0]}], sendSettings: true}});
+		}
+	} else {
+		if (clipboard.items.length > 0) {
+			beo.sendToProduct("equaliser", {header: "pasteFilter", content: {channel: selectedChannel, clipboard: clipboard.items}});
+		}
+	}
+	beo.ask();
+}
+
 function showChannelSettings() {
 	showChannels = [selectedChannel];
 	if (selectedChannel == "a" && groupAB) showChannels = ["a", "b"];
@@ -1837,6 +1896,11 @@ return {
 	selectQDisplay: selectQDisplay,
 	selectChannel: selectChannel,
 	selectFilter: selectFilter,
+	contextMenu: contextMenu,
+	showChannelOptions: showChannelOptions,
+	copyFilter: copyFilter,
+	pasteFilter: pasteFilter,
+	getClipboard: function() {return clipboard},
 	setCrossoverType: setCrossoverType,
 	toggleShowAllChannels: toggleShowAllChannels,
 	toggleLink: toggleLink,

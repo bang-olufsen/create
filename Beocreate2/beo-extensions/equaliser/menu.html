@@ -88,7 +88,7 @@
 				
 				<div class="menu-icon right button symbol" id="equaliser-compare-button" style="-webkit-mask-image: url(€/symbols-black/ear.svg); mask-image: url(€/symbols-black/ear.svg);" onmousedown="equaliser.compare(true);" onmouseup="equaliser.compare(false);" ontouchstart="equaliser.compare(true, true);" ontouchend="equaliser.compare(false, true);" title="Press and hold to compare with all filters off"></div>
 				
-				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="beo.ask('equaliser-options-prompt');" title="More filter options"></div>
+				<div class="menu-icon right button symbol" style="-webkit-mask-image: url(common/symbols-black/more.svg); mask-image: url(common/symbols-black/more.svg);" onclick="equaliser.showChannelOptions();" title="More filter options"></div>
 			</div>
 			<!--<hr class="no-margin-top">-->
 			<div class="collection-row-scroller" id="equaliser-collection-scroller">
@@ -197,7 +197,7 @@
 				<hr>
 				
 				<div class="menu-item toggle on" id="equaliser-filter-enabled" onclick="equaliser.toggleBypass();">
-					<div class="menu-label">Filter Enabled</div>
+					<div class="menu-label">Filter On</div>
 					<div class="menu-toggle"></div>
 				</div>
 				<div class="button pill grey" onclick="equaliser.deleteFilter();">Remove Filter...</div>
@@ -275,6 +275,16 @@
 			<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
 		</div>
 		
+		<div class="ask-menu" id="equaliser-context-prompt">
+			<div class="ask-buttons">
+				<div class="button pill grey" id="equaliser-copy" onclick="equaliser.copyFilter();">Copy This Filter</div>
+				<div class="button pill grey disabled" id="equaliser-paste" onclick="equaliser.pasteFilter();">Paste &amp; Replace Filter</div>
+				<hr>
+				<div class="button pill grey" onclick="equaliser.deleteFilter(true);">Remove Filter</div>
+				<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>
+			</div>
+		</div>
+		
 		<div class="ask-menu" id="equaliser-delete-prompt">
 			<h2>Remove this filter?</h2>
 			<div class="ask-buttons">
@@ -299,6 +309,9 @@
 					<p>Create a new listening mode preset that includes the current sound design.</p>
 					<hr>
 				</div>
+				<div class="button pill grey disabled" id="equaliser-copy-all" onclick="equaliser.copyFilter(true);">Copy All Filters</div>
+				<div class="button pill grey disabled" id="equaliser-paste-all" onclick="equaliser.pasteFilter(true);">Paste &amp; Replace All</div>
+				<hr>
 				<div class="button pill grey disabled" onclick="equaliser.importFilters();">Import Filters...</div>
 				<div class="button pill grey" onclick="equaliser.deleteAllFilters();">Remove Channel Filters...</div>
 				<div class="button pill black cancel default" onclick="beo.ask();">Cancel</div>

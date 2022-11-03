@@ -453,7 +453,7 @@ var fetch = require("node-fetch");
 	}
 	
 	function getVolumeViaALSA(callback, mixer = alsaMixer) {
-		exec("amixer get "+mixer, function(error, stdout, stderr) {
+		exec("amixer get \""+mixer+"\"", function(error, stdout, stderr) {
 			if (error) {
 				if (callback) callback(null, error);
 			} else {

@@ -361,7 +361,7 @@ var networkCore = require('../../beocreate_essentials/networking');
 						extensions["setup"].joinSetupFlow("network", {after: ["choose-country"], before: ["speaker-preset", "product-information"]});
 					}
 					interval = 30;
-					beo.bus.emit("led", {header: "blink", content: {options: {interval: 1, colour: "orange"}}});
+					beo.bus.emit("network", {header: "status", content: "setup"});
 					break;
 			}
 			connectionMode = options.mode;

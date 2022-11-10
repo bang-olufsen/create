@@ -1,4 +1,4 @@
-/*Copyright 2018-2019 Bang & Olufsen A/S
+/*Copyright 2018-2022 Bang & Olufsen A/S
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -344,6 +344,9 @@ function generateMetadataForBlock(block) {
 			break;
 		case "SPDIF-TX-Enable":
 			metadata["enableSPDIFTransmitterRegister"] = {value: block.paramAddress[0]};
+			break;
+		case "SPDIF-TX-OffAtMute":
+			metadata["disableSPDIFTransmitterAtMuteRegister"] = {value: block.paramAddress[0]};
 			break;
 		case "CanBeDaisyChained":
 			metadata["canBecomeDaisyChainSlaveRegister"] = {value: block.paramAddress[0]};

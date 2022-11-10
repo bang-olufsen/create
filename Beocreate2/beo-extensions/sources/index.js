@@ -262,7 +262,7 @@ function processAudioControlStatus(overview) {
 		for (var i = 0; i < overview.players.length; i++) {
 			// Go through each source, see their status and update accordingly.
 			[extension, childSource] = matchAudioControlSourceToExtension(overview.players[i].name, overview.players[i]);
-			if (extension) {
+			if (extension && (extension in allSources)) {
 				allSources[extension].childSource = childSource;
 				if (childSource && allSources[childSource]) allSources[childSource].parentSource = extension;
 				if (overview.players[i].state == "unknown") overview.players[i].state = "stopped";

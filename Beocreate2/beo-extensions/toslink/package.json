@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/toslink",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Toslink settings for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {

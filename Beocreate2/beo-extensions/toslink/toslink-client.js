@@ -79,6 +79,10 @@ function toggleEnabled(enabled) {
 	beo.send({target: "toslink", header: "toslinkEnabled", content: {enabled: enabled}});
 }
 
+function setTXEnabled(enabled = true) {
+	beo.send({target: "toslink", header: "toslinkTXEnabled", content: {enabled: enabled}});
+}
+
 function setSensitivity(sensitivity) {
 	switch (sensitivity) {
 		case "high":
@@ -152,7 +156,8 @@ return {
 	toggleEnabled: toggleEnabled,
 	toggleStopsOtherSources: toggleStopsOtherSources,
 	setSensitivity: setSensitivity,
-	toggleSoundSync: toggleSoundSync
+	toggleSoundSync: toggleSoundSync,
+	setTXEnabled: setTXEnabled
 }
 
 })();

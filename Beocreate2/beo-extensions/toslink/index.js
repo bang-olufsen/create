@@ -30,7 +30,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	var settings = JSON.parse(JSON.stringify(defaultSettings));
 	var canControlToslink = {
 			"enabled": false,
-			"sensitivity": false
+			"sensitivity": false,
+			"disableTransmitterAtMute": false
 		};
 	var canControlToslinkSensitivity = false;
 	
@@ -40,6 +41,8 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 	
 	var sources = null;
 	var soundSyncLG = false;
+	
+	var daisyChainEnabled = false;
 	
 	beo.bus.on('general', function(event) {
 		
@@ -115,6 +118,18 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					readToslinkStatus(false);
 				}
 				
+				if (metadata.disableSPDIFTransmitterAtMuteRegister && metadata.disableSPDIFTransmitterAtMuteRegister.value) {
+					canControlToslink.disableTransmitterAtMute = true;
+					if (daisyChainEnabled) {
+						setToslinkTransmitterOffAtMute(false);
+					} else if (event.content.fromStartup) {
+						setToslinkTransmitterOffAtMute(false);
+						setToslinkTransmitterOffAtMute(true, 10000);
+					}
+				} else {
+					canControlToslink.disableTransmitterAtMute = false;
+				}
+				
 				applyToslinkEnabledFromSettings();
 				applyToslinkSensitivityFromSettings();
 				
@@ -142,6 +157,17 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 				beo.bus.emit("ui", {target: "toslink", header: "toslinkSettings", content: {settings: settings, canControlToslink: canControlToslink}});
 				beo.bus.emit("settings", {header: "saveSettings", content: {extension: "toslink", settings: settings}});
 				applyToslinkEnabledFromSettings();
+			}
+		}
+		
+		if (event.header == "toslinkTXEnabled") {
+			if (event.content.enabled != undefined) {
+				if (debug) console.log("Setting Toslink transmitter status to "+event.content.enabled+".");
+				if (event.content.enabled == true) {
+					beoDSP.writeDSP(metadata.enableSPDIFTransmitterRegister.value[0], 1, false);
+				} else {
+					beoDSP.writeDSP(metadata.enableSPDIFTransmitterRegister.value[0], 0, false);
+				}
 			}
 		}
 		
@@ -187,6 +213,32 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 		}
 	});
 	
+	beo.bus.on('daisy-chain', function(event) {
+	
+		if (event.header == "daisyChainEnabled") {
+			// Daisy-chain extension will announce whether or not this is a master speaker in a chained system.
+			if (event.content.enabled) {
+				daisyChainEnabled = true;
+				setToslinkTransmitterOffAtMute(false);
+			} else {
+				daisyChainEnabled = false;
+			}
+		}
+	});
+	
+	beo.bus.on('sources', function(event) {
+		
+		if (event.header == "sourcesChanged") {
+			if (event.content.fromStandby == true) {
+				setToslinkTransmitterOffAtMute(false)
+			} else if (event.content.toStandby == true) {
+				setToslinkTransmitterOffAtMute(true, 5000)
+			}
+		}
+		
+	});
+	
+	
 	
 	function applyToslinkEnabledFromSettings() {
 		if (canControlToslink.enabled) {
@@ -225,6 +277,26 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 			if (levelValue) {
 				if (debug) console.log("Setting Toslink sensitivity to "+settings.sensitivity+".");
 				beoDSP.writeDSP(metadata["sensitivitySPDIFRegister"].value[0], levelValue, true, true);
+			}
+		}
+	}
+	
+	var toslinkTransmitterOffTimeout = null;
+	function setToslinkTransmitterOffAtMute(off, after = null) {
+		if (canControlToslink.disableTransmitterAtMute) {
+			clearTimeout(toslinkTransmitterOffTimeout);
+			if (after) {
+				toslinkTransmitterOffTimeout = setTimeout(function() {
+					setToslinkTransmitterOffAtMute(off);
+				}, after);
+			} else {
+				if (off) {
+					if (!daisyChainEnabled) {
+						beoDSP.writeDSP(metadata.disableSPDIFTransmitterAtMuteRegister.value[0], 1, false);
+					}
+				} else {
+					beoDSP.writeDSP(metadata.disableSPDIFTransmitterAtMuteRegister.value[0], 0, false);
+				}
 			}
 		}
 	}

@@ -81,11 +81,11 @@ var _ = require('underscore');
 									} else if (debug) {
 										console.log("Received metadata from DSP.");
 									}
-									beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP}});
+									beo.bus.emit('dsp', {header: "metadata", content: {metadata: metadata, fromDSP: fromDSP, fromStartup: true}});
 									if (beo.selectedExtension == "dsp-programs") sendDSPPrograms();
 								} else {
 									if (debug) console.log("No metadata found for current DSP program.");
-									beo.bus.emit('dsp', {header: "metadata", content: {metadata: null}});
+									beo.bus.emit('dsp', {header: "metadata", content: {metadata: null, fromStartup: true}});
 								}
 							} else {
 								if (debug) console.log("'"+shouldUpgrade+"' is an upgrade to the current DSP program. Upgrading...");

@@ -535,7 +535,7 @@ beoBus.on('dsp', function(event) {
 			if (!fs.existsSync("/etc/quiet_start") && !quietMode) {
 				setTimeout(function() {
 					playProductSound("startup");
-				}, 500);
+				}, 1000);
 			} else {
 				fs.writeFileSync("/etc/quiet_start", "Used.");
 			}

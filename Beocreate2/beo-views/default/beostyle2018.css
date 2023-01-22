@@ -749,7 +749,7 @@ header .button.symbol {
 	position: absolute;
 	width: 21px;
 	height: 21px;
-	margin: 0 -10px -10px;
+	margin: 0 -10px;
 	padding: 10px;
 }
 
@@ -3284,6 +3284,7 @@ header .tabs > div.selected:after {
 	box-shadow: 0 10px 50px rgba(0, 0, 0, 0.1);
 	background-color: var(--main-bg);
 	padding-bottom: env(safe-area-inset-bottom);
+	box-sizing: border-box;
 }
 
 .dark .ask-content,

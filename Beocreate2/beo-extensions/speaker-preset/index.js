@@ -330,7 +330,6 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 						if (fullPresetList[presetID]["speaker-preset"].description) {
 							preset.description = fullPresetList[presetID]["speaker-preset"].description;
 						}
-			
 						if (fullPresetList[presetID]["speaker-preset"].samplingRate) {
 							samplingRate = fullPresetList[presetID]["speaker-preset"].samplingRate;
 						} else {
@@ -338,7 +337,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 						}
 					}
 					
-					checkedPresetContent = Object.assign(checkedPresetContent, preflightPresetSettings(fullPresetList[presetID]), samplingRate);
+					checkedPresetContent = Object.assign(checkedPresetContent, preflightPresetSettings(fullPresetList[presetID], samplingRate));
 					
 					programName = false;
 					metadataFromDSP = false;
@@ -381,7 +380,7 @@ var beoDSP = require('../../beocreate_essentials/dsp');
 					preflight[soundAdjustment] = {status: 1};
 					if (extensions[soundAdjustment]) {
 						if (extensions[soundAdjustment].checkSettings != undefined) {
-							if (debug == 2) console.log("Checking preset content for extension '"+soundAdjustment+"'...");
+							if (debug == 2) console.log("Checking preset content for extension '"+soundAdjustment+"' (sampling rate "+samplingRate+" Hz)...");
 							preflight[soundAdjustment].report = extensions[soundAdjustment].checkSettings(presetToPreflight[soundAdjustment], samplingRate);
 							preflight[soundAdjustment].status = 0;
 							

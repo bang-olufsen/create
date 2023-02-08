@@ -1,6 +1,6 @@
 {
   "name": "@beocreate/speaker-preset",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Speaker preset management for Beocreate sound systems.",
   "main": "index.js",
   "scripts": {

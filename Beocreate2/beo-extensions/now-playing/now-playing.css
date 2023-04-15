@@ -654,3 +654,11 @@
 	
 	
 }
+
+@media only screen and (max-aspect-ratio: 10/19) {
+	
+	#now-playing-info-area .scroll-invitation {
+		display: block;
+	}
+	
+}
